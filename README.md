@@ -10,6 +10,12 @@ A Rolldown plugin to bundle dts files.
 npm i rolldown-plugin-dts
 ```
 
+## Credits
+
+The project draws inspiration from [rollup-plugin-dts](https://github.com/Swatinem/rollup-plugin-dts)
+but is an independent implementation.
+Special thanks to the original creators for their valuable work.
+
 ## Sponsors
 
 <p align="center">
