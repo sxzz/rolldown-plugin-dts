@@ -4,10 +4,13 @@
 
 A Rolldown plugin to bundle dts files.
 
+> [!WARNING]
+> This plugin is still in development and may not work as expected.
+
 ## Install
 
 ```bash
-npm i rolldown-plugin-dts
+npm i https://pkg.pr.new/sxzz/rolldown-plugin-dts@main
 ```
 
 ## Credits
