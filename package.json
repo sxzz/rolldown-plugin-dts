@@ -1,0 +1,65 @@
+{
+  "name": "rolldown-plugin-dts",
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.6.5",
+  "description": "A Rolldown plugin to bundle dts files",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://github.com/sxzz/rolldown-plugin-dts#readme",
+  "bugs": {
+    "url": "https://github.com/sxzz/rolldown-plugin-dts/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sxzz/rolldown-plugin-dts.git"
+  },
+  "author": "三咲智子 Kevin Deng <sxzz@sxzz.moe>",
+  "funding": "https://github.com/sponsors/sxzz",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "lint": "eslint --cache .",
+    "lint:fix": "pnpm run lint --fix",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --cache --write .",
+    "release": "bumpp && pnpm publish",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "magic-string-ast": "^0.8.0",
+    "oxc-parser": "^0.61.2"
+  },
+  "devDependencies": {
+    "@sxzz/eslint-config": "^6.1.0",
+    "@sxzz/prettier-config": "^2.2.1",
+    "@sxzz/test-utils": "^0.5.2",
+    "@types/node": "^22.13.10",
+    "bumpp": "^10.1.0",
+    "eslint": "^9.22.0",
+    "oxc-transform": "^0.60.0",
+    "prettier": "^3.5.3",
+    "rolldown": "1.0.0-beta.6",
+    "tsdown": "^0.6.9",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
+  },
+  "engines": {
+    "node": ">=20.18.0"
+  },
+  "prettier": "@sxzz/prettier-config"
+}
