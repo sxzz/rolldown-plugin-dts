@@ -1,7 +1,4 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`basic 1`] = `
-"// main.d.ts
+// index.d.ts
 
 //#region tests/fixtures/basic/foo.d.ts
 declare const foo: number
@@ -20,5 +17,4 @@ declare class Cls {
 }
 
 //#endregion
-export { Cls, fn, foo };"
-`;
+export { Cls, fn, foo };

@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@types/diff':
+        specifier: ^7.0.2
+        version: 7.0.2
+      diff:
+        specifier: ^7.0.0
+        version: 7.0.0
       magic-string-ast:
         specifier: ^0.8.0
         version: 0.8.0
@@ -22,8 +28,8 @@ importers:
         specifier: ^2.2.1
         version: 2.2.1
       '@sxzz/test-utils':
-        specifier: ^0.5.2
-        version: 0.5.2(esbuild@0.25.1)(rolldown@1.0.0-beta.7(typescript@5.8.2))(rollup@4.37.0)(vitest@3.0.9(@types/debug@4.1.12)(@types/node@22.13.13)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.7.0))
+        specifier: ^0.5.3
+        version: 0.5.3(esbuild@0.25.1)(rolldown@1.0.0-beta.7(typescript@5.8.2))(rollup@4.37.0)(vitest@3.0.9(@types/debug@4.1.12)(@types/node@22.13.13)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.7.0))
       '@types/node':
         specifier: ^22.13.13
         version: 22.13.13
@@ -39,6 +45,9 @@ importers:
       rolldown:
         specifier: 1.0.0-beta.7
         version: 1.0.0-beta.7(typescript@5.8.2)
+      rollup-plugin-dts:
+        specifier: ^6.2.1
+        version: 6.2.1(rollup@4.37.0)(typescript@5.8.2)
       tsdown:
         specifier: ^0.6.9
         version: 0.6.9(typescript@5.8.2)
@@ -752,8 +761,8 @@ packages:
   '@sxzz/prettier-config@2.2.1':
     resolution: {integrity: sha512-4eKrQdzJpMOFrUD9rFm1IfVkpchPvnPOObJvnX+DQB0KHRtHbU0vBwSpOLHioxLPYFwJGjSl6NC0trrCDkCtsA==}
 
-  '@sxzz/test-utils@0.5.2':
-    resolution: {integrity: sha512-a7ahm32VLqDc6C16C2K1nEzZQZ2B9UkjLMI/fXZTvHbz3Y7vJnxXdgCP3sBXCmjNtEZh3ldrf9YlES0WLWr2eA==}
+  '@sxzz/test-utils@0.5.3':
+    resolution: {integrity: sha512-0VFfuF086x5A986813tQKWYvRvuaYtgwfUSXq4xS9/tazLhXz0YvvyewY469Zr7NOZc+njvvuf9695fo6qGkkQ==}
     engines: {node: '>=20.18.0'}
     peerDependencies:
       esbuild: '>=0.20.0'
@@ -773,6 +782,9 @@ packages:
 
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
+
+  '@types/diff@7.0.2':
+    resolution: {integrity: sha512-JSWRMozjFKsGlEjiiKajUjIJVKuKdE3oVy2DNtK+fUo8q82nhFZ2CPQwicAIkXrofahDXrWJ7mjelvZphMS98Q==}
 
   '@types/doctrine@0.0.9':
     resolution: {integrity: sha512-eOIHzCUSH7SMfonMG1LsC2f8vxBFtho6NGBznK41R84YzPuvSBzrhEps33IsQiOW9+VL6NQ9DbjQJznk/S4uRA==}
@@ -2845,7 +2857,7 @@ snapshots:
 
   '@sxzz/prettier-config@2.2.1': {}
 
-  '@sxzz/test-utils@0.5.2(esbuild@0.25.1)(rolldown@1.0.0-beta.7(typescript@5.8.2))(rollup@4.37.0)(vitest@3.0.9(@types/debug@4.1.12)(@types/node@22.13.13)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.7.0))':
+  '@sxzz/test-utils@0.5.3(esbuild@0.25.1)(rolldown@1.0.0-beta.7(typescript@5.8.2))(rollup@4.37.0)(vitest@3.0.9(@types/debug@4.1.12)(@types/node@22.13.13)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.7.0))':
     dependencies:
       tinyglobby: 0.2.12
       unplugin-utils: 0.2.4
@@ -2863,6 +2875,8 @@ snapshots:
   '@types/debug@4.1.12':
     dependencies:
       '@types/ms': 2.1.0
+
+  '@types/diff@7.0.2': {}
 
   '@types/doctrine@0.0.9': {}
 
