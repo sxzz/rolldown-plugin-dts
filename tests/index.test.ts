@@ -54,10 +54,11 @@ await testFixtures(
 
 function cleanupCode(text: string) {
   return text
-    .split('\n')
-    .filter((line) => line.trim() !== '')
-    .join('\n')
     .replaceAll(/\/\/#region .*\n/g, '')
     .replaceAll('//#endregion\n', '')
     .replaceAll(/from "(.*)"/g, "from '$1'")
+    .replaceAll('export type', 'export') // FIXME
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+    .join('\n')
 }

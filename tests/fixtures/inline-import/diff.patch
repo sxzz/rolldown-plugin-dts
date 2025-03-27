@@ -12,7 +12,5 @@ Index: diff.patch
 +  bar: import('./mod').Foo
 +  baz: typeof import('./mod').Bar
  }
--export type { Foo };
-\ No newline at end of file
-+export { Foo };
+ export { Foo };
 \ No newline at end of file

@@ -6,6 +6,7 @@ import {
   type Declaration,
   type Function,
   type Node,
+  type Span,
   type TSTypeName,
   type TSTypeQuery,
   type TSTypeReference,
@@ -18,15 +19,24 @@ const RE_TYPE = /\btype\b/
 
 export function dts(): Plugin {
   let i = 0
-  const map = new Map<number, string>()
+  const map = new Map<number, [code: string, nameRange: [number, number]]>()
 
-  function register(raw: string) {
+  function register(raw: string, idNode: Node & Span, parent: Span) {
     const id = i++
-    map.set(id, raw)
+    let idNodeEnd = idNode.end
+    if ('typeAnnotation' in idNode && idNode.typeAnnotation) {
+      idNodeEnd = idNode.typeAnnotation.start
+    }
+    const nameRange: [number, number] = [
+      idNode.start - parent.start,
+      idNodeEnd - parent.start,
+    ]
+    map.set(id, [raw, nameRange])
     return id
   }
-  function retrieve(id: number) {
-    return map.get(id)!
+  function retrieve(id: number, name: string) {
+    const [code, nameRange] = map.get(id)!
+    return code.slice(0, nameRange[0]) + name + code.slice(nameRange[1])
   }
 
   return {
@@ -49,7 +59,7 @@ export function dts(): Plugin {
       const { program } = await parseAsync(id, code)
 
       const s = new MagicStringAST(code)
-      for (let node of program.body) {
+      for (let node of program.body as (Node & Span)[]) {
         // fix:
         // - import type { ... } from '...'
         // - import { type ... } from '...'
@@ -78,7 +88,13 @@ export function dts(): Plugin {
         }
 
         // remove `export` modifier
-        if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+        const isDefaultExport = node.type === 'ExportDefaultDeclaration'
+
+        if (
+          (node.type === 'ExportNamedDeclaration' ||
+            node.type === 'ExportDefaultDeclaration') &&
+          node.declaration
+        ) {
           node = node.declaration
         }
 
@@ -95,16 +111,20 @@ export function dts(): Plugin {
             node as Exclude<Declaration, VariableDeclaration> | Function
           ).id
           if (!binding) continue
-          const id = register(s.sliceNode(node))
+          const original = s.sliceNode(node)
+          const id = register(original, binding, node)
           const deps = collectDependencies(node)
           const typeDeps = collectTypeDeps(node)
           const depsString = [...deps, ...typeDeps]
             .map((node) => `() => ${s.sliceNode(node)}`)
             .join(', ')
 
+          const runtime = `[${id}, ${depsString}]`
           s.overwriteNode(
             node,
-            `var ${s.sliceNode(binding)} = [${id}, ${depsString}]`,
+            isDefaultExport
+              ? runtime
+              : `var ${s.sliceNode(binding)} = [${id}, ${depsString}]`,
           )
         }
       }
@@ -127,6 +147,7 @@ export function dts(): Plugin {
           continue
 
         const [decl] = node.declarations
+
         if (decl.init?.type !== 'ArrayExpression' || !decl.init.elements[0]) {
           patchVariableDeclarator(s, node, decl)
           continue
@@ -139,7 +160,8 @@ export function dts(): Plugin {
         }
 
         const id = idNode.value
-        const type = retrieve(id)
+        const type = retrieve(id, s.sliceNode(decl.id))
+
         s.overwriteNode(node, type)
       }
 
@@ -163,11 +185,12 @@ export function dts(): Plugin {
     const [decl] = node.declarations
 
     const raw = s.sliceNode(node)
-    const id = register(raw)
+    const id = register(raw, decl.id, node)
     const deps = collectTypeDeps(node)
       .map((node) => s.sliceNode(node))
       .join(', ')
-    s.overwriteNode(node, `var ${s.sliceNode(decl.id)} = [${id}, ${deps}]`)
+    const runtime = `[${id}, ${deps}]`
+    s.overwriteNode(node, `var ${s.sliceNode(decl.id)} = ${runtime}`)
   }
 }
 
@@ -175,7 +198,9 @@ function collectDependencies(node: Node) {
   const deps = new Set<Node>()
   ;(walk as any)(node, {
     enter(node: Node) {
-      if (
+      if (node.type === 'ClassDeclaration' && node.superClass) {
+        deps.add(node.superClass)
+      } else if (
         (node.type === 'MethodDefinition' ||
           node.type === 'PropertyDefinition') &&
         (node.key.type === 'Identifier' ||
