@@ -28,8 +28,8 @@ await testFixtures(
       undefined,
       { entryFileNames: '[name].ts' },
     )
-    rollupSnapshot = stripEmptyLines(rollupSnapshot)
-    const rolldownSnapshot = stripEmptyLines(stripRegion(snapshot))
+    rollupSnapshot = cleanupCode(rollupSnapshot)
+    const rolldownSnapshot = cleanupCode(snapshot)
     const diffPath = path.resolve(dirname, 'diff.patch')
     if (rollupSnapshot !== rolldownSnapshot) {
       const diff = createPatch(
@@ -52,15 +52,12 @@ await testFixtures(
   { snapshot: false },
 )
 
-function stripEmptyLines(text: string) {
+function cleanupCode(text: string) {
   return text
     .split('\n')
     .filter((line) => line.trim() !== '')
     .join('\n')
-}
-
-function stripRegion(text: string) {
-  return text
     .replaceAll(/\/\/#region .*\n/g, '')
     .replaceAll('//#endregion\n', '')
+    .replaceAll(/from "(.*)"/g, "from '$1'")
 }

@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { walk } from 'estree-walker'
 import { MagicStringAST } from 'magic-string-ast'
 import {
   parseAsync,
@@ -24,7 +25,6 @@ export function dts(): Plugin {
     map.set(id, raw)
     return id
   }
-
   function retrieve(id: number) {
     return map.get(id)!
   }
@@ -50,6 +50,9 @@ export function dts(): Plugin {
 
       const s = new MagicStringAST(code)
       for (let node of program.body) {
+        // fix:
+        // - import type { ... } from '...'
+        // - import { type ... } from '...'
         if (node.type === 'ImportDeclaration') {
           for (const specifier of node.specifiers) {
             if (
@@ -71,8 +74,10 @@ export function dts(): Plugin {
               s.slice(node.start, firstSpecifier.start).replace(RE_TYPE, ''),
             )
           }
+          continue
         }
 
+        // remove `export` modifier
         if (node.type === 'ExportNamedDeclaration' && node.declaration) {
           node = node.declaration
         }
@@ -91,13 +96,15 @@ export function dts(): Plugin {
           ).id
           if (!binding) continue
           const id = register(s.sliceNode(node))
-          const deps = scanTypeReference(node)
+          const deps = collectDependencies(node)
+          const typeDeps = collectTypeDeps(node)
+          const depsString = [...deps, ...typeDeps]
             .map((node) => `() => ${s.sliceNode(node)}`)
             .join(', ')
 
           s.overwriteNode(
             node,
-            `var ${s.sliceNode(binding)} = [${id}, ${deps}]`,
+            `var ${s.sliceNode(binding)} = [${id}, ${depsString}]`,
           )
         }
       }
@@ -157,14 +164,32 @@ export function dts(): Plugin {
 
     const raw = s.sliceNode(node)
     const id = register(raw)
-    const deps = scanTypeReference(node)
+    const deps = collectTypeDeps(node)
       .map((node) => s.sliceNode(node))
       .join(', ')
     s.overwriteNode(node, `var ${s.sliceNode(decl.id)} = [${id}, ${deps}]`)
   }
 }
 
-function scanTypeReference(node: Node): TSTypeName[] {
+function collectDependencies(node: Node) {
+  const deps = new Set<Node>()
+  ;(walk as any)(node, {
+    enter(node: Node) {
+      if (
+        (node.type === 'MethodDefinition' ||
+          node.type === 'PropertyDefinition') &&
+        (node.key.type === 'Identifier' ||
+          node.key.type === 'MemberExpression') &&
+        node.computed
+      ) {
+        deps.add(node.key)
+      }
+    },
+  })
+  return Array.from(deps)
+}
+
+function collectTypeDeps(node: Node): TSTypeName[] {
   if (!node) return []
   const result: any[] = []
 
@@ -177,13 +202,14 @@ function scanTypeReference(node: Node): TSTypeName[] {
     }
 
     if (typeof value === 'object') {
-      result.push(...scanTypeReference(value))
+      result.push(...collectTypeDeps(value))
     }
   }
 
   return result
 }
 
+// patch let x = 1; to declare let x: typeof 1;
 function patchVariableDeclarator(
   s: MagicStringAST,
   node: VariableDeclaration,
@@ -199,6 +225,7 @@ function patchVariableDeclarator(
   }
 }
 
+// patch `.d.ts` suffix in import source to `.js`
 function patchImportSource(s: MagicStringAST, node: Node) {
   if (
     (node.type === 'ImportDeclaration' ||

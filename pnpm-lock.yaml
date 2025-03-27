@@ -8,12 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@types/diff':
-        specifier: ^7.0.2
-        version: 7.0.2
-      diff:
-        specifier: ^7.0.0
-        version: 7.0.0
       magic-string-ast:
         specifier: ^0.8.0
         version: 0.8.0
@@ -30,15 +24,24 @@ importers:
       '@sxzz/test-utils':
         specifier: ^0.5.3
         version: 0.5.3(esbuild@0.25.1)(rolldown@1.0.0-beta.7(typescript@5.8.2))(rollup@4.37.0)(vitest@3.0.9(@types/debug@4.1.12)(@types/node@22.13.13)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.7.0))
+      '@types/diff':
+        specifier: ^7.0.2
+        version: 7.0.2
       '@types/node':
         specifier: ^22.13.13
         version: 22.13.13
       bumpp:
         specifier: ^10.1.0
         version: 10.1.0
+      diff:
+        specifier: ^7.0.0
+        version: 7.0.0
       eslint:
         specifier: ^9.23.0
         version: 9.23.0(jiti@2.4.2)
+      estree-walker:
+        specifier: ^3.0.3
+        version: 3.0.3
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
