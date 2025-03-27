@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noEmit": true,
+    "stripInternal": true,
+    "allowSyntheticDefaultImports": true,
+    "skipDefaultLibCheck": true
+  }
+}

@@ -8,7 +8,7 @@ import { expect } from 'vitest'
 import { dts } from '../src'
 
 await testFixtures(
-  'tests/fixtures/*/index.d.ts',
+  ['tests/fixtures/*/index.d.ts', 'tests/fixtures/local/*/index.d.ts'],
   async (args, id) => {
     const dirname = path.dirname(id)
 
