@@ -1,0 +1,20 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,10 +1,9 @@
+ // index.d.ts
+-declare enum E {}
++enum E {}
+ interface Foo {
+   e: E;
+ }
+-declare namespace Bar {
++namespace Bar {
+   export enum F {}
+ }
+-export { Bar };
+-export { Foo };
+\ No newline at end of file
++export { Bar, Foo };
+\ No newline at end of file

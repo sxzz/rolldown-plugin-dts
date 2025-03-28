@@ -1,0 +1,16 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,9 +1,5 @@
+ // index.d.ts
+-interface SimpleInterface {}
+-type ObjectWithParam<ParamObj> = {
+-  [Prop in keyof ParamObj]?: any;
+-};
+ declare class CalendarDataManager {
+-  emitter: ObjectWithParam<SimpleInterface>;
++  emitter: import("./options").ObjectWithParam<import("./options").SimpleInterface>;
+ }
+ export { CalendarDataManager };
+\ No newline at end of file

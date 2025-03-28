@@ -4,6 +4,3 @@ dist
 *.log
 .DS_Store
 .eslintcache
-
-tests/fixtures/local
-tests/fixtures/fails

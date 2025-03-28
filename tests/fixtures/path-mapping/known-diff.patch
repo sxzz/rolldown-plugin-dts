@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,2 +1,3 @@
+ // index.d.ts
+-export { Foo } from 'components/Foo';
+\ No newline at end of file
++import { Foo } from 'components/Foo';
++export { Foo };
+\ No newline at end of file

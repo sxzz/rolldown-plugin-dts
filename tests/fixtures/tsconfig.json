@@ -1,13 +1,20 @@
 {
   "compilerOptions": {
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "lib": ["es2018", "esnext", "dom"],
+    "skipDefaultLibCheck": true,
+
     "strict": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "noEmit": true,
-    "stripInternal": true,
+
     "allowSyntheticDefaultImports": true,
-    "skipDefaultLibCheck": true
+    "moduleResolution": "node",
+    "module": "esnext",
+    "stripInternal": true,
+
+    "newLine": "lf",
+
+    "noEmit": true,
+    "declaration": true,
+    "emitDeclarationOnly": true
+    // "outDir": "./"
   }
 }

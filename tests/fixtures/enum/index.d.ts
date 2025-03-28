@@ -1,9 +1,12 @@
-export declare enum Foo {
+export declare enum A {
   A = 0,
-  B = 1,
 }
-
-export declare const enum Bar {
-  A = 0,
-  B = 1,
+export declare enum B {
+  B = "B",
+}
+export declare const enum C {
+  C = 0,
+}
+export declare const enum D {
+  D = "D",
 }

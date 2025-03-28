@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -4,6 +4,5 @@
+ type VerticalAlignment = "top" | "middle" | "bottom";
+ type HorizontalAlignment = "left" | "center" | "right";
+ type SeussFish = `${Quantity | Color} fish`;
+ declare function setAlignment(value: `${VerticalAlignment}-${HorizontalAlignment}`): void;
+-export { setAlignment };
+-export { SeussFish };
+\ No newline at end of file
++export { SeussFish, setAlignment };
+\ No newline at end of file

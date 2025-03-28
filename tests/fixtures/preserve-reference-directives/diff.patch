@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,6 +1,5 @@
+ // index.d.ts
+-/// <reference types="react" />
+ declare type JSXElements$1 = keyof JSX.IntrinsicElements;
+ declare const a: JSXElements$1[];
+ declare type JSXElements = keyof JSX.IntrinsicElements;
+ declare const b: JSXElements[];

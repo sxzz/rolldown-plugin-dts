@@ -1,0 +1,16 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,5 +1,8 @@
+ // index.d.ts
+ declare function autobind(): ClassDecorator | MethodDecorator;
++type index_d_default = autobind
+ declare function autobind(constructor: Function): void;
++type index_d_default = autobind
+ declare function autobind(prototype: Object, name: string, descriptor: PropertyDescriptor): PropertyDescriptor;
+-export { autobind as default };
+\ No newline at end of file
++type index_d_default = autobind
++export { index_d_default as default };
+\ No newline at end of file

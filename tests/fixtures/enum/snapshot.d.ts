@@ -1,14 +1,18 @@
 // index.d.ts
 
 //#region tests/fixtures/enum/index.d.ts
-declare enum Foo {
+declare enum A {
   A = 0,
-  B = 1,
 }
-declare const enum Bar {
-  A = 0,
-  B = 1,
+declare enum B {
+  B = "B",
+}
+declare const enum C {
+  C = 0,
+}
+declare const enum D {
+  D = "D",
 }
 
 //#endregion
-export { Bar, Foo };
+export { A, B, C, D };

@@ -1,0 +1,15 @@
+// index.d.ts
+
+//#region tests/fixtures/reference-path-remapping/sub/api2.d.ts
+declare class C2 {
+  public X: x2.I2;
+}
+
+//#endregion
+//#region tests/fixtures/reference-path-remapping/index.d.ts
+declare class C1 {
+  public X: x1.I1;
+}
+
+//#endregion
+export { C1, C2 };

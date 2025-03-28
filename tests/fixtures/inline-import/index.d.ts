@@ -1,4 +1,4 @@
 export interface Foo {
-  bar: import('./mod').Foo
-  baz: typeof import('./mod').Bar
+  bar: import("./bar").Bar;
+  baz: typeof import("./bar").Baz;
 }

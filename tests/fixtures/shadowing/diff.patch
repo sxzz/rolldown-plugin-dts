@@ -1,0 +1,34 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,5 +1,19 @@
+ // index.d.ts
++interface A {}
++interface B {}
++interface C {}
++interface D {}
++interface E {}
++interface F {}
++interface G {}
++interface H {}
++interface I {}
++interface J {}
++interface K {}
++interface L {}
++interface M {}
++interface N {}
+ declare class GenericKlass<A = any, B = A> {
+   a: A;
+   b: B;
+ }
+@@ -16,6 +30,5 @@
+   k: K;
+   l: L;
+ };
+ interface GenericExtends<M = any, N = M> extends GenericInterface<M, N> {}
+-export { GenericKlass, genericFunction };
+-export { ConditionalInfer, GenericExtends, GenericInterface, GenericType, Mapped };
+\ No newline at end of file
++export { ConditionalInfer, GenericExtends, GenericInterface, GenericKlass, GenericType, Mapped, genericFunction };
+\ No newline at end of file

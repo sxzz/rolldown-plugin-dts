@@ -1,0 +1,12 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,7 +1,5 @@
+ // index.d.ts
+-/// <reference path="./sub/ns-api2.d.ts" />
+-/// <reference path="./ns-api.d.ts" />
+ declare class C2 {
+   public X: x2.I2;
+ }
+ declare class C1 {

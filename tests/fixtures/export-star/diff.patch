@@ -1,0 +1,13 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,5 +1,4 @@
+ // index.d.ts
+ interface B {}
+ declare class A {}
+-export { A };
+-export { B };
+\ No newline at end of file
++export { A, B };
+\ No newline at end of file

@@ -1,0 +1,10 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,2 +1,2 @@
+ // index.d.ts
+-export * from 'rollup';
+\ No newline at end of file
++export * from 'rollup'
+\ No newline at end of file

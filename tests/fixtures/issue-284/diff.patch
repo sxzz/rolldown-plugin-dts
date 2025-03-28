@@ -1,0 +1,15 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,8 +1,8 @@
+ // index.d.ts
+ interface MyInterface {
+   a: string;
+ }
+-declare namespace MyInterface {
++namespace MyInterface {
+   export const b: string;
+ }
+ export { MyInterface };
+\ No newline at end of file

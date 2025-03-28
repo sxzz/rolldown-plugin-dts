@@ -15,9 +15,10 @@ npm i https://pkg.pr.new/sxzz/rolldown-plugin-dts@main
 
 ## Credits
 
-The project draws inspiration from [rollup-plugin-dts](https://github.com/Swatinem/rollup-plugin-dts)
-but is an independent implementation.
-Special thanks to the original creators for their valuable work.
+The project is inspired by [rollup-plugin-dts](https://github.com/Swatinem/rollup-plugin-dts)
+but has been independently implemented.
+We extend our gratitude to the original creators for their contributions.
+Furthermore, the test suite is authorized by them and distributed under the MIT license.
 
 ## Sponsors
 

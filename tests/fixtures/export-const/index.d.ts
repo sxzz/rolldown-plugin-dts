@@ -1,13 +1,10 @@
-export declare const strRuntime = 'hello'
-export declare const stringType: string
-export declare const strLiteralType: 'world'
-
-export declare const numberRuntime = 42
-export declare const numberLiteralType: 42
-export declare const numberType: number
-
-export declare const arrType: never[]
-export declare const arrType2: Array<string>
-
-export declare const tuple: [number, string]
-export declare const symbol: unique symbol
+export declare const sLit = "";
+export declare const nLit = 0;
+export declare const aLit: never[];
+export declare const sLitDef: "";
+export declare const nLitDef: 0;
+export declare const sDef: string;
+export declare const nDef: number;
+export declare const aDef: Array<number>;
+export declare const tuple: [number, string];
+export declare const unique: unique symbol;

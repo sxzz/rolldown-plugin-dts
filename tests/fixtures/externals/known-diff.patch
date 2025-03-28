@@ -1,0 +1,13 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,3 +1,4 @@
+ // index.d.ts
+-export { ReactFragment } from 'react';
+-export { DragContainerElement } from 'd3-drag';
+\ No newline at end of file
++import { ReactFragment } from 'react';
++import { DragContainerElement } from 'd3-drag';
++export { DragContainerElement, ReactFragment };
+\ No newline at end of file

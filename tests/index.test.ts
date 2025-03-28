@@ -13,7 +13,7 @@ const isUpdateEnabled =
   process.env.npm_lifecycle_script?.includes('--update')
 
 await testFixtures(
-  ['tests/fixtures/*/index.d.ts', 'tests/fixtures/local/*/index.d.ts'],
+  'tests/fixtures/*/index.d.ts',
   async (args, id) => {
     const dirname = path.dirname(id)
 

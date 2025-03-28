@@ -4,13 +4,13 @@ Index: diff.patch
 +++ diff.patch
 @@ -1,8 +1,6 @@
  // index.d.ts
--interface Foo$1 {}
--declare const Bar = 42
+-interface Bar {}
+-declare const Baz = 123;
  interface Foo {
--  bar: Foo$1
--  baz: typeof Bar
-+  bar: import('./mod').Foo
-+  baz: typeof import('./mod').Bar
+-  bar: Bar;
+-  baz: typeof Baz;
++  bar: import("./bar").Bar;
++  baz: typeof import("./bar").Baz;
  }
  export { Foo };
 \ No newline at end of file

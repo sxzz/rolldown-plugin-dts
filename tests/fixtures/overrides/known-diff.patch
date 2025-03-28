@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -10,5 +10,6 @@
+   constructor(b: B);
+   method(c: C): D;
+   method(e: E): F;
+ }
+-export { Foo as default };
+\ No newline at end of file
++type index_d_default = Foo
++export { index_d_default as default };
+\ No newline at end of file

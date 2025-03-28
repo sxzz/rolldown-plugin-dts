@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -3,6 +3,5 @@
+ interface MyComponentProps extends React.HtmlHTMLAttributes<HTMLDivElement> {
+   foo: string;
+ }
+ declare class MyComponent extends React.Component<MyComponentProps> {}
+-export { MyComponent };
+-export { MyComponentProps };
+\ No newline at end of file
++export { MyComponent, MyComponentProps };
+\ No newline at end of file

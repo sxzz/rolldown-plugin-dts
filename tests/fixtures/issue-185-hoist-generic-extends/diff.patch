@@ -1,0 +1,34 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,14 +1,19 @@
+ // index.d.ts
++type __defProp = Object.defineProperty
++type __export = (target, all) => {
++	for (var name in all) __defProp(target, name, {
++		get: all[name],
++		enumerable: true
++	});
++}
++type a_d_exports = {}
++__export(a_d_exports, {
++	Props: () => Props,
++	System: () => System
++});
+ declare type Props = Record<string, number>;
+ declare class System<T extends Props> {
+   _obj: T;
+   constructor(src: T);
+ }
+-type a_d_Props = Props;
+-type a_d_System<T extends Props> = System<T>;
+-declare const a_d_System: typeof System;
+-declare namespace a_d {
+-  export { a_d_System as System };
+-  export { a_d_Props as Props };
+-}
+-export { a_d as A };
+\ No newline at end of file
++export { a_d_exports as A };
+\ No newline at end of file

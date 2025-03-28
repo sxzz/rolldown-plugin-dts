@@ -1,0 +1,32 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,12 +1,18 @@
+ // index.d.ts
++type __defProp = Object.defineProperty
++type __export = (target, all) => {
++	for (var name in all) __defProp(target, name, {
++		get: all[name],
++		enumerable: true
++	});
++}
++type example_d_exports = {}
++__export(example_d_exports, {
++	Example: () => Example,
++	dog: () => dog
++});
+ interface Example<S extends string> {
+   example: S;
+ }
+ declare const dog: Example<"hi">;
+-type example_d_Example<S extends string> = Example<S>;
+-declare const example_d_dog: typeof dog;
+-declare namespace example_d {
+-  export { example_d_dog as dog };
+-  export { example_d_Example as Example };
+-}
+-export { example_d as types };
+\ No newline at end of file
++export { example_d_exports as types };
+\ No newline at end of file

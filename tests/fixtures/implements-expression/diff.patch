@@ -1,0 +1,22 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -6,11 +6,11 @@
+   class Component<P> {
+     props: P;
+   }
+ }
++type ns_d_default = ns
+ interface G {}
+-interface MyComponentProps extends ns.Props<G> {
++interface MyComponentProps extends ns_d_default.Props<G> {
+   bar: string;
+ }
+-declare class MyComponent extends ns.Component<MyComponentProps> {}
+-export { MyComponent };
+-export { MyComponentProps };
+\ No newline at end of file
++declare class MyComponent extends ns_d_default.Component<MyComponentProps> {}
++export { MyComponent, MyComponentProps };
+\ No newline at end of file

@@ -1,0 +1,15 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,9 +1,5 @@
+ // index.d.ts
+-declare enum Alphabet {
+-  a = "a",
+-  b = "b",
+-}
+ declare class Test {
+   readonly letter = Alphabet.a;
+ }
+ export { Test };
+\ No newline at end of file

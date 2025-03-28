@@ -1,0 +1,25 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,14 +1,13 @@
+ // index.d.ts
+ declare type In = { a: string };
+ declare type Out = { b: number };
+ declare const config: {
+-  normalize: (inVar: In) => Out;
++  normalize: (inVar: import("./settings").In) => import("./settings").Out;
+ };
+ declare const options: {
+-  normalize: (inVar: In) => Out;
++  normalize: (inVar: import("./settings").In) => import("./settings").Out;
+ };
+ declare const params: {
+-  normalize: (inVar: In) => Out;
++  normalize: (inVar: import("./settings").In) => import("./settings").Out;
+ };
+-export { config, options, params };
+-export { In, Out };
+\ No newline at end of file
++export { In, Out, config, options, params };
+\ No newline at end of file
