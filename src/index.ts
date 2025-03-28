@@ -37,15 +37,11 @@ export function dts(): Plugin {
     if ('typeAnnotation' in binding && binding.typeAnnotation) {
       bindingEnd = binding.typeAnnotation.start
     }
-    symbolMap.set(symbolId, [
-      raw,
-      [
-        [binding.start - parent.start, bindingEnd - parent.start],
-        ...deps.map(
-          (d): Range => [d.start - parent.start, d.end - parent.start],
-        ),
-      ],
-    ])
+    const ranges: Range[] = [
+      [binding.start - parent.start, bindingEnd - parent.start],
+      ...deps.map((d): Range => [d.start - parent.start, d.end - parent.start]),
+    ]
+    symbolMap.set(symbolId, [raw, ranges])
     return symbolId
   }
 
@@ -113,6 +109,7 @@ export function dts(): Plugin {
           if (!binding) continue
           const original = s.sliceNode(node)
           const deps = collectDependencies(node)
+          deps.sort((a, b) => a.start - b.start)
           const depsString = deps
             .map((node) => `() => ${s.sliceNode(node)}`)
             .join(', ')
