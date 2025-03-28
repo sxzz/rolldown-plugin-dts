@@ -1,4 +1,6 @@
+import * as mod from './mod.js'
 export declare const foo: number
+export declare const bar: typeof mod.a
 type SomeType<T> = T
 type FooType = string
 interface Interface {}

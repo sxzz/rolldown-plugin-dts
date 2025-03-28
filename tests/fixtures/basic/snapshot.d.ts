@@ -1,7 +1,12 @@
 // index.d.ts
 
+//#region tests/fixtures/basic/mod.d.ts
+declare const a: string
+
+//#endregion
 //#region tests/fixtures/basic/foo.d.ts
 declare const foo: number
+declare const bar: typeof a
 type SomeType<T> = T
 type FooType = string
 interface Interface {}
@@ -17,4 +22,4 @@ declare class Cls {
 }
 
 //#endregion
-export { Cls, fn, foo };
+export { Cls, bar, fn, foo };

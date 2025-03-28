@@ -1,3 +1,3 @@
-import type { type foo, type fn, type Cls } from './foo.js'
+import type { type foo, type fn, type Cls, bar } from './foo.js'
 
-export { foo, fn, Cls }
+export { foo, bar, fn, Cls }
