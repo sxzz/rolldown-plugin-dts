@@ -23,7 +23,7 @@ export function dts(): Plugin {
   let i = 0
   const symbolMap = new Map<
     number /* symbol id */,
-    [code: string, bindingRange: Range[], isType: boolean, hasDeclare: boolean]
+    [code: string, bindingRange: Range[], isType: boolean, needDeclare: boolean]
   >()
 
   function register(
@@ -32,7 +32,7 @@ export function dts(): Plugin {
     deps: (Node & Span)[],
     parent: Span,
     isType: boolean,
-    hasDeclare: boolean,
+    needDeclare: boolean,
   ) {
     const symbolId = i++
     let bindingEnd = binding.end
@@ -43,12 +43,12 @@ export function dts(): Plugin {
       [binding.start - parent.start, bindingEnd - parent.start],
       ...deps.map((d): Range => [d.start - parent.start, d.end - parent.start]),
     ]
-    symbolMap.set(symbolId, [raw, ranges, isType, hasDeclare])
+    symbolMap.set(symbolId, [raw, ranges, isType, needDeclare])
     return symbolId
   }
 
   function retrieve(s: MagicStringAST, id: number, bindings: Span[]) {
-    const [code, ranges, isType, hasDeclare] = symbolMap.get(id)!
+    const [code, ranges, isType, needDeclare] = symbolMap.get(id)!
     if (!ranges.length) return code
 
     let codeIndex = 0
@@ -59,7 +59,7 @@ export function dts(): Plugin {
       codeIndex = end
     }
     result += code.slice(codeIndex)
-    return [result, isType, hasDeclare]
+    return [result, isType, needDeclare]
   }
 
   return {
@@ -119,14 +119,21 @@ export function dts(): Plugin {
             .join(', ')
           const isType =
             node.type.startsWith('TS') && node.type !== 'TSDeclareFunction'
-          const hasDeclare = 'declare' in node && !!node.declare
+          const needDeclare =
+            (node.type === 'TSEnumDeclaration' ||
+              node.type === 'ClassDeclaration' ||
+              node.type === 'FunctionDeclaration' ||
+              node.type === 'TSDeclareFunction' ||
+              node.type === 'TSModuleDeclaration') &&
+            !node.declare
+
           const symbolId = register(
             original,
             binding,
             deps,
             node,
             isType,
-            hasDeclare,
+            needDeclare,
           )
 
           const runtime = `[${symbolId}, ${depsString}]`
@@ -177,7 +184,7 @@ export function dts(): Plugin {
         }
 
         const symbolId = symbolIdNode.value
-        const [type, isType, hasDeclare] = retrieve(s, symbolId, [
+        const [type, , needDeclare] = retrieve(s, symbolId, [
           decl.id,
           ...depsNodes.map((dep) => {
             if (dep.type !== 'ArrowFunctionExpression')
@@ -186,10 +193,7 @@ export function dts(): Plugin {
           }),
         ])
 
-        s.overwriteNode(
-          node,
-          `${!isType && !hasDeclare ? 'declare ' : ''}${type}`,
-        )
+        s.overwriteNode(node, `${needDeclare ? 'declare ' : ''}${type}`)
       }
 
       const str = s.toString()
@@ -216,7 +220,7 @@ export function dts(): Plugin {
     const depsString = deps
       .map((node) => `() => ${s.sliceNode(node)}`)
       .join(', ')
-    const symbolId = register(raw, decl.id, deps, node, false, node.declare)
+    const symbolId = register(raw, decl.id, deps, node, false, !node.declare)
     const runtime = `[${symbolId}, ${depsString}]`
     s.overwriteNode(node, `var ${s.sliceNode(decl.id)} = ${runtime}`)
   }

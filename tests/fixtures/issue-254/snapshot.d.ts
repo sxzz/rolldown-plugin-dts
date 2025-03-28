@@ -1,11 +1,11 @@
 // index.d.ts
 
 //#region tests/fixtures/issue-254/foo.d.ts
-enum E {}
+declare enum E {}
 interface Foo {
   e: E;
 }
-namespace Bar {
+declare namespace Bar {
   export enum F {}
 }
 

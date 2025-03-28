@@ -2,15 +2,9 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,10 +1,9 @@
- // index.d.ts
--declare enum E {}
-+enum E {}
- interface Foo {
-   e: E;
+@@ -5,6 +5,5 @@
  }
--declare namespace Bar {
-+namespace Bar {
+ declare namespace Bar {
    export enum F {}
  }
 -export { Bar };

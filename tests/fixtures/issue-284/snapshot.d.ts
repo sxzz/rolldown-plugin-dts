@@ -4,7 +4,7 @@
 interface MyInterface {
   a: string;
 }
-namespace MyInterface {
+declare namespace MyInterface {
   export const b: string;
 }
 
