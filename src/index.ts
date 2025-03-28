@@ -1,15 +1,13 @@
 import path from 'node:path'
 import { walk } from 'estree-walker'
-import { MagicStringAST } from 'magic-string-ast'
+import { MagicString, MagicStringAST } from 'magic-string-ast'
 import {
   parseAsync,
-  type BindingPattern,
   type Declaration,
   type Expression,
   type Function,
   type Node,
   type Span,
-  type TSModuleDeclarationName,
   type VariableDeclaration,
   type VariableDeclarator,
 } from 'oxc-parser'
@@ -19,47 +17,67 @@ const RE_TYPE = /\btype\b/
 
 type Range = [start: number, end: number]
 
+interface SymbolInfo {
+  code: string
+  idRange: Range
+  depsRanges: Range[]
+  isType: boolean
+  needDeclare: boolean
+}
+
 export function dts(): Plugin {
   let i = 0
-  const symbolMap = new Map<
-    number /* symbol id */,
-    [code: string, bindingRange: Range[], isType: boolean, needDeclare: boolean]
-  >()
+  const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
 
   function register(
-    raw: string,
-    binding: BindingPattern | TSModuleDeclarationName,
+    code: string,
+    binding: (Node & Span) | Range,
     deps: (Node & Span)[],
     parent: Span,
-    isType: boolean,
-    needDeclare: boolean,
+    options: Omit<SymbolInfo, 'code' | 'idRange' | 'depsRanges'>,
   ) {
     const symbolId = i++
-    let bindingEnd = binding.end
-    if ('typeAnnotation' in binding && binding.typeAnnotation) {
-      bindingEnd = binding.typeAnnotation.start
+
+    const depsRanges: Range[] = deps.map(
+      (d): Range => [d.start - parent.start, d.end - parent.start],
+    )
+
+    let idRange: Range | undefined
+    if (Array.isArray(binding)) {
+      idRange = binding
+    } else {
+      let bindingEnd = binding.end
+      if ('typeAnnotation' in binding && binding.typeAnnotation) {
+        bindingEnd = binding.typeAnnotation.start
+      }
+      idRange = [binding.start - parent.start, bindingEnd - parent.start]
     }
-    const ranges: Range[] = [
-      [binding.start - parent.start, bindingEnd - parent.start],
-      ...deps.map((d): Range => [d.start - parent.start, d.end - parent.start]),
-    ]
-    symbolMap.set(symbolId, [raw, ranges, isType, needDeclare])
+
+    symbolMap.set(symbolId, { code, idRange, depsRanges, ...options })
     return symbolId
   }
 
-  function retrieve(s: MagicStringAST, id: number, bindings: Span[]) {
-    const [code, ranges, isType, needDeclare] = symbolMap.get(id)!
-    if (!ranges.length) return code
+  function retrieve(
+    s: MagicStringAST,
+    symbolId: number,
+    id: Node,
+    deps: Span[],
+  ) {
+    const { code, idRange, depsRanges, isType, needDeclare } =
+      symbolMap.get(symbolId)!
+    const result = new MagicString(code)
 
-    let codeIndex = 0
-    let result = ''
-    for (const [start, end] of ranges) {
-      result += code.slice(codeIndex, start)
-      result += s.sliceNode(bindings.shift())
-      codeIndex = end
+    const idRaw = s.sliceNode(id)
+    if (idRange[0] === idRange[1]) {
+      result.prependLeft(idRange[0], ` ${idRaw}`)
+    } else {
+      result.overwrite(idRange[0], idRange[1], idRaw)
     }
-    result += code.slice(codeIndex)
-    return [result, isType, needDeclare]
+
+    for (const [i, range] of depsRanges.entries()) {
+      result.overwrite(range[0], range[1], s.sliceNode(deps[i]))
+    }
+    return [result.toString(), isType, needDeclare]
   }
 
   return {
@@ -110,10 +128,22 @@ export function dts(): Plugin {
           const binding = (
             node as Exclude<Declaration, VariableDeclaration> | Function
           ).id
-          if (!binding) continue
+
+          let bindingRange: Range | null = binding
+            ? [binding.start, binding.end]
+            : null
+
+          if (!binding) {
+            if (isDefaultExport) {
+              const idx = s.sliceNode(node).indexOf('function') + 8
+              bindingRange = [idx, idx]
+            } else {
+              continue
+            }
+          }
+
           const original = s.sliceNode(node)
           const deps = collectDependencies(node)
-          deps.sort((a, b) => a.start - b.start)
           const depsString = deps
             .map((node) => `() => ${s.sliceNode(node)}`)
             .join(', ')
@@ -129,15 +159,17 @@ export function dts(): Plugin {
 
           const symbolId = register(
             original,
-            binding,
+            binding || bindingRange!,
             deps,
             node,
-            isType,
-            needDeclare,
+            {
+              isType,
+              needDeclare,
+            },
           )
 
           const runtime = `[${symbolId}, ${depsString}]`
-          const bindingName = s.sliceNode(binding)
+          const bindingName = binding ? s.sliceNode(binding) : 'export_default'
           if (isDefaultExport) {
             s.overwriteNode(
               stmt,
@@ -184,14 +216,16 @@ export function dts(): Plugin {
         }
 
         const symbolId = symbolIdNode.value
-        const [type, , needDeclare] = retrieve(s, symbolId, [
+        const [type, , needDeclare] = retrieve(
+          s,
+          symbolId,
           decl.id,
-          ...depsNodes.map((dep) => {
+          depsNodes.map((dep) => {
             if (dep.type !== 'ArrowFunctionExpression')
               throw new Error('Expected ArrowFunctionExpression')
             return dep.body
           }),
-        ])
+        )
 
         s.overwriteNode(node, `${needDeclare ? 'declare ' : ''}${type}`)
       }
@@ -220,7 +254,10 @@ export function dts(): Plugin {
     const depsString = deps
       .map((node) => `() => ${s.sliceNode(node)}`)
       .join(', ')
-    const symbolId = register(raw, decl.id, deps, node, false, !node.declare)
+    const symbolId = register(raw, decl.id, deps, node, {
+      isType: false,
+      needDeclare: !node.declare,
+    })
     const runtime = `[${symbolId}, ${depsString}]`
     s.overwriteNode(node, `var ${s.sliceNode(decl.id)} = ${runtime}`)
   }
