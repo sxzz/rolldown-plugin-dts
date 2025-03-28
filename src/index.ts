@@ -185,7 +185,6 @@ export function dts(): Plugin {
             return dep.body
           }),
         ])
-        console.log(type, isType, hasDeclare)
 
         s.overwriteNode(
           node,
@@ -231,8 +230,13 @@ function collectDependencies(node: Node): (Node & Span)[] {
         for (const heritage of node.extends || []) {
           deps.add(heritage.expression)
         }
-      } else if (node.type === 'ClassDeclaration' && node.superClass) {
-        deps.add(node.superClass)
+      } else if (node.type === 'ClassDeclaration') {
+        if (node.superClass) deps.add(node.superClass)
+        if (node.implements) {
+          for (const implement of node.implements) {
+            deps.add(implement.expression)
+          }
+        }
       } else if (
         (node.type === 'MethodDefinition' ||
           node.type === 'PropertyDefinition' ||
