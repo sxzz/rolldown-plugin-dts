@@ -17,22 +17,20 @@ await testFixtures(
   async (args, id) => {
     const dirname = path.dirname(id)
 
-    const { output } = await build({
-      input: [id],
-      write: false,
-      plugins: [dts()],
-    })
-    const snapshot = outputToSnapshot(output)
+    let [snapshot, rollupSnapshot] = await Promise.all([
+      build({
+        input: [id],
+        write: false,
+        plugins: [dts()],
+      }).then(({ output }) => outputToSnapshot(output)),
+      rollupBuild(id, [rollupDts()], undefined, {
+        entryFileNames: '[name].ts',
+      }).then(({ snapshot }) => snapshot),
+    ])
     await expect(snapshot).toMatchFileSnapshot(
       path.resolve(dirname, 'snapshot.d.ts'),
     )
 
-    let { snapshot: rollupSnapshot } = await rollupBuild(
-      id,
-      [rollupDts()],
-      undefined,
-      { entryFileNames: '[name].ts' },
-    )
     rollupSnapshot = cleanupCode(rollupSnapshot)
     const rolldownSnapshot = cleanupCode(snapshot)
     const diffPath = path.resolve(dirname, 'diff.patch')
