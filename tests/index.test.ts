@@ -1,11 +1,16 @@
-import { access } from 'node:fs/promises'
+import { access, readFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
+import process from 'node:process'
 import { outputToSnapshot, rollupBuild, testFixtures } from '@sxzz/test-utils'
 import { createPatch } from 'diff'
 import { build } from 'rolldown'
 import { dts as rollupDts } from 'rollup-plugin-dts'
 import { expect } from 'vitest'
 import { dts } from '../src'
+
+const isUpdateEnabled =
+  process.env.npm_lifecycle_script?.includes('-u') ||
+  process.env.npm_lifecycle_script?.includes('--update')
 
 await testFixtures(
   ['tests/fixtures/*/index.d.ts', 'tests/fixtures/local/*/index.d.ts'],
@@ -31,6 +36,8 @@ await testFixtures(
     rollupSnapshot = cleanupCode(rollupSnapshot)
     const rolldownSnapshot = cleanupCode(snapshot)
     const diffPath = path.resolve(dirname, 'diff.patch')
+    const knownDiffPath = path.resolve(dirname, 'known-diff.patch')
+
     if (rollupSnapshot !== rolldownSnapshot) {
       const diff = createPatch(
         'diff.patch',
@@ -44,9 +51,19 @@ await testFixtures(
           stripTrailingCr: true,
         },
       )
-      await expect(diff).toMatchFileSnapshot(diffPath)
+      const knownDiff = await readFile(knownDiffPath, 'utf8').catch(() => null)
+      if (knownDiff !== diff) {
+        await expect(diff).toMatchFileSnapshot(diffPath)
+        await unlink(knownDiffPath).catch(() => {})
+      }
+    } else if (isUpdateEnabled) {
+      await Promise.all([
+        unlink(diffPath).catch(() => {}),
+        unlink(knownDiffPath).catch(() => {}),
+      ])
     } else {
       await expect(access(diffPath)).rejects.toThrow()
+      await expect(access(knownDiffPath)).rejects.toThrow()
     }
   },
   { snapshot: false },

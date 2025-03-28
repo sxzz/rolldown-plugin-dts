@@ -10,9 +10,6 @@ import {
   type Node,
   type Span,
   type TSModuleDeclarationName,
-  type TSTypeName,
-  type TSTypeQuery,
-  type TSTypeReference,
   type VariableDeclaration,
   type VariableDeclarator,
 } from 'oxc-parser'
@@ -115,7 +112,7 @@ export function dts(): Plugin {
           ).id
           if (!binding) continue
           const original = s.sliceNode(node)
-          const deps = [...collectDependencies(node), ...collectTypeDeps(node)]
+          const deps = collectDependencies(node)
           const depsString = deps
             .map((node) => `() => ${s.sliceNode(node)}`)
             .join(', ')
@@ -196,11 +193,11 @@ export function dts(): Plugin {
     const [decl] = node.declarations
 
     const raw = s.sliceNode(node)
-    const deps = collectTypeDeps(node)
-    const symbolId = register(raw, decl.id, deps, node)
-    const depsString = collectTypeDeps(node)
+    const deps = collectDependencies(node)
+    const depsString = deps
       .map((node) => `() => ${s.sliceNode(node)}`)
       .join(', ')
+    const symbolId = register(raw, decl.id, deps, node)
     const runtime = `[${symbolId}, ${depsString}]`
     s.overwriteNode(node, `var ${s.sliceNode(decl.id)} = ${runtime}`)
   }
@@ -214,39 +211,24 @@ function collectDependencies(node: Node): (Node & Span)[] {
         deps.add(node.superClass)
       } else if (
         (node.type === 'MethodDefinition' ||
-          node.type === 'PropertyDefinition') &&
+          node.type === 'PropertyDefinition' ||
+          node.type === 'TSPropertySignature') &&
         (node.key.type === 'Identifier' ||
           node.key.type === 'MemberExpression') &&
         node.computed
       ) {
         deps.add(node.key)
+      } else if (node.type === 'TSTypeReference') {
+        deps.add(node.typeName)
+      } else if (node.type === 'TSTypeQuery') {
+        deps.add(node.exprName)
       }
     },
   })
   return Array.from(deps)
 }
 
-function collectTypeDeps(node: Node): TSTypeName[] {
-  if (!node) return []
-  const result: any[] = []
-
-  for (const value of Object.values(node)) {
-    if (value?.type === 'TSTypeReference') {
-      result.push((value as TSTypeReference).typeName)
-    }
-    if (value?.type === 'TSTypeQuery') {
-      result.push((value as TSTypeQuery).exprName)
-    }
-
-    if (typeof value === 'object') {
-      result.push(...collectTypeDeps(value))
-    }
-  }
-
-  return result
-}
-
-// patch `let x = 1;` to `declare let x: typeof 1;`
+// patch `let x = 1;` to `type x: 1;`
 function patchVariableDeclarator(
   s: MagicStringAST,
   node: VariableDeclaration,
@@ -255,7 +237,7 @@ function patchVariableDeclarator(
   if (decl.init && !decl.id.typeAnnotation) {
     s.overwriteNode(
       node,
-      `declare ${node.kind} ${s.sliceNode(decl.id)}: typeof ${s.sliceNode(decl.init)}`,
+      `type ${s.sliceNode(decl.id)} = ${s.sliceNode(decl.init)}`,
     )
   } else if (!node.declare) {
     s.prependLeft(node.start, 'declare ')
