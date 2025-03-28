@@ -13,4 +13,3 @@ Index: diff.patch
 +  emitter: import("./options").ObjectWithParam<import("./options").SimpleInterface>;
  }
  export { CalendarDataManager };
-\ No newline at end of file

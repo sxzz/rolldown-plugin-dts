@@ -5,6 +5,4 @@ Index: diff.patch
 @@ -1,2 +1,2 @@
  // index.d.ts
 -export * from 'package-a/file.js';
-\ No newline at end of file
 +export * from 'package-a/file.js'
-\ No newline at end of file

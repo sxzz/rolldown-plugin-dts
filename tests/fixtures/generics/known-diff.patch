@@ -9,6 +9,4 @@ Index: diff.patch
  interface I2 extends Gen<P> {}
 -export { Cl, fn };
 -export { I1, I2, Ty, TyCtor, TyFn };
-\ No newline at end of file
 +export { Cl, I1, I2, Ty, TyCtor, TyFn, fn };
-\ No newline at end of file

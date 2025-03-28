@@ -8,7 +8,5 @@ Index: diff.patch
    },
  ): Promise<void>;
 -export { export_default as default };
-\ No newline at end of file
 +type index_d_default = export_default
 +export { index_d_default as default };
-\ No newline at end of file

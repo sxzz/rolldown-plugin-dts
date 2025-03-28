@@ -27,6 +27,4 @@ Index: diff.patch
 -  export { example_d_Example as Example };
 -}
 -export { example_d as types };
-\ No newline at end of file
 +export { example_d_exports as types };
-\ No newline at end of file

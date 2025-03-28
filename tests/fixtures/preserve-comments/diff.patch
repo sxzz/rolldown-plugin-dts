@@ -17,4 +17,3 @@ Index: diff.patch
 - */
  declare function main(): void;
  export { first, main, second };
-\ No newline at end of file

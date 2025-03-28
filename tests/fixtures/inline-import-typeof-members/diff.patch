@@ -13,4 +13,3 @@ Index: diff.patch
 +  rollup: import("rollup").RollupOptions;
  }
  export { Test, TypeScript };
-\ No newline at end of file

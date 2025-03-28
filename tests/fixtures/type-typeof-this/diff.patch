@@ -9,4 +9,3 @@ Index: diff.patch
 +  min: () => typeof void 0;
  }
  export { NumberSchema };
-\ No newline at end of file

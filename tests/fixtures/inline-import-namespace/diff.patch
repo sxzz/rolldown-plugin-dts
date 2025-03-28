@@ -18,4 +18,3 @@ Index: diff.patch
 +  ns: typeof import("./bar");
  }
  export { Foo };
-\ No newline at end of file

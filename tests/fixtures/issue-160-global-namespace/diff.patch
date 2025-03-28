@@ -15,4 +15,3 @@ Index: diff.patch
 -  }
 -}
  export { A };
-\ No newline at end of file

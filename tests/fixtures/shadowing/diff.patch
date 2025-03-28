@@ -29,6 +29,4 @@ Index: diff.patch
  interface GenericExtends<M = any, N = M> extends GenericInterface<M, N> {}
 -export { GenericKlass, genericFunction };
 -export { ConditionalInfer, GenericExtends, GenericInterface, GenericType, Mapped };
-\ No newline at end of file
 +export { ConditionalInfer, GenericExtends, GenericInterface, GenericKlass, GenericType, Mapped, genericFunction };
-\ No newline at end of file

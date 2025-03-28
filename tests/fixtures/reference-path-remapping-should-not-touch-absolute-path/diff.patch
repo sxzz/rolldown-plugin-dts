@@ -7,4 +7,3 @@ Index: diff.patch
 -/// <reference path="/some/absolute/path" />
  interface Hello {}
  export { Hello };
-\ No newline at end of file

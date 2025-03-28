@@ -7,4 +7,3 @@ Index: diff.patch
 -interface Foo {}
 +import Foo = require("./bar");
  export { Foo };
-\ No newline at end of file

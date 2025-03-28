@@ -9,4 +9,3 @@ Index: diff.patch
 +type bar_d_default = Bar
 +interface Foo extends bar_d_default {}
  export { Foo };
-\ No newline at end of file

@@ -20,6 +20,4 @@ Index: diff.patch
  };
 -export { config, options, params };
 -export { In, Out };
-\ No newline at end of file
 +export { In, Out, config, options, params };
-\ No newline at end of file

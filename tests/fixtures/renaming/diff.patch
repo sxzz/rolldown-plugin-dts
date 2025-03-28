@@ -44,6 +44,4 @@ Index: diff.patch
  };
 -export { Func$1 as AFunc, Klass$1 as AKlass, Func as BFunc, Klass as BKlass };
 -export { Interface$1 as AInterface, Type$1 as AType, Interface as BInterface, Type as BType };
-\ No newline at end of file
 +export { Func as AFunc, Interface as AInterface, Klass as AKlass, Type as AType, Func$1 as BFunc, Interface$1 as BInterface, Klass$1 as BKlass, Type$1 as BType };
-\ No newline at end of file

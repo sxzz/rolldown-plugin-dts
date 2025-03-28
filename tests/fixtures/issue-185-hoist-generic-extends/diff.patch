@@ -29,6 +29,4 @@ Index: diff.patch
 -  export { a_d_Props as Props };
 -}
 -export { a_d as A };
-\ No newline at end of file
 +export { a_d_exports as A };
-\ No newline at end of file

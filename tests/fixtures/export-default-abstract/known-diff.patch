@@ -16,7 +16,5 @@ Index: diff.patch
 +  abstract readonly memberType: memberTypes_d_default;
  }
 -export { MemberInfo as default };
-\ No newline at end of file
 +type index_d_default = MemberInfo
 +export { index_d_default as default };
-\ No newline at end of file

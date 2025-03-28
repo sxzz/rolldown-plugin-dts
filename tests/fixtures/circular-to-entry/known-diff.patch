@@ -17,7 +17,5 @@ Index: diff.patch
    constructor();
  }
 -export { FooManager as default };
-\ No newline at end of file
 +type index_d_default = FooManager
 +export { index_d_default as default };
-\ No newline at end of file

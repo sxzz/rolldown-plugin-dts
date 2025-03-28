@@ -50,6 +50,4 @@ Index: diff.patch
 -}
 -export { BarType, BarValue, X };
 -export { Foo$1 as Foo, Foo as FooInlne, O as O1 };
-\ No newline at end of file
 +export { A, BarType, BarValue, C, C as C1, E3, E4, F, G, G1, H1, I, O as O1, index_d_default as default };
-\ No newline at end of file

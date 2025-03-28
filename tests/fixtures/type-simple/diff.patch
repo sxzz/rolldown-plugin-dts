@@ -9,6 +9,4 @@ Index: diff.patch
  declare const O: bigint;
 -export { A, B, C, D, E, F, G, H, I, J, K, L, M, O };
 -export { N };
-\ No newline at end of file
 +export { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O };
-\ No newline at end of file

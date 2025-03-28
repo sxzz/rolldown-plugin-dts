@@ -5,7 +5,5 @@ Index: diff.patch
 @@ -1,2 +1,3 @@
  // index.d.ts
 -export { DragContainerElement } from 'd3-drag-local';
-\ No newline at end of file
 +import { DragContainerElement } from 'd3-drag-local';
 +export { DragContainerElement };
-\ No newline at end of file

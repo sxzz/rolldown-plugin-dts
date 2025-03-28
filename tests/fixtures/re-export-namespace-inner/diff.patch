@@ -24,6 +24,4 @@ Index: diff.patch
 -  };
 -}
 -export { mod_d as outer };
-\ No newline at end of file
 +export { mod_d_exports as outer };
-\ No newline at end of file

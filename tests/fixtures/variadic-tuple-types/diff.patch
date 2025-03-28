@@ -9,6 +9,4 @@ Index: diff.patch
  declare function concat<T extends Arr, U extends Arr>(arr1: T, arr2: U): [...T, ...U];
 -export { concat };
 -export { StrStrNumNumBool };
-\ No newline at end of file
 +export { StrStrNumNumBool, concat };
-\ No newline at end of file

@@ -8,6 +8,4 @@ Index: diff.patch
  declare class A {}
 -export { A };
 -export { B };
-\ No newline at end of file
 +export { A, B };
-\ No newline at end of file

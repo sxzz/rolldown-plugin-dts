@@ -16,9 +16,7 @@ Index: diff.patch
 +	});
  }
 -export { foo_d as foo };
-\ No newline at end of file
 +type foo_d_exports = {}
 +__export(foo_d_exports, { A: () => A });
 +interface A {}
 +export { foo_d_exports as foo };
-\ No newline at end of file

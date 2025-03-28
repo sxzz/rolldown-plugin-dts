@@ -9,6 +9,4 @@ Index: diff.patch
  declare function setAlignment(value: `${VerticalAlignment}-${HorizontalAlignment}`): void;
 -export { setAlignment };
 -export { SeussFish };
-\ No newline at end of file
 +export { SeussFish, setAlignment };
-\ No newline at end of file

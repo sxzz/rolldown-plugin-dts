@@ -59,6 +59,4 @@ Index: diff.patch
  }
 -export { deep_d as deep, defs_d as ns, onlyOne_d as onlyOne };
 -export { WithA };
-\ No newline at end of file
 +export { WithA, deep_d_exports as deep, defs_d_exports as ns, only_one_d_exports as onlyOne };
-\ No newline at end of file

@@ -17,9 +17,7 @@ Index: diff.patch
 +	});
  }
 -export { foo_d as foo };
-\ No newline at end of file
 +type foo_d_exports = {}
 +__export(foo_d_exports, { in: () => _in });
 +declare const _in = "foo";
 +export { foo_d_exports as foo };
-\ No newline at end of file

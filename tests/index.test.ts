@@ -45,7 +45,6 @@ await testFixtures(
         undefined,
         {
           ignoreWhitespace: true,
-          ignoreNewlineAtEof: true,
           stripTrailingCr: true,
         },
       )
@@ -70,7 +69,7 @@ await testFixtures(
 )
 
 function cleanupCode(text: string) {
-  return text
+  return `${text
     .replaceAll(/\/\/#region .*\n/g, '')
     .replaceAll('//#endregion\n', '')
     .replaceAll(/from "(.*)"/g, "from '$1'")
@@ -78,4 +77,5 @@ function cleanupCode(text: string) {
     .split('\n')
     .filter((line) => line.trim() !== '')
     .join('\n')
+    .trim()}\n`
 }

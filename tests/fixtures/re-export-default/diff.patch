@@ -8,7 +8,5 @@ Index: diff.patch
 +type default1_d_default = Foo$1
  declare class Foo {}
 -export { Foo$1 as default, Foo as default2 };
-\ No newline at end of file
 +type default2_d_default = Foo
 +export { default1_d_default as default, default2_d_default as default2 };
-\ No newline at end of file
