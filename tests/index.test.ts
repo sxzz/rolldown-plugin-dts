@@ -55,6 +55,8 @@ await testFixtures(
       if (knownDiff !== diff) {
         await expect(diff).toMatchFileSnapshot(diffPath)
         await unlink(knownDiffPath).catch(() => {})
+      } else {
+        await unlink(diffPath).catch(() => {})
       }
     } else if (isUpdateEnabled) {
       await Promise.all([
