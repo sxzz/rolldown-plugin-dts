@@ -103,7 +103,7 @@ export function dts(): Plugin {
       for (let node of program.body as (Node & Span)[]) {
         const stmt = node
 
-        if (rewriteImportType(s, node)) continue
+        if (rewriteImport(s, node)) continue
 
         // remove `export` modifier
         const isDefaultExport = node.type === 'ExportDefaultDeclaration'
@@ -341,7 +341,9 @@ function patchImportSource(s: MagicStringAST, node: Node) {
 // fix:
 // - import type { ... } from '...'
 // - import { type ... } from '...'
-function rewriteImportType(s: MagicStringAST, node: Node) {
+// - import Foo = require("./bar")
+// - export = Foo
+function rewriteImport(s: MagicStringAST, node: Node) {
   if (node.type === 'ImportDeclaration') {
     for (const specifier of node.specifiers) {
       if (
@@ -360,6 +362,19 @@ function rewriteImportType(s: MagicStringAST, node: Node) {
         s.slice(node.start, firstSpecifier.start).replace(RE_TYPE, ''),
       )
     }
+    return true
+  } else if (node.type === 'TSImportEqualsDeclaration') {
+    if (node.moduleReference.type === 'TSExternalModuleReference') {
+      s.overwriteNode(
+        node,
+        `import ${s.sliceNode(node.id)} from ${s.sliceNode(
+          node.moduleReference.expression,
+        )}`,
+      )
+    }
+    return true
+  } else if (node.type === 'TSExportAssignment') {
+    s.overwriteNode(node, `export default ${s.sliceNode(node.expression)}`)
     return true
   }
 }

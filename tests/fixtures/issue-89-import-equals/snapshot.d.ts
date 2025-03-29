@@ -1,7 +1,8 @@
 // index.d.ts
 
-//#region tests/fixtures/issue-89-import-equals/index.d.ts
-import Foo = require("./bar");
+//#region tests/fixtures/issue-89-import-equals/bar.d.ts
+interface Foo {}
+type bar_d_default = Foo
 
 //#endregion
-export { Foo };
+export { bar_d_default as Foo };
