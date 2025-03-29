@@ -90,18 +90,21 @@ export function dts(): Plugin {
           node = node.declaration
         }
 
-        if (node.type === 'VariableDeclaration') {
-          handleVariableDeclaration(s, node)
-          continue
-        }
+        if (
+          node.type === 'VariableDeclaration' &&
+          node.declarations.length !== 1
+        )
+          throw new Error('Only one declaration is supported')
 
         if (
           node.type === 'TSDeclareFunction' ||
           node.type.endsWith('Declaration')
         ) {
-          const binding = (
-            node as Exclude<Declaration, VariableDeclaration> | Function
-          ).id
+          const binding =
+            node.type === 'VariableDeclaration'
+              ? node.declarations[0].id
+              : (node as Exclude<Declaration | Function, VariableDeclaration>)
+                  .id
 
           const code = s.sliceNode(node)
           const offset = node.start
@@ -129,7 +132,8 @@ export function dts(): Plugin {
               node.type === 'ClassDeclaration' ||
               node.type === 'FunctionDeclaration' ||
               node.type === 'TSDeclareFunction' ||
-              node.type === 'TSModuleDeclaration') &&
+              node.type === 'TSModuleDeclaration' ||
+              node.type === 'VariableDeclaration') &&
             !node.declare
 
           const symbolId = register({
@@ -157,7 +161,7 @@ export function dts(): Plugin {
       }
 
       const str = s.toString()
-      console.log(str)
+      // console.log(str)
       return str
     },
 
@@ -216,36 +220,6 @@ export function dts(): Plugin {
 
       return str
     },
-  }
-
-  function handleVariableDeclaration(
-    s: MagicStringAST,
-    node: VariableDeclaration,
-  ) {
-    if (!node.declare) return
-    if (node.declarations.length !== 1)
-      throw new Error('Only one declaration is supported')
-
-    const [decl] = node.declarations
-
-    const offset = node.start
-    const code = s.sliceNode(node)
-    const deps = collectDependencies(s, node)
-    const depsString = stringifyDependencies(s, deps)
-    const depsRanges: Range[] = deps.map((dep) => [
-      dep.start - offset,
-      dep.end - offset,
-    ])
-
-    const symbolId = register({
-      code,
-      binding: getIdentifierRange(decl.id, -offset),
-      deps: depsRanges,
-      isType: false,
-      needDeclare: !node.declare,
-    })
-    const runtime = `[${symbolId}, ${depsString}]`
-    s.overwriteNode(node, `var ${s.sliceNode(decl.id)} = ${runtime}`)
   }
 }
 
