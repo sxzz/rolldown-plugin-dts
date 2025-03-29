@@ -105,7 +105,7 @@ export function dts(): Plugin {
       for (let node of program.body as (Node & Span)[]) {
         const stmt = node
 
-        if (rewriteImport(s, node)) continue
+        if (rewriteImportExport(s, node)) continue
 
         // remove `export` modifier
         const isDefaultExport = node.type === 'ExportDefaultDeclaration'
@@ -185,7 +185,7 @@ export function dts(): Plugin {
       }
 
       const str = s.toString()
-      console.log(str)
+      // console.log(str)
       return str
     },
 
@@ -354,21 +354,30 @@ function patchImportSource(s: MagicStringAST, node: Node) {
 // fix:
 // - import type { ... } from '...'
 // - import { type ... } from '...'
+// - export type { ... }
+// - export { type ... }
 // - import Foo = require("./bar")
 // - export = Foo
-function rewriteImport(s: MagicStringAST, node: Node) {
-  if (node.type === 'ImportDeclaration') {
+function rewriteImportExport(s: MagicStringAST, node: Node) {
+  if (
+    node.type === 'ImportDeclaration' ||
+    (node.type === 'ExportNamedDeclaration' && !node.declaration)
+  ) {
     for (const specifier of node.specifiers) {
       if (
-        specifier.type === 'ImportSpecifier' &&
-        specifier.importKind === 'type'
+        (specifier.type === 'ImportSpecifier' &&
+          specifier.importKind === 'type') ||
+        (specifier.type === 'ExportSpecifier' &&
+          specifier.exportKind === 'type')
       ) {
         s.overwriteNode(specifier, s.sliceNode(specifier).replace(RE_TYPE, ''))
       }
     }
 
     const firstSpecifier = node.specifiers[0]
-    if (node.importKind === 'type' && firstSpecifier) {
+    const kind =
+      node.type === 'ImportDeclaration' ? node.importKind : node.exportKind
+    if (kind === 'type' && firstSpecifier) {
       s.overwrite(
         node.start,
         firstSpecifier.start,

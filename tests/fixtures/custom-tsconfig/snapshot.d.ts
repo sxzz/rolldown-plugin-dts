@@ -1,2 +1,4 @@
 // index.d.ts
-export {}
+import { Foo } from "@/foo";
+
+export { Foo };
