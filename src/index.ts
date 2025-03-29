@@ -6,6 +6,8 @@ import {
   type Declaration,
   type Expression,
   type Function,
+  type IdentifierName,
+  type MemberExpression,
   type Node,
   type Span,
   type VariableDeclaration,
@@ -183,6 +185,7 @@ export function dts(): Plugin {
       }
 
       const str = s.toString()
+      console.log(str)
       return str
     },
 
@@ -277,14 +280,16 @@ function collectDependencies(node: Node): (Node & Span)[] {
           }
         }
       } else if (
-        (node.type === 'MethodDefinition' ||
-          node.type === 'PropertyDefinition' ||
-          node.type === 'TSPropertySignature') &&
-        (node.key.type === 'Identifier' ||
-          node.key.type === 'MemberExpression') &&
-        node.computed
+        node.type === 'MethodDefinition' ||
+        node.type === 'PropertyDefinition' ||
+        node.type === 'TSPropertySignature'
       ) {
-        addDependency(node.key)
+        if (node.computed && isReferenceId(node.key)) {
+          addDependency(node.key)
+        }
+        if ('value' in node && isReferenceId(node.value)) {
+          addDependency(node.value)
+        }
       } else if (node.type === 'TSTypeReference') {
         addDependency(node.typeName)
       } else if (node.type === 'TSTypeQuery') {
@@ -300,6 +305,14 @@ function collectDependencies(node: Node): (Node & Span)[] {
     }
     deps.add(node)
   }
+}
+
+function isReferenceId(
+  node?: Node | null,
+): node is (IdentifierName | MemberExpression) & Span {
+  return (
+    !!node && (node.type === 'Identifier' || node.type === 'MemberExpression')
+  )
 }
 
 function stringifyDependencies(s: MagicStringAST, deps: Node[]) {
