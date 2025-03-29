@@ -175,15 +175,17 @@ export function dts(): Plugin {
               stmt,
               `var ${bindingName} = ${runtime};export default ${bindingName}`,
             )
-          } else
+          } else {
             s.overwriteNode(
               node,
               `var ${bindingName} = [${symbolId}, ${depsString}]`,
             )
+          }
         }
       }
 
-      return s.toString()
+      const str = s.toString()
+      return str
     },
 
     async renderChunk(code, chunk) {

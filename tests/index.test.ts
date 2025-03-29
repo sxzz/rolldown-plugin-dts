@@ -1,9 +1,8 @@
 import { access, readFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import { outputToSnapshot, rollupBuild, testFixtures } from '@sxzz/test-utils'
+import { rolldownBuild, rollupBuild, testFixtures } from '@sxzz/test-utils'
 import { createPatch } from 'diff'
-import { build } from 'rolldown'
 import { dts as rollupDts } from 'rollup-plugin-dts'
 import { expect } from 'vitest'
 import { dts } from '../src'
@@ -17,22 +16,20 @@ await testFixtures(
   async (args, id) => {
     const dirname = path.dirname(id)
 
-    let [snapshot, rollupSnapshot] = await Promise.all([
-      build({
-        input: [id],
-        write: false,
-        plugins: [dts()],
-      }).then(({ output }) => outputToSnapshot(output)),
+    let [rolldownSnapshot, rollupSnapshot] = await Promise.all([
+      rolldownBuild(id, [dts()], { treeshake: true }).then(
+        ({ snapshot }) => snapshot,
+      ),
       rollupBuild(id, [rollupDts()], undefined, {
         entryFileNames: '[name].ts',
       }).then(({ snapshot }) => snapshot),
     ])
-    await expect(snapshot).toMatchFileSnapshot(
+    await expect(rolldownSnapshot).toMatchFileSnapshot(
       path.resolve(dirname, 'snapshot.d.ts'),
     )
 
     rollupSnapshot = cleanupCode(rollupSnapshot)
-    const rolldownSnapshot = cleanupCode(snapshot)
+    rolldownSnapshot = cleanupCode(rolldownSnapshot)
     const diffPath = path.resolve(dirname, 'diff.patch')
     const knownDiffPath = path.resolve(dirname, 'known-diff.patch')
 
