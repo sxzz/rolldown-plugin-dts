@@ -144,9 +144,7 @@ export function dts(): Plugin {
 
           const original = s.sliceNode(node)
           const deps = collectDependencies(node)
-          const depsString = deps
-            .map((node) => `() => ${s.sliceNode(node)}`)
-            .join(', ')
+          const depsString = stringifyDependencies(s, deps)
           const isType =
             node.type.startsWith('TS') && node.type !== 'TSDeclareFunction'
           const needDeclare =
@@ -253,9 +251,7 @@ export function dts(): Plugin {
 
     const raw = s.sliceNode(node)
     const deps = collectDependencies(node)
-    const depsString = deps
-      .map((node) => `() => ${s.sliceNode(node)}`)
-      .join(', ')
+    const depsString = stringifyDependencies(s, deps)
     const symbolId = register(raw, decl.id, deps, node, {
       isType: false,
       needDeclare: !node.declare,
@@ -271,13 +267,13 @@ function collectDependencies(node: Node): (Node & Span)[] {
     enter(node: Node) {
       if (node.type === 'TSInterfaceDeclaration' && node.extends) {
         for (const heritage of node.extends || []) {
-          deps.add(heritage.expression)
+          addDependency(heritage.expression)
         }
       } else if (node.type === 'ClassDeclaration') {
-        if (node.superClass) deps.add(node.superClass)
+        if (node.superClass) addDependency(node.superClass)
         if (node.implements) {
           for (const implement of node.implements) {
-            deps.add(implement.expression)
+            addDependency(implement.expression)
           }
         }
       } else if (
@@ -288,15 +284,26 @@ function collectDependencies(node: Node): (Node & Span)[] {
           node.key.type === 'MemberExpression') &&
         node.computed
       ) {
-        deps.add(node.key)
+        addDependency(node.key)
       } else if (node.type === 'TSTypeReference') {
-        deps.add(node.typeName)
+        addDependency(node.typeName)
       } else if (node.type === 'TSTypeQuery') {
-        deps.add(node.exprName)
+        addDependency(node.exprName)
       }
     },
   })
   return Array.from(deps)
+
+  function addDependency(node: Node & Span) {
+    if (node.type === 'Identifier' && node.name === 'this') {
+      return
+    }
+    deps.add(node)
+  }
+}
+
+function stringifyDependencies(s: MagicStringAST, deps: Node[]) {
+  return deps.map((node) => `() => ${s.sliceNode(node)}`).join(', ')
 }
 
 // patch `let x = 1;` to `type x: 1;`
