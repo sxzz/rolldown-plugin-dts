@@ -7,13 +7,13 @@ declare type Out = { b: number };
 //#endregion
 //#region tests/fixtures/export-multiple-vars/util.d.ts
 declare const config: {
-  normalize: (inVar: import("./settings").In) => import("./settings").Out;
+  normalize: (inVar: In) => Out;
 };
 declare const options: {
-  normalize: (inVar: import("./settings").In) => import("./settings").Out;
+  normalize: (inVar: In) => Out;
 };
 declare const params: {
-  normalize: (inVar: import("./settings").In) => import("./settings").Out;
+  normalize: (inVar: In) => Out;
 };
 
 //#endregion

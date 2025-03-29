@@ -7,8 +7,8 @@ declare const Baz = 123;
 //#endregion
 //#region tests/fixtures/inline-import/index.d.ts
 interface Foo {
-  bar: import("./bar").Bar;
-  baz: typeof import("./bar").Baz;
+  bar: Bar;
+  baz: typeof Baz;
 }
 
 //#endregion

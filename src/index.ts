@@ -232,7 +232,7 @@ function collectDependencies(
   const deps: Set<Partial<Node> & Span> = new Set()
 
   ;(walk as any)(node, {
-    enter(node: Node) {
+    leave(node: Node) {
       if (node.type === 'TSInterfaceDeclaration' && node.extends) {
         for (const heritage of node.extends || []) {
           addDependency(heritage.expression)
@@ -267,14 +267,14 @@ function collectDependencies(
           ? `{ ${s.sliceNode(node.qualifier)} as ${local} }`
           : `* as ${local}`
         s.prepend(`import ${specifiers} from ${source};\n`)
-        if (node.qualifier)
+        if (node.qualifier) {
           addDependency({
             type: 'Identifier',
             name: local,
-            start: node.qualifier.start,
-            end: node.qualifier.end,
+            start: node.start + (node.isTypeOf ? 7 : 0),
+            end: node.typeArguments ? node.typeArguments.start : node.end,
           })
-        // s.overwriteNode(node, local)
+        }
       }
     },
   })
