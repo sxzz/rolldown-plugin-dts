@@ -40,7 +40,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "magic-string-ast": "^0.8.0",
+    "magic-string-ast": "^0.9.0",
     "oxc-parser": "^0.61.2"
   },
   "devDependencies": {

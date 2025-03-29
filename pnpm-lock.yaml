@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       magic-string-ast:
-        specifier: ^0.8.0
-        version: 0.8.0
+        specifier: ^0.9.0
+        version: 0.9.0
       oxc-parser:
         specifier: ^0.61.2
         version: 0.61.2
@@ -1572,8 +1572,8 @@ packages:
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
-  magic-string-ast@0.8.0:
-    resolution: {integrity: sha512-e9eH6YOYl2OuDd3fNt2ciFhj/l2vxJmGeWLLcY+0NcW6k0Xitq7XIxN2++QVVhswXeJLy95SjF8oVKRyJC95GQ==}
+  magic-string-ast@0.9.0:
+    resolution: {integrity: sha512-kHVEB7DfucGmRRTW4EFdIQMrfpRqhaUhm+osaAqt22CuHEMVAfxA8Eroj8yWvTiHGcntRgWQR1yRe/BKK54+/A==}
     engines: {node: '>=20.18.0'}
 
   magic-string@0.30.17:
@@ -3673,7 +3673,7 @@ snapshots:
 
   lru-cache@10.4.3: {}
 
-  magic-string-ast@0.8.0:
+  magic-string-ast@0.9.0:
     dependencies:
       magic-string: 0.30.17
 

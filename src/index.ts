@@ -1,8 +1,9 @@
 import path from 'node:path'
 import { walk } from 'estree-walker'
-import { MagicString, MagicStringAST } from 'magic-string-ast'
+import { MagicStringAST } from 'magic-string-ast'
 import {
   parseAsync,
+  type BindingPattern,
   type Declaration,
   type Expression,
   type Function,
@@ -10,19 +11,31 @@ import {
   type MemberExpression,
   type Node,
   type Span,
+  type TSModuleDeclarationName,
   type VariableDeclaration,
   type VariableDeclarator,
 } from 'oxc-parser'
+import { overwriteOrAppend, type Range } from './utils/magic-string'
 import type { Plugin } from 'rolldown'
 
 const RE_TYPE = /\btype\b/
 
-type Range = [start: number, end: number]
+// export declare function x(xx: X): void
+
+// to:            const x = [1, () => X]
+// after compile: const y = [1, () => Y]
+
+// replace X with Y:
+// export declare function y(xx: Y): void
+
+// how? needs
+// - original range (overwrite or add)
+// - replacement
 
 interface SymbolInfo {
   code: string
-  idRange: Range
-  depsRanges: Range[]
+  binding: Range
+  deps: Range[]
   isType: boolean
   needDeclare: boolean
 }
@@ -31,55 +44,14 @@ export function dts(): Plugin {
   let i = 0
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
 
-  function register(
-    code: string,
-    binding: (Node & Span) | Range,
-    deps: (Node & Span)[],
-    parent: Span,
-    options: Omit<SymbolInfo, 'code' | 'idRange' | 'depsRanges'>,
-  ) {
+  function register(info: SymbolInfo) {
     const symbolId = i++
-
-    const depsRanges: Range[] = deps.map(
-      (d): Range => [d.start - parent.start, d.end - parent.start],
-    )
-
-    let idRange: Range | undefined
-    if (Array.isArray(binding)) {
-      idRange = binding
-    } else {
-      let bindingEnd = binding.end
-      if ('typeAnnotation' in binding && binding.typeAnnotation) {
-        bindingEnd = binding.typeAnnotation.start
-      }
-      idRange = [binding.start - parent.start, bindingEnd - parent.start]
-    }
-
-    symbolMap.set(symbolId, { code, idRange, depsRanges, ...options })
+    symbolMap.set(symbolId, info)
     return symbolId
   }
 
-  function retrieve(
-    s: MagicStringAST,
-    symbolId: number,
-    id: Node,
-    deps: Span[],
-  ) {
-    const { code, idRange, depsRanges, isType, needDeclare } =
-      symbolMap.get(symbolId)!
-    const result = new MagicString(code)
-
-    const idRaw = s.sliceNode(id)
-    if (idRange[0] === idRange[1]) {
-      result.prependLeft(idRange[0], ` ${idRaw}`)
-    } else {
-      result.overwrite(idRange[0], idRange[1], idRaw)
-    }
-
-    for (const [i, range] of depsRanges.entries()) {
-      result.overwrite(range[0], range[1], s.sliceNode(deps[i]))
-    }
-    return [result.toString(), isType, needDeclare]
+  function retrieve(symbolId: number) {
+    return symbolMap.get(symbolId)!
   }
 
   return {
@@ -131,22 +103,25 @@ export function dts(): Plugin {
             node as Exclude<Declaration, VariableDeclaration> | Function
           ).id
 
-          let bindingRange: Range | null = binding
-            ? [binding.start, binding.end]
-            : null
+          const code = s.sliceNode(node)
+          const offset = node.start
 
-          if (!binding) {
-            if (isDefaultExport) {
-              const idx = s.sliceNode(node).indexOf('function') + 8
-              bindingRange = [idx, idx]
-            } else {
-              continue
-            }
+          let bindingRange: Range
+          if (binding) {
+            bindingRange = getIdentifierRange(binding, -offset)
+          } else if (isDefaultExport) {
+            const idx = s.sliceNode(node).indexOf('function') + 8
+            bindingRange = [idx, idx]
+          } else {
+            continue
           }
 
-          const original = s.sliceNode(node)
-          const deps = collectDependencies(node)
+          const deps = collectDependencies(s, node)
           const depsString = stringifyDependencies(s, deps)
+          const depsRanges: Range[] = deps.map((dep) => [
+            dep.start - offset,
+            dep.end - offset,
+          ])
           const isType =
             node.type.startsWith('TS') && node.type !== 'TSDeclareFunction'
           const needDeclare =
@@ -157,16 +132,13 @@ export function dts(): Plugin {
               node.type === 'TSModuleDeclaration') &&
             !node.declare
 
-          const symbolId = register(
-            original,
-            binding || bindingRange!,
-            deps,
-            node,
-            {
-              isType,
-              needDeclare,
-            },
-          )
+          const symbolId = register({
+            code,
+            binding: bindingRange,
+            deps: depsRanges,
+            isType,
+            needDeclare,
+          })
 
           const runtime = `[${symbolId}, ${depsString}]`
           const bindingName = binding ? s.sliceNode(binding) : 'export_default'
@@ -185,7 +157,7 @@ export function dts(): Plugin {
       }
 
       const str = s.toString()
-      // console.log(str)
+      console.log(str)
       return str
     },
 
@@ -219,18 +191,22 @@ export function dts(): Plugin {
         }
 
         const symbolId = symbolIdNode.value
-        const [type, , needDeclare] = retrieve(
-          s,
-          symbolId,
-          decl.id,
-          depsNodes.map((dep) => {
-            if (dep.type !== 'ArrowFunctionExpression')
-              throw new Error('Expected ArrowFunctionExpression')
-            return dep.body
-          }),
-        )
+        const { code, binding, deps, needDeclare } = retrieve(symbolId)
 
-        s.overwriteNode(node, `${needDeclare ? 'declare ' : ''}${type}`)
+        const depsRaw = depsNodes.map((dep) => {
+          if (dep.type !== 'ArrowFunctionExpression')
+            throw new Error('Expected ArrowFunctionExpression')
+          return s.sliceNode(dep.body)
+        })
+
+        const ss = new MagicStringAST(code)
+        overwriteOrAppend(ss, binding, s.sliceNode(decl.id))
+        for (const dep of deps) {
+          overwriteOrAppend(ss, dep, depsRaw.shift()!)
+        }
+        if (needDeclare) ss.prepend('declare ')
+
+        s.overwriteNode(node, ss.toString())
       }
 
       const str = s.toString()
@@ -252,10 +228,19 @@ export function dts(): Plugin {
 
     const [decl] = node.declarations
 
-    const raw = s.sliceNode(node)
-    const deps = collectDependencies(node)
+    const offset = node.start
+    const code = s.sliceNode(node)
+    const deps = collectDependencies(s, node)
     const depsString = stringifyDependencies(s, deps)
-    const symbolId = register(raw, decl.id, deps, node, {
+    const depsRanges: Range[] = deps.map((dep) => [
+      dep.start - offset,
+      dep.end - offset,
+    ])
+
+    const symbolId = register({
+      code,
+      binding: getIdentifierRange(decl.id, -offset),
+      deps: depsRanges,
       isType: false,
       needDeclare: !node.declare,
     })
@@ -264,8 +249,14 @@ export function dts(): Plugin {
   }
 }
 
-function collectDependencies(node: Node): (Node & Span)[] {
-  const deps = new Set<Node & Span>()
+let i = 0
+
+function collectDependencies(
+  s: MagicStringAST,
+  node: Node,
+): (Partial<Node> & Span)[] {
+  const deps: Set<Partial<Node> & Span> = new Set()
+
   ;(walk as any)(node, {
     enter(node: Node) {
       if (node.type === 'TSInterfaceDeclaration' && node.extends) {
@@ -294,15 +285,32 @@ function collectDependencies(node: Node): (Node & Span)[] {
         addDependency(node.typeName)
       } else if (node.type === 'TSTypeQuery') {
         addDependency(node.exprName)
+      } else if (node.type === 'TSImportType') {
+        if (node.argument.type !== 'TSLiteralType') return
+        const source = s.sliceNode(node.argument)
+        const local = `_${i++}`
+        const specifiers = node.qualifier
+          ? `{ ${s.sliceNode(node.qualifier)} as ${local} }`
+          : `* as ${local}`
+        s.prepend(`import ${specifiers} from ${source};\n`)
+        if (node.qualifier)
+          addDependency({
+            type: 'Identifier',
+            name: local,
+            start: node.qualifier.start,
+            end: node.qualifier.end,
+          })
+        // s.overwriteNode(node, local)
       }
     },
   })
   return Array.from(deps)
 
-  function addDependency(node: Node & Span) {
+  function addDependency(node: Partial<Node> & Span) {
     if (node.type === 'Identifier' && node.name === 'this') {
       return
     }
+
     deps.add(node)
   }
 }
@@ -315,8 +323,26 @@ function isReferenceId(
   )
 }
 
-function stringifyDependencies(s: MagicStringAST, deps: Node[]) {
-  return deps.map((node) => `() => ${s.sliceNode(node)}`).join(', ')
+function stringifyDependencies(
+  s: MagicStringAST,
+  deps: (Partial<Node> & Span)[],
+) {
+  return deps
+    .map(
+      (node) =>
+        `() => ${node.type === 'Identifier' ? node.name! : s.sliceNode(node)}`,
+    )
+    .join(', ')
+}
+
+function getIdentifierRange(
+  node: BindingPattern | TSModuleDeclarationName,
+  offset: number = 0,
+): Range {
+  if ('typeAnnotation' in node && node.typeAnnotation) {
+    return [node.start + offset, node.typeAnnotation.start + offset]
+  }
+  return [node.start + offset, node.end + offset]
 }
 
 // patch `let x = 1;` to `type x: 1;`

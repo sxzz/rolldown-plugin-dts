@@ -2,10 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,8 +1,6 @@
+@@ -1,8 +1,8 @@
  // index.d.ts
--interface Bar {}
--declare const Baz = 123;
+ interface Bar {}
+ declare const Baz = 123;
  interface Foo {
 -  bar: Bar;
 -  baz: typeof Baz;
