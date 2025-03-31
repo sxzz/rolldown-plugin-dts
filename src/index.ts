@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { walk } from 'estree-walker'
-import { MagicStringAST } from 'magic-string-ast'
+import { MagicStringAST, type MagicString } from 'magic-string-ast'
 import {
   parseAsync,
   type BindingPattern,
@@ -52,6 +52,18 @@ export function dts(): Plugin {
 
   function retrieve(symbolId: number) {
     return symbolMap.get(symbolId)!
+  }
+
+  const importsMap: Record<string, string> = {}
+  function importNamespace(s: MagicString, source: string) {
+    if (importsMap[source]) return importsMap[source]
+    let local = source.replaceAll(/[^a-z0-9]/gi, '_')
+    if (/^\d/.test(local[0])) {
+      local = `_${local}`
+    }
+    importsMap[source] = local
+    s.prepend(`import * as ${local} from ${JSON.stringify(source)};\n`)
+    return local
   }
 
   return {
@@ -119,7 +131,7 @@ export function dts(): Plugin {
             continue
           }
 
-          const deps = collectDependencies(s, node)
+          const deps = collectDependencies(s, node, importNamespace)
           const depsString = stringifyDependencies(s, deps)
           const depsRanges: Range[] = deps.map((dep) => [
             dep.start - offset,
@@ -223,11 +235,10 @@ export function dts(): Plugin {
   }
 }
 
-let i = 0
-
 function collectDependencies(
   s: MagicStringAST,
   node: Node,
+  importNamespace: (s: MagicString, source: string) => string,
 ): (Partial<Node> & Span)[] {
   const deps: Set<Partial<Node> & Span> = new Set()
 
@@ -260,21 +271,20 @@ function collectDependencies(
       } else if (node.type === 'TSTypeQuery') {
         addDependency(node.exprName)
       } else if (node.type === 'TSImportType') {
-        if (node.argument.type !== 'TSLiteralType') return
-        const source = s.sliceNode(node.argument)
-        const local = `_${i++}`
-        const specifiers = node.qualifier
-          ? `{ ${s.sliceNode(node.qualifier)} as ${local} }`
-          : `* as ${local}`
-        s.prepend(`import ${specifiers} from ${source};\n`)
-        if (node.qualifier) {
-          addDependency({
-            type: 'Identifier',
-            name: local,
-            start: node.start + (node.isTypeOf ? 7 : 0),
-            end: node.typeArguments ? node.typeArguments.start : node.end,
-          })
-        }
+        if (
+          node.argument.type !== 'TSLiteralType' ||
+          node.argument.literal.type !== 'Literal' ||
+          typeof node.argument.literal.value !== 'string'
+        )
+          return
+        const source = node.argument.literal.value
+        const local = importNamespace(s, source)
+        addDependency({
+          type: 'Identifier',
+          name: local,
+          start: node.start + (node.isTypeOf ? 7 : 0),
+          end: node.argument.end + 1,
+        })
       }
     },
   })
