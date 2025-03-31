@@ -2,7 +2,7 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,14 +1,19 @@
+@@ -1,8 +1,20 @@
  // index.d.ts
 +type __defProp = Object.defineProperty
 +type __export = (target, all) => {
@@ -14,19 +14,14 @@ Index: diff.patch
 +type bar_d_exports = {}
 +__export(bar_d_exports, {
 +	Bar: () => Bar,
-+	IBar: () => IBar
++	Baz: () => Baz
 +});
- declare class Bar {}
- interface IBar {}
--type __bar_Bar = Bar;
--declare const __bar_Bar: typeof Bar;
--type __bar_IBar = IBar;
--declare namespace __bar {
--  export { __bar_Bar as Bar };
--  export { __bar_IBar as IBar };
--}
+ interface Bar {}
+ declare const Baz = 123;
  interface Foo {
--  ns: typeof __bar;
-+  ns: typeof bar_d_exports;
+-  bar: Bar;
+-  baz: typeof Baz;
++  bar: bar_d_exports.Bar;
++  baz: typeof bar_d_exports.Baz;
  }
  export { Foo };
