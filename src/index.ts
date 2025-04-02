@@ -37,8 +37,8 @@ interface SymbolInfo {
   code: string
   binding: Range
   deps: Range[]
-  isType: boolean
   needDeclare: boolean
+  jsdoc?: string
 }
 
 export function dts(): Plugin {
@@ -141,6 +141,14 @@ export function dts(): Plugin {
                   .id
 
           const code = s.sliceNode(node)
+
+          const jsdoc = comments.find(
+            (c) =>
+              c.type === 'Block' &&
+              c.value[0] === '*' &&
+              stmt.start - c.end <= 1,
+          )
+
           const offset = node.start
 
           let bindingRange: Range
@@ -159,8 +167,6 @@ export function dts(): Plugin {
             dep.start - offset,
             dep.end - offset,
           ])
-          const isType =
-            node.type.startsWith('TS') && node.type !== 'TSDeclareFunction'
           const needDeclare =
             (node.type === 'TSEnumDeclaration' ||
               node.type === 'ClassDeclaration' ||
@@ -174,8 +180,8 @@ export function dts(): Plugin {
             code,
             binding: bindingRange,
             deps: depsRanges,
-            isType,
             needDeclare,
+            jsdoc: jsdoc ? s.sliceNode(jsdoc) : undefined,
           })
 
           const runtime = `[${symbolId}, ${depsString}]`
@@ -241,7 +247,7 @@ export function dts(): Plugin {
         }
 
         const symbolId = symbolIdNode.value
-        const { code, binding, deps, needDeclare } = retrieve(symbolId)
+        const { code, binding, deps, needDeclare, jsdoc } = retrieve(symbolId)
 
         const depsRaw = depsNodes.map((dep) => {
           if (dep.type !== 'ArrowFunctionExpression')
@@ -255,6 +261,7 @@ export function dts(): Plugin {
           overwriteOrAppend(ss, dep, depsRaw.shift()!)
         }
         if (needDeclare) ss.prepend('declare ')
+        if (jsdoc) ss.prepend(`${jsdoc}\n`)
 
         s.overwriteNode(node, ss.toString())
       }
