@@ -4,14 +4,38 @@
 
 A Rolldown plugin to bundle dts files.
 
-> [!WARNING]
-> This plugin is still in development and may not work as expected.
-
 ## Install
 
 ```bash
 npm i https://pkg.pr.new/sxzz/rolldown-plugin-dts@main
 ```
+
+## Usage
+
+Add the plugin to your `rolldown.config.js`:
+
+```js
+// rolldown.config.js
+import { dts } from 'rolldown-plugin-dts'
+
+const config = [
+  {
+    input: './index.d.ts',
+    plugins: [dts()],
+    output: [
+      {
+        file: 'dist/index.d.ts',
+        format: 'es',
+      },
+    ],
+  },
+]
+
+export default config
+```
+
+> [!NOTE]
+> Namespaces are not supported yet.
 
 ## Credits
 
