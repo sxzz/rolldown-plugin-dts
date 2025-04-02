@@ -32,19 +32,20 @@ await testFixtures(
     rolldownSnapshot = cleanupCode(rolldownSnapshot)
     const diffPath = path.resolve(dirname, 'diff.patch')
     const knownDiffPath = path.resolve(dirname, 'known-diff.patch')
+    const diff = createPatch(
+      'diff.patch',
+      rollupSnapshot,
+      rolldownSnapshot,
+      undefined,
+      undefined,
+      {
+        ignoreWhitespace: true,
+        stripTrailingCr: true,
+      },
+    )
 
-    if (rollupSnapshot !== rolldownSnapshot) {
-      const diff = createPatch(
-        'diff.patch',
-        rollupSnapshot,
-        rolldownSnapshot,
-        undefined,
-        undefined,
-        {
-          ignoreWhitespace: true,
-          stripTrailingCr: true,
-        },
-      )
+    // not the same
+    if (diff.split('\n').length !== 5) {
       const knownDiff = await readFile(knownDiffPath, 'utf8').catch(() => null)
       if (knownDiff !== diff) {
         await expect(diff).toMatchFileSnapshot(diffPath)

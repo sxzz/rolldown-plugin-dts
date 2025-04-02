@@ -28,7 +28,6 @@ declare class BarValue { }
 
 //#endregion
 //#region tests/fixtures/type-only-import-export/index.d.ts
-type index_d_default = E
 interface O {}
 declare class X {}
 interface Foo$1 {
@@ -36,4 +35,4 @@ interface Foo$1 {
 }
 
 //#endregion
-export { A, B, B1 as B2, B1 as B3, BarType, BarValue, C, C as C1, D, E3 as E2, E3, E4, F, Foo, Foo$1 as FooInlne, G, G1, H1, I, J, K1, L, M1, O as O1, X, index_d_default as default };
+export { A, B, B1 as B2, B1 as B3, BarType, BarValue, C, C as C1, D, E3 as E2, E3, E4, F, Foo, Foo$1 as FooInlne, G, G1, H1, I, J, K1, L, M1, O as O1, X, E as default };

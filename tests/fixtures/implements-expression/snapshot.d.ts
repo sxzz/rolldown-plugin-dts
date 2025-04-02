@@ -9,15 +9,14 @@ declare namespace ns {
     props: P;
   }
 }
-type ns_d_default = ns
 
 //#endregion
 //#region tests/fixtures/implements-expression/index.d.ts
 interface G {}
-interface MyComponentProps extends ns_d_default.Props<G> {
+interface MyComponentProps extends ns.Props<G> {
   bar: string;
 }
-declare class MyComponent extends ns_d_default.Component<MyComponentProps> {}
+declare class MyComponent extends ns.Component<MyComponentProps> {}
 
 //#endregion
 export { MyComponent, MyComponentProps };

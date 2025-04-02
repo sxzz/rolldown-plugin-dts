@@ -407,6 +407,7 @@ function patchImportSource(s: MagicStringAST, node: Node) {
 // - export { type ... }
 // - import Foo = require("./bar")
 // - export = Foo
+// - export default x
 function rewriteImportExport(s: MagicStringAST, node: Node) {
   if (
     node.type === 'ImportDeclaration' ||
@@ -446,6 +447,15 @@ function rewriteImportExport(s: MagicStringAST, node: Node) {
     return true
   } else if (node.type === 'TSExportAssignment') {
     s.overwriteNode(node, `export default ${s.sliceNode(node.expression)}`)
+    return true
+  } else if (
+    node.type === 'ExportDefaultDeclaration' &&
+    node.declaration.type === 'Identifier'
+  ) {
+    s.overwriteNode(
+      node,
+      `export { ${s.sliceNode(node.declaration)} as default }`,
+    )
     return true
   }
 }
