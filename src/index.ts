@@ -70,15 +70,42 @@ export function dts(): Plugin {
 
   return {
     name: 'rolldown-plugin-dts',
-    options(options) {
-      options.resolve ||= {}
-      options.resolve.extensions = ['.d.ts']
-      options.resolve.extensionAlias = { '.js': ['.d.ts'] }
+
+    options({ onLog, ...options }) {
+      return {
+        ...options,
+        resolve: {
+          extensions: ['.d.ts'],
+          extensionAlias: { '.js': ['.d.ts'] },
+          ...options.resolve,
+        },
+        onLog(level, log, defaultHandler) {
+          if (level === 'warn' && log.code === 'CIRCULAR_DEPENDENCY') {
+            return
+          }
+          if (onLog) {
+            onLog(level, log, defaultHandler)
+          } else {
+            defaultHandler(level, log)
+          }
+        },
+        treeshake: {
+          moduleSideEffects: 'no-external',
+          unknownGlobalSideEffects: false,
+        },
+      }
     },
+
     outputOptions(options) {
-      options.entryFileNames = '[name].ts'
-      options.chunkFileNames = '[name]-[hash].d.ts'
+      return {
+        chunkFileNames: '[name]-[hash].d.ts',
+        entryFileNames: '[name].ts',
+        format: 'es',
+        exports: 'named',
+        ...options,
+      }
     },
+
     resolveId(id, importer) {
       if (importer && !path.isAbsolute(id) && id[0] !== '.') {
         return { id, external: true }
