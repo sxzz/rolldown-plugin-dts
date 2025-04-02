@@ -190,6 +190,8 @@ export function dts(): Plugin {
         }
       }
 
+      if (!s.hasChanged()) return
+
       const str = s.toString()
       // console.log(str)
       return str
@@ -405,6 +407,7 @@ function patchImportSource(s: MagicStringAST, node: Node) {
 // - import { type ... } from '...'
 // - export type { ... }
 // - export { type ... }
+// - export type * as '...'
 // - import Foo = require("./bar")
 // - export = Foo
 // - export default x
@@ -432,6 +435,15 @@ function rewriteImportExport(s: MagicStringAST, node: Node) {
         node.start,
         firstSpecifier.start,
         s.slice(node.start, firstSpecifier.start).replace(RE_TYPE, ''),
+      )
+    }
+    return true
+  } else if (node.type === 'ExportAllDeclaration') {
+    if (node.exportKind === 'type') {
+      s.overwrite(
+        node.start,
+        node.source.start,
+        s.slice(node.start, node.source.start).replace(RE_TYPE, ''),
       )
     }
     return true

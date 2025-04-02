@@ -15,8 +15,11 @@ import { H as H1 } from "h1";
 import { K as K1 } from "k1";
 import { M as M1 } from "m1";
 import * as I from "i";
+import * as O from "o";
 
 export * from "i1"
+
+export * from "n"
 
 //#region tests/fixtures/type-only-import-export/foo.d.ts
 interface Foo {}
@@ -28,11 +31,11 @@ declare class BarValue { }
 
 //#endregion
 //#region tests/fixtures/type-only-import-export/index.d.ts
-interface O {}
+interface O$1 {}
 declare class X {}
 interface Foo$1 {
   inline: string
 }
 
 //#endregion
-export { A, B, B1 as B2, B1 as B3, BarType, BarValue, C, C as C1, D, E3 as E2, E3, E4, F, Foo, Foo$1 as FooInlne, G, G1, H1, I, J, K1, L, M1, O as O1, X, E as default };
+export { A, B, B1 as B2, B1 as B3, BarType, BarValue, C, C as C1, D, E3 as E2, E3, E4, F, Foo, Foo$1 as FooInlne, G, G1, H1, I, J, K1, L, M1, O, O$1 as O1, X, E as default };
