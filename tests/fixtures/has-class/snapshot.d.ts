@@ -14,7 +14,6 @@ declare class Foo extends A {
   constructor(c: C);
   method(d: D): E;
 }
-type index_d_default = Foo
 
 //#endregion
-export { index_d_default as default };
+export { Foo as default };

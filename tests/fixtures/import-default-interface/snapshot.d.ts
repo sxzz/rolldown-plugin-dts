@@ -2,11 +2,10 @@
 
 //#region tests/fixtures/import-default-interface/bar.d.ts
 interface Bar {}
-type bar_d_default = Bar
 
 //#endregion
 //#region tests/fixtures/import-default-interface/index.d.ts
-interface Foo extends bar_d_default {}
+interface Foo extends Bar {}
 
 //#endregion
 export { Foo };

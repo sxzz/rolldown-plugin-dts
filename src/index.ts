@@ -179,7 +179,7 @@ export function dts(): Plugin {
           if (isDefaultExport) {
             s.overwriteNode(
               stmt,
-              `var ${bindingName} = ${runtime};export default ${bindingName}`,
+              `var ${bindingName} = ${runtime};export { ${bindingName} as default }`,
             )
           } else {
             s.overwriteNode(

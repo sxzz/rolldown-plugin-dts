@@ -13,7 +13,6 @@ declare class Foo {
   method(c: C): D;
   method(e: E): F;
 }
-type index_d_default = Foo
 
 //#endregion
-export { index_d_default as default };
+export { Foo as default };

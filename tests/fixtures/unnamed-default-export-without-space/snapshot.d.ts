@@ -10,7 +10,6 @@ declare function export_default<T extends object>(
     [x in keyof T]: () => Promise<T[x]>;
   },
 ): Promise<void>;
-type index_d_default = export_default
 
 //#endregion
-export { index_d_default as default };
+export { export_default as default };
