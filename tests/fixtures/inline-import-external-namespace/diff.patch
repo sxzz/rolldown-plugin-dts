@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,7 +1,6 @@
+ // index.d.ts
+-import * as foo from 'foo';
+ interface Foo {
+-  ns1: foo;
+-  ns2: typeof foo;
++  ns1: import("foo");
++  ns2: typeof import("foo");
+ }
+ export { Foo };

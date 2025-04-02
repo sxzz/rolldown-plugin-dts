@@ -2,22 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,14 +1,19 @@
+@@ -1,14 +1,5 @@
  // index.d.ts
-+type __defProp = Object.defineProperty
-+type __export = (target, all) => {
-+	for (var name in all) __defProp(target, name, {
-+		get: all[name],
-+		enumerable: true
-+	});
-+}
-+type bar_d_exports = {}
-+__export(bar_d_exports, {
-+	Bar: () => Bar,
-+	IBar: () => IBar
-+});
- declare class Bar {}
- interface IBar {}
+-declare class Bar {}
+-interface IBar {}
 -type __bar_Bar = Bar;
 -declare const __bar_Bar: typeof Bar;
 -type __bar_IBar = IBar;
@@ -27,6 +15,6 @@ Index: diff.patch
 -}
  interface Foo {
 -  ns: typeof __bar;
-+  ns: typeof bar_d_exports;
++  ns: typeof import("./bar");
  }
  export { Foo };

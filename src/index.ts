@@ -56,18 +56,6 @@ export function dts(): Plugin {
     return symbolMap.get(symbolId)!
   }
 
-  const importsMap: Record<string, string> = {}
-  function importNamespace(s: MagicString, source: string) {
-    if (importsMap[source]) return importsMap[source]
-    let local = source.replaceAll(/[^a-z0-9]/gi, '_')
-    if (/^\d/.test(local[0])) {
-      local = `_${local}`
-    }
-    importsMap[source] = local
-    s.prepend(`import * as ${local} from ${JSON.stringify(source)};\n`)
-    return local
-  }
-
   return {
     name: 'rolldown-plugin-dts',
 
@@ -161,7 +149,7 @@ export function dts(): Plugin {
             continue
           }
 
-          const deps = collectDependencies(s, node, importNamespace)
+          const deps = collectDependencies(s, node)
           const depsString = stringifyDependencies(s, deps)
           const depsRanges: Range[] = deps.map((dep) => [
             dep.start - offset,
@@ -285,7 +273,6 @@ function collectReferenceDirectives(comment: Comment[]) {
 function collectDependencies(
   s: MagicStringAST,
   node: Node,
-  importNamespace: (s: MagicString, source: string) => string,
 ): (Partial<Node> & Span)[] {
   const deps: Set<Partial<Node> & Span> = new Set()
 
@@ -324,13 +311,18 @@ function collectDependencies(
           typeof node.argument.literal.value !== 'string'
         )
           return
+        if (!node.qualifier) {
+          // throw new Error('Import namespace is not supported')
+          return
+        }
         const source = node.argument.literal.value
-        const local = importNamespace(s, source)
+        const imported = s.sliceNode(node.qualifier)
+        const local = importNamespace(s, source, imported)
         addDependency({
           type: 'Identifier',
           name: local,
           start: node.start + (node.isTypeOf ? 7 : 0),
-          end: node.argument.end + 1,
+          end: node.qualifier.end,
         })
       }
     },
@@ -456,4 +448,13 @@ function rewriteImportExport(s: MagicStringAST, node: Node) {
     s.overwriteNode(node, `export default ${s.sliceNode(node.expression)}`)
     return true
   }
+}
+
+let i = 0
+function importNamespace(s: MagicString, source: string, imported: string) {
+  const local = `_${i++}`
+  s.prepend(
+    `import { ${imported} as ${local} } from ${JSON.stringify(source)};\n`,
+  )
+  return local
 }
