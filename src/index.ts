@@ -4,6 +4,7 @@ import { MagicStringAST, type MagicString } from 'magic-string-ast'
 import {
   parseAsync,
   type BindingPattern,
+  type Comment,
   type Declaration,
   type Expression,
   type Function,
@@ -43,6 +44,7 @@ interface SymbolInfo {
 export function dts(): Plugin {
   let i = 0
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
+  const commentMap = new Map<string /* filename */, string[]>()
 
   function register(info: SymbolInfo) {
     const symbolId = i++
@@ -83,14 +85,15 @@ export function dts(): Plugin {
       }
     },
     async transform(code, id) {
-      const { program } = await parseAsync(id, code)
+      const { program, comments } = await parseAsync(id, code)
+      const preserveComments = collectReferenceDirectives(comments)
+      commentMap.set(id, preserveComments)
 
       const s = new MagicStringAST(code)
       for (let node of program.body as (Node & Span)[]) {
-        const stmt = node
-
         if (rewriteImportExport(s, node)) continue
 
+        const stmt = node
         // remove `export` modifier
         const isDefaultExport = node.type === 'ExportDefaultDeclaration'
 
@@ -181,6 +184,16 @@ export function dts(): Plugin {
       const { program } = await parseAsync(chunk.fileName, code)
       const s = new MagicStringAST(code)
 
+      const comments = new Set<string>()
+      for (const id of chunk.moduleIds) {
+        const preserveComments = commentMap.get(id)
+        if (preserveComments) {
+          preserveComments.forEach((c) => comments.add(c))
+          commentMap.delete(id)
+        }
+      }
+      if (comments.size) s.prepend(`${[...comments].join('\n')}\n`)
+
       for (const node of program.body) {
         if (patchImportSource(s, node)) continue
 
@@ -233,6 +246,13 @@ export function dts(): Plugin {
       return str
     },
   }
+}
+
+const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
+function collectReferenceDirectives(comment: Comment[]) {
+  return comment
+    .filter((c) => REFERENCE_RE.test(c.value))
+    .map((c) => `//${c.value}`)
 }
 
 function collectDependencies(

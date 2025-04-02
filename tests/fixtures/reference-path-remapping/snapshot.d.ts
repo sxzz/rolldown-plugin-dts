@@ -1,4 +1,6 @@
 // index.d.ts
+/// <reference path="./ns-api2.d.ts" />
+/// <reference path="./ns-api.d.ts" />
 
 //#region tests/fixtures/reference-path-remapping/sub/api2.d.ts
 declare class C2 {

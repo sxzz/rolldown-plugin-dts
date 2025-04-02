@@ -1,4 +1,5 @@
 // index.d.ts
+/// <reference types="react" />
 
 //#region tests/fixtures/preserve-reference-directives/a.d.ts
 declare type JSXElements$1 = keyof JSX.IntrinsicElements;
