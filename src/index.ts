@@ -63,8 +63,12 @@ export function dts(): Plugin {
       return {
         ...options,
         resolve: {
-          extensions: ['.d.ts'],
-          extensionAlias: { '.js': ['.d.ts'] },
+          extensions: ['.d.ts', '.d.mts', '.d.cts'],
+          extensionAlias: {
+            '.js': ['.d.ts'],
+            '.mjs': ['.d.mts'],
+            '.cjs': ['.d.cts'],
+          },
           ...options.resolve,
         },
         onLog(level, log, defaultHandler) {
@@ -386,17 +390,20 @@ function patchVariableDeclarator(
   }
 }
 
+const RE_D_TS = /\.d\.([cm]?)ts$/
+
 // patch `.d.ts` suffix in import source to `.js`
 function patchImportSource(s: MagicStringAST, node: Node) {
   if (
     (node.type === 'ImportDeclaration' ||
       node.type === 'ExportAllDeclaration' ||
       node.type === 'ExportNamedDeclaration') &&
-    node.source?.value.endsWith('.d.ts')
+    node.source?.value &&
+    RE_D_TS.test(node.source.value)
   ) {
     s.overwriteNode(
       node.source,
-      JSON.stringify(`${node.source.value.slice(0, -4)}js`),
+      JSON.stringify(node.source.value.replace(RE_D_TS, '.$1js')),
     )
     return true
   }
