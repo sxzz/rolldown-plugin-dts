@@ -3,7 +3,6 @@ import { walk } from 'estree-walker'
 import { MagicStringAST, type MagicString } from 'magic-string-ast'
 import {
   parseAsync,
-  type BindingPattern,
   type Comment,
   type Declaration,
   type Expression,
@@ -12,10 +11,10 @@ import {
   type MemberExpression,
   type Node,
   type Span,
-  type TSModuleDeclarationName,
   type VariableDeclaration,
   type VariableDeclarator,
 } from 'oxc-parser'
+import { getIdentifierRange } from './utils/ast'
 import { overwriteOrAppend, type Range } from './utils/magic-string'
 import type { Plugin } from 'rolldown'
 
@@ -369,16 +368,6 @@ function stringifyDependencies(
         `() => ${node.type === 'Identifier' ? node.name! : s.sliceNode(node)}`,
     )
     .join(', ')
-}
-
-function getIdentifierRange(
-  node: BindingPattern | TSModuleDeclarationName,
-  offset: number = 0,
-): Range {
-  if ('typeAnnotation' in node && node.typeAnnotation) {
-    return [node.start + offset, node.typeAnnotation.start + offset]
-  }
-  return [node.start + offset, node.end + offset]
 }
 
 // patch `let x = 1;` to `type x: 1;`
