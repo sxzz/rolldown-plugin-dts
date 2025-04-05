@@ -12,10 +12,11 @@ const isUpdateEnabled =
   process.env.npm_lifecycle_script?.includes('--update')
 
 await testFixtures(
-  'tests/fixtures/*/index.d.ts',
+  'tests/fixtures/**/index.d.ts',
   async (args, id) => {
     const dirname = path.dirname(id)
 
+    let error: any
     let [rolldownSnapshot, rollupSnapshot] = await Promise.all([
       rolldownBuild(id, [dts()], { treeshake: true }).then(
         ({ snapshot }) => snapshot,
@@ -23,7 +24,13 @@ await testFixtures(
       rollupBuild(id, [rollupDts()], undefined, {
         entryFileNames: '[name].ts',
       }).then(({ snapshot }) => snapshot),
-    ])
+    ]).catch((_error) => ((error = _error), []))
+
+    if (id.includes('error')) {
+      return expect(error).toBeTruthy()
+    }
+
+    if (error) throw error
     await expect(rolldownSnapshot).toMatchFileSnapshot(
       path.resolve(dirname, 'snapshot.d.ts'),
     )

@@ -324,7 +324,7 @@ function collectDependencies(
         )
           return
         if (!node.qualifier) {
-          // throw new Error('Import namespace is not supported')
+          throw new Error('Import namespace is not supported')
           return
         }
         const source = node.argument.literal.value
