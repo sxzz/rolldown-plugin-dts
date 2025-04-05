@@ -56,7 +56,7 @@ export function dts(): Plugin {
   }
 
   return {
-    name: 'rolldown-plugin-types',
+    name: 'rolldown-plugin-dts',
 
     options({ onLog, ...options }) {
       return {

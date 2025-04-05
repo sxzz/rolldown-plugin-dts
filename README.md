@@ -1,13 +1,13 @@
-# rolldown-plugin-types [![npm](https://img.shields.io/npm/v/rolldown-plugin-types.svg)](https://npmjs.com/package/rolldown-plugin-types)
+# rolldown-plugin-dts [![npm](https://img.shields.io/npm/v/rolldown-plugin-dts.svg)](https://npmjs.com/package/rolldown-plugin-dts)
 
-[![Unit Test](https://github.com/sxzz/rolldown-plugin-types/actions/workflows/unit-test.yml/badge.svg)](https://github.com/sxzz/rolldown-plugin-types/actions/workflows/unit-test.yml)
+[![Unit Test](https://github.com/sxzz/rolldown-plugin-dts/actions/workflows/unit-test.yml/badge.svg)](https://github.com/sxzz/rolldown-plugin-dts/actions/workflows/unit-test.yml)
 
 A Rolldown plugin to bundle dts files.
 
 ## Install
 
 ```bash
-npm i rolldown-plugin-types
+npm i rolldown-plugin-dts
 ```
 
 ## Usage
@@ -16,7 +16,7 @@ Add the plugin to your `rolldown.config.js`:
 
 ```js
 // rolldown.config.js
-import { dts } from 'rolldown-plugin-types'
+import { dts } from 'rolldown-plugin-dts'
 
 const config = [
   {

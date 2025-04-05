@@ -1,17 +1,17 @@
 {
-  "name": "rolldown-plugin-types",
+  "name": "rolldown-plugin-dts",
   "version": "0.0.0",
   "packageManager": "pnpm@10.7.1",
   "description": "A Rolldown plugin to bundle dts files",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://github.com/sxzz/rolldown-plugin-types#readme",
+  "homepage": "https://github.com/sxzz/rolldown-plugin-dts#readme",
   "bugs": {
-    "url": "https://github.com/sxzz/rolldown-plugin-types/issues"
+    "url": "https://github.com/sxzz/rolldown-plugin-dts/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sxzz/rolldown-plugin-types.git"
+    "url": "git+https://github.com/sxzz/rolldown-plugin-dts.git"
   },
   "author": "三咲智子 Kevin Deng <sxzz@sxzz.moe>",
   "funding": "https://github.com/sponsors/sxzz",
