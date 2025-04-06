@@ -6,10 +6,15 @@ export function overwriteOrAppend(
   s: MagicString,
   range: Range,
   replacement: string,
+  suffix?: string,
 ): void {
   if (range[0] === range[1]) {
     s.appendLeft(range[0], ` ${replacement}`)
     return
   }
-  s.overwrite(range[0], range[1], replacement)
+
+  const original = s.slice(range[0], range[1])
+  if (original !== replacement) {
+    s.overwrite(range[0], range[1], replacement + (suffix || ''))
+  }
 }

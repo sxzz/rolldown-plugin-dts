@@ -32,21 +32,25 @@ const RE_TYPE = /\btype\b/
 // - original range (overwrite or add)
 // - replacement
 
+type Dep = Partial<Node> & Span & { _suffix?: string }
+type DepSymbol = [start: number, end: number, suffix?: string]
 interface SymbolInfo {
   code: string
   binding: Range
-  deps: Range[]
+  deps: DepSymbol[]
   needDeclare: boolean
   jsdoc?: string
+  preserveName: boolean
 }
 
 export function dts(): Plugin {
-  let i = 0
+  let symbolIdx = 0
+  let IdentifierIdx = 0
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
-  const commentMap = new Map<string /* filename */, string[]>()
+  const preserveMap = new Map<string /* filename */, string[]>()
 
   function register(info: SymbolInfo) {
-    const symbolId = i++
+    const symbolId = symbolIdx++
     symbolMap.set(symbolId, info)
     return symbolId
   }
@@ -98,18 +102,29 @@ export function dts(): Plugin {
     },
 
     resolveId(id, importer) {
-      if (importer && !path.isAbsolute(id) && id[0] !== '.') {
+      if (importer && isExternal(id)) {
         return { id, external: true }
       }
     },
+
     async transform(code, id) {
       const { program, comments } = await parseAsync(id, code)
-      const preserveComments = collectReferenceDirectives(comments)
-      commentMap.set(id, preserveComments)
+      const preserved = collectReferenceDirectives(comments)
+      preserveMap.set(id, preserved)
 
       const s = new MagicStringAST(code)
       for (let node of program.body as (Node & Span)[]) {
+        if (
+          node.type === 'ExportAllDeclaration' &&
+          node.exported &&
+          !isExternal(node.source.value)
+        ) {
+          throw new Error("`export * as foo from './...'` is not supported")
+        }
         if (rewriteImportExport(s, node)) continue
+
+        const sideEffect =
+          node.type === 'TSModuleDeclaration' && node.kind !== 'namespace'
 
         const stmt = node
         // remove `export` modifier
@@ -151,7 +166,9 @@ export function dts(): Plugin {
           const offset = node.start
 
           let bindingRange: Range
-          if (binding) {
+          if (sideEffect) {
+            bindingRange = [0, 0]
+          } else if (binding) {
             bindingRange = getIdentifierRange(binding, -offset)
           } else if (isDefaultExport) {
             const idx = s.sliceNode(node).indexOf('function') + 8
@@ -160,11 +177,12 @@ export function dts(): Plugin {
             continue
           }
 
-          const deps = collectDependencies(s, node)
-          const depsString = stringifyDependencies(s, deps)
-          const depsRanges: Range[] = deps.map((dep) => [
+          const depsNodes = collectDependencies(s, node)
+          const depsString = stringifyDependencies(s, depsNodes)
+          const depsSymbols: DepSymbol[] = depsNodes.map((dep) => [
             dep.start - offset,
             dep.end - offset,
+            dep._suffix,
           ])
           const needDeclare =
             (node.type === 'TSEnumDeclaration' ||
@@ -178,23 +196,25 @@ export function dts(): Plugin {
           const symbolId = register({
             code,
             binding: bindingRange,
-            deps: depsRanges,
+            deps: depsSymbols,
             needDeclare,
             jsdoc: jsdoc ? s.sliceNode(jsdoc) : undefined,
+            preserveName: sideEffect,
           })
 
-          const runtime = `[${symbolId}, ${depsString}]`
-          const bindingName = binding ? s.sliceNode(binding) : 'export_default'
+          const runtime = `[${symbolId}, ${depsString}${depsString && sideEffect ? ', ' : ''}${sideEffect ? 'sideEffect()' : ''}]`
+          const bindingName = sideEffect
+            ? `_${IdentifierIdx++}`
+            : binding
+              ? s.sliceNode(binding)
+              : 'export_default'
           if (isDefaultExport) {
             s.overwriteNode(
               stmt,
               `var ${bindingName} = ${runtime};export { ${bindingName} as default }`,
             )
           } else {
-            s.overwriteNode(
-              node,
-              `var ${bindingName} = [${symbolId}, ${depsString}]`,
-            )
+            s.overwriteNode(node, `var ${bindingName} = ${runtime};`)
           }
         }
       }
@@ -202,7 +222,6 @@ export function dts(): Plugin {
       if (!s.hasChanged()) return
 
       const str = s.toString()
-      // console.log(str)
       return str
     },
 
@@ -212,10 +231,10 @@ export function dts(): Plugin {
 
       const comments = new Set<string>()
       for (const id of chunk.moduleIds) {
-        const preserveComments = commentMap.get(id)
+        const preserveComments = preserveMap.get(id)
         if (preserveComments) {
           preserveComments.forEach((c) => comments.add(c))
-          commentMap.delete(id)
+          preserveMap.delete(id)
         }
       }
       if (comments.size) s.prepend(`${[...comments].join('\n')}\n`)
@@ -246,18 +265,20 @@ export function dts(): Plugin {
         }
 
         const symbolId = symbolIdNode.value
-        const { code, binding, deps, needDeclare, jsdoc } = retrieve(symbolId)
+        const { code, binding, deps, needDeclare, jsdoc, preserveName } =
+          retrieve(symbolId)
 
-        const depsRaw = depsNodes.map((dep) => {
-          if (dep.type !== 'ArrowFunctionExpression')
-            throw new Error('Expected ArrowFunctionExpression')
-          return s.sliceNode(dep.body)
-        })
+        const depsRaw = depsNodes
+          .filter((node) => node?.type === 'ArrowFunctionExpression')
+          .map((dep) => s.sliceNode(dep.body))
 
         const ss = new MagicStringAST(code)
-        overwriteOrAppend(ss, binding, s.sliceNode(decl.id))
+        if (!preserveName) {
+          overwriteOrAppend(ss, binding, s.sliceNode(decl.id))
+        }
         for (const dep of deps) {
-          overwriteOrAppend(ss, dep, depsRaw.shift()!)
+          const [start, end, suffix] = dep
+          overwriteOrAppend(ss, [start, end], depsRaw.shift()!, suffix)
         }
         if (needDeclare) ss.prepend('declare ')
         if (jsdoc) ss.prepend(`${jsdoc}\n`)
@@ -282,15 +303,28 @@ function collectReferenceDirectives(comment: Comment[]) {
     .map((c) => `//${c.value}`)
 }
 
-function collectDependencies(
-  s: MagicStringAST,
-  node: Node,
-): (Partial<Node> & Span)[] {
-  const deps: Set<Partial<Node> & Span> = new Set()
+function collectDependencies(s: MagicStringAST, node: Node): Dep[] {
+  const deps: Set<Dep> = new Set()
 
   ;(walk as any)(node, {
     leave(node: Node) {
-      if (node.type === 'TSInterfaceDeclaration' && node.extends) {
+      if (node.type === 'ExportNamedDeclaration') {
+        for (const specifier of node.specifiers) {
+          if (specifier.type === 'ExportSpecifier') {
+            let _suffix: string | undefined
+            if (
+              specifier.local.start === specifier.exported.start &&
+              specifier.local.end === specifier.exported.end
+            ) {
+              _suffix = ` as ${s.sliceNode(specifier.local)}`
+            }
+            addDependency({
+              ...specifier.local,
+              _suffix,
+            })
+          }
+        }
+      } else if (node.type === 'TSInterfaceDeclaration' && node.extends) {
         for (const heritage of node.extends || []) {
           addDependency(heritage.expression)
         }
@@ -325,7 +359,6 @@ function collectDependencies(
           return
         if (!node.qualifier) {
           throw new Error('Import namespace is not supported')
-          return
         }
         const source = node.argument.literal.value
         const imported = s.sliceNode(node.qualifier)
@@ -341,11 +374,8 @@ function collectDependencies(
   })
   return Array.from(deps)
 
-  function addDependency(node: Partial<Node> & Span) {
-    if (node.type === 'Identifier' && node.name === 'this') {
-      return
-    }
-
+  function addDependency(node: Dep) {
+    if (node.type === 'Identifier' && node.name === 'this') return
     deps.add(node)
   }
 }
@@ -358,10 +388,7 @@ function isReferenceId(
   )
 }
 
-function stringifyDependencies(
-  s: MagicStringAST,
-  deps: (Partial<Node> & Span)[],
-) {
+function stringifyDependencies(s: MagicStringAST, deps: Dep[]) {
   return deps
     .map(
       (node) =>
@@ -482,4 +509,8 @@ function importNamespace(s: MagicString, source: string, imported: string) {
     `import { ${imported} as ${local} } from ${JSON.stringify(source)};\n`,
   )
   return local
+}
+
+function isExternal(id: string) {
+  return !path.isAbsolute(id) && id[0] !== '.'
 }

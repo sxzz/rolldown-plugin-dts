@@ -6,6 +6,7 @@ interface Shadowed2 {}
 interface Shadowed3 {}
 interface Shadowed4 {}
 interface Referenced1 {}
+interface Referenced2 {}
 declare namespace ns {
   class Shadowed1 {}
   enum Shadowed2 {}

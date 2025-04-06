@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -18,9 +18,8 @@
+ interface Second {}
+ declare module "foobar" {
+   const second3: Second;
+ }
+-// all these have at least one `export`, which silences TS error `2669`
+ interface First {}
+ declare global {
+   namespace NodeJS {
+     interface Global {

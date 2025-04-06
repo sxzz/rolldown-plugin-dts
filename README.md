@@ -34,8 +34,12 @@ const config = [
 export default config
 ```
 
-> [!NOTE]
-> Namespaces are not supported yet.
+## Caveats
+
+- Namespaces are not supported yet.
+  - `export * as ns from './ns'`
+  - `import * as ns from './ns'` and then `export { ns }`
+  - `type ns = import('./ns')`
 
 ## Credits
 
