@@ -41,6 +41,11 @@ export default config
   - `import * as ns from './ns'` and then `export { ns }`
   - `type ns = import('./ns')`
 
+## Differences from `rollup-plugin-dts`
+
+- The `rollup-plugin-dts` plugin is designed for Rollup, whereas this plugin is specifically tailored for Rolldown.
+- This plugin does not generate dts files but instead bundles them.
+
 ## Credits
 
 The project is inspired by [rollup-plugin-dts](https://github.com/Swatinem/rollup-plugin-dts)
