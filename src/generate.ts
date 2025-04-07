@@ -30,9 +30,17 @@ export function createGeneratePlugin({
         },
       },
       handler(code, id) {
-        const result = oxcIsolatedDeclaration(id, code, isolatedDeclaration)
+        const { code: dtsCode, errors } = oxcIsolatedDeclaration(
+          id,
+          code,
+          isolatedDeclaration,
+        )
+        if (errors.length) {
+          return this.error(errors[0])
+        }
+
         const dtsId = filename_ts_to_dts(id)
-        dtsMap.set(dtsId, result.code)
+        dtsMap.set(dtsId, dtsCode)
 
         const mod = this.getModuleInfo(id)
         if (mod?.isEntry) {
