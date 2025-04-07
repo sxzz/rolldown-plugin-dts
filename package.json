@@ -1,7 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "version": "0.1.0",
-  "packageManager": "pnpm@10.7.1",
+  "packageManager": "pnpm@10.8.0",
   "description": "A Rolldown plugin to bundle dts files",
   "type": "module",
   "license": "MIT",
@@ -41,24 +41,25 @@
   },
   "dependencies": {
     "magic-string-ast": "^0.9.1",
-    "oxc-parser": "^0.62.0"
+    "oxc-parser": "^0.62.0",
+    "oxc-transform": "^0.62.0"
   },
   "devDependencies": {
     "@sxzz/eslint-config": "^6.1.1",
     "@sxzz/prettier-config": "^2.2.1",
     "@sxzz/test-utils": "^0.5.4",
     "@types/diff": "^7.0.2",
-    "@types/node": "^22.13.17",
+    "@types/node": "^22.14.0",
     "bumpp": "^10.1.0",
     "diff": "^7.0.0",
-    "eslint": "^9.23.0",
+    "eslint": "^9.24.0",
     "estree-walker": "^3.0.3",
     "prettier": "^3.5.3",
     "rolldown": "1.0.0-beta.7",
     "rollup-plugin-dts": "^6.2.1",
-    "tsdown": "^0.7.3",
+    "tsdown": "^0.8.0-beta.1",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2",
+    "typescript": "^5.8.3",
     "vitest": "^3.1.1"
   },
   "engines": {
