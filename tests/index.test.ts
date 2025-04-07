@@ -5,7 +5,7 @@ import { rolldownBuild, rollupBuild, testFixtures } from '@sxzz/test-utils'
 import { createPatch } from 'diff'
 import { dts as rollupDts } from 'rollup-plugin-dts'
 import { expect } from 'vitest'
-import { dts } from '../src'
+import { createFakeJsPlugin } from '../src'
 
 const isUpdateEnabled =
   process.env.npm_lifecycle_script?.includes('-u') ||
@@ -18,9 +18,9 @@ await testFixtures(
 
     let error: any
     let [rolldownSnapshot, rollupSnapshot] = await Promise.all([
-      rolldownBuild(id, [dts()], { treeshake: true }).then(
-        ({ snapshot }) => snapshot,
-      ),
+      rolldownBuild(id, [createFakeJsPlugin({ dtsInput: true })], {
+        treeshake: true,
+      }).then(({ snapshot }) => snapshot),
       rollupBuild(id, [rollupDts()], undefined, {
         entryFileNames: '[name].ts',
       }).then(({ snapshot }) => snapshot),

@@ -15,7 +15,7 @@ export function createGeneratePlugin({
   isolatedDeclaration,
   inputAlias,
   external,
-}: Options): Plugin {
+}: Pick<Options, 'external' | 'isolatedDeclaration' | 'inputAlias'>): Plugin {
   const dtsMap = new Map<string, string>()
 
   return {

@@ -7,6 +7,13 @@ import type { FunctionPluginHooks, Plugin } from 'rolldown'
 type ResolveIdExtraOptions = Parameters<FunctionPluginHooks['resolveId']>[2]
 
 export interface Options {
+  /**
+   * When entries are `.dts` files (instead of `.ts` files), this option should be set to `true`.
+   *
+   * If enabled, the plugin will skip generating a `.dts` file for the entry point.
+   */
+  dtsInput?: boolean
+
   isolatedDeclaration?: Omit<IsolatedDeclarationsOptions, 'sourcemap'>
   /**
    * dts file name alias `{ [filename]: path }`
@@ -26,5 +33,7 @@ export interface Options {
 }
 
 export function dts(options: Options = {}): Plugin[] {
-  return [createGeneratePlugin(options), createFakeJsPlugin()]
+  return [createGeneratePlugin(options), createFakeJsPlugin(options)]
 }
+
+export { createFakeJsPlugin, createGeneratePlugin }

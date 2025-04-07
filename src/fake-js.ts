@@ -22,6 +22,7 @@ import {
   RE_NODE_MODULES,
 } from './utils/filename'
 import { overwriteOrAppend, type Range } from './utils/magic-string'
+import type { Options } from '.'
 import type { Plugin } from 'rolldown'
 
 const RE_TYPE = /\btype\b/
@@ -49,7 +50,9 @@ interface SymbolInfo {
   preserveName: boolean
 }
 
-export function createFakeJsPlugin(): Plugin {
+export function createFakeJsPlugin({
+  dtsInput,
+}: Pick<Options, 'dtsInput'>): Plugin {
   let symbolIdx = 0
   let identifierIdx = 0
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
@@ -72,9 +75,28 @@ export function createFakeJsPlugin(): Plugin {
   return {
     name: 'rolldown-plugin-dts:fake-js',
 
+    options: dtsInput
+      ? (options) => {
+          return {
+            ...options,
+            resolve: {
+              extensions: ['.d.ts', '.d.mts', '.d.cts'],
+              extensionAlias: {
+                '.js': ['.d.ts'],
+                '.mjs': ['.d.mts'],
+                '.cjs': ['.d.cts'],
+              },
+              ...options.resolve,
+            },
+          }
+        }
+      : undefined,
+
     outputOptions(options) {
       return {
         ...options,
+        entryFileNames:
+          options.entryFileNames ?? (dtsInput ? '[name].ts' : undefined),
         chunkFileNames(chunk) {
           const original =
             (typeof options.chunkFileNames === 'function'
