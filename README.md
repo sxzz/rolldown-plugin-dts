@@ -18,21 +18,14 @@ Add the plugin to your `rolldown.config.js`:
 // rolldown.config.js
 import { dts } from 'rolldown-plugin-dts'
 
-const config = [
-  {
-    input: './src/index.ts',
-    plugins: [dts()],
-    output: [
-      {
-        file: 'dist/index.js',
-        format: 'es',
-      },
-    ],
-  },
-]
-
-export default config
+export default {
+  input: './src/index.ts',
+  plugins: [dts()],
+  output: [{ dir: 'dist', format: 'es' }],
+}
 ```
+
+You can find a real demo in [here](./rolldown.config.ts).
 
 ## Options
 
