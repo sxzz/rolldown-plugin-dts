@@ -33,7 +33,12 @@ export interface Options {
 }
 
 export function dts(options: Options = {}): Plugin[] {
-  return [createGeneratePlugin(options), createFakeJsPlugin(options)]
+  const plugins: Plugin[] = []
+  if (!options.dtsInput) {
+    plugins.push(createGeneratePlugin(options))
+  }
+  plugins.push(createFakeJsPlugin(options))
+  return plugins
 }
 
 export { createFakeJsPlugin, createGeneratePlugin }
