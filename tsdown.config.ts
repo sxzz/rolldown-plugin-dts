@@ -1,4 +1,3 @@
-import { transformPlugin } from 'rolldown/experimental'
 import { defineConfig } from 'tsdown'
 import { dts } from './src/index'
 
