@@ -25,6 +25,10 @@ export interface Options {
    * }
    */
   inputAlias?: Record<string, string>
+
+  /**
+   * Determines whether the module imported by `.dts` files should be treated as external or not.
+   */
   external?: (
     id: string,
     importer: string,

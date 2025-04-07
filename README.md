@@ -2,7 +2,7 @@
 
 [![Unit Test](https://github.com/sxzz/rolldown-plugin-dts/actions/workflows/unit-test.yml/badge.svg)](https://github.com/sxzz/rolldown-plugin-dts/actions/workflows/unit-test.yml)
 
-A Rolldown plugin to bundle dts files.
+A Rolldown plugin to generate and bundle dts files.
 
 ## Install
 
@@ -20,11 +20,11 @@ import { dts } from 'rolldown-plugin-dts'
 
 const config = [
   {
-    input: './index.d.ts',
+    input: './src/index.ts',
     plugins: [dts()],
     output: [
       {
-        file: 'dist/index.d.ts',
+        file: 'dist/index.js',
         format: 'es',
       },
     ],
@@ -34,17 +34,50 @@ const config = [
 export default config
 ```
 
+## Options
+
+````ts
+interface Options {
+  /**
+   * When entries are `.dts` files (instead of `.ts` files), this option should be set to `true`.
+   *
+   * If enabled, the plugin will skip generating a `.dts` file for the entry point.
+   */
+  dtsInput?: boolean
+
+  isolatedDeclaration?: Omit<IsolatedDeclarationsOptions, 'sourcemap'>
+
+  /**
+   * dts file name alias `{ [filename]: path }`
+   *
+   * @example
+   * ```ts
+   * inputAlias: {
+   *   'foo.d.ts': 'foo/index.d.ts',
+   * }
+   */
+  inputAlias?: Record<string, string>
+
+  /**
+   * Determines whether the module imported by `.dts` files should be treated as external or not.
+   */
+  external?: (
+    id: string,
+    importer: string,
+    extraOptions: ResolveIdExtraOptions,
+  ) => boolean | void
+}
+````
+
 ## Caveats
+
+- The plugin uses Oxc's `isolatedDeclarations` to generate `.dts` files,
+  which means you need to set `isolatedDeclarations: true` in your `tsconfig.json` and ensure there are no errors.
 
 - Namespaces are not supported yet.
   - `export * as ns from './ns'`
   - `import * as ns from './ns'` and then `export { ns }`
   - `type ns = import('./ns')`
-
-## Differences from `rollup-plugin-dts`
-
-- The `rollup-plugin-dts` plugin is designed for Rollup, whereas this plugin is specifically tailored for Rolldown.
-- This plugin does not generate dts files but instead bundles them.
 
 ## Credits
 
