@@ -8,9 +8,9 @@ type ResolveIdExtraOptions = Parameters<FunctionPluginHooks['resolveId']>[2]
 
 export interface Options {
   /**
-   * When entries are `.dts` files (instead of `.ts` files), this option should be set to `true`.
+   * When entries are `.d.ts` files (instead of `.ts` files), this option should be set to `true`.
    *
-   * If enabled, the plugin will skip generating a `.dts` file for the entry point.
+   * If enabled, the plugin will skip generating a `.d.ts` file for the entry point.
    */
   dtsInput?: boolean
 
@@ -27,7 +27,7 @@ export interface Options {
   inputAlias?: Record<string, string>
 
   /**
-   * Determines whether the module imported by `.dts` files should be treated as external or not.
+   * Determines whether the module imported by `.d.ts` files should be treated as external or not.
    */
   external?: (
     id: string,

@@ -32,9 +32,9 @@ You can find a real demo in [here](./rolldown.config.ts).
 ````ts
 interface Options {
   /**
-   * When entries are `.dts` files (instead of `.ts` files), this option should be set to `true`.
+   * When entries are `.d.ts` files (instead of `.ts` files), this option should be set to `true`.
    *
-   * If enabled, the plugin will skip generating a `.dts` file for the entry point.
+   * If enabled, the plugin will skip generating a `.d.ts` file for the entry point.
    */
   dtsInput?: boolean
 
@@ -52,7 +52,7 @@ interface Options {
   inputAlias?: Record<string, string>
 
   /**
-   * Determines whether the module imported by `.dts` files should be treated as external or not.
+   * Determines whether the module imported by `.d.ts` files should be treated as external or not.
    */
   external?: (
     id: string,
@@ -64,7 +64,7 @@ interface Options {
 
 ## Caveats
 
-- The plugin uses Oxc's `isolatedDeclarations` to generate `.dts` files,
+- The plugin uses Oxc's `isolatedDeclarations` to generate `.d.ts` files,
   which means you need to set `isolatedDeclarations: true` in your `tsconfig.json` and ensure there are no errors.
 
 - Namespaces are not supported yet.
