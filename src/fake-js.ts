@@ -171,6 +171,7 @@ export function createFakeJsPlugin({
               (c) =>
                 c.type === 'Block' &&
                 c.value[0] === '*' &&
+                c.start < node.start &&
                 stmt.start - c.end <= 1,
             )
 
