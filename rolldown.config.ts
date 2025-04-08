@@ -7,7 +7,10 @@ const config = defineConfig({
   plugins: [dts()],
   external: Object.keys(dependencies),
   platform: 'node',
-  output: [{ dir: 'temp', format: 'es' }],
+  output: [
+    { dir: 'temp/esm', format: 'es' },
+    // { dir: 'temp/cjs', format: 'cjs' },
+  ],
 })
 
 export default config

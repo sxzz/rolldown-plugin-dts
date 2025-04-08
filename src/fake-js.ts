@@ -93,6 +93,11 @@ export function createFakeJsPlugin({
       : undefined,
 
     outputOptions(options) {
+      if (options.format === 'cjs' || options.format === 'commonjs') {
+        throw new Error(
+          '[rolldown-plugin-dts] Cannot bundle dts files with `cjs` format.',
+        )
+      }
       return {
         ...options,
         entryFileNames:
