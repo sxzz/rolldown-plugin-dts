@@ -57,11 +57,10 @@ export function createGeneratePlugin({
         if (mod?.isEntry) {
           let fileName = basename(dtsId)
 
-          if (inputAliasMap.has(dtsId)) {
-            fileName = inputAliasMap.get(dtsId)!
-          }
           if (inputAliasMap.has(fileName)) {
             fileName = inputAliasMap.get(fileName)!
+          } else if (inputAliasMap.has(dtsId)) {
+            fileName = inputAliasMap.get(dtsId)!
           }
 
           this.emitFile({
