@@ -17,9 +17,20 @@ export function createGeneratePlugin({
   external,
 }: Pick<Options, 'external' | 'isolatedDeclaration' | 'inputAlias'>): Plugin {
   const dtsMap = new Map<string, string>()
+  const inputAliasMap = new Map<string, string>(
+    Object.entries(inputAlias || {}),
+  )
+
+  let inputOption: Record<string, string> | undefined
 
   return {
     name: 'rolldown-plugin-dts:generate',
+
+    options({ input }) {
+      if (isPlainObject(input)) {
+        inputOption = { ...input }
+      }
+    },
 
     transform: {
       order: 'pre',
@@ -45,9 +56,14 @@ export function createGeneratePlugin({
         const mod = this.getModuleInfo(id)
         if (mod?.isEntry) {
           let fileName = basename(dtsId)
-          if (inputAlias?.[fileName]) {
-            fileName = inputAlias[fileName]
+
+          if (inputAliasMap.has(dtsId)) {
+            fileName = inputAliasMap.get(dtsId)!
           }
+          if (inputAliasMap.has(fileName)) {
+            fileName = inputAliasMap.get(fileName)!
+          }
+
           this.emitFile({
             type: 'chunk',
             id: dtsId,
@@ -63,8 +79,7 @@ export function createGeneratePlugin({
         return { id, meta: { dtsFile: true } }
       }
 
-      const importerMod = importer ? this.getModuleInfo(importer) : null
-      if (importerMod?.meta.dtsFile) {
+      if (importer && this.getModuleInfo(importer)?.meta.dtsFile) {
         if (
           // FIXME external all deps temporarily
           // should introduce custom resolver for resolving types from node_modules
@@ -91,6 +106,22 @@ export function createGeneratePlugin({
         if (dtsMap.has(dtsId)) {
           return { id: dtsId, meta: { dtsFile: true } }
         }
+      } else if (extraOptions.isEntry && inputOption) {
+        // mapping entry point to dts filename
+        const resolution = await this.resolve(id, importer, extraOptions)
+        if (!resolution) return
+
+        const dtsId = filename_ts_to_dts(resolution.id)
+        if (inputAliasMap.has(dtsId)) return resolution
+
+        for (const [name, entry] of Object.entries(inputOption)) {
+          if (entry === id) {
+            inputAliasMap.set(dtsId, `${name}.d.ts`)
+            break
+          }
+        }
+
+        return resolution
       }
     },
 
@@ -111,4 +142,13 @@ export function createGeneratePlugin({
       },
     },
   }
+}
+
+function isPlainObject(data: unknown): data is Record<PropertyKey, unknown> {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const proto = Object.getPrototypeOf(data)
+  return proto === null || proto === Object.prototype
 }
