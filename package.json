@@ -41,8 +41,8 @@
   },
   "dependencies": {
     "magic-string-ast": "^0.9.1",
-    "oxc-parser": "^0.62.0",
-    "oxc-transform": "^0.62.0"
+    "oxc-parser": "^0.63.0",
+    "oxc-transform": "^0.63.0"
   },
   "devDependencies": {
     "@sxzz/eslint-config": "^6.1.1",
