@@ -40,6 +40,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
+    "dts-resolver": "^0.1.0",
     "magic-string-ast": "^0.9.1",
     "oxc-parser": "^0.62.0",
     "oxc-transform": "^0.62.0"

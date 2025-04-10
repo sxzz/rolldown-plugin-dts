@@ -1,10 +1,7 @@
 import { createFakeJsPlugin } from './fake-js'
 import { createGeneratePlugin } from './generate'
 import type { IsolatedDeclarationsOptions } from 'oxc-transform'
-import type { FunctionPluginHooks, Plugin } from 'rolldown'
-
-// TODO https://github.com/rolldown/rolldown/pull/4050
-type ResolveIdExtraOptions = Parameters<FunctionPluginHooks['resolveId']>[2]
+import type { Plugin } from 'rolldown'
 
 export interface Options {
   /**
@@ -26,14 +23,8 @@ export interface Options {
    */
   inputAlias?: Record<string, string>
 
-  /**
-   * Determines whether the module imported by `.d.ts` files should be treated as external or not.
-   */
-  external?: (
-    id: string,
-    importer: string,
-    extraOptions: ResolveIdExtraOptions,
-  ) => boolean | void
+  /** Resolve external types used in dts files from `node_modules` */
+  resolve?: boolean | (string | RegExp)[]
 }
 
 export function dts(options: Options = {}): Plugin[] {

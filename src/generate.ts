@@ -1,4 +1,5 @@
 import { basename } from 'node:path'
+import { createResolver } from 'dts-resolver'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
 import {
   filename_dts_to,
@@ -11,16 +12,18 @@ import {
 import type { Options } from '.'
 import type { Plugin } from 'rolldown'
 
+const meta = { dtsFile: true } as const
+
 export function createGeneratePlugin({
   isolatedDeclaration,
   inputAlias = {},
-  external,
-}: Pick<Options, 'external' | 'isolatedDeclaration' | 'inputAlias'>): Plugin {
+  resolve = false,
+}: Pick<Options, 'isolatedDeclaration' | 'inputAlias' | 'resolve'>): Plugin {
   const dtsMap = new Map<string, string>()
   const inputAliasMap = new Map<string, string>(Object.entries(inputAlias))
+  const resolver = createResolver()
 
   let inputOption: Record<string, string> | undefined
-
   return {
     name: 'rolldown-plugin-dts:generate',
 
@@ -73,17 +76,28 @@ export function createGeneratePlugin({
     async resolveId(id, importer, extraOptions) {
       // must be entry
       if (dtsMap.has(id)) {
-        return { id, meta: { dtsFile: true } }
+        return { id, meta }
       }
 
       if (importer && this.getModuleInfo(importer)?.meta.dtsFile) {
-        if (
-          // FIXME external all deps temporarily
-          // should introduce custom resolver for resolving types from node_modules
-          !isRelative(id) ||
-          external?.(id, importer!, extraOptions) === true
-        ) {
-          return { id, external: true }
+        // in dts file
+
+        // resolve dependency
+        if (!isRelative(id)) {
+          let shouldResolve: boolean
+          if (typeof resolve === 'boolean') {
+            shouldResolve = resolve
+          } else {
+            shouldResolve = resolve.some((pattern) =>
+              typeof pattern === 'string' ? id === pattern : pattern.test(id),
+            )
+          }
+          if (shouldResolve) {
+            const resolution = resolver(id, importer)
+            if (resolution) return { id: resolution, meta }
+          } else {
+            return { id, external: true, meta }
+          }
         }
 
         // link to the original module
@@ -95,13 +109,13 @@ export function createGeneratePlugin({
 
         const dtsId = filename_ts_to_dts(resolution.id)
         if (dtsMap.has(dtsId)) {
-          return { id: dtsId, meta: { dtsFile: true } }
+          return { id: dtsId, meta }
         }
 
         // pre-load original module if not already loaded
         await this.load(resolution)
         if (dtsMap.has(dtsId)) {
-          return { id: dtsId, meta: { dtsFile: true } }
+          return { id: dtsId, meta }
         }
       } else if (extraOptions.isEntry && inputOption) {
         // mapping entry point to dts filename

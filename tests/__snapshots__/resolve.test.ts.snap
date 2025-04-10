@@ -1,0 +1,74 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`resolve dep 1`] = `
+"import { build } from "rolldown";
+import MagicString, { MagicStringOptions, OverwriteOptions } from "magic-string";
+
+//#region node_modules/.pnpm/magic-string-ast@0.9.1/node_modules/magic-string-ast/dist/index.d.ts
+/**
+* MagicString with AST manipulation
+*/
+/**
+* MagicString with AST manipulation
+*/
+interface Node {
+	start?: number | null;
+	end?: number | null;
+}
+/**
+* MagicString with AST manipulation
+*/
+/**
+* MagicString with AST manipulation
+*/
+interface MagicStringAST extends MagicString {}
+/**
+* MagicString with AST manipulation
+*/
+/**
+* MagicString with AST manipulation
+*/
+declare class MagicStringAST implements MagicString {
+	private prototype;
+	s: MagicString;
+	constructor(str: string | MagicString, options?: MagicStringOptions, prototype?: typeof MagicString);
+	private getNodePos;
+	removeNode(node: Node | Node[], { offset }?: {
+		offset?: number
+	}): this;
+	moveNode(node: Node | Node[], index: number, { offset }?: {
+		offset?: number
+	}): this;
+	sliceNode(node: Node | Node[], { offset }?: {
+		offset?: number
+	}): string;
+	overwriteNode(node: Node | Node[], content: string | Node | Node[], { offset,...options }?: OverwriteOptions & {
+		offset?: number
+	}): this;
+	snipNode(node: Node | Node[], { offset }?: {
+		offset?: number
+	}): MagicStringAST;
+	clone(): this;
+	toString(): string;
+}
+/**
+* The result of code transformation.
+*/
+/**
+* The result of code transformation.
+*/
+interface CodeTransform {
+	code: string;
+	map: any;
+}
+/**
+* Generate an object of code and source map from MagicString.
+*/
+/**
+* Generate an object of code and source map from MagicString.
+*/
+declare function generateTransform(s: MagicString | undefined, id: string): CodeTransform | undefined;
+
+//#endregion
+export { MagicStringAST, build };"
+`;

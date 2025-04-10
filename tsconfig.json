@@ -17,5 +17,5 @@
     "skipLibCheck": true
   },
   "include": ["src", "tests"],
-  "exclude": ["tests/rollup-plugin-dts"]
+  "exclude": ["tests/fixtures", "tests/rollup-plugin-dts"]
 }

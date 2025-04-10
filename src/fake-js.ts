@@ -19,7 +19,6 @@ import {
   filename_js_to_dts,
   isRelative,
   RE_DTS,
-  RE_NODE_MODULES,
 } from './utils/filename'
 import { overwriteOrAppend, type Range } from './utils/magic-string'
 import type { Options } from '.'
@@ -117,12 +116,7 @@ export function createFakeJsPlugin({
     },
 
     transform: {
-      filter: {
-        id: {
-          include: [RE_DTS],
-          exclude: [RE_NODE_MODULES],
-        },
-      },
+      filter: { id: RE_DTS },
       async handler(code, id) {
         const { program, comments } = await parseAsync(id, code)
         const preserved = collectReferenceDirectives(comments)

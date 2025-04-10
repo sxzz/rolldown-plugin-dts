@@ -51,14 +51,8 @@ interface Options {
    */
   inputAlias?: Record<string, string>
 
-  /**
-   * Determines whether the module imported by `.d.ts` files should be treated as external or not.
-   */
-  external?: (
-    id: string,
-    importer: string,
-    extraOptions: ResolveIdExtraOptions,
-  ) => boolean | void
+  /** Resolve external types used in dts files from `node_modules` */
+  resolve?: boolean | (string | RegExp)[]
 }
 ````
 
