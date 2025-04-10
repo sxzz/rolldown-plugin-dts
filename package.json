@@ -39,6 +39,9 @@
     "release": "bumpp && pnpm publish",
     "prepublishOnly": "pnpm run build"
   },
+  "peerDependencies": {
+    "rolldown": "^1.0.0-beta.7"
+  },
   "dependencies": {
     "dts-resolver": "^0.1.0",
     "magic-string-ast": "^0.9.1",
@@ -56,7 +59,7 @@
     "eslint": "^9.24.0",
     "estree-walker": "^3.0.3",
     "prettier": "^3.5.3",
-    "rolldown": "1.0.0-beta.7",
+    "rolldown": "^1.0.0-beta.7",
     "rollup-plugin-dts": "^6.2.1",
     "tsdown": "^0.8.0-beta.1",
     "tsx": "^4.19.3",
