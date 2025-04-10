@@ -1,4 +1,4 @@
-import { basename } from 'node:path'
+import { basename, extname } from 'node:path'
 import { createResolver } from 'dts-resolver'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
 import {
@@ -6,6 +6,7 @@ import {
   filename_ts_to_dts,
   isRelative,
   RE_DTS,
+  RE_JS,
   RE_NODE_MODULES,
   RE_TS,
 } from './utils/filename'
@@ -16,11 +17,19 @@ const meta = { dtsFile: true } as const
 
 export function createGeneratePlugin({
   isolatedDeclaration,
-  inputAlias = {},
+  inputAlias,
   resolve = false,
 }: Pick<Options, 'isolatedDeclaration' | 'inputAlias' | 'resolve'>): Plugin {
-  const dtsMap = new Map<string, string>()
-  const inputAliasMap = new Map<string, string>(Object.entries(inputAlias))
+  const dtsMap = new Map<
+    string,
+    {
+      code: string
+      src: string
+    }
+  >()
+  const inputAliasMap = new Map<string, string>(
+    inputAlias && Object.entries(inputAlias),
+  )
   const resolver = createResolver()
 
   let inputOption: Record<string, string> | undefined
@@ -30,6 +39,22 @@ export function createGeneratePlugin({
     options({ input }) {
       if (isPlainObject(input)) {
         inputOption = { ...input }
+      }
+    },
+
+    outputOptions(options) {
+      return {
+        ...options,
+        entryFileNames(chunk) {
+          const original =
+            (typeof options.entryFileNames === 'function'
+              ? options.entryFileNames(chunk)
+              : options.entryFileNames) || '[name].js'
+          if (chunk.name.endsWith('.d')) {
+            return original.replace(RE_JS, '.$1ts')
+          }
+          return original
+        },
       }
     },
 
@@ -47,27 +72,26 @@ export function createGeneratePlugin({
           code,
           isolatedDeclaration,
         )
-        if (errors.length) {
-          return this.error(errors[0])
-        }
+        if (errors.length) return this.error(errors[0])
 
         const dtsId = filename_ts_to_dts(id)
-        dtsMap.set(dtsId, dtsCode)
+        dtsMap.set(dtsId, {
+          code: dtsCode,
+          src: id,
+        })
 
         const mod = this.getModuleInfo(id)
         if (mod?.isEntry) {
-          let fileName = basename(dtsId)
-
-          if (inputAliasMap.has(fileName)) {
-            fileName = inputAliasMap.get(fileName)!
+          let name: string | undefined = basename(dtsId, extname(dtsId))
+          if (inputAliasMap.has(name)) {
+            name = inputAliasMap.get(name)!
           } else if (inputAliasMap.has(dtsId)) {
-            fileName = inputAliasMap.get(dtsId)!
+            name = inputAliasMap.get(dtsId)!
           }
-
           this.emitFile({
             type: 'chunk',
             id: dtsId,
-            fileName,
+            name,
           })
         }
       },
@@ -146,7 +170,7 @@ export function createGeneratePlugin({
       handler(id) {
         if (dtsMap.has(id)) {
           return {
-            code: dtsMap.get(id)!,
+            code: dtsMap.get(id)!.code,
             moduleSideEffects: false,
           }
         }
