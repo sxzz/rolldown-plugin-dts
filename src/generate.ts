@@ -13,13 +13,11 @@ import type { Plugin } from 'rolldown'
 
 export function createGeneratePlugin({
   isolatedDeclaration,
-  inputAlias,
+  inputAlias = {},
   external,
 }: Pick<Options, 'external' | 'isolatedDeclaration' | 'inputAlias'>): Plugin {
   const dtsMap = new Map<string, string>()
-  const inputAliasMap = new Map<string, string>(
-    Object.entries(inputAlias || {}),
-  )
+  const inputAliasMap = new Map<string, string>(Object.entries(inputAlias))
 
   let inputOption: Record<string, string> | undefined
 
