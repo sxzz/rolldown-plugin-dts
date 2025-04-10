@@ -63,7 +63,7 @@ interface Options {
 }
 ````
 
-## Caveats
+## ⚠️ Caveats
 
 - The plugin uses Oxc's `isolatedDeclarations` to generate `.d.ts` files,
   which means you need to set `isolatedDeclarations: true` in your `tsconfig.json` and ensure there are no errors.
