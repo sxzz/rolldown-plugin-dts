@@ -2,25 +2,42 @@ import { defineConfig } from 'rolldown'
 import { dependencies } from './package.json'
 import { dts } from './src/index'
 
-const config = defineConfig({
+const common = defineConfig({
   input: ['./src/index.ts', './src/generate.ts'],
-  plugins: [dts()],
   external: Object.keys(dependencies),
   platform: 'node',
-  output: [
-    {
+})
+
+const config = defineConfig([
+  {
+    ...common,
+    plugins: [dts()],
+    output: {
       dir: 'temp/esm',
       format: 'es',
       entryFileNames: '[name].mjs',
       chunkFileNames: '[name]-[hash].mjs',
     },
-    // {
-    //   dir: 'temp/cjs',
-    //   format: 'cjs',
-    //   entryFileNames: '[name].cjs',
-    //   chunkFileNames: '[name]-[hash].cjs',
-    // },
-  ],
-})
+  },
+  {
+    ...common,
+    output: {
+      dir: 'temp/cjs',
+      format: 'cjs',
+      entryFileNames: '[name].cjs',
+      chunkFileNames: '[name]-[hash].cjs',
+    },
+  },
+  {
+    ...common,
+    plugins: [dts({ emitDtsOnly: true })],
+    output: {
+      dir: 'temp/cjs',
+      format: 'esm',
+      entryFileNames: '[name].cjs',
+      chunkFileNames: '[name]-[hash].cjs',
+    },
+  },
+])
 
 export default config

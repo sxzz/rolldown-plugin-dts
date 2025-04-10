@@ -19,7 +19,11 @@ export function createGeneratePlugin({
   isolatedDeclaration,
   inputAlias,
   resolve = false,
-}: Pick<Options, 'isolatedDeclaration' | 'inputAlias' | 'resolve'>): Plugin {
+  emitDtsOnly = false,
+}: Pick<
+  Options,
+  'isolatedDeclaration' | 'inputAlias' | 'resolve' | 'emitDtsOnly'
+>): Plugin {
   const dtsMap = new Map<
     string,
     {
@@ -93,6 +97,10 @@ export function createGeneratePlugin({
             id: dtsId,
             name,
           })
+
+          if (emitDtsOnly) {
+            return '//' // placeholder
+          }
         }
       },
     },
@@ -176,6 +184,16 @@ export function createGeneratePlugin({
         }
       },
     },
+
+    generateBundle: emitDtsOnly
+      ? (options, bundle) => {
+          for (const fileName of Object.keys(bundle)) {
+            if (!RE_DTS.test(fileName)) {
+              delete bundle[fileName]
+            }
+          }
+        }
+      : undefined,
   }
 }
 
