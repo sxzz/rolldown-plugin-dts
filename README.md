@@ -73,6 +73,16 @@ interface Options {
   - `import * as ns from './ns'` and then `export { ns }`
   - `type ns = import('./ns')`
 
+## Differences from `rollup-plugin-dts`
+
+`rolldown-plugin-dts` generates separate chunks for `.d.ts` files, enabling both source code (`.js`)
+and type definition files (`.d.ts`) to be produced in a single build process.
+
+However, this functionality is limited to ESM output format. Consequently,
+**two** distinct build processes are required for CommonJS source code (`.cjs`)
+and its corresponding type definition files (`.d.cts`).
+In such cases, the `emitDtsOnly` option can be particularly helpful.
+
 ## Credits
 
 The project is inspired by [rollup-plugin-dts](https://github.com/Swatinem/rollup-plugin-dts)
