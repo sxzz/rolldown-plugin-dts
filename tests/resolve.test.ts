@@ -17,7 +17,10 @@ test('resolve dep', async () => {
         if (importer?.endsWith('index.ts')) return { id, external: true }
       },
     },
-    dts({ resolve: ['magic-string-ast'] }),
+    dts({
+      resolve: ['magic-string-ast'],
+      isolatedDeclaration: true,
+    }),
   ])
   const chunk = chunks.find(
     (chunk): chunk is OutputChunk => chunk.fileName === 'index.d.ts',

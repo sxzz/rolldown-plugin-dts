@@ -1,6 +1,8 @@
 import { basename, extname } from 'node:path'
 import { createResolver } from 'dts-resolver'
+import { getTsconfig } from 'get-tsconfig'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
+import * as ts from 'typescript'
 import {
   filename_dts_to,
   filename_ts_to_dts,
@@ -10,19 +12,25 @@ import {
   RE_NODE_MODULES,
   RE_TS,
 } from './utils/filename'
+import { createOrGetTsModule, formatHost, type TsProgram } from './utils/tsc'
 import type { Options } from '.'
 import type { Plugin } from 'rolldown'
 
 const meta = { dtsFile: true } as const
 
 export function createGeneratePlugin({
+  compilerOptions,
   isolatedDeclaration,
   inputAlias,
   resolve = false,
   emitDtsOnly = false,
 }: Pick<
   Options,
-  'isolatedDeclaration' | 'inputAlias' | 'resolve' | 'emitDtsOnly'
+  | 'isolatedDeclaration'
+  | 'inputAlias'
+  | 'resolve'
+  | 'emitDtsOnly'
+  | 'compilerOptions'
 >): Plugin {
   const dtsMap = new Map<
     string,
@@ -35,10 +43,22 @@ export function createGeneratePlugin({
     inputAlias && Object.entries(inputAlias),
   )
   const resolver = createResolver()
+  let programs: TsProgram[] = []
 
   let inputOption: Record<string, string> | undefined
   return {
     name: 'rolldown-plugin-dts:generate',
+
+    buildStart(options) {
+      if (isolatedDeclaration == null) {
+        const { config } = getTsconfig(options.cwd) || {}
+        if (config?.compilerOptions?.isolatedDeclarations) {
+          isolatedDeclaration = {
+            stripInternal: !!config?.compilerOptions.stripInternal,
+          }
+        }
+      }
+    },
 
     options({ input }) {
       if (isPlainObject(input)) {
@@ -71,12 +91,43 @@ export function createGeneratePlugin({
         },
       },
       handler(code, id) {
-        const { code: dtsCode, errors } = oxcIsolatedDeclaration(
-          id,
-          code,
-          isolatedDeclaration,
-        )
-        if (errors.length) return this.error(errors[0])
+        let dtsCode: string | undefined
+
+        const mod = this.getModuleInfo(id)
+        const isEntry = mod?.isEntry
+
+        if (isolatedDeclaration) {
+          const result = oxcIsolatedDeclaration(
+            id,
+            code,
+            isolatedDeclaration === true ? {} : isolatedDeclaration,
+          )
+          if (result.errors.length) return this.error(result.errors[0])
+          dtsCode = result.code
+        } else {
+          const {
+            program: { program },
+            file,
+          } = createOrGetTsModule(programs, compilerOptions, id, code, isEntry)
+          const { emitSkipped, diagnostics } = program.emit(
+            file,
+            (_, code) => {
+              dtsCode = code
+            },
+            undefined,
+            true,
+            undefined,
+            // @ts-expect-error private API: forceDtsEmit
+            true,
+          )
+          if (emitSkipped && diagnostics.length) {
+            return this.error(ts.formatDiagnostics(diagnostics, formatHost))
+          }
+        }
+
+        if (!dtsCode) {
+          return this.error(new Error(`Failed to generate dts for ${id}`))
+        }
 
         const dtsId = filename_ts_to_dts(id)
         dtsMap.set(dtsId, {
@@ -84,8 +135,7 @@ export function createGeneratePlugin({
           src: id,
         })
 
-        const mod = this.getModuleInfo(id)
-        if (mod?.isEntry) {
+        if (isEntry) {
           let name: string | undefined = basename(dtsId, extname(dtsId))
           if (inputAliasMap.has(name)) {
             name = inputAliasMap.get(name)!
@@ -194,6 +244,10 @@ export function createGeneratePlugin({
           }
         }
       : undefined,
+
+    buildEnd() {
+      programs = []
+    },
   }
 }
 

@@ -40,10 +40,17 @@
     "prepublishOnly": "pnpm run build"
   },
   "peerDependencies": {
-    "rolldown": "^1.0.0-beta.7"
+    "rolldown": "^1.0.0-beta.7",
+    "typescript": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
   },
   "dependencies": {
     "dts-resolver": "^0.1.0",
+    "get-tsconfig": "^4.10.0",
     "magic-string-ast": "^0.9.1",
     "oxc-parser": "^0.62.0",
     "oxc-transform": "^0.62.0"
