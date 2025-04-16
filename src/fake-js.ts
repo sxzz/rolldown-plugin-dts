@@ -1,7 +1,7 @@
 import { walk } from 'estree-walker'
 import { MagicStringAST, type MagicString } from 'magic-string-ast'
 import {
-  parseAsync,
+  parseSync,
   type Comment,
   type Declaration,
   type Expression,
@@ -117,8 +117,8 @@ export function createFakeJsPlugin({
 
     transform: {
       filter: { id: RE_DTS },
-      async handler(code, id) {
-        const { program, comments } = await parseAsync(id, code)
+      handler(code, id) {
+        const { program, comments } = parseSync(id, code)
         const preserved = collectReferenceDirectives(comments)
         preserveMap.set(id, preserved)
 
@@ -237,12 +237,12 @@ export function createFakeJsPlugin({
       },
     },
 
-    async renderChunk(code, chunk) {
+    renderChunk(code, chunk) {
       if (!RE_DTS.test(chunk.fileName)) {
         return
       }
 
-      const { program } = await parseAsync(chunk.fileName, code)
+      const { program } = parseSync(chunk.fileName, code)
       const s = new MagicStringAST(code)
 
       const comments = new Set<string>()

@@ -1,7 +1,24 @@
+import { createRequire } from 'node:module'
 import path from 'node:path'
-import * as ts from 'typescript'
+import type * as Ts from 'typescript'
 
-const defaultCompilerOptions: ts.CompilerOptions = {
+let ts: typeof Ts
+// eslint-disable-next-line import/no-mutable-exports
+export let formatHost: Ts.FormatDiagnosticsHost
+
+export function initTs(): void {
+  const require = createRequire(import.meta.url)
+  ts = require('typescript')
+  formatHost = {
+    getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
+    getNewLine: () => ts.sys.newLine,
+    getCanonicalFileName: ts.sys.useCaseSensitiveFileNames
+      ? (f) => f
+      : (f) => f.toLowerCase(),
+  }
+}
+
+const defaultCompilerOptions: Ts.CompilerOptions = {
   declaration: true,
   noEmit: false,
   emitDeclarationOnly: true,
@@ -10,31 +27,23 @@ const defaultCompilerOptions: ts.CompilerOptions = {
   declarationMap: false,
   skipLibCheck: true,
   preserveSymlinks: true,
-  target: ts.ScriptTarget.ESNext,
+  target: 99 satisfies Ts.ScriptTarget.ESNext,
   resolveJsonModule: true,
 }
 
-export const formatHost: ts.FormatDiagnosticsHost = {
-  getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
-  getNewLine: () => ts.sys.newLine,
-  getCanonicalFileName: ts.sys.useCaseSensitiveFileNames
-    ? (f) => f
-    : (f) => f.toLowerCase(),
-}
-
 export interface TsProgram {
-  program: ts.Program
+  program: Ts.Program
   files: Map<string, string>
 }
 
 export interface TsModule {
   program: TsProgram
-  file: ts.SourceFile
+  file: Ts.SourceFile
 }
 
 export function createOrGetTsModule(
   programs: TsProgram[],
-  compilerOptions: ts.CompilerOptions | undefined,
+  compilerOptions: Ts.CompilerOptions | undefined,
   id: string,
   code: string,
   isEntry?: boolean,
@@ -58,13 +67,13 @@ export function createOrGetTsModule(
 }
 
 function createTsProgram(
-  compilerOptions: ts.CompilerOptions | undefined,
+  compilerOptions: Ts.CompilerOptions | undefined,
   id: string,
   code: string,
 ): TsModule {
   const files = new Map<string, string>([[id, code]])
 
-  const options: ts.CompilerOptions = {
+  const options: Ts.CompilerOptions = {
     ...defaultCompilerOptions,
     ...loadTsconfig(id),
     ...compilerOptions,
@@ -105,7 +114,7 @@ function createTsProgram(
   }
 }
 
-const tsconfigCache = new Map<string, ts.CompilerOptions>()
+const tsconfigCache = new Map<string, Ts.CompilerOptions>()
 
 function loadTsconfig(id: string) {
   const configPath = ts.findConfigFile(path.dirname(id), ts.sys.fileExists)

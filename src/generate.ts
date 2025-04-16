@@ -12,7 +12,12 @@ import {
   RE_NODE_MODULES,
   RE_TS,
 } from './utils/filename'
-import { createOrGetTsModule, formatHost, type TsProgram } from './utils/tsc'
+import {
+  createOrGetTsModule,
+  formatHost,
+  initTs,
+  type TsProgram,
+} from './utils/tsc'
 import type { Options } from '.'
 import type { Plugin } from 'rolldown'
 
@@ -32,13 +37,7 @@ export function createGeneratePlugin({
   | 'emitDtsOnly'
   | 'compilerOptions'
 >): Plugin {
-  const dtsMap = new Map<
-    string,
-    {
-      code: string
-      src: string
-    }
-  >()
+  const dtsMap = new Map<string, { code: string; src: string }>()
   const inputAliasMap = new Map<string, string>(
     inputAlias && Object.entries(inputAlias),
   )
@@ -57,6 +56,10 @@ export function createGeneratePlugin({
             stripInternal: !!config?.compilerOptions.stripInternal,
           }
         }
+      }
+
+      if (!isolatedDeclaration) {
+        initTs()
       }
     },
 
