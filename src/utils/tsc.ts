@@ -2,7 +2,8 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import type * as Ts from 'typescript'
 
-let ts: typeof Ts
+// eslint-disable-next-line import/no-mutable-exports
+export let ts: typeof Ts
 // eslint-disable-next-line import/no-mutable-exports
 export let formatHost: Ts.FormatDiagnosticsHost
 

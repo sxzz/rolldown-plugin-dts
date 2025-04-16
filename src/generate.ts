@@ -2,7 +2,6 @@ import { basename, extname } from 'node:path'
 import { createResolver } from 'dts-resolver'
 import { getTsconfig } from 'get-tsconfig'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
-import * as ts from 'typescript'
 import {
   filename_dts_to,
   filename_ts_to_dts,
@@ -16,6 +15,7 @@ import {
   createOrGetTsModule,
   formatHost,
   initTs,
+  ts,
   type TsProgram,
 } from './utils/tsc'
 import type { Options } from '.'
