@@ -76,15 +76,19 @@ interface Options {
 
 ## ⚠️ Caveats
 
-- The plugin leverages Oxc's `isolatedDeclarations` to generate `.d.ts` files when `isolatedDeclaration` is enabled,
-  offering significantly faster performance compared to the `typescript` compiler.
-
 - Namespaces are not supported yet.
   - `export * as ns from './ns'`
   - `import * as ns from './ns'` and then `export { ns }`
   - `type ns = import('./ns')`
 
 ## Differences from `rollup-plugin-dts`
+
+### Isolated Declarations
+
+The plugin leverages Oxc's `isolatedDeclarations` to generate `.d.ts` files when `isolatedDeclaration` is enabled,
+offering significantly faster performance compared to the `typescript` compiler.
+
+### Single Build for ESM
 
 `rolldown-plugin-dts` generates separate chunks for `.d.ts` files, enabling both source code (`.js`)
 and type definition files (`.d.ts`) to be produced in a single build process.
