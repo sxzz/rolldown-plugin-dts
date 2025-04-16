@@ -45,8 +45,19 @@ interface Options {
    */
   emitDtsOnly?: boolean
 
-  isolatedDeclaration?: Omit<IsolatedDeclarationsOptions, 'sourcemap'>
-
+  /**
+   * The `compilerOptions` for the TypeScript compiler.
+   *
+   * @see https://www.typescriptlang.org/docs/handbook/compiler-options.html
+   */
+  compilerOptions?: CompilerOptions
+  /**
+   * When `true`, the plugin will generate `.d.ts` files using `oxc-transform`,
+   * which is blazingly faster than `typescript` compiler.
+   *
+   * This option is enabled when `isolatedDeclaration` in `tsconfig.json` is set to `true`.
+   */
+  isolatedDeclaration?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
   /**
    * dts file name alias `{ [filename]: path }`
    *
@@ -65,8 +76,8 @@ interface Options {
 
 ## ⚠️ Caveats
 
-- The plugin uses Oxc's `isolatedDeclarations` to generate `.d.ts` files,
-  which means you need to set `isolatedDeclarations: true` in your `tsconfig.json` and ensure there are no errors.
+- The plugin leverages Oxc's `isolatedDeclarations` to generate `.d.ts` files when `isolatedDeclaration` is enabled,
+  offering significantly faster performance compared to the `typescript` compiler.
 
 - Namespaces are not supported yet.
   - `export * as ns from './ns'`
