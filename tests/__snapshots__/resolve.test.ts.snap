@@ -1,8 +1,9 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`resolve dep 1`] = `
-"import { build } from "rolldown";
+"// index.d.ts
 import MagicString, { MagicStringOptions, OverwriteOptions } from "magic-string";
+import { build } from "rolldown";
 
 //#region node_modules/.pnpm/magic-string-ast@0.9.1/node_modules/magic-string-ast/dist/index.d.ts
 /**

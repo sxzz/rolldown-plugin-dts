@@ -3,27 +3,18 @@ import { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { expect, test } from 'vitest'
 import { dts } from '../src'
-import type { OutputChunk } from 'rolldown'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 test('resolve dep', async () => {
   const root = path.resolve(dirname, 'fixtures/resolve-dep')
 
-  const { chunks } = await rolldownBuild(path.resolve(root, 'index.ts'), [
-    {
-      name: 'external-runtime',
-      resolveId(id, importer) {
-        if (importer?.endsWith('index.ts')) return { id, external: true }
-      },
-    },
+  const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
     dts({
       resolve: ['magic-string-ast'],
       isolatedDeclaration: true,
+      emitDtsOnly: true,
     }),
   ])
-  const chunk = chunks.find(
-    (chunk): chunk is OutputChunk => chunk.fileName === 'index.d.ts',
-  )
-  expect(chunk!.code).toMatchSnapshot()
+  expect(snapshot).toMatchSnapshot()
 })
