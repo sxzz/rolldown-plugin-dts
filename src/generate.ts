@@ -148,7 +148,7 @@ export function createGeneratePlugin({
           this.emitFile({
             type: 'chunk',
             id: dtsId,
-            fileName: name ? `${name}.d.ts` : undefined,
+            name: name ? `${name}.d` : undefined,
           })
 
           if (emitDtsOnly) {
