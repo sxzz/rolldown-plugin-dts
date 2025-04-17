@@ -26,16 +26,11 @@ const meta = { dtsFile: true } as const
 export function createGeneratePlugin({
   compilerOptions,
   isolatedDeclaration,
-  inputAlias,
   resolve = false,
   emitDtsOnly = false,
 }: Pick<
   Options,
-  | 'isolatedDeclaration'
-  | 'inputAlias'
-  | 'resolve'
-  | 'emitDtsOnly'
-  | 'compilerOptions'
+  'isolatedDeclaration' | 'resolve' | 'emitDtsOnly' | 'compilerOptions'
 >): Plugin {
   const dtsMap = new Map<string, { code: string; src: string }>()
 
@@ -52,7 +47,6 @@ export function createGeneratePlugin({
   const resolver = createResolver()
   let programs: TsProgram[] = []
 
-  let inputOption: Record<string, string> | undefined
   return {
     name: 'rolldown-plugin-dts:generate',
 
@@ -70,22 +64,12 @@ export function createGeneratePlugin({
         initTs()
       }
 
-      if (!inputAlias && isPlainObject(options.input)) {
-        inputAlias = options.input
-      }
-
-      if (inputAlias) {
+      if (!Array.isArray(options.input)) {
         const cwd = options.cwd || process.cwd()
-        for (const [fileName, inputFilePath] of Object.entries(inputAlias)) {
+        for (const [fileName, inputFilePath] of Object.entries(options.input)) {
           const id = path.resolve(cwd, inputFilePath)
           inputAliasMap.set(id, fileName)
         }
-      }
-    },
-
-    options({ input }) {
-      if (isPlainObject(input)) {
-        inputOption = { ...input }
       }
     },
 
@@ -174,7 +158,7 @@ export function createGeneratePlugin({
       },
     },
 
-    async resolveId(id, importer, extraOptions) {
+    async resolveId(id, importer) {
       // must be entry
       if (dtsMap.has(id)) {
         return { id, meta }
@@ -218,22 +202,6 @@ export function createGeneratePlugin({
         if (dtsMap.has(dtsId)) {
           return { id: dtsId, meta }
         }
-      } else if (extraOptions.isEntry && inputOption) {
-        // mapping entry point to dts filename
-        const resolution = await this.resolve(id, importer, extraOptions)
-        if (!resolution) return
-
-        const dtsId = filename_ts_to_dts(resolution.id)
-        if (inputAliasMap.has(dtsId)) return resolution
-
-        for (const [name, inputId] of Object.entries(inputOption)) {
-          if (inputId === id) {
-            inputAliasMap.set(id, name)
-            break
-          }
-        }
-
-        return resolution
       }
     },
 
@@ -268,13 +236,4 @@ export function createGeneratePlugin({
       programs = []
     },
   }
-}
-
-function isPlainObject(data: unknown): data is Record<PropertyKey, unknown> {
-  if (typeof data !== 'object' || data === null) {
-    return false
-  }
-
-  const proto = Object.getPrototypeOf(data)
-  return proto === null || proto === Object.prototype
 }

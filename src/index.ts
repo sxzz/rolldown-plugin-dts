@@ -31,22 +31,6 @@ export interface Options {
    * This option is enabled when `isolatedDeclaration` in `tsconfig.json` is set to `true`.
    */
   isolatedDeclaration?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
-  /**
-   * An object mapping names to TypeScript source file paths. { [entryName: string]: string }
-   *
-   * @example
-   *
-   * The following config will generate at least two entry chunks with the names
-   * `a.d.ts` and `b/index.d.ts`
-   *
-   * ```ts
-   * inputAlias: {
-   *   'a': 'src/main-a.ts',
-   *   'b/index': 'src/main-b.ts'
-   * }
-   * ```
-   */
-  inputAlias?: { [entryName: string]: string }
 
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]
