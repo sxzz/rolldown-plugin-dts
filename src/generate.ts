@@ -143,8 +143,7 @@ export function createGeneratePlugin({
         })
 
         if (isEntry) {
-          const name: string | undefined = inputAliasMap.get(id)
-
+          const name = inputAliasMap.get(id)
           this.emitFile({
             type: 'chunk',
             id: dtsId,
