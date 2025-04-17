@@ -2,17 +2,11 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,12 +1,15 @@
+@@ -1,12 +1,9 @@
  // index.d.ts
-+type __defProp = Object.defineProperty
-+type __export = (target, all) => {
-+	for (var name in all) __defProp(target, name, {
-+		get: all[name],
-+		enumerable: true
-+	});
++declare namespace mod_d_exports {
++  export { inner, }
 +}
-+type mod_d_exports = {}
-+__export(mod_d_exports, { inner: () => inner });
  declare namespace inner {
    type Ty = number;
    const num: number;

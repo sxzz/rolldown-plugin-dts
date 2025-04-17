@@ -2,6 +2,7 @@ import { walk } from 'estree-walker'
 import { MagicStringAST, type MagicString } from 'magic-string-ast'
 import {
   parseSync,
+  type ArrowFunctionExpression,
   type Comment,
   type Declaration,
   type Expression,
@@ -9,17 +10,13 @@ import {
   type IdentifierName,
   type MemberExpression,
   type Node,
+  type ObjectExpression,
   type Span,
   type VariableDeclaration,
   type VariableDeclarator,
 } from 'oxc-parser'
 import { getIdentifierRange } from './utils/ast'
-import {
-  filename_dts_to,
-  filename_js_to_dts,
-  isRelative,
-  RE_DTS,
-} from './utils/filename'
+import { filename_dts_to, filename_js_to_dts, RE_DTS } from './utils/filename'
 import { overwriteOrAppend, type Range } from './utils/magic-string'
 import type { Options } from '.'
 import type { Plugin } from 'rolldown'
@@ -124,13 +121,6 @@ export function createFakeJsPlugin({
 
         const s = new MagicStringAST(code)
         for (let node of program.body as (Node & Span)[]) {
-          if (
-            node.type === 'ExportAllDeclaration' &&
-            node.exported &&
-            isRelative(node.source.value)
-          ) {
-            throw new Error("`export * as foo from './...'` is not supported")
-          }
           if (rewriteImportExport(s, node)) continue
 
           const sideEffect =
@@ -255,7 +245,10 @@ export function createFakeJsPlugin({
       }
       if (comments.size) s.prepend(`${[...comments].join('\n')}\n`)
 
+      const removedNodes = patchTsNamespace(s, program.body)
+
       for (const node of program.body) {
+        if (removedNodes.has(node)) continue
         if (patchImportSource(s, node)) continue
 
         if (
@@ -377,17 +370,15 @@ function collectDependencies(
           typeof node.argument.literal.value !== 'string'
         )
           return
-        if (!node.qualifier) {
-          throw new Error('Import namespace is not supported')
-        }
+
         const source = node.argument.literal.value
-        const imported = s.sliceNode(node.qualifier)
+        const imported = node.qualifier && s.sliceNode(node.qualifier)
         const local = importNamespace(s, source, imported, getIdentifierIndex)
         addDependency({
           type: 'Identifier',
           name: local,
           start: node.start + (node.isTypeOf ? 7 : 0),
-          end: node.qualifier.end,
+          end: node.qualifier ? node.qualifier.end : node.end,
         })
       }
     },
@@ -423,6 +414,14 @@ function patchVariableDeclarator(
   node: VariableDeclaration,
   decl: VariableDeclarator,
 ) {
+  const name = s.sliceNode(decl.id)
+
+  // remove helper function
+  if (name.startsWith('__defProp') || name.startsWith('__export')) {
+    s.removeNode(node)
+    return
+  }
+
   if (decl.init && !decl.id.typeAnnotation) {
     s.overwriteNode(
       node,
@@ -448,6 +447,55 @@ function patchImportSource(s: MagicStringAST, node: Node) {
     )
     return true
   }
+}
+
+function patchTsNamespace(s: MagicStringAST, nodes: Node[]) {
+  const emptyObjectAssignments = new Map<string, VariableDeclaration>()
+  const removed = new Set<Node>()
+
+  for (const node of nodes) {
+    if (
+      node.type === 'VariableDeclaration' &&
+      node.declarations.length === 1 &&
+      node.declarations[0].init?.type === 'ObjectExpression' &&
+      node.declarations[0].init.properties.length === 0
+    ) {
+      emptyObjectAssignments.set(s.sliceNode(node.declarations[0].id), node)
+    }
+
+    if (
+      node.type !== 'ExpressionStatement' ||
+      node.expression.type !== 'CallExpression' ||
+      node.expression.callee.type !== 'Identifier' ||
+      !node.expression.callee.name.startsWith('__export')
+    )
+      continue
+
+    const [binding, exports] = node.expression.arguments
+    const bindingText = s.sliceNode(binding)
+    if (emptyObjectAssignments.has(bindingText)) {
+      const emptyNode = emptyObjectAssignments.get(bindingText)!
+      s.removeNode(emptyNode)
+      emptyObjectAssignments.delete(bindingText)
+      removed.add(emptyNode)
+    }
+
+    let code = `declare namespace ${bindingText} {
+  export { `
+    for (const properties of (exports as ObjectExpression).properties) {
+      if (properties.type !== 'Property') continue
+      const exported = s.sliceNode(properties.key)
+      const local = s.sliceNode(
+        (properties.value as ArrowFunctionExpression).body,
+      )
+      const suffix = exported !== local ? ` as ${exported}` : ''
+      code += `${local}${suffix}, `
+    }
+    code += `}\n}`
+    s.overwriteNode(node, code)
+  }
+
+  return removed
 }
 
 // fix:
@@ -523,12 +571,11 @@ function rewriteImportExport(s: MagicStringAST, node: Node) {
 function importNamespace(
   s: MagicString,
   source: string,
-  imported: string,
+  imported: string | null,
   getIdentifierIndex: () => number,
 ) {
   const local = `_${getIdentifierIndex()}`
-  s.prepend(
-    `import { ${imported} as ${local} } from ${JSON.stringify(source)};\n`,
-  )
+  const specifiers = imported ? `{ ${imported} as ${local} }` : `* as ${local}`
+  s.prepend(`import ${specifiers} from ${JSON.stringify(source)};\n`)
   return local
 }

@@ -1,0 +1,17 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,8 +1,6 @@
+ // index.d.ts
+-declare const _in = "foo";
+-declare namespace foo_d {
+-  export {
+-    _in as in,
+-  };
++declare namespace foo_d_exports {
++  export { _in as in, }
+ }
+-export { foo_d as foo };
++declare const _in = "foo";
++export { foo_d_exports as foo };

@@ -1,29 +1,15 @@
 // index.d.ts
 
 //#region rolldown:runtime
-type __defProp = Object.defineProperty
-type __export = (target, all) => {
-	for (var name in all) __defProp(target, name, {
-		get: all[name],
-		enumerable: true
-	});
-}
+
+
 
 //#endregion
 //#region tests/rollup-plugin-dts/re-export-namespace/namespace.d.ts
-type namespace_d_exports = {}
-__export(namespace_d_exports, {
-	A: () => A,
-	B: () => B,
-	C: () => C,
-	D: () => D,
-	E: () => E,
-	F: () => F,
-	GenericC: () => GenericC,
-	GenericF: () => GenericF,
-	GenericI: () => GenericI,
-	GenericT: () => GenericT
-});
+
+declare namespace namespace_d_exports {
+  export { A, B, C, D, E, F, GenericC, GenericF, GenericI, GenericT, }
+}
 interface A {}
 declare function B(): void;
 declare class C {}

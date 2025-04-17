@@ -1,21 +1,15 @@
 // index.d.ts
 
 //#region rolldown:runtime
-type __defProp = Object.defineProperty
-type __export = (target, all) => {
-	for (var name in all) __defProp(target, name, {
-		get: all[name],
-		enumerable: true
-	});
-}
+
+
 
 //#endregion
 //#region tests/rollup-plugin-dts/issue-217/example.d.ts
-type example_d_exports = {}
-__export(example_d_exports, {
-	Example: () => Example,
-	dog: () => dog
-});
+
+declare namespace example_d_exports {
+  export { Example, dog, }
+}
 interface Example<S extends string> {
   example: S;
 }

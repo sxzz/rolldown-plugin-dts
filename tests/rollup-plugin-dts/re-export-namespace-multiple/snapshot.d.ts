@@ -1,25 +1,15 @@
 // index.d.ts
 
 //#region rolldown:runtime
-type __defProp = Object.defineProperty
-type __export = (target, all) => {
-	for (var name in all) __defProp(target, name, {
-		get: all[name],
-		enumerable: true
-	});
-}
+
+
 
 //#endregion
 //#region tests/rollup-plugin-dts/re-export-namespace-multiple/defs.d.ts
-type defs_d_exports = {}
-__export(defs_d_exports, {
-	A: () => A,
-	B: () => B,
-	C: () => C,
-	D: () => D,
-	E: () => E,
-	F: () => F
-});
+
+declare namespace defs_d_exports {
+  export { A, B, C, D, E, F, }
+}
 interface A {}
 declare function B(): void;
 declare class C {}
@@ -32,13 +22,17 @@ declare type F = string;
 
 //#endregion
 //#region tests/rollup-plugin-dts/re-export-namespace-multiple/deep.d.ts
-type deep_d_exports = {}
-__export(deep_d_exports, { ns: () => defs_d_exports });
+
+declare namespace deep_d_exports {
+  export { defs_d_exports as ns, }
+}
 
 //#endregion
 //#region tests/rollup-plugin-dts/re-export-namespace-multiple/only-one.d.ts
-type only_one_d_exports = {}
-__export(only_one_d_exports, { A: () => A });
+
+declare namespace only_one_d_exports {
+  export { A, }
+}
 
 //#endregion
 //#region tests/rollup-plugin-dts/re-export-namespace-multiple/index.d.ts

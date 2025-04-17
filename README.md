@@ -74,13 +74,6 @@ interface Options {
 }
 ````
 
-## ⚠️ Caveats
-
-- Namespaces are not supported yet.
-  - `export * as ns from './ns'`
-  - `import * as ns from './ns'` and then `export { ns }`
-  - `type ns = import('./ns')`
-
 ## Differences from `rollup-plugin-dts`
 
 ### Isolated Declarations
