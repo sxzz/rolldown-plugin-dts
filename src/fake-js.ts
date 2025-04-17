@@ -13,7 +13,6 @@ import {
   type ObjectExpression,
   type Span,
   type VariableDeclaration,
-  type VariableDeclarator,
 } from 'oxc-parser'
 import { getIdentifierRange } from './utils/ast'
 import { filename_dts_to, filename_js_to_dts, RE_DTS } from './utils/filename'
@@ -262,7 +261,7 @@ export function createFakeJsPlugin({
         const [decl] = node.declarations
 
         if (decl.init?.type !== 'ArrayExpression' || !decl.init.elements[0]) {
-          patchVariableDeclarator(s, node, decl)
+          s.removeNode(node)
           continue
         }
 
@@ -271,7 +270,7 @@ export function createFakeJsPlugin({
           symbolIdNode?.type !== 'Literal' ||
           typeof symbolIdNode.value !== 'number'
         ) {
-          patchVariableDeclarator(s, node, decl)
+          s.removeNode(node)
           continue
         }
 
@@ -408,30 +407,6 @@ function stringifyDependencies(s: MagicStringAST, deps: Dep[]) {
         `() => ${node.type === 'Identifier' ? node.name! : s.sliceNode(node)}`,
     )
     .join(', ')
-}
-
-// patch `let x = 1;` to `type x: 1;`
-function patchVariableDeclarator(
-  s: MagicStringAST,
-  node: VariableDeclaration,
-  decl: VariableDeclarator,
-) {
-  const name = s.sliceNode(decl.id)
-
-  // remove helper function
-  if (name.startsWith('__defProp') || name.startsWith('__export')) {
-    s.removeNode(node)
-    return
-  }
-
-  if (decl.init && !decl.id.typeAnnotation) {
-    s.overwriteNode(
-      node,
-      `type ${s.sliceNode(decl.id)} = ${s.sliceNode(decl.init)}`,
-    )
-  } else if (!node.declare) {
-    s.prependLeft(node.start, 'declare ')
-  }
 }
 
 // patch `.d.ts` suffix in import source to `.js`
