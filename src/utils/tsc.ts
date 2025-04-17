@@ -1,13 +1,16 @@
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import type * as Ts from 'typescript'
+import Debug from 'debug'
+import type Ts from 'typescript'
 
-// eslint-disable-next-line import/no-mutable-exports
-export let ts: typeof Ts
-// eslint-disable-next-line import/no-mutable-exports
-export let formatHost: Ts.FormatDiagnosticsHost
+const debug = Debug('rolldown-plugin-dts:tsc')
+
+let ts: typeof Ts
+let formatHost: Ts.FormatDiagnosticsHost
 
 export function initTs(): void {
+  debug('loading typescript')
+
   const require = createRequire(import.meta.url)
   ts = require('typescript')
   formatHost = {
@@ -17,6 +20,8 @@ export function initTs(): void {
       ? (f) => f
       : (f) => f.toLowerCase(),
   }
+
+  debug(`loaded typescript: ${ts.version}`)
 }
 
 const defaultCompilerOptions: Ts.CompilerOptions = {
@@ -62,7 +67,10 @@ export function createOrGetTsModule(
     }
   }
 
+  debug(`create program for module: ${id}`)
   const module = createTsProgram(compilerOptions, id, code)
+  debug(`created program for module: ${id}`)
+
   programs.push(module.program)
   return module
 }
@@ -113,6 +121,30 @@ function createTsProgram(
     },
     file: sourceFile,
   }
+}
+
+export function tscEmit(module: TsModule): { code?: string; error?: string } {
+  const {
+    program: { program },
+    file,
+  } = module
+  let dtsCode: string | undefined
+  const { emitSkipped, diagnostics } = program.emit(
+    file,
+    (_, code) => {
+      debug(`emit dts: ${file.fileName}`)
+      dtsCode = code
+    },
+    undefined,
+    true,
+    undefined,
+    // @ts-expect-error private API: forceDtsEmit
+    true,
+  )
+  if (emitSkipped && diagnostics.length) {
+    return { error: ts.formatDiagnostics(diagnostics, formatHost) }
+  }
+  return { code: dtsCode }
 }
 
 const tsconfigCache = new Map<string, Ts.CompilerOptions>()

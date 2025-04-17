@@ -13,9 +13,8 @@ import {
 } from './utils/filename'
 import {
   createOrGetTsModule,
-  formatHost,
   initTs,
-  ts,
+  tscEmit,
   type TsProgram,
 } from './utils/tsc'
 import type { Options } from '.'
@@ -108,24 +107,18 @@ export function createGeneratePlugin({
           if (result.errors.length) return this.error(result.errors[0])
           dtsCode = result.code
         } else {
-          const {
-            program: { program },
-            file,
-          } = createOrGetTsModule(programs, compilerOptions, id, code, isEntry)
-          const { emitSkipped, diagnostics } = program.emit(
-            file,
-            (_, code) => {
-              dtsCode = code
-            },
-            undefined,
-            true,
-            undefined,
-            // @ts-expect-error private API: forceDtsEmit
-            true,
+          const module = createOrGetTsModule(
+            programs,
+            compilerOptions,
+            id,
+            code,
+            isEntry,
           )
-          if (emitSkipped && diagnostics.length) {
-            return this.error(ts.formatDiagnostics(diagnostics, formatHost))
+          const result = tscEmit(module)
+          if (result.error) {
+            return this.error(result.error)
           }
+          dtsCode = result.code
         }
 
         if (!dtsCode) {

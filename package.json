@@ -49,6 +49,7 @@
     }
   },
   "dependencies": {
+    "debug": "^4.4.0",
     "dts-resolver": "^0.1.0",
     "get-tsconfig": "^4.10.0",
     "magic-string-ast": "^0.9.1",
@@ -59,6 +60,7 @@
     "@sxzz/eslint-config": "^6.1.1",
     "@sxzz/prettier-config": "^2.2.1",
     "@sxzz/test-utils": "^0.5.4",
+    "@types/debug": "^4.1.12",
     "@types/diff": "^7.0.2",
     "@types/node": "^22.14.0",
     "bumpp": "^10.1.0",
