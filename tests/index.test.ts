@@ -38,19 +38,22 @@ test('resolve dependencies', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+// Test implicit alias mapping based on rollup input option
 test('implicit input alias', async () => {
   const root = path.resolve(dirname, 'fixtures/alias')
   const { snapshot, chunks } = await rolldownBuild(
     null!,
     [
       dts({
-        emitDtsOnly: false,
+        emitDtsOnly: false, // Generate both JS and DTS files
         compilerOptions: {},
         isolatedDeclaration: false,
       }),
     ],
     {
       cwd: root,
+      // A mapping from output chunk names to input files. This mapping should
+      // be used in both JS and DTS outputs.
       input: {
         output1: 'input1.ts',
         'output2/index': 'input2.ts',
@@ -68,15 +71,18 @@ test('implicit input alias', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+// Test explicit input alias mapping via plugin options
 test('explicit input alias', async () => {
   const root = path.resolve(dirname, 'fixtures/alias')
   const { snapshot, chunks } = await rolldownBuild(
     null!,
     [
       dts({
-        emitDtsOnly: true,
+        emitDtsOnly: true, // Only generate DTS files
         compilerOptions: {},
         isolatedDeclaration: false,
+        // A mapping from output chunk names to input files. This mapping should
+        // only be used in DTS outputs.
         inputAlias: {
           output1: 'input1.ts',
           'output2/index': 'input2.ts',
@@ -85,11 +91,14 @@ test('explicit input alias', async () => {
     ],
     {
       cwd: root,
+      // For JS outputs, input files are provided directly without any alias
+      // mapping.
       input: ['input1.ts', 'input2.ts'],
     },
   )
   const fileNames = chunks.map((chunk) => chunk.fileName).sort()
 
+  // Verify DTS files are generated at the correct paths
   expect(fileNames).toContain('output1.d.ts')
   expect(fileNames).toContain('output2/index.d.ts')
 
