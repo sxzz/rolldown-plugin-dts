@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module'
-import path from 'node:path'
 import Debug from 'debug'
+import type { TsConfigJson } from 'get-tsconfig'
 import type Ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:tsc')
@@ -49,7 +49,7 @@ export interface TsModule {
 
 export function createOrGetTsModule(
   programs: TsProgram[],
-  compilerOptions: Ts.CompilerOptions | undefined,
+  compilerOptions: TsConfigJson.CompilerOptions | undefined,
   id: string,
   code: string,
   isEntry?: boolean,
@@ -76,17 +76,20 @@ export function createOrGetTsModule(
 }
 
 function createTsProgram(
-  compilerOptions: Ts.CompilerOptions | undefined,
+  compilerOptions: TsConfigJson.CompilerOptions | undefined,
   id: string,
   code: string,
 ): TsModule {
   const files = new Map<string, string>([[id, code]])
 
+  const overrideCompilerOptions: Ts.CompilerOptions =
+    ts.convertCompilerOptionsFromJson(compilerOptions, '.').options
+
   const options: Ts.CompilerOptions = {
     ...defaultCompilerOptions,
-    ...loadTsconfig(id),
-    ...compilerOptions,
+    ...overrideCompilerOptions,
   }
+
   const host = ts.createCompilerHost(options, true)
   const { readFile: _readFile, fileExists: _fileExists } = host
   host.fileExists = (fileName) => {
@@ -97,18 +100,7 @@ function createTsProgram(
     if (files.has(fileName)) return files.get(fileName)!
     return _readFile(fileName)
   }
-  const program = ts.createProgram(
-    [id],
-    {
-      ...compilerOptions,
-      moduleResolution: ts.ModuleResolutionKind.Node10,
-      declaration: true,
-      emitDeclarationOnly: true,
-      outDir: undefined,
-      declarationDir: undefined,
-    },
-    host,
-  )
+  const program = ts.createProgram([id], options, host)
   const sourceFile = program.getSourceFile(id)
   if (!sourceFile) {
     throw new Error(`Source file not found: ${id}`)
@@ -145,31 +137,4 @@ export function tscEmit(module: TsModule): { code?: string; error?: string } {
     return { error: ts.formatDiagnostics(diagnostics, formatHost) }
   }
   return { code: dtsCode }
-}
-
-const tsconfigCache = new Map<string, Ts.CompilerOptions>()
-
-function loadTsconfig(id: string) {
-  const configPath = ts.findConfigFile(path.dirname(id), ts.sys.fileExists)
-  if (!configPath) return {}
-
-  if (tsconfigCache.has(configPath)) {
-    return tsconfigCache.get(configPath)!
-  }
-
-  const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile)
-  if (error) {
-    throw ts.formatDiagnostic(error, formatHost)
-  }
-
-  const configContents = ts.parseJsonConfigFileContent(
-    config,
-    ts.sys,
-    path.dirname(configPath),
-  )
-  if (configContents.errors.length) {
-    throw ts.formatDiagnostics(configContents.errors, formatHost)
-  }
-  tsconfigCache.set(configPath, configContents.options)
-  return configContents.options
 }

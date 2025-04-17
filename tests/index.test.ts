@@ -13,7 +13,9 @@ test('typescript compiler', async () => {
     [
       dts({
         emitDtsOnly: true,
-        compilerOptions: {},
+        compilerOptions: {
+          skipLibCheck: true,
+        },
         isolatedDeclaration: false,
       }),
     ],

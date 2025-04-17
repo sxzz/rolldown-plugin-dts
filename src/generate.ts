@@ -51,13 +51,19 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     buildStart(options) {
-      if (isolatedDeclaration == null) {
+      if (!compilerOptions) {
         const { config } = getTsconfig(options.cwd) || {}
-        if (config?.compilerOptions?.isolatedDeclarations) {
-          isolatedDeclaration = {
-            stripInternal: !!config?.compilerOptions.stripInternal,
-          }
-        }
+        compilerOptions = config?.compilerOptions as any
+      }
+
+      if (isolatedDeclaration == null) {
+        isolatedDeclaration = !!compilerOptions?.isolatedDeclarations
+      }
+      if (isolatedDeclaration === true) {
+        isolatedDeclaration = {}
+      }
+      if (isolatedDeclaration && isolatedDeclaration.stripInternal == null) {
+        isolatedDeclaration.stripInternal = !!compilerOptions?.stripInternal
       }
 
       if (!isolatedDeclaration) {
