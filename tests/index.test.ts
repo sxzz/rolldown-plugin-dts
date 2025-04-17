@@ -1,86 +1,55 @@
-import { access, readFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
-import process from 'node:process'
-import { rolldownBuild, rollupBuild, testFixtures } from '@sxzz/test-utils'
-import { createPatch } from 'diff'
-import { dts as rollupDts } from 'rollup-plugin-dts'
-import { expect } from 'vitest'
-import { createFakeJsPlugin } from '../src'
+import { fileURLToPath } from 'node:url'
+import { rolldownBuild } from '@sxzz/test-utils'
+import { expect, test } from 'vitest'
+import { dts } from '../src'
 
-const isUpdateEnabled =
-  process.env.npm_lifecycle_script?.includes('-u') ||
-  process.env.npm_lifecycle_script?.includes('--update')
+const dirname = path.dirname(fileURLToPath(import.meta.url))
 
-await testFixtures(
-  'tests/rollup-plugin-dts/**/index.d.ts',
-  async (args, id) => {
-    const dirname = path.dirname(id)
+test('typescript compiler', async () => {
+  const root = path.resolve(dirname, 'fixtures/tsc')
+  const { snapshot } = await rolldownBuild(
+    null!,
+    [
+      dts({
+        emitDtsOnly: true,
+        compilerOptions: {},
+        isolatedDeclaration: false,
+      }),
+    ],
+    {
+      input: [path.resolve(root, 'entry1.ts'), path.resolve(root, 'entry2.ts')],
+    },
+  )
+  expect(snapshot).toMatchSnapshot()
+})
 
-    let error: any
-    let [rolldownSnapshot, rollupSnapshot] = await Promise.all([
-      rolldownBuild(id, [createFakeJsPlugin({ dtsInput: true })], {
-        treeshake: true,
-      }).then(({ snapshot }) => snapshot),
-      rollupBuild(id, [rollupDts()], undefined, {
-        entryFileNames: '[name].ts',
-      }).then(({ snapshot }) => snapshot),
-    ]).catch((_error) => ((error = _error), []))
+test('resolve dependencies', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/resolve-dep.ts'),
+    [
+      dts({
+        resolve: ['magic-string-ast'],
+        isolatedDeclaration: true,
+        emitDtsOnly: true,
+      }),
+    ],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
 
-    if (id.includes('error')) {
-      return expect(error).toBeTruthy()
-    }
-
-    if (error) throw error
-    await expect(rolldownSnapshot).toMatchFileSnapshot(
-      path.resolve(dirname, 'snapshot.d.ts'),
-    )
-
-    rollupSnapshot = cleanupCode(rollupSnapshot)
-    rolldownSnapshot = cleanupCode(rolldownSnapshot)
-    const diffPath = path.resolve(dirname, 'diff.patch')
-    const knownDiffPath = path.resolve(dirname, 'known-diff.patch')
-    const diff = createPatch(
-      'diff.patch',
-      rollupSnapshot,
-      rolldownSnapshot,
-      undefined,
-      undefined,
-      {
-        ignoreWhitespace: true,
-        stripTrailingCr: true,
-      },
-    )
-
-    // not the same
-    if (diff.split('\n').length !== 5) {
-      const knownDiff = await readFile(knownDiffPath, 'utf8').catch(() => null)
-      if (knownDiff !== diff) {
-        await expect(diff).toMatchFileSnapshot(diffPath)
-        await unlink(knownDiffPath).catch(() => {})
-      } else {
-        await unlink(diffPath).catch(() => {})
-      }
-    } else if (isUpdateEnabled) {
-      await Promise.all([
-        unlink(diffPath).catch(() => {}),
-        unlink(knownDiffPath).catch(() => {}),
-      ])
-    } else {
-      await expect(access(diffPath)).rejects.toThrow()
-      await expect(access(knownDiffPath)).rejects.toThrow()
-    }
-  },
-  { snapshot: false },
-)
-
-function cleanupCode(text: string) {
-  return `${text
-    .replaceAll(/\/\/#region .*\n/g, '')
-    .replaceAll('//#endregion\n', '')
-    .replaceAll(/from "(.*)"/g, "from '$1'")
-    .replaceAll('export type', 'export') // FIXME
-    .split('\n')
-    .filter((line) => line.trim() !== '')
-    .join('\n')
-    .trim()}\n`
-}
+test('isolated declaration error', async () => {
+  const error = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/isolated-decl-error.ts'),
+    [
+      dts({
+        emitDtsOnly: true,
+        isolatedDeclaration: true,
+      }),
+    ],
+  ).catch((error: any) => error)
+  expect(String(error)).toContain(
+    `Function must have an explicit return type annotation with --isolatedDeclarations.`,
+  )
+  expect(String(error)).toContain(`export function fn() {`)
+})

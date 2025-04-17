@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`resolve dep 1`] = `
-"// index.d.ts
+exports[`resolve dependencies 1`] = `
+"// resolve-dep.d.ts
 import MagicString, { MagicStringOptions, OverwriteOptions } from "magic-string";
 import { build } from "rolldown";
 
@@ -72,4 +72,26 @@ declare function generateTransform(s: MagicString | undefined, id: string): Code
 
 //#endregion
 export { MagicStringAST, build };"
+`;
+
+exports[`typescript compiler 1`] = `
+"// entry1.d.ts
+
+//#region tests/fixtures/tsc/mod.d.ts
+declare const str = "foo";
+declare const num = 42;
+declare const bool = true;
+declare function fn(arg: typeof str): "foo" | 1;
+
+//#endregion
+export { bool, fn, num, str };
+// entry2.d.ts
+
+//#region tests/fixtures/tsc/entry2.d.ts
+interface Unused {
+    foo: string;
+}
+
+//#endregion
+export { Unused };"
 `;
