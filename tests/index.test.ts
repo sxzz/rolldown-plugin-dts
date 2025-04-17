@@ -38,6 +38,39 @@ test('resolve dependencies', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+// Test alias mapping based on rolldown input option
+test('input alias', async () => {
+  const root = path.resolve(dirname, 'fixtures/alias')
+  const { snapshot, chunks } = await rolldownBuild(
+    null!,
+    [
+      dts({
+        emitDtsOnly: false, // Generate both JS and DTS files
+        compilerOptions: {},
+        isolatedDeclaration: false,
+      }),
+    ],
+    {
+      cwd: root,
+      // A mapping from output chunk names to input files. This mapping should
+      // be used in both JS and DTS outputs.
+      input: {
+        output1: 'input1.ts',
+        'output2/index': 'input2.ts',
+      },
+    },
+  )
+  const fileNames = chunks.map((chunk) => chunk.fileName).sort()
+
+  // The JS output and DTS output should have the same structure
+  expect(fileNames).toContain('output1.d.ts')
+  expect(fileNames).toContain('output1.js')
+  expect(fileNames).toContain('output2/index.d.ts')
+  expect(fileNames).toContain('output2/index.js')
+
+  expect(snapshot).toMatchSnapshot()
+})
+
 test('isolated declaration error', async () => {
   const error = await rolldownBuild(
     path.resolve(dirname, 'fixtures/isolated-decl-error.ts'),

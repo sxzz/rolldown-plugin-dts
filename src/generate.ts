@@ -1,4 +1,5 @@
-import { basename, extname } from 'node:path'
+import path from 'node:path'
+import process from 'node:process'
 import { createResolver } from 'dts-resolver'
 import { getTsconfig } from 'get-tsconfig'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
@@ -25,25 +26,27 @@ const meta = { dtsFile: true } as const
 export function createGeneratePlugin({
   compilerOptions,
   isolatedDeclaration,
-  inputAlias,
   resolve = false,
   emitDtsOnly = false,
 }: Pick<
   Options,
-  | 'isolatedDeclaration'
-  | 'inputAlias'
-  | 'resolve'
-  | 'emitDtsOnly'
-  | 'compilerOptions'
+  'isolatedDeclaration' | 'resolve' | 'emitDtsOnly' | 'compilerOptions'
 >): Plugin {
   const dtsMap = new Map<string, { code: string; src: string }>()
-  const inputAliasMap = new Map<string, string>(
-    inputAlias && Object.entries(inputAlias),
-  )
+
+  /**
+   * A map of input id to output file name
+   *
+   * @example
+   *
+   * inputAlias = new Map([
+   *   ['/absolute/path/to/src/source_file.ts', 'dist/foo/index'],
+   * ])
+   */
+  const inputAliasMap = new Map<string, string>()
   const resolver = createResolver()
   let programs: TsProgram[] = []
 
-  let inputOption: Record<string, string> | undefined
   return {
     name: 'rolldown-plugin-dts:generate',
 
@@ -60,11 +63,13 @@ export function createGeneratePlugin({
       if (!isolatedDeclaration) {
         initTs()
       }
-    },
 
-    options({ input }) {
-      if (isPlainObject(input)) {
-        inputOption = { ...input }
+      if (!Array.isArray(options.input)) {
+        const cwd = options.cwd || process.cwd()
+        for (const [fileName, inputFilePath] of Object.entries(options.input)) {
+          const id = path.resolve(cwd, inputFilePath)
+          inputAliasMap.set(id, fileName)
+        }
       }
     },
 
@@ -138,16 +143,11 @@ export function createGeneratePlugin({
         })
 
         if (isEntry) {
-          let name: string | undefined = basename(dtsId, extname(dtsId))
-          if (inputAliasMap.has(name)) {
-            name = inputAliasMap.get(name)!
-          } else if (inputAliasMap.has(dtsId)) {
-            name = inputAliasMap.get(dtsId)!
-          }
+          const name = inputAliasMap.get(id)
           this.emitFile({
             type: 'chunk',
             id: dtsId,
-            name,
+            name: name ? `${name}.d` : undefined,
           })
 
           if (emitDtsOnly) {
@@ -157,7 +157,7 @@ export function createGeneratePlugin({
       },
     },
 
-    async resolveId(id, importer, extraOptions) {
+    async resolveId(id, importer) {
       // must be entry
       if (dtsMap.has(id)) {
         return { id, meta }
@@ -201,22 +201,6 @@ export function createGeneratePlugin({
         if (dtsMap.has(dtsId)) {
           return { id: dtsId, meta }
         }
-      } else if (extraOptions.isEntry && inputOption) {
-        // mapping entry point to dts filename
-        const resolution = await this.resolve(id, importer, extraOptions)
-        if (!resolution) return
-
-        const dtsId = filename_ts_to_dts(resolution.id)
-        if (inputAliasMap.has(dtsId)) return resolution
-
-        for (const [name, entry] of Object.entries(inputOption)) {
-          if (entry === id) {
-            inputAliasMap.set(dtsId, `${name}.d.ts`)
-            break
-          }
-        }
-
-        return resolution
       }
     },
 
@@ -251,13 +235,4 @@ export function createGeneratePlugin({
       programs = []
     },
   }
-}
-
-function isPlainObject(data: unknown): data is Record<PropertyKey, unknown> {
-  if (typeof data !== 'object' || data === null) {
-    return false
-  }
-
-  const proto = Object.getPrototypeOf(data)
-  return proto === null || proto === Object.prototype
 }

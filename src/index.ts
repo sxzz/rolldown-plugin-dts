@@ -31,16 +31,6 @@ export interface Options {
    * This option is enabled when `isolatedDeclaration` in `tsconfig.json` is set to `true`.
    */
   isolatedDeclaration?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
-  /**
-   * dts file name alias `{ [filename]: path }`
-   *
-   * @example
-   * ```ts
-   * inputAlias: {
-   *   'foo.d.ts': 'foo/index.d.ts',
-   * }
-   */
-  inputAlias?: Record<string, string>
 
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]
