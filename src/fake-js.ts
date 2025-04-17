@@ -297,7 +297,7 @@ export function createFakeJsPlugin({
 
       const str = s.toString()
       if (str.trim().length === 0) {
-        return 'export {}'
+        return 'export { };'
       }
 
       return str
