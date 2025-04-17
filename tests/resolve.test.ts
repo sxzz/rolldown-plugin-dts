@@ -5,10 +5,9 @@ import { expect, test } from 'vitest'
 import { dts } from '../src'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
+const root = path.resolve(dirname, 'fixtures/resolve-dep')
 
 test('resolve dep', async () => {
-  const root = path.resolve(dirname, 'fixtures/resolve-dep')
-
   const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
     dts({
       resolve: ['magic-string-ast'],

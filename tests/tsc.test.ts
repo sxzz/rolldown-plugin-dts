@@ -5,10 +5,9 @@ import { expect, test } from 'vitest'
 import { dts } from '../src'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
+const root = path.resolve(dirname, 'fixtures/tsc')
 
 test('tsc', async () => {
-  const root = path.resolve(dirname, 'fixtures/tsc')
-
   const { snapshot } = await rolldownBuild(
     null!,
     [

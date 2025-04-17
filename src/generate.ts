@@ -104,7 +104,13 @@ export function createGeneratePlugin({
             code,
             isolatedDeclaration === true ? {} : isolatedDeclaration,
           )
-          if (result.errors.length) return this.error(result.errors[0])
+          if (result.errors.length) {
+            const [error] = result.errors
+            return this.error({
+              message: error.message,
+              frame: error.codeframe,
+            })
+          }
           dtsCode = result.code
         } else {
           const module = createOrGetTsModule(
