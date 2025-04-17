@@ -1,4 +1,5 @@
-import { basename, extname } from 'node:path'
+import path from 'node:path'
+import process from 'node:process'
 import { createResolver } from 'dts-resolver'
 import { getTsconfig } from 'get-tsconfig'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
@@ -37,9 +38,17 @@ export function createGeneratePlugin({
   | 'compilerOptions'
 >): Plugin {
   const dtsMap = new Map<string, { code: string; src: string }>()
-  const inputAliasMap = new Map<string, string>(
-    inputAlias && Object.entries(inputAlias),
-  )
+
+  /**
+   * A map of input id to output file name
+   *
+   * @example
+   *
+   * inputAlias = new Map([
+   *   ['/absolute/path/to/src/source_file.ts', 'dist/foo/index'],
+   * ])
+   */
+  const inputAliasMap = new Map<string, string>()
   const resolver = createResolver()
   let programs: TsProgram[] = []
 
@@ -59,6 +68,18 @@ export function createGeneratePlugin({
 
       if (!isolatedDeclaration) {
         initTs()
+      }
+
+      if (!inputAlias && isPlainObject(options.input)) {
+        inputAlias = options.input
+      }
+
+      if (inputAlias) {
+        const cwd = options.cwd || process.cwd()
+        for (const [fileName, inputFilePath] of Object.entries(inputAlias)) {
+          const id = path.resolve(cwd, inputFilePath)
+          inputAliasMap.set(id, fileName)
+        }
       }
     },
 
@@ -138,16 +159,12 @@ export function createGeneratePlugin({
         })
 
         if (isEntry) {
-          let name: string | undefined = basename(dtsId, extname(dtsId))
-          if (inputAliasMap.has(name)) {
-            name = inputAliasMap.get(name)!
-          } else if (inputAliasMap.has(dtsId)) {
-            name = inputAliasMap.get(dtsId)!
-          }
+          const name: string | undefined = inputAliasMap.get(id)
+
           this.emitFile({
             type: 'chunk',
             id: dtsId,
-            name,
+            fileName: name ? `${name}.d.ts` : undefined,
           })
 
           if (emitDtsOnly) {
@@ -209,9 +226,9 @@ export function createGeneratePlugin({
         const dtsId = filename_ts_to_dts(resolution.id)
         if (inputAliasMap.has(dtsId)) return resolution
 
-        for (const [name, entry] of Object.entries(inputOption)) {
-          if (entry === id) {
-            inputAliasMap.set(dtsId, `${name}.d.ts`)
+        for (const [name, inputId] of Object.entries(inputOption)) {
+          if (inputId === id) {
+            inputAliasMap.set(id, name)
             break
           }
         }

@@ -32,15 +32,21 @@ export interface Options {
    */
   isolatedDeclaration?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
   /**
-   * dts file name alias `{ [filename]: path }`
+   * An object mapping names to TypeScript source file paths. { [entryName: string]: string }
    *
    * @example
+   *
+   * The following config will generate at least two entry chunks with the names
+   * `a.d.ts` and `b/index.d.ts`
+   *
    * ```ts
    * inputAlias: {
-   *   'foo.d.ts': 'foo/index.d.ts',
+   *   'a': 'src/main-a.ts',
+   *   'b/index': 'src/main-b.ts'
    * }
+   * ```
    */
-  inputAlias?: Record<string, string>
+  inputAlias?: { [entryName: string]: string }
 
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]

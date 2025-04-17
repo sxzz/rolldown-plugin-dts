@@ -1,5 +1,104 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`explicit input alias 1`] = `
+"// input2.d-BunDIF-p.d.ts
+
+//#region shared.d.ts
+interface Shared {
+    shared: string;
+}
+declare const shared: Shared;
+
+//#endregion
+//#region input2.d.ts
+interface Input2 extends Shared {
+    input2: string;
+}
+declare const input2: Input2;
+
+//#endregion
+export { Input2, input2 };
+// output1.d.ts
+import { Input2 } from "./input2.d-BunDIF-p.js";
+
+//#region input1.d.ts
+interface Input1 extends Input2 {
+    input1: string;
+}
+declare const input1: Input1;
+
+//#endregion
+export { Input1, input1 };
+// output2/index.d.ts
+import { Input2, input2 } from "../input2.d-BunDIF-p.js";
+
+export { Input2, input2 };"
+`;
+
+exports[`implicit input alias 1`] = `
+"// input2-eM-jH71Q.js
+
+//#region shared.ts
+const shared = { shared: "shared" };
+
+//#endregion
+//#region input2.ts
+const input2 = {
+	...shared,
+	input2: "input2"
+};
+
+//#endregion
+export { input2 };
+// input2.d-D6mB_nrs.d.ts
+
+//#region shared.d.ts
+interface Shared {
+    shared: string;
+}
+declare const shared: Shared;
+
+//#endregion
+//#region input2.d.ts
+interface Input2 extends Shared {
+    input2: string;
+}
+declare const input2: Input2;
+
+//#endregion
+export { Input2, input2 as input2$1 };
+// output1.d.ts
+import { Input2 } from "./input2.d-D6mB_nrs.js";
+
+//#region input1.d.ts
+interface Input1 extends Input2 {
+    input1: string;
+}
+declare const input1: Input1;
+
+//#endregion
+export { Input1, input1 };
+// output1.js
+import { input2 } from "./input2-eM-jH71Q.js";
+
+//#region input1.ts
+const input1 = {
+	...input2,
+	input1: "input1"
+};
+
+//#endregion
+export { input1 };
+// output2/index.d.ts
+import { Input2, input2$1 as input2 } from "../input2.d-D6mB_nrs.js";
+
+export { Input2, input2 };
+// output2/index.js
+import { input2 } from "../input2-eM-jH71Q.js";
+
+export { input2 };"
+`;
+
 exports[`resolve dependencies 1`] = `
 "// resolve-dep.d.ts
 import MagicString, { MagicStringOptions, OverwriteOptions } from "magic-string";
