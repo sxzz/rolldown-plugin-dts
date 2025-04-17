@@ -232,6 +232,8 @@ export function createFakeJsPlugin({
         return
       }
 
+      // console.log(code)
+
       const { program } = parseSync(chunk.fileName, code)
       const s = new MagicStringAST(code)
 
@@ -554,7 +556,10 @@ function rewriteImportExport(s: MagicStringAST, node: Node) {
     }
     return true
   } else if (node.type === 'TSExportAssignment') {
-    s.overwriteNode(node, `export default ${s.sliceNode(node.expression)}`)
+    s.overwriteNode(
+      node,
+      `export { ${s.sliceNode(node.expression)} as default }`,
+    )
     return true
   } else if (
     node.type === 'ExportDefaultDeclaration' &&

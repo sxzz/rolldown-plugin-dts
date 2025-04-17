@@ -9,7 +9,7 @@ import { RollupOptions } from "rollup";
 //#region node_modules/.pnpm/typescript@5.8.3/node_modules/typescript/lib/typescript.d.ts
 
 declare namespace typescript_d_exports {
-  export { typescript_d_default as default, }
+  export { ts as default, }
 }
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -11408,7 +11408,6 @@ declare namespace ts {
      */
     function transform<T extends Node>(source: T | T[], transformers: TransformerFactory<T>[], compilerOptions?: CompilerOptions): TransformationResult<T>;
 }
-type typescript_d_default = ts
 
 //#endregion
 //#region tests/rollup-plugin-dts/inline-import-typeof-members/index.d.ts
