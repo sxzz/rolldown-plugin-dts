@@ -1,5 +1,3 @@
-import path from 'node:path'
-import process from 'node:process'
 import { createResolver } from 'dts-resolver'
 import { getTsconfig } from 'get-tsconfig'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
@@ -50,7 +48,7 @@ export function createGeneratePlugin({
   return {
     name: 'rolldown-plugin-dts:generate',
 
-    buildStart(options) {
+    async buildStart(options) {
       if (!compilerOptions) {
         const { config } = getTsconfig(options.cwd) || {}
         compilerOptions = config?.compilerOptions as any
@@ -71,10 +69,14 @@ export function createGeneratePlugin({
       }
 
       if (!Array.isArray(options.input)) {
-        const cwd = options.cwd || process.cwd()
-        for (const [fileName, inputFilePath] of Object.entries(options.input)) {
-          const id = path.resolve(cwd, inputFilePath)
-          inputAliasMap.set(id, fileName)
+        for (const [name, id] of Object.entries(options.input)) {
+          let resolved = await this.resolve(id, undefined, {
+            skipSelf: true,
+          })
+          resolved ||= await this.resolve(`./${id}`, undefined, {
+            skipSelf: true,
+          })
+          inputAliasMap.set(resolved?.id || id, name)
         }
       }
     },
@@ -164,8 +166,8 @@ export function createGeneratePlugin({
     },
 
     async resolveId(id, importer) {
-      // must be entry
       if (dtsMap.has(id)) {
+        // must be dts entry
         return { id, meta }
       }
 
