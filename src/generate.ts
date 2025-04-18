@@ -1,5 +1,5 @@
 import { createResolver } from 'dts-resolver'
-import { getTsconfig } from 'get-tsconfig'
+import { getTsconfig, parseTsconfig } from 'get-tsconfig'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
 import {
   filename_dts_to,
@@ -23,15 +23,46 @@ import type { Plugin } from 'rolldown'
 const meta = { dtsFile: true } as const
 
 export function createGeneratePlugin({
+  tsconfig,
   compilerOptions,
   isolatedDeclaration,
   resolve = false,
   emitDtsOnly = false,
 }: Pick<
   Options,
-  'isolatedDeclaration' | 'resolve' | 'emitDtsOnly' | 'compilerOptions'
+  | 'isolatedDeclaration'
+  | 'resolve'
+  | 'emitDtsOnly'
+  | 'tsconfig'
+  | 'compilerOptions'
 >): Plugin {
   const dtsMap = new Map<string, { code: string; src: string }>()
+
+  function resolveOptions(cwd?: string) {
+    if (tsconfig === true || tsconfig == null) {
+      const { config } = getTsconfig(cwd) || {}
+      compilerOptions = {
+        ...config?.compilerOptions,
+        ...compilerOptions,
+      }
+    } else if (typeof tsconfig === 'string') {
+      const config = parseTsconfig(tsconfig)
+      compilerOptions = {
+        ...config.compilerOptions,
+        ...compilerOptions,
+      }
+    }
+
+    if (isolatedDeclaration == null) {
+      isolatedDeclaration = !!compilerOptions?.isolatedDeclarations
+    }
+    if (isolatedDeclaration === true) {
+      isolatedDeclaration = {}
+    }
+    if (isolatedDeclaration && isolatedDeclaration.stripInternal == null) {
+      isolatedDeclaration.stripInternal = !!compilerOptions?.stripInternal
+    }
+  }
 
   /**
    * A map of input id to output file name
@@ -50,20 +81,7 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      if (!compilerOptions) {
-        const { config } = getTsconfig(options.cwd) || {}
-        compilerOptions = config?.compilerOptions as any
-      }
-
-      if (isolatedDeclaration == null) {
-        isolatedDeclaration = !!compilerOptions?.isolatedDeclarations
-      }
-      if (isolatedDeclaration === true) {
-        isolatedDeclaration = {}
-      }
-      if (isolatedDeclaration && isolatedDeclaration.stripInternal == null) {
-        isolatedDeclaration.stripInternal = !!compilerOptions?.stripInternal
-      }
+      resolveOptions(options.cwd)
 
       if (!isolatedDeclaration) {
         initTs()

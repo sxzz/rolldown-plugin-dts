@@ -31,6 +31,7 @@ test('typescript compiler', async () => {
         emitDtsOnly: true,
         compilerOptions: {
           skipLibCheck: true,
+          isolatedDeclarations: false,
         },
         isolatedDeclaration: false,
       }),
