@@ -171,44 +171,43 @@ export function createGeneratePlugin({
         return { id, meta }
       }
 
-      if (importer && this.getModuleInfo(importer)?.meta.dtsFile) {
-        // in dts file
+      if (!importer || !this.getModuleInfo(importer)?.meta.dtsFile) {
+        return
+      }
 
-        // resolve dependency
-        if (!isRelative(id)) {
-          let shouldResolve: boolean
-          if (typeof resolve === 'boolean') {
-            shouldResolve = resolve
-          } else {
-            shouldResolve = resolve.some((pattern) =>
-              typeof pattern === 'string' ? id === pattern : pattern.test(id),
-            )
-          }
-          if (shouldResolve) {
-            const resolution = resolver(id, importer)
-            if (resolution) return { id: resolution, meta }
-          } else {
-            return { id, external: true, meta }
-          }
+      // in dts file
+
+      // resolve dependency
+      if (!isRelative(id)) {
+        let shouldResolve: boolean
+        if (typeof resolve === 'boolean') {
+          shouldResolve = resolve
+        } else {
+          shouldResolve = resolve.some((pattern) =>
+            typeof pattern === 'string' ? id === pattern : pattern.test(id),
+          )
         }
-
-        // link to the original module
-        const resolution = await this.resolve(
-          id,
-          filename_dts_to(importer!, 'ts'),
-        )
-        if (!resolution || resolution.external) return
-
-        const dtsId = filename_ts_to_dts(resolution.id)
-        if (dtsMap.has(dtsId)) {
-          return { id: dtsId, meta }
+        if (shouldResolve) {
+          const resolution = resolver(id, importer)
+          if (resolution) return { id: resolution, meta }
+        } else {
+          return { id, external: true, meta }
         }
+      }
 
-        // pre-load original module if not already loaded
-        await this.load(resolution)
-        if (dtsMap.has(dtsId)) {
-          return { id: dtsId, meta }
-        }
+      // link to the original module
+      const resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
+      if (!resolution || resolution.external) return
+
+      const dtsId = filename_ts_to_dts(resolution.id)
+      if (dtsMap.has(dtsId)) {
+        return { id: dtsId, meta }
+      }
+
+      // pre-load original module if not already loaded
+      await this.load(resolution)
+      if (dtsMap.has(dtsId)) {
+        return { id: dtsId, meta }
       }
     },
 
