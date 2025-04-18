@@ -12,6 +12,7 @@ import {
   type Node,
   type ObjectExpression,
   type Span,
+  type TSTypeName,
   type VariableDeclaration,
 } from 'oxc-parser'
 import { getIdentifierRange } from './utils/ast'
@@ -373,13 +374,18 @@ function collectDependencies(
           return
 
         const source = node.argument.literal.value
-        const imported = node.qualifier && s.sliceNode(node.qualifier)
-        const local = importNamespace(s, source, imported, getIdentifierIndex)
+        const imported = node.qualifier && resolveTSTypeName(node.qualifier)
+        const local = importNamespace(
+          s,
+          source,
+          imported && s.sliceNode(imported),
+          getIdentifierIndex,
+        )
         addDependency({
           type: 'Identifier',
           name: local,
           start: node.start + (node.isTypeOf ? 7 : 0),
-          end: node.qualifier ? node.qualifier.end : node.end,
+          end: imported ? imported.end : node.end,
         })
       }
     },
@@ -390,6 +396,13 @@ function collectDependencies(
     if (node.type === 'Identifier' && node.name === 'this') return
     deps.add(node)
   }
+}
+
+function resolveTSTypeName(node: TSTypeName) {
+  if (node.type === 'Identifier') {
+    return node
+  }
+  return resolveTSTypeName(node.left)
 }
 
 function isReferenceId(
