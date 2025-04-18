@@ -5,6 +5,7 @@ import {
   filename_dts_to,
   filename_js_to_dts,
   filename_ts_to_dts,
+  isRelative,
   RE_DTS,
   RE_JS,
   RE_NODE_MODULES,
@@ -206,10 +207,10 @@ export function createGeneratePlugin({
 
       // link to the original module
       let resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
-      if (!resolution || resolution.external) return resolution
+      if (!resolution) return
 
       // resolve dependency
-      if (RE_NODE_MODULES.test(resolution.id)) {
+      if (RE_NODE_MODULES.test(resolution.id) || !isRelative(resolution.id)) {
         let shouldResolve: boolean
         if (typeof resolve === 'boolean') {
           shouldResolve = resolve
@@ -224,6 +225,8 @@ export function createGeneratePlugin({
         } else {
           return { id, external: true, meta }
         }
+      } else if (resolution.external) {
+        return resolution
       }
 
       let dtsId: string

@@ -1,3 +1,5 @@
+import path from 'node:path'
+
 export const RE_JS: RegExp = /\.([cm]?)jsx?$/
 export const RE_TS: RegExp = /\.([cm]?)tsx?$/
 export const RE_DTS: RegExp = /\.d\.([cm]?)ts$/
@@ -11,4 +13,8 @@ export function filename_ts_to_dts(id: string): string {
 }
 export function filename_dts_to(id: string, ext: 'js' | 'ts'): string {
   return id.replace(RE_DTS, `.$1${ext}`)
+}
+
+export function isRelative(id: string): boolean {
+  return path.isAbsolute(id) || id[0] === '.'
 }
