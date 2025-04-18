@@ -1,5 +1,46 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`basic 1`] = `
+"// basic.d.ts
+
+//#region tests/fixtures/basic.d.ts
+declare const foo: number;
+type SomeType<T> = T;
+type FooType = string;
+interface Interface {}
+declare function fn(arg0: SomeType<FooType>, opt: Interface): void;
+declare enum Enum {
+	A = 0,
+	B = 1,
+	C = 2,
+}
+declare class Cls {
+	foo: string;
+	fn(e: Enum): void;
+}
+
+//#endregion
+export { Cls, Enum, fn, foo };
+// basic.js
+
+//#region tests/fixtures/basic.ts
+const foo = 42;
+function fn(arg0, opt) {}
+let Enum = /* @__PURE__ */ function(Enum$1) {
+	Enum$1[Enum$1["A"] = 0] = "A";
+	Enum$1[Enum$1["B"] = 1] = "B";
+	Enum$1[Enum$1["C"] = 2] = "C";
+	return Enum$1;
+}({});
+var Cls = class {
+	foo;
+	fn(e) {}
+};
+
+//#endregion
+export { Cls, Enum, fn, foo };"
+`;
+
 exports[`input alias 1`] = `
 "// input2-eM-jH71Q.js
 

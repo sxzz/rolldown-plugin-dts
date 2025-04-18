@@ -6,6 +6,14 @@ import { dts } from '../src'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
+test('basic', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/basic.ts'),
+    [dts()],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
 test('typescript compiler', async () => {
   const root = path.resolve(dirname, 'fixtures/tsc')
   const { snapshot } = await rolldownBuild(
