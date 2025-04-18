@@ -232,8 +232,6 @@ export function createFakeJsPlugin({
         return
       }
 
-      // console.log(code)
-
       const { program } = parseSync(chunk.fileName, code)
       const s = new MagicStringAST(code)
 
@@ -364,7 +362,9 @@ function collectDependencies(
       } else if (node.type === 'TSTypeReference') {
         addDependency(node.typeName)
       } else if (node.type === 'TSTypeQuery') {
-        addDependency(node.exprName)
+        if (node.exprName.type !== 'TSImportType') {
+          addDependency(node.exprName)
+        }
       } else if (node.type === 'TSImportType') {
         if (
           node.argument.type !== 'TSLiteralType' ||
@@ -384,7 +384,7 @@ function collectDependencies(
         addDependency({
           type: 'Identifier',
           name: local,
-          start: node.start + (node.isTypeOf ? 7 : 0),
+          start: node.start,
           end: imported ? imported.end : node.end,
         })
       }
