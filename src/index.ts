@@ -30,7 +30,7 @@ export interface Options {
    * When `true`, the plugin will generate `.d.ts` files using `oxc-transform`,
    * which is blazingly faster than `typescript` compiler.
    *
-   * This option is enabled when `isolatedDeclaration` in `compilerOptions` is set to `true`.
+   * This option is enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
    */
   isolatedDeclaration?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
 
