@@ -11,16 +11,22 @@ import {
   RE_NODE_MODULES,
   RE_TS,
 } from './utils/filename'
-import {
-  createOrGetTsModule,
-  initTs,
-  tscEmit,
-  type TsProgram,
-} from './utils/tsc'
+import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc'
 import type { Options } from '.'
 import type { Plugin } from 'rolldown'
+import type * as Ts from 'typescript'
 
 const meta = { dtsFile: true } as const
+
+export interface TsModule {
+  /** `.ts` source code */
+  code: string
+  /** `.ts` file name */
+  id: string
+  isEntry: boolean
+}
+/** dts filename -> ts module */
+export type DtsMap = Map<string, TsModule>
 
 export function createGeneratePlugin({
   tsconfig,
@@ -36,7 +42,7 @@ export function createGeneratePlugin({
   | 'tsconfig'
   | 'compilerOptions'
 >): Plugin {
-  const dtsMap = new Map<string, { code: string; src: string }>()
+  const dtsMap: DtsMap = new Map<string, TsModule>()
 
   function resolveOptions(cwd?: string) {
     if (tsconfig === true || tsconfig == null) {
@@ -76,7 +82,7 @@ export function createGeneratePlugin({
    */
   const inputAliasMap = new Map<string, string>()
   let resolver: Resolver
-  let programs: TsProgram[] = []
+  let programs: Ts.Program[] = []
 
   return {
     name: 'rolldown-plugin-dts:generate',
@@ -129,49 +135,10 @@ export function createGeneratePlugin({
         },
       },
       handler(code, id) {
-        let dtsCode: string | undefined
-
         const mod = this.getModuleInfo(id)
-        const isEntry = mod?.isEntry
-
-        if (isolatedDeclaration) {
-          const result = oxcIsolatedDeclaration(
-            id,
-            code,
-            isolatedDeclaration === true ? {} : isolatedDeclaration,
-          )
-          if (result.errors.length) {
-            const [error] = result.errors
-            return this.error({
-              message: error.message,
-              frame: error.codeframe,
-            })
-          }
-          dtsCode = result.code
-        } else {
-          const module = createOrGetTsModule(
-            programs,
-            compilerOptions,
-            id,
-            code,
-            isEntry,
-          )
-          const result = tscEmit(module)
-          if (result.error) {
-            return this.error(result.error)
-          }
-          dtsCode = result.code
-        }
-
-        if (!dtsCode) {
-          return this.error(new Error(`Failed to generate dts for ${id}`))
-        }
-
+        const isEntry = !!mod?.isEntry
         const dtsId = filename_ts_to_dts(id)
-        dtsMap.set(dtsId, {
-          code: dtsCode,
-          src: id,
-        })
+        dtsMap.set(dtsId, { code, id, isEntry })
 
         if (isEntry) {
           const name = inputAliasMap.get(id)
@@ -260,12 +227,48 @@ export function createGeneratePlugin({
           exclude: [RE_NODE_MODULES],
         },
       },
-      handler(id) {
-        if (dtsMap.has(id)) {
-          return {
-            code: dtsMap.get(id)!.code,
-            moduleSideEffects: false,
+      handler(dtsId) {
+        if (!dtsMap.has(dtsId)) return
+
+        const { code, id, isEntry } = dtsMap.get(dtsId)!
+        let dtsCode: string | undefined
+
+        if (isolatedDeclaration) {
+          const result = oxcIsolatedDeclaration(
+            id,
+            code,
+            isolatedDeclaration === true ? {} : isolatedDeclaration,
+          )
+          if (result.errors.length) {
+            const [error] = result.errors
+            return this.error({
+              message: error.message,
+              frame: error.codeframe,
+            })
           }
+          dtsCode = result.code
+        } else {
+          const module = createOrGetTsModule(
+            programs,
+            compilerOptions,
+            id,
+            isEntry,
+            dtsMap,
+          )
+          const result = tscEmit(module)
+          if (result.error) {
+            return this.error(result.error)
+          }
+          dtsCode = result.code
+        }
+
+        if (!dtsCode) {
+          return this.error(new Error(`Failed to generate dts for ${id}`))
+        }
+
+        return {
+          code: dtsCode,
+          moduleSideEffects: false,
         }
       },
     },

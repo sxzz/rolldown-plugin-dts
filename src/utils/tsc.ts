@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module'
 import Debug from 'debug'
+import type { DtsMap } from '../generate'
 import type { TsConfigJson } from 'get-tsconfig'
 import type Ts from 'typescript'
 
@@ -37,38 +38,33 @@ const defaultCompilerOptions: Ts.CompilerOptions = {
   resolveJsonModule: true,
 }
 
-export interface TsProgram {
+export interface TscModule {
   program: Ts.Program
-  files: Map<string, string>
-}
-
-export interface TsModule {
-  program: TsProgram
   file: Ts.SourceFile
 }
 
 export function createOrGetTsModule(
-  programs: TsProgram[],
+  programs: Ts.Program[],
   compilerOptions: TsConfigJson.CompilerOptions | undefined,
   id: string,
-  code: string,
-  isEntry?: boolean,
-): TsModule {
-  const tsProgram = programs.find(({ program }) => {
+  isEntry: boolean,
+  dtsMap: DtsMap,
+): TscModule {
+  const program = programs.find((program) => {
     if (isEntry) {
       return program.getRootFileNames().includes(id)
     }
     return program.getSourceFile(id)
   })
-  if (tsProgram) {
-    const sourceFile = tsProgram.program.getSourceFile(id)
+  if (program) {
+    const sourceFile = program.getSourceFile(id)
     if (sourceFile) {
-      return { program: tsProgram, file: sourceFile }
+      return { program, file: sourceFile }
     }
   }
 
   debug(`create program for module: ${id}`)
-  const module = createTsProgram(compilerOptions, id, code)
+  const module = createTsProgram(compilerOptions, dtsMap, id)
   debug(`created program for module: ${id}`)
 
   programs.push(module.program)
@@ -77,11 +73,9 @@ export function createOrGetTsModule(
 
 function createTsProgram(
   compilerOptions: TsConfigJson.CompilerOptions | undefined,
+  dtsMap: DtsMap,
   id: string,
-  code: string,
-): TsModule {
-  const files = new Map<string, string>([[id, code]])
-
+): TscModule {
   const overrideCompilerOptions: Ts.CompilerOptions =
     ts.convertCompilerOptionsFromJson(compilerOptions, '.').options
 
@@ -93,33 +87,37 @@ function createTsProgram(
   const host = ts.createCompilerHost(options, true)
   const { readFile: _readFile, fileExists: _fileExists } = host
   host.fileExists = (fileName) => {
-    if (files.has(fileName)) return true
+    const module = getTsModule(dtsMap, fileName)
+    if (module) return true
     return _fileExists(fileName)
   }
   host.readFile = (fileName) => {
-    if (files.has(fileName)) return files.get(fileName)!
+    const module = getTsModule(dtsMap, fileName)
+    if (module) return module.code
     return _readFile(fileName)
   }
-  const program = ts.createProgram([id], options, host)
+
+  const entries = Array.from(dtsMap.values())
+    .filter((v) => v.isEntry)
+    .map((v) => v.id)
+  const program = ts.createProgram(
+    Array.from(new Set([id, ...entries])),
+    options,
+    host,
+  )
   const sourceFile = program.getSourceFile(id)
   if (!sourceFile) {
     throw new Error(`Source file not found: ${id}`)
   }
 
   return {
-    program: {
-      program,
-      files,
-    },
+    program,
     file: sourceFile,
   }
 }
 
-export function tscEmit(module: TsModule): { code?: string; error?: string } {
-  const {
-    program: { program },
-    file,
-  } = module
+export function tscEmit(module: TscModule): { code?: string; error?: string } {
+  const { program, file } = module
   let dtsCode: string | undefined
   const { emitSkipped, diagnostics } = program.emit(
     file,
@@ -137,4 +135,10 @@ export function tscEmit(module: TsModule): { code?: string; error?: string } {
     return { error: ts.formatDiagnostics(diagnostics, formatHost) }
   }
   return { code: dtsCode }
+}
+
+function getTsModule(dtsMap: DtsMap, tsId: string) {
+  const module = Array.from(dtsMap.values()).find((dts) => dts.id === tsId)
+  if (!module) return
+  return module
 }
