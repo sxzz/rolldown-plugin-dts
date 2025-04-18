@@ -158,10 +158,10 @@ export function createGeneratePlugin({
             id: dtsId,
             name: name ? `${name}.d` : undefined,
           })
+        }
 
-          if (emitDtsOnly) {
-            return '//' // placeholder
-          }
+        if (emitDtsOnly) {
+          return 'export { }'
         }
       },
     },
