@@ -1,7 +1,7 @@
 import path from 'node:path'
 
 export const RE_JS: RegExp = /\.([cm]?)js$/
-export const RE_TS: RegExp = /\.([cm]?)ts$/
+export const RE_TS: RegExp = /\.([cm]?)tsx?$/
 export const RE_DTS: RegExp = /\.d\.([cm]?)ts$/
 export const RE_NODE_MODULES: RegExp = /node_modules/
 

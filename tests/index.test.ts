@@ -14,6 +14,14 @@ test('basic', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+test('tsx', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/tsx.tsx'),
+    [dts()],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
 test('typescript compiler', async () => {
   const root = path.resolve(dirname, 'fixtures/tsc')
   const { snapshot } = await rolldownBuild(

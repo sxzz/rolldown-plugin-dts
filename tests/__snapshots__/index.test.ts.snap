@@ -179,6 +179,27 @@ declare function generateTransform(s: MagicString | undefined, id: string): Code
 export { MagicStringAST, build };"
 `;
 
+exports[`tsx 1`] = `
+"// tsx.d.ts
+import { JSX } from "solid-js";
+
+//#region tests/fixtures/tsx.d.ts
+declare function createComponent(): JSX.HTMLAttributes<HTMLElement>;
+
+//#endregion
+export { createComponent };
+// tsx.js
+import { jsx } from "react/jsx-runtime";
+
+//#region tests/fixtures/tsx.tsx
+function createComponent() {
+	return /* @__PURE__ */ jsx("div", {});
+}
+
+//#endregion
+export { createComponent };"
+`;
+
 exports[`typescript compiler 1`] = `
 "// entry1.d.ts
 
