@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "debug": "^4.4.0",
-    "dts-resolver": "^0.1.1",
+    "dts-resolver": "^1.0.0",
     "get-tsconfig": "^4.10.0",
     "magic-string-ast": "^0.9.1",
     "oxc-parser": "^0.64.0",

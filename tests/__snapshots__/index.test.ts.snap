@@ -105,6 +105,16 @@ import { input2 } from "../input2-eM-jH71Q.js";
 export { input2 };"
 `;
 
+exports[`paths 1`] = `
+"// index.d.ts
+
+//#region tests/fixtures/paths/mod.d.ts
+declare const foo = 42;
+
+//#endregion
+export { foo };"
+`;
+
 exports[`resolve dependencies 1`] = `
 "// resolve-dep.d.ts
 import MagicString, { MagicStringOptions, OverwriteOptions } from "magic-string";

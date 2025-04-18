@@ -1,11 +1,10 @@
-import { createResolver } from 'dts-resolver'
+import { createResolver, type Resolver } from 'dts-resolver'
 import { getTsconfig, parseTsconfig } from 'get-tsconfig'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
 import {
   filename_dts_to,
   filename_js_to_dts,
   filename_ts_to_dts,
-  isRelative,
   RE_DTS,
   RE_JS,
   RE_NODE_MODULES,
@@ -40,7 +39,8 @@ export function createGeneratePlugin({
 
   function resolveOptions(cwd?: string) {
     if (tsconfig === true || tsconfig == null) {
-      const { config } = getTsconfig(cwd) || {}
+      const { config, path } = getTsconfig(cwd) || {}
+      tsconfig = path
       compilerOptions = {
         ...config?.compilerOptions,
         ...compilerOptions,
@@ -74,7 +74,7 @@ export function createGeneratePlugin({
    * ])
    */
   const inputAliasMap = new Map<string, string>()
-  const resolver = createResolver()
+  let resolver: Resolver
   let programs: TsProgram[] = []
 
   return {
@@ -82,6 +82,9 @@ export function createGeneratePlugin({
 
     async buildStart(options) {
       resolveOptions(options.cwd)
+      resolver = createResolver({
+        tsconfig: tsconfig ? (tsconfig as string) : undefined,
+      })
 
       if (!isolatedDeclaration) {
         initTs()
@@ -201,8 +204,12 @@ export function createGeneratePlugin({
         return { ...resolution, meta }
       }
 
+      // link to the original module
+      let resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
+      if (!resolution || resolution.external) return
+
       // resolve dependency
-      if (!isRelative(id)) {
+      if (RE_NODE_MODULES.test(resolution.id)) {
         let shouldResolve: boolean
         if (typeof resolve === 'boolean') {
           shouldResolve = resolve
@@ -218,10 +225,6 @@ export function createGeneratePlugin({
           return { id, external: true, meta }
         }
       }
-
-      // link to the original module
-      let resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
-      if (!resolution || resolution.external) return
 
       let dtsId: string
       if (RE_JS.test(resolution.id)) {
