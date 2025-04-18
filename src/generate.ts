@@ -206,7 +206,7 @@ export function createGeneratePlugin({
 
       // link to the original module
       let resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
-      if (!resolution || resolution.external) return
+      if (!resolution || resolution.external) return resolution
 
       // resolve dependency
       if (RE_NODE_MODULES.test(resolution.id)) {
