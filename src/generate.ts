@@ -3,6 +3,7 @@ import { getTsconfig } from 'get-tsconfig'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
 import {
   filename_dts_to,
+  filename_js_to_dts,
   filename_ts_to_dts,
   isRelative,
   RE_DTS,
@@ -165,7 +166,7 @@ export function createGeneratePlugin({
       },
     },
 
-    async resolveId(id, importer) {
+    async resolveId(id, importer, options) {
       if (dtsMap.has(id)) {
         // must be dts entry
         return { id, meta }
@@ -174,8 +175,13 @@ export function createGeneratePlugin({
       if (!importer || !this.getModuleInfo(importer)?.meta.dtsFile) {
         return
       }
-
       // in dts file
+
+      if (RE_DTS.test(id)) {
+        const resolution = await this.resolve(id, importer, options)
+        if (!resolution) return
+        return { ...resolution, meta }
+      }
 
       // resolve dependency
       if (!isRelative(id)) {
@@ -196,17 +202,29 @@ export function createGeneratePlugin({
       }
 
       // link to the original module
-      const resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
+      let resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
       if (!resolution || resolution.external) return
 
-      const dtsId = filename_ts_to_dts(resolution.id)
-      if (dtsMap.has(dtsId)) {
-        return { id: dtsId, meta }
+      let dtsId: string
+      if (RE_JS.test(resolution.id)) {
+        // resolve dts for js
+        resolution = await this.resolve(
+          filename_js_to_dts(resolution.id),
+          importer,
+          { skipSelf: false },
+        )
+        if (!resolution) return
+        dtsId = resolution.id
+      } else {
+        dtsId = filename_ts_to_dts(resolution.id)
+        if (dtsMap.has(dtsId)) {
+          return { id: dtsId, meta }
+        }
       }
 
-      // pre-load original module if not already loaded
       await this.load(resolution)
-      if (dtsMap.has(dtsId)) {
+
+      if (RE_DTS.test(resolution.id) || dtsMap.has(dtsId)) {
         return { id: dtsId, meta }
       }
     },
