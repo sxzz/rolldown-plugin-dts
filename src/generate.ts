@@ -31,12 +31,12 @@ export type DtsMap = Map<string, TsModule>
 export function createGeneratePlugin({
   tsconfig,
   compilerOptions,
-  isolatedDeclaration,
+  isolatedDeclarations,
   resolve = false,
   emitDtsOnly = false,
 }: Pick<
   Options,
-  | 'isolatedDeclaration'
+  | 'isolatedDeclarations'
   | 'resolve'
   | 'emitDtsOnly'
   | 'tsconfig'
@@ -60,14 +60,14 @@ export function createGeneratePlugin({
       }
     }
 
-    if (isolatedDeclaration == null) {
-      isolatedDeclaration = !!compilerOptions?.isolatedDeclarations
+    if (isolatedDeclarations == null) {
+      isolatedDeclarations = !!compilerOptions?.isolatedDeclarations
     }
-    if (isolatedDeclaration === true) {
-      isolatedDeclaration = {}
+    if (isolatedDeclarations === true) {
+      isolatedDeclarations = {}
     }
-    if (isolatedDeclaration && isolatedDeclaration.stripInternal == null) {
-      isolatedDeclaration.stripInternal = !!compilerOptions?.stripInternal
+    if (isolatedDeclarations && isolatedDeclarations.stripInternal == null) {
+      isolatedDeclarations.stripInternal = !!compilerOptions?.stripInternal
     }
   }
 
@@ -93,7 +93,7 @@ export function createGeneratePlugin({
         tsconfig: tsconfig ? (tsconfig as string) : undefined,
       })
 
-      if (!isolatedDeclaration) {
+      if (!isolatedDeclarations) {
         initTs()
       }
 
@@ -236,11 +236,11 @@ export function createGeneratePlugin({
         const { code, id, isEntry } = dtsMap.get(dtsId)!
         let dtsCode: string | undefined
 
-        if (isolatedDeclaration) {
+        if (isolatedDeclarations) {
           const result = oxcIsolatedDeclaration(
             id,
             code,
-            isolatedDeclaration === true ? {} : isolatedDeclaration,
+            isolatedDeclarations === true ? {} : isolatedDeclarations,
           )
           if (result.errors.length) {
             const [error] = result.errors
