@@ -174,12 +174,19 @@ export function createGeneratePlugin({
           return { ...resolution, meta }
         }
 
+        if (RE_NODE_MODULES.test(importer)) {
+          const resolution = resolver(id, importer)
+          if (resolution) return { id: resolution, meta }
+        }
+
         // link to the original module
         let resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
-        if (!resolution) return
 
         // resolve dependency
-        if (RE_NODE_MODULES.test(resolution.id) || !isRelative(resolution.id)) {
+        if (
+          RE_NODE_MODULES.test(resolution?.id || id) ||
+          !isRelative(resolution?.id || id)
+        ) {
           let shouldResolve: boolean
           if (typeof resolve === 'boolean') {
             shouldResolve = resolve
@@ -194,7 +201,9 @@ export function createGeneratePlugin({
           } else {
             return { id, external: true, meta }
           }
-        } else if (resolution.external) {
+        }
+
+        if (!resolution || resolution.external) {
           return resolution
         }
 

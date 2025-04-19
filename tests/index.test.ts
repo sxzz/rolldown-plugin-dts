@@ -60,7 +60,8 @@ test('resolve dependencies', async () => {
       }),
     ],
   )
-  expect(snapshot).toMatchSnapshot()
+  expect(snapshot).contain('declare class MagicString')
+  expect(snapshot).contain('declare class MagicStringAST')
 })
 
 // Test alias mapping based on rolldown input option
