@@ -46,24 +46,11 @@ export interface Options {
     | boolean
     | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
 
-  /**
-   * @deprecated Use `isolatedDeclarations` instead.
-   */
-  isolatedDeclaration?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
-
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]
 }
 
 export function dts(options: Options = {}): Plugin[] {
-  // Compatibility with old `isolatedDeclaration` option name
-  if (options.isolatedDeclaration != null) {
-    console.warn(
-      '[rolldown-plugin-dts] `isolatedDeclaration` option is deprecated. Use `isolatedDeclarations` instead.',
-    )
-    options = { ...options, isolatedDeclarations: options.isolatedDeclaration }
-  }
-
   const plugins: Plugin[] = []
   if (!options.dtsInput) {
     plugins.push(createGeneratePlugin(options))
