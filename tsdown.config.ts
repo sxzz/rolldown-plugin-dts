@@ -8,7 +8,7 @@ export default defineConfig({
   platform: 'node',
   plugins: [
     dts({
-      isolatedDeclaration: true,
+      isolatedDeclarations: true,
     }),
   ],
 })

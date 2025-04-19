@@ -68,7 +68,9 @@ interface Options {
    *
    * This option is enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
    */
-  isolatedDeclaration?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
+  isolatedDeclarations?:
+    | boolean
+    | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
 
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]
@@ -79,7 +81,7 @@ interface Options {
 
 ### Isolated Declarations
 
-The plugin leverages Oxc's `isolatedDeclarations` to generate `.d.ts` files when `isolatedDeclaration` is enabled,
+The plugin leverages Oxc's `isolatedDeclarations` to generate `.d.ts` files when `isolatedDeclarations` is enabled,
 offering significantly faster performance compared to the `typescript` compiler.
 
 ### Single Build for ESM

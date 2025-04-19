@@ -42,7 +42,7 @@ test('typescript compiler', async () => {
           skipLibCheck: true,
           isolatedDeclarations: false,
         },
-        isolatedDeclaration: false,
+        isolatedDeclarations: false,
       }),
     ],
   )
@@ -55,7 +55,7 @@ test('resolve dependencies', async () => {
     [
       dts({
         resolve: ['magic-string-ast'],
-        isolatedDeclaration: true,
+        isolatedDeclarations: true,
         emitDtsOnly: true,
       }),
     ],
@@ -73,7 +73,7 @@ test('input alias', async () => {
       dts({
         emitDtsOnly: false, // Generate both JS and DTS files
         compilerOptions: {},
-        isolatedDeclaration: false,
+        isolatedDeclarations: false,
       }),
     ],
     {
@@ -103,7 +103,7 @@ test('isolated declaration error', async () => {
     [
       dts({
         emitDtsOnly: true,
-        isolatedDeclaration: true,
+        isolatedDeclarations: true,
       }),
     ],
   ).catch((error: any) => error)
@@ -119,7 +119,7 @@ test('paths', async () => {
     path.resolve(root, 'index.ts'),
     [
       dts({
-        isolatedDeclaration: true,
+        isolatedDeclarations: true,
         emitDtsOnly: true,
       }),
     ],
