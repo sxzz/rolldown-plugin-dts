@@ -155,69 +155,72 @@ export function createGeneratePlugin({
       },
     },
 
-    async resolveId(id, importer, options) {
-      if (dtsMap.has(id)) {
-        // must be dts entry
-        return { id, meta }
-      }
+    resolveId: {
+      order: 'pre',
+      async handler(id, importer, options) {
+        if (dtsMap.has(id)) {
+          // must be dts entry
+          return { id, meta }
+        }
 
-      if (!importer || !this.getModuleInfo(importer)?.meta.dtsFile) {
-        return
-      }
-      // in dts file
+        if (!importer || !this.getModuleInfo(importer)?.meta.dtsFile) {
+          return
+        }
+        // in dts file
 
-      if (RE_DTS.test(id)) {
-        const resolution = await this.resolve(id, importer, options)
+        if (RE_DTS.test(id)) {
+          const resolution = await this.resolve(id, importer, options)
+          if (!resolution) return
+          return { ...resolution, meta }
+        }
+
+        // link to the original module
+        let resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
         if (!resolution) return
-        return { ...resolution, meta }
-      }
 
-      // link to the original module
-      let resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
-      if (!resolution) return
+        // resolve dependency
+        if (RE_NODE_MODULES.test(resolution.id) || !isRelative(resolution.id)) {
+          let shouldResolve: boolean
+          if (typeof resolve === 'boolean') {
+            shouldResolve = resolve
+          } else {
+            shouldResolve = resolve.some((pattern) =>
+              typeof pattern === 'string' ? id === pattern : pattern.test(id),
+            )
+          }
+          if (shouldResolve) {
+            const resolution = resolver(id, importer)
+            if (resolution) return { id: resolution, meta }
+          } else {
+            return { id, external: true, meta }
+          }
+        } else if (resolution.external) {
+          return resolution
+        }
 
-      // resolve dependency
-      if (RE_NODE_MODULES.test(resolution.id) || !isRelative(resolution.id)) {
-        let shouldResolve: boolean
-        if (typeof resolve === 'boolean') {
-          shouldResolve = resolve
-        } else {
-          shouldResolve = resolve.some((pattern) =>
-            typeof pattern === 'string' ? id === pattern : pattern.test(id),
+        let dtsId: string
+        if (RE_JS.test(resolution.id)) {
+          // resolve dts for js
+          resolution = await this.resolve(
+            filename_js_to_dts(resolution.id),
+            importer,
+            { skipSelf: false },
           )
-        }
-        if (shouldResolve) {
-          const resolution = resolver(id, importer)
-          if (resolution) return { id: resolution, meta }
+          if (!resolution) return
+          dtsId = resolution.id
         } else {
-          return { id, external: true, meta }
+          dtsId = filename_ts_to_dts(resolution.id)
+          if (dtsMap.has(dtsId)) {
+            return { id: dtsId, meta }
+          }
         }
-      } else if (resolution.external) {
-        return resolution
-      }
 
-      let dtsId: string
-      if (RE_JS.test(resolution.id)) {
-        // resolve dts for js
-        resolution = await this.resolve(
-          filename_js_to_dts(resolution.id),
-          importer,
-          { skipSelf: false },
-        )
-        if (!resolution) return
-        dtsId = resolution.id
-      } else {
-        dtsId = filename_ts_to_dts(resolution.id)
-        if (dtsMap.has(dtsId)) {
+        await this.load(resolution)
+
+        if (RE_DTS.test(resolution.id) || dtsMap.has(dtsId)) {
           return { id: dtsId, meta }
         }
-      }
-
-      await this.load(resolution)
-
-      if (RE_DTS.test(resolution.id) || dtsMap.has(dtsId)) {
-        return { id: dtsId, meta }
-      }
+      },
     },
 
     load: {

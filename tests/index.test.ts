@@ -25,8 +25,17 @@ test('tsx', async () => {
 test('typescript compiler', async () => {
   const root = path.resolve(dirname, 'fixtures/tsc')
   const { snapshot } = await rolldownBuild(
-    null!,
+    [path.resolve(root, 'entry1.ts'), path.resolve(root, 'entry2.ts')],
     [
+      {
+        name: 'virtual-module',
+        resolveId(id) {
+          if (id === '/vfs') return '/vfs.ts'
+        },
+        load(id) {
+          if (id === '/vfs.ts') return `export const vfs = Math.random()`
+        },
+      },
       dts({
         emitDtsOnly: true,
         compilerOptions: {
@@ -36,9 +45,6 @@ test('typescript compiler', async () => {
         isolatedDeclaration: false,
       }),
     ],
-    {
-      input: [path.resolve(root, 'entry1.ts'), path.resolve(root, 'entry2.ts')],
-    },
   )
   expect(snapshot).toMatchSnapshot()
 })

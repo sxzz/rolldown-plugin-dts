@@ -220,7 +220,11 @@ declare const bool = true;
 declare function fn(arg: typeof str): "foo" | 1;
 
 //#endregion
-export { bool, fn, num, str };
+//#region ../../../../../vfs.d.ts
+declare const vfs: number;
+
+//#endregion
+export { bool, fn, num, str, vfs };
 // entry2.d.ts
 
 //#region tests/fixtures/tsc/entry2.d.ts

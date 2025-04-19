@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module'
 import Debug from 'debug'
 import type { DtsMap } from '../generate'
+import { RE_NODE_MODULES } from './filename'
 import type { TsConfigJson } from 'get-tsconfig'
 import type Ts from 'typescript'
 
@@ -89,11 +90,17 @@ function createTsProgram(
   host.fileExists = (fileName) => {
     const module = getTsModule(dtsMap, fileName)
     if (module) return true
+    if (debug.enabled && !RE_NODE_MODULES.test(fileName)) {
+      debug(`file exists from fs: ${fileName}`)
+    }
     return _fileExists(fileName)
   }
   host.readFile = (fileName) => {
     const module = getTsModule(dtsMap, fileName)
     if (module) return module.code
+    if (debug.enabled && !RE_NODE_MODULES.test(fileName)) {
+      debug(`read file from fs: ${fileName}`)
+    }
     return _readFile(fileName)
   }
 
