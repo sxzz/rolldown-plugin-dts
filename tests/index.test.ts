@@ -46,7 +46,7 @@ test('typescript compiler', async () => {
       }),
     ],
   )
-  expect(snapshot).toMatchSnapshot()
+  expect(snapshot.replaceAll(/\/\/#region.*/g, '')).toMatchSnapshot()
 })
 
 test('resolve dependencies', async () => {

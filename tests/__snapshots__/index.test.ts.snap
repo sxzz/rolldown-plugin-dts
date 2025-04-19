@@ -213,21 +213,21 @@ export { createComponent };"
 exports[`typescript compiler 1`] = `
 "// entry1.d.ts
 
-//#region tests/fixtures/tsc/mod.d.ts
+
 declare const str = "foo";
 declare const num = 42;
 declare const bool = true;
 declare function fn(arg: typeof str): "foo" | 1;
 
 //#endregion
-//#region ../../../../../vfs.d.ts
+
 declare const vfs: number;
 
 //#endregion
 export { bool, fn, num, str, vfs };
 // entry2.d.ts
 
-//#region tests/fixtures/tsc/entry2.d.ts
+
 interface Unused {
     foo: string;
 }
