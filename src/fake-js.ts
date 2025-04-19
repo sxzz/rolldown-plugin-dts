@@ -104,7 +104,7 @@ export function createFakeJsPlugin({
               ? options.chunkFileNames(chunk)
               : options.chunkFileNames) || '[name]-[hash].js'
 
-          if (chunk.name.endsWith('.d')) {
+          if (!original.includes('.d') && chunk.name.endsWith('.d')) {
             return filename_js_to_dts(original)
           }
           return original

@@ -118,7 +118,7 @@ export function createGeneratePlugin({
             (typeof options.entryFileNames === 'function'
               ? options.entryFileNames(chunk)
               : options.entryFileNames) || '[name].js'
-          if (chunk.name.endsWith('.d')) {
+          if (!original.includes('.d') && chunk.name.endsWith('.d')) {
             return original.replace(RE_JS, '.$1ts')
           }
           return original
