@@ -1,3 +1,5 @@
+import path from 'node:path'
+import process from 'node:process'
 import { createResolver, type Resolver } from 'dts-resolver'
 import { getTsconfig, parseTsconfig } from 'get-tsconfig'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
@@ -53,6 +55,7 @@ export function createGeneratePlugin({
         ...compilerOptions,
       }
     } else if (typeof tsconfig === 'string') {
+      tsconfig = path.resolve(cwd || process.cwd(), tsconfig)
       const config = parseTsconfig(tsconfig)
       compilerOptions = {
         ...config.compilerOptions,
