@@ -7,6 +7,7 @@ import {
   RE_JS,
   RE_NODE_MODULES,
   RE_TS,
+  RE_VUE,
 } from './utils/filename.ts'
 import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc.ts'
 import type { OptionsResolved } from './index.ts'
@@ -96,7 +97,7 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_TS],
+          include: [RE_TS, RE_VUE],
           exclude: [RE_DTS, RE_NODE_MODULES],
         },
       },

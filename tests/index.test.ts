@@ -161,3 +161,18 @@ test('dts input', async () => {
   })
   expect(snapshot).toMatchSnapshot()
 })
+
+test('vue-sfc w/ ts-compiler', async () => {
+  const root = path.resolve(dirname, 'fixtures/vue-sfc')
+  const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
+    dts({
+      emitDtsOnly: true,
+      compilerOptions: {
+        skipLibCheck: true,
+        isolatedDeclarations: false,
+      },
+      isolatedDeclarations: false,
+    }),
+  ])
+  expect(snapshot).toMatchSnapshot()
+})

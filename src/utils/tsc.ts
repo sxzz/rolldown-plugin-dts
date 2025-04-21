@@ -1,13 +1,15 @@
 import { createRequire } from 'node:module'
 import Debug from 'debug'
 import type { DtsMap } from '../generate.ts'
-import { RE_NODE_MODULES } from './filename.ts'
+import { RE_NODE_MODULES, RE_VUE } from './filename.ts'
+import { createVueProgramFactory } from './vue'
 import type { TsConfigJson } from 'get-tsconfig'
 import type Ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:tsc')
 
-let ts: typeof Ts
+// eslint-disable-next-line import/no-mutable-exports
+export let ts: typeof Ts
 let formatHost: Ts.FormatDiagnosticsHost
 
 export function initTs(): void {
@@ -104,14 +106,22 @@ function createTsProgram(
     return _readFile(fileName)
   }
 
-  const entries = Array.from(dtsMap.values())
-    .filter((v) => v.isEntry)
-    .map((v) => v.id)
-  const program = ts.createProgram(
-    Array.from(new Set([id, ...entries])),
+  const entries = [
+    ...new Set([
+      ...Array.from(dtsMap.values())
+        .filter((v) => v.isEntry)
+        .map((v) => v.id),
+      id,
+    ]),
+  ]
+  const createProgram = entries.some((id) => RE_VUE.test(id))
+    ? createVueProgramFactory()
+    : ts.createProgram
+  const program = createProgram({
+    rootNames: Array.from(entries),
     options,
     host,
-  )
+  })
   const sourceFile = program.getSourceFile(id)
   if (!sourceFile) {
     throw new Error(`Source file not found: ${id}`)
