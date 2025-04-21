@@ -18,7 +18,7 @@ import type { Options } from '.'
 import type { Plugin } from 'rolldown'
 import type * as Ts from 'typescript'
 
-const meta = { dtsFile: true } as const
+export const meta = { dtsFile: true } as const
 
 export interface TsModule {
   /** `.ts` source code */

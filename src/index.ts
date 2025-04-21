@@ -1,3 +1,4 @@
+import { createDtsInputPlugin } from './dts-input'
 import { createFakeJsPlugin } from './fake-js'
 import { createGeneratePlugin } from './generate'
 import type { TsConfigJson } from 'get-tsconfig'
@@ -52,7 +53,9 @@ export interface Options {
 
 export function dts(options: Options = {}): Plugin[] {
   const plugins: Plugin[] = []
-  if (!options.dtsInput) {
+  if (options.dtsInput) {
+    plugins.push(createDtsInputPlugin())
+  } else {
     plugins.push(createGeneratePlugin(options))
   }
   plugins.push(createFakeJsPlugin(options))
