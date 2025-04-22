@@ -101,6 +101,50 @@ import { input2 } from "../input2-LCiYuoaZ.js";
 export { input2 };"
 `;
 
+exports[`jsdoc 1`] = `
+"// jsdoc.d.ts
+//#region tests/fixtures/jsdoc.d.ts
+/**
+* named export
+*/
+declare function fn(): number;
+/**
+* options
+*/
+interface Options {
+    /**
+     * interface member
+     */
+    foo: string;
+}
+/**
+* type alias
+*/
+type Foo = string;
+/**
+* default export
+*/
+declare const _default: number;
+
+//#endregion
+export { Foo, Options, _default as default, fn };
+// jsdoc.js
+//#region tests/fixtures/jsdoc.ts
+/**
+* named export
+*/
+function fn() {
+	return 42;
+}
+/**
+* default export
+*/
+var jsdoc_default = fn();
+
+//#endregion
+export { jsdoc_default as default, fn };"
+`;
+
 exports[`paths 1`] = `
 "// index.d.ts
 //#region tests/fixtures/paths/mod.d.ts

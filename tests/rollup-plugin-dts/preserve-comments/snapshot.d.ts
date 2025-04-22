@@ -3,9 +3,6 @@
 /**
 * A function with doc-comment that is imported first
 */
-/**
- * A function with doc-comment that is imported first
- */
 declare function first(): void;
 
 //#endregion
@@ -13,9 +10,6 @@ declare function first(): void;
 /**
 * A function with doc-comment that is imported second
 */
-/**
- * A function with doc-comment that is imported second
- */
 declare function second(): void;
 
 //#endregion
@@ -23,9 +17,6 @@ declare function second(): void;
 /**
 * A function with doc-comment in the main file
 */
-/**
- * A function with doc-comment in the main file
- */
 declare function main(): void;
 
 //#endregion

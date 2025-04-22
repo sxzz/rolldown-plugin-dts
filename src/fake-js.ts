@@ -42,7 +42,6 @@ interface SymbolInfo {
   binding: Range
   deps: DepSymbol[]
   needDeclare: boolean
-  jsdoc?: string
   preserveName: boolean
 }
 
@@ -155,15 +154,6 @@ export function createFakeJsPlugin({
                     .id
 
             const code = s.sliceNode(node)
-
-            const jsdoc = comments.find(
-              (c) =>
-                c.type === 'Block' &&
-                c.value[0] === '*' &&
-                c.start < node.start &&
-                stmt.start - c.end <= 1,
-            )
-
             const offset = node.start
 
             let bindingRange: Range
@@ -199,7 +189,6 @@ export function createFakeJsPlugin({
               binding: bindingRange,
               deps: depsSymbols,
               needDeclare,
-              jsdoc: jsdoc ? s.sliceNode(jsdoc) : undefined,
               preserveName: sideEffect,
             })
 
@@ -274,7 +263,7 @@ export function createFakeJsPlugin({
         }
 
         const symbolId = symbolIdNode.value
-        const { code, binding, deps, needDeclare, jsdoc, preserveName } =
+        const { code, binding, deps, needDeclare, preserveName } =
           retrieve(symbolId)
 
         const depsRaw = depsNodes
@@ -290,7 +279,6 @@ export function createFakeJsPlugin({
           overwriteOrAppend(ss, [start, end], depsRaw.shift()!, suffix)
         }
         if (needDeclare) ss.prepend('declare ')
-        if (jsdoc) ss.prepend(`${jsdoc}\n`)
 
         s.overwriteNode(node, ss.toString())
       }

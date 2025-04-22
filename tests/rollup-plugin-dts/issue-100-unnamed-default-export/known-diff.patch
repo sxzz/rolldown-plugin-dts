@@ -2,15 +2,12 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,9 +1,12 @@
+@@ -1,9 +1,9 @@
  // index.d.ts
  /**
  * @description @TODO
  */
 -declare function export_default<T extends object>(
-+/**
-+ * @description @TODO
-+ */
 +declare function export_default <T extends object>(
    object: T,
    initializationObject: {

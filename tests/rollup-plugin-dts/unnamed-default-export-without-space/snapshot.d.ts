@@ -3,9 +3,6 @@
 /**
 * @description @TODO
 */
-/**
- * @description @TODO
- */
 declare function export_default<T extends object>(
   object: T,
   initializationObject: {
