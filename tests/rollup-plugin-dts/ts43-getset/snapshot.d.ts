@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/ts43-getset/foo.d.ts
 interface GetT {}
 interface SetT {}

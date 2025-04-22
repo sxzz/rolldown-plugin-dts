@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/ts43-override/foo.d.ts
 interface ShowT {}
 interface HideT {}

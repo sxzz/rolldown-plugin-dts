@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/ts43-staticindex/foo.d.ts
 interface StaticT {}
 

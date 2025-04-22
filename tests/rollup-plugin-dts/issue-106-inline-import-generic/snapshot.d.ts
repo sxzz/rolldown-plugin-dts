@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/issue-106-inline-import-generic/options.d.ts
 interface SimpleInterface {}
 type ObjectWithParam<ParamObj> = {

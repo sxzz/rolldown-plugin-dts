@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/issue-100-unnamed-default-export/index.d.ts
 /**
 * @description @TODO

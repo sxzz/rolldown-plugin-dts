@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/enum/index.d.ts
 declare enum A {
   A = 0,

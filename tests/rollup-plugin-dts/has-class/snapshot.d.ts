@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/has-class/foo.d.ts
 declare abstract class A {}
 interface B {}

@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/ts42-abstract/index.d.ts
 interface AbstractReturnValue {}
 interface AbstractMember {}

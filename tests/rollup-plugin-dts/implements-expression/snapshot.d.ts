@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/implements-expression/ns.d.ts
 declare namespace ns {
   interface Props<T> {

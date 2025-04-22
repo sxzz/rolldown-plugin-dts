@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/inline-import-generic/bar.d.ts
 interface Bar<T> {
   t: T;

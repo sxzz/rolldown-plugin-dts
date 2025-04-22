@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/inline-import/bar.d.ts
 interface Bar {}
 declare const Baz = 123;

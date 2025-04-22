@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/variadic-tuple-types/index.d.ts
 type Strings = [string, string];
 type Numbers = [number, number];

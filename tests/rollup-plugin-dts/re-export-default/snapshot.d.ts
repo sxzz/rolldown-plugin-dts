@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/re-export-default/default1.d.ts
 declare class Foo {}
 

@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/type-simple/index.d.ts
 declare const A: "string";
 declare const B: 8;

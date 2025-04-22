@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/extend-global-module/second.d.ts
 interface Second$2 {}
 declare global {

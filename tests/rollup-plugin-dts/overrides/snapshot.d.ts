@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/overrides/index.d.ts
 interface A {}
 interface B {}

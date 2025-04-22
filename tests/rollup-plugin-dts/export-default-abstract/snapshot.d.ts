@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/export-default-abstract/memberTypes.d.ts
 interface MemberTypes {}
 

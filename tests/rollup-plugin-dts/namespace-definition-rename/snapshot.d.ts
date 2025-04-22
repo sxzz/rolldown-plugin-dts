@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/namespace-definition-rename/a.d.ts
 declare function fn(arg: string): string;
 declare namespace fn {

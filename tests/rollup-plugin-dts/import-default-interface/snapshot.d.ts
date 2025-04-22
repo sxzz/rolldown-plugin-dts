@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/import-default-interface/bar.d.ts
 interface Bar {}
 

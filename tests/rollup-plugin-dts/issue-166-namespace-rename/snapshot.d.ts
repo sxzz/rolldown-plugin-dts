@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/issue-166-namespace-rename/a.d.ts
 declare const Item$1: () => void;
 declare namespace A {

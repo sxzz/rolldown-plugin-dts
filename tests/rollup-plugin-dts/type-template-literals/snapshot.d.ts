@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/type-template-literals/foo.d.ts
 type Color = "red" | "blue";
 type Quantity = "one" | "two";

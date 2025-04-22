@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/overrides-with-rename/b.d.ts
 declare function autobind$1(): typeof autobind;
 declare function autobind$1(constructor: Function): void;

@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/export-const/index.d.ts
 declare const sLit = "";
 declare const nLit = 0;

@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/issue-111/a.d.ts
 interface Stuff$1 {
   id: string;

@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/call-signature/index.d.ts
 interface I {
   (arg: string): string;

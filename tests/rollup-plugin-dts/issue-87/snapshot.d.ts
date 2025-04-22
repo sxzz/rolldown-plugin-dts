@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/issue-87/a.d.ts
 interface Cache {
   destroy: () => void;

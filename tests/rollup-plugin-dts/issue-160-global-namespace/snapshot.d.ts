@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/issue-160-global-namespace/mod.d.ts
 interface A {}
 interface B {}

@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/basic/mod.d.ts
 declare const a: string
 

@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/renaming/a.d.ts
 interface A$1 {}
 interface B$1 {}

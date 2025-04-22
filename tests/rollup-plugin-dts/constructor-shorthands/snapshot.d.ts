@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/constructor-shorthands/index.d.ts
 interface A {}
 declare class B {}

@@ -2,7 +2,6 @@
 
 exports[`basic 1`] = `
 "// basic.d.ts
-
 //#region tests/fixtures/basic.d.ts
 declare const foo: number;
 type SomeType<T> = T;
@@ -22,7 +21,6 @@ declare class Cls {
 //#endregion
 export { Cls, Enum, fn, foo };
 // basic.js
-
 //#region tests/fixtures/basic.ts
 const foo = 42;
 function fn(arg0, opt) {}
@@ -42,8 +40,7 @@ export { Cls, Enum, fn, foo };"
 `;
 
 exports[`input alias 1`] = `
-"// input2-eM-jH71Q.js
-
+"// input2-LCiYuoaZ.js
 //#region shared.ts
 const shared = { shared: "shared" };
 
@@ -56,8 +53,7 @@ const input2 = {
 
 //#endregion
 export { input2 };
-// input2.d-D6mB_nrs.d.ts
-
+// input2.d-UeQ5AhiD.d.ts
 //#region shared.d.ts
 interface Shared {
     shared: string;
@@ -74,7 +70,7 @@ declare const input2: Input2;
 //#endregion
 export { Input2, input2 as input2$1 };
 // output1.d.ts
-import { Input2 } from "./input2.d-D6mB_nrs.js";
+import { Input2 } from "./input2.d-UeQ5AhiD.js";
 
 //#region input1.d.ts
 interface Input1 extends Input2 {
@@ -85,7 +81,7 @@ declare const input1: Input1;
 //#endregion
 export { Input1, input1 };
 // output1.js
-import { input2 } from "./input2-eM-jH71Q.js";
+import { input2 } from "./input2-LCiYuoaZ.js";
 
 //#region input1.ts
 const input1 = {
@@ -96,18 +92,17 @@ const input1 = {
 //#endregion
 export { input1 };
 // output2/index.d.ts
-import { Input2, input2$1 as input2 } from "../input2.d-D6mB_nrs.js";
+import { Input2, input2$1 as input2 } from "../input2.d-UeQ5AhiD.js";
 
 export { Input2, input2 };
 // output2/index.js
-import { input2 } from "../input2-eM-jH71Q.js";
+import { input2 } from "../input2-LCiYuoaZ.js";
 
 export { input2 };"
 `;
 
 exports[`paths 1`] = `
 "// index.d.ts
-
 //#region tests/fixtures/paths/mod.d.ts
 declare const foo = 42;
 
@@ -139,7 +134,6 @@ export { createComponent };"
 exports[`typescript compiler 1`] = `
 "// entry1.d.ts
 
-
 declare const str = "foo";
 declare const num = 42;
 declare const bool = true;
@@ -152,7 +146,6 @@ declare const vfs: number;
 //#endregion
 export { bool, fn, num, str, vfs };
 // entry2.d.ts
-
 
 interface Unused {
     foo: string;

@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/using-namespace-import/namespace.d.ts
 interface Bar {}
 

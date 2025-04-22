@@ -1,5 +1,4 @@
 // index.d.ts
-
 //#region tests/rollup-plugin-dts/export-star/b.d.ts
 interface B {}
 
