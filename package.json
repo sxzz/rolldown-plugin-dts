@@ -1,7 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "version": "0.8.2",
-  "packageManager": "pnpm@10.8.1",
+  "packageManager": "pnpm@10.9.0",
   "description": "A Rolldown plugin to bundle dts files",
   "type": "module",
   "license": "MIT",
@@ -53,11 +53,11 @@
     "dts-resolver": "^1.0.0",
     "get-tsconfig": "^4.10.0",
     "magic-string-ast": "^0.9.1",
-    "oxc-parser": "^0.64.0",
-    "oxc-transform": "^0.64.0"
+    "oxc-parser": "^0.65.0",
+    "oxc-transform": "^0.65.0"
   },
   "devDependencies": {
-    "@sxzz/eslint-config": "^6.1.1",
+    "@sxzz/eslint-config": "^6.1.2",
     "@sxzz/prettier-config": "^2.2.1",
     "@sxzz/test-utils": "^0.5.5",
     "@types/debug": "^4.1.12",
@@ -65,18 +65,21 @@
     "@types/node": "^22.14.1",
     "bumpp": "^10.1.0",
     "diff": "^7.0.0",
-    "eslint": "^9.25.0",
+    "eslint": "^9.25.1",
     "estree-walker": "^3.0.3",
     "prettier": "^3.5.3",
-    "rolldown": "^1.0.0-beta.7",
+    "rolldown": "1.0.0-beta.7-commit.c2596d3",
     "rollup-plugin-dts": "^6.2.1",
-    "tsdown": "^0.8.1",
+    "tsdown": "^0.9.2",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3",
-    "vitest": "^3.1.1"
+    "vitest": "^3.1.2"
   },
   "engines": {
     "node": ">=20.18.0"
+  },
+  "resolutions": {
+    "rolldown-plugin-dts": "workspace:*"
   },
   "prettier": "@sxzz/prettier-config"
 }
