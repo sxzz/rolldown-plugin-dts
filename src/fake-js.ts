@@ -217,9 +217,7 @@ export function createFakeJsPlugin({
     },
 
     renderChunk(code, chunk) {
-      if (!RE_DTS.test(chunk.fileName)) {
-        return
-      }
+      if (!RE_DTS.test(chunk.fileName)) return
 
       const { program } = parseSync(chunk.fileName, code)
       const s = new MagicStringAST(code)
@@ -288,7 +286,14 @@ export function createFakeJsPlugin({
         return 'export { };'
       }
 
-      return str
+      this.emitFile({
+        type: 'asset',
+        fileName: chunk.fileName,
+        source: str,
+        name: chunk.name,
+      })
+
+      return ''
     },
   }
 }

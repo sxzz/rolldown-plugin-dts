@@ -11,4 +11,5 @@ export default defineConfig({
       isolatedDeclarations: true,
     }),
   ],
+  minify: true,
 })
