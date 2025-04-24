@@ -154,6 +154,17 @@ declare const foo = 42;
 export { foo };"
 `;
 
+exports[`resolve dts 1`] = `
+"// index.d.ts
+//#region tests/fixtures/resolve-dts/mod.d.ts
+type Foo = string
+
+//#endregion
+export { Foo };
+// index.js
+"
+`;
+
 exports[`tsx 1`] = `
 "// tsx.d.ts
 import { JSX } from "solid-js";

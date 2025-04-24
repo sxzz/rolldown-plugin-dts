@@ -183,7 +183,11 @@ export function createGeneratePlugin({
         }
 
         // link to the original module
-        let resolution = await this.resolve(id, filename_dts_to(importer, 'ts'))
+        const tsImporter = filename_dts_to(importer, 'ts')
+        let resolution = await this.resolve(id, tsImporter)
+        if (!resolution && !id.endsWith('.d')) {
+          resolution = await this.resolve(`${id}.d`, tsImporter)
+        }
 
         // resolve dependency
         if (
@@ -221,7 +225,9 @@ export function createGeneratePlugin({
           if (!resolution) return
           dtsId = resolution.id
         } else {
-          dtsId = filename_ts_to_dts(resolution.id)
+          dtsId = RE_DTS.test(resolution.id)
+            ? resolution.id
+            : filename_ts_to_dts(resolution.id)
           if (dtsMap.has(dtsId)) {
             return { id: dtsId, meta }
           }

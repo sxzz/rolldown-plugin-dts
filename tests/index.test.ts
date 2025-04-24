@@ -72,6 +72,14 @@ test('resolve dependencies', async () => {
   expect(snapshot).contain('declare class MagicStringAST')
 })
 
+test('resolve dts', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/resolve-dts/index.ts'),
+    [dts()],
+  )
+  expect(snapshot).matchSnapshot()
+})
+
 // Test alias mapping based on rolldown input option
 test('input alias', async () => {
   const root = path.resolve(dirname, 'fixtures/alias')
