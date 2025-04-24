@@ -50,11 +50,11 @@
   },
   "dependencies": {
     "debug": "^4.4.0",
-    "dts-resolver": "^1.0.0",
+    "dts-resolver": "^1.0.1",
     "get-tsconfig": "^4.10.0",
     "magic-string-ast": "^0.9.1",
-    "oxc-parser": "^0.65.0",
-    "oxc-transform": "^0.65.0"
+    "oxc-parser": "^0.66.0",
+    "oxc-transform": "^0.66.0"
   },
   "devDependencies": {
     "@sxzz/eslint-config": "^6.1.2",
@@ -70,7 +70,7 @@
     "prettier": "^3.5.3",
     "rolldown": "1.0.0-beta.7-commit.c2596d3",
     "rollup-plugin-dts": "^6.2.1",
-    "tsdown": "^0.9.2",
+    "tsdown": "^0.9.6",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2"
