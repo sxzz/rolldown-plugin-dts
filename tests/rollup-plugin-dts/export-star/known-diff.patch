@@ -6,6 +6,6 @@ Index: diff.patch
  // index.d.ts
  interface B {}
  declare class A {}
--export { A };
--export { B };
-+export { A, B };
+-export { A }
+-export { B }
++export { A, B }

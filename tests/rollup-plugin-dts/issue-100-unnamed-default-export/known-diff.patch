@@ -11,5 +11,5 @@ Index: diff.patch
 +declare function export_default <T extends object>(
    object: T,
    initializationObject: {
-     [x in keyof T]: () => Promise<T[x]>;
+     [x in keyof T]: () => Promise<T[x]>
    },

@@ -6,23 +6,29 @@ import { createPatch } from 'diff'
 import { dts as rollupDts } from 'rollup-plugin-dts'
 import { expect } from 'vitest'
 import { createFakeJsPlugin } from '../src'
+import { glob } from 'tinyglobby'
 
 const isUpdateEnabled =
   process.env.npm_lifecycle_script?.includes('-u') ||
   process.env.npm_lifecycle_script?.includes('--update')
 
 await testFixtures(
-  'tests/rollup-plugin-dts/**/index.d.ts',
+  'tests/rollup-plugin-dts/**/{index,main-a}.d.ts',
   async (args, id) => {
     const dirname = path.dirname(id)
 
+    let entries = [id]
+    if (id.endsWith('main-a.d.ts')) {
+      entries = await glob('main-*.d.ts', { cwd: dirname, absolute: true })
+    }
+
     let error: any
     let [rolldownSnapshot, rollupSnapshot] = await Promise.all([
-      rolldownBuild(id, [createFakeJsPlugin({ dtsInput: true })], {
+      rolldownBuild(entries, [createFakeJsPlugin({ dtsInput: true })], {
         treeshake: true,
         external: ['typescript'],
       }).then(({ snapshot }) => snapshot),
-      rollupBuild(id, [rollupDts()], undefined, {
+      rollupBuild(entries, [rollupDts()], undefined, {
         entryFileNames: '[name].ts',
       }).then(({ snapshot }) => snapshot),
     ]).catch((_error) => ((error = _error), []))
@@ -83,5 +89,6 @@ function cleanupCode(text: string) {
     .split('\n')
     .filter((line) => line.trim() !== '')
     .join('\n')
+    .replaceAll(/;$/gm, '')
     .trim()}\n`
 }

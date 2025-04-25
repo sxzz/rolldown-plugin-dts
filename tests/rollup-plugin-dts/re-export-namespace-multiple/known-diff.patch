@@ -8,42 +8,42 @@ Index: diff.patch
 +  export { A, B, C, D, E, F, }
 +}
  interface A {}
- declare function B(): void;
+ declare function B(): void
  declare class C {}
  declare enum D {
 @@ -7,30 +10,14 @@
    B = 1,
  }
- declare const E: string;
- declare type F = string;
--type defs_d_A = A;
--declare const defs_d_B: typeof B;
--type defs_d_C = C;
--declare const defs_d_C: typeof C;
--type defs_d_D = D;
--declare const defs_d_D: typeof D;
--declare const defs_d_E: typeof E;
--type defs_d_F = F;
+ declare const E: string
+ declare type F = string
+-type defs_d_A = A
+-declare const defs_d_B: typeof B
+-type defs_d_C = C
+-declare const defs_d_C: typeof C
+-type defs_d_D = D
+-declare const defs_d_D: typeof D
+-declare const defs_d_E: typeof E
+-type defs_d_F = F
 -declare namespace defs_d {
--  export { defs_d_B as B, defs_d_C as C, defs_d_D as D, defs_d_E as E };
--  export { defs_d_A as A, defs_d_F as F };
+-  export { defs_d_B as B, defs_d_C as C, defs_d_D as D, defs_d_E as E }
+-  export { defs_d_A as A, defs_d_F as F }
 +declare namespace deep_d_exports {
 +  export { defs_d_exports as ns, }
  }
 -declare namespace deep_d {
 -  export {
 -    defs_d as ns,
--  };
 +declare namespace only_one_d_exports {
 +  export { A, }
  }
--type onlyOne_d_A = A;
+-}
+-type onlyOne_d_A = A
 -declare namespace onlyOne_d {
--  export { onlyOne_d_A as A };
+-  export { onlyOne_d_A as A }
 -}
  interface WithA {
-   a: A;
+   a: A
  }
--export { deep_d as deep, defs_d as ns, onlyOne_d as onlyOne };
--export { WithA };
-+export { WithA, deep_d_exports as deep, defs_d_exports as ns, only_one_d_exports as onlyOne };
+-export { deep_d as deep, defs_d as ns, onlyOne_d as onlyOne }
+-export { WithA }
++export { WithA, deep_d_exports as deep, defs_d_exports as ns, only_one_d_exports as onlyOne }

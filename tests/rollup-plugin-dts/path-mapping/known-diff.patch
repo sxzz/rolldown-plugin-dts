@@ -4,6 +4,6 @@ Index: diff.patch
 +++ diff.patch
 @@ -1,2 +1,3 @@
  // index.d.ts
--export { Foo } from 'components/Foo';
-+import { Foo } from 'components/Foo';
-+export { Foo };
+-export { Foo } from 'components/Foo'
++import { Foo } from 'components/Foo'
++export { Foo }

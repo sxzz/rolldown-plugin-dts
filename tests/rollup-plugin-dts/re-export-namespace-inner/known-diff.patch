@@ -8,14 +8,14 @@ Index: diff.patch
 +  export { inner, }
 +}
  declare namespace inner {
-   type Ty = number;
-   const num: number;
+   type Ty = number
+   const num: number
  }
--import mod_d_inner = inner;
+-import mod_d_inner = inner
 -declare namespace mod_d {
 -  export {
 -    mod_d_inner as inner,
--  };
+-  }
 -}
--export { mod_d as outer };
-+export { mod_d_exports as outer };
+-export { mod_d as outer }
++export { mod_d_exports as outer }

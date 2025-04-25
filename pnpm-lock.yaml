@@ -69,6 +69,9 @@ importers:
       rollup-plugin-dts:
         specifier: ^6.2.1
         version: 6.2.1(rollup@4.40.0)(typescript@5.8.3)
+      tinyglobby:
+        specifier: ^0.2.13
+        version: 0.2.13
       tsdown:
         specifier: ^0.9.6
         version: 0.9.6(typescript@5.8.3)

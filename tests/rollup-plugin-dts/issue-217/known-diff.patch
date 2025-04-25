@@ -8,14 +8,14 @@ Index: diff.patch
 +  export { Example, dog, }
 +}
  interface Example<S extends string> {
-   example: S;
+   example: S
  }
- declare const dog: Example<"hi">;
--type example_d_Example<S extends string> = Example<S>;
--declare const example_d_dog: typeof dog;
+ declare const dog: Example<"hi">
+-type example_d_Example<S extends string> = Example<S>
+-declare const example_d_dog: typeof dog
 -declare namespace example_d {
--  export { example_d_dog as dog };
--  export { example_d_Example as Example };
+-  export { example_d_dog as dog }
+-  export { example_d_Example as Example }
 -}
--export { example_d as types };
-+export { example_d_exports as types };
+-export { example_d as types }
++export { example_d_exports as types }

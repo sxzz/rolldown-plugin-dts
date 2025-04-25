@@ -3,10 +3,10 @@ Index: diff.patch
 --- diff.patch
 +++ diff.patch
 @@ -9,6 +9,5 @@
- };
+ }
  declare const params: {
-   normalize: (inVar: In) => Out;
- };
--export { config, options, params };
--export { In, Out };
-+export { In, Out, config, options, params };
+   normalize: (inVar: In) => Out
+ }
+-export { config, options, params }
+-export { In, Out }
++export { In, Out, config, options, params }

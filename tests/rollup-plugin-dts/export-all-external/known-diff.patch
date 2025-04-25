@@ -1,8 +1,0 @@
-Index: diff.patch
-===================================================================
---- diff.patch
-+++ diff.patch
-@@ -1,2 +1,2 @@
- // index.d.ts
--export * from 'rollup';
-+export * from 'rollup'

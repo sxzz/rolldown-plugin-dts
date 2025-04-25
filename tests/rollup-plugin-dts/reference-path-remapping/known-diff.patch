@@ -8,5 +8,5 @@ Index: diff.patch
 +/// <reference path="./ns-api2.d.ts" />
  /// <reference path="./ns-api.d.ts" />
  declare class C2 {
-   public X: x2.I2;
+   public X: x2.I2
  }

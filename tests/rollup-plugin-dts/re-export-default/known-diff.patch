@@ -6,6 +6,6 @@ Index: diff.patch
  // index.d.ts
 -declare class Foo$1 {}
  declare class Foo {}
--export { Foo$1 as default, Foo as default2 };
+-export { Foo$1 as default, Foo as default2 }
 +declare class Foo$1 {}
-+export { Foo as default, Foo$1 as default2 };
++export { Foo as default, Foo$1 as default2 }

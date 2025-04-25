@@ -1,0 +1,18 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,6 +1,10 @@
+-// main-a.ts
++// common.d-I_HN9Sub.d.ts
+ interface A {}
+ interface B {}
+ export { A, B }
+-// main-b.ts
+-export { B } from './main-a.ts'
++// main-a.d.ts
++import { A } from './common.d-I_HN9Sub.js'
++export { A }
++// main-b.d.ts
++import { B } from './common.d-I_HN9Sub.js'
++export { B }

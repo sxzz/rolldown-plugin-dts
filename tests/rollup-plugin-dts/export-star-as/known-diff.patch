@@ -5,12 +5,12 @@ Index: diff.patch
 @@ -1,7 +1,6 @@
  // index.d.ts
 -interface A {}
--type foo_d_A = A;
+-type foo_d_A = A
 -declare namespace foo_d {
--  export { foo_d_A as A };
+-  export { foo_d_A as A }
 +declare namespace foo_d_exports {
 +  export { A, }
  }
--export { foo_d as foo };
+-export { foo_d as foo }
 +interface A {}
-+export { foo_d_exports as foo };
++export { foo_d_exports as foo }
