@@ -21,7 +21,12 @@ export function createDtsInputPlugin(): Plugin {
     outputOptions(options) {
       return {
         ...options,
-        entryFileNames: '[name].ts',
+        entryFileNames(chunk) {
+          if (chunk.name.endsWith('.d')) {
+            return '[name].ts'
+          }
+          return '[name].d.ts'
+        },
       }
     },
 

@@ -165,3 +165,12 @@ test('tree-shaking', async () => {
   )
   expect(snapshot).matchSnapshot()
 })
+
+test('dts input', async () => {
+  const { snapshot } = await rolldownBuild(null!, [dts({ dtsInput: true })], {
+    input: {
+      index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+    },
+  })
+  expect(snapshot).toMatchSnapshot()
+})

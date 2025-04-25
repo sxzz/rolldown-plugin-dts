@@ -39,6 +39,15 @@ var Cls = class {
 export { Cls, Enum, fn, foo };"
 `;
 
+exports[`dts input 1`] = `
+"// index.d.ts
+//#region tests/fixtures/dts-input.d.ts
+declare class Foo {}
+
+//#endregion
+export { Foo };"
+`;
+
 exports[`input alias 1`] = `
 "// input2-LCiYuoaZ.js
 //#region shared.ts
