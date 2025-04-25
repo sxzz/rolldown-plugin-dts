@@ -147,3 +147,21 @@ test('paths', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test('tree-shaking', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/tree-shaking/index.ts'),
+    [
+      dts(),
+      {
+        name: 'external-node',
+        resolveId(id) {
+          if (id.startsWith('node:'))
+            return { id, external: true, moduleSideEffects: false }
+        },
+      },
+    ],
+    { treeshake: true },
+  )
+  expect(snapshot).matchSnapshot()
+})

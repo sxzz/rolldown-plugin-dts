@@ -165,6 +165,17 @@ export { Foo };
 "
 `;
 
+exports[`tree-shaking 1`] = `
+"// index.d.ts
+//#region tests/fixtures/tree-shaking/mod.d.ts
+type A = string;
+
+//#endregion
+export { A };
+// index.js
+"
+`;
+
 exports[`tsx 1`] = `
 "// tsx.d.ts
 import { JSX } from "solid-js";

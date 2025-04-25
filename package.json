@@ -68,7 +68,7 @@
     "eslint": "^9.25.1",
     "estree-walker": "^3.0.3",
     "prettier": "^3.5.3",
-    "rolldown": "1.0.0-beta.7-commit.c2596d3",
+    "rolldown": "1.0.0-beta.8-commit.6aca0ce",
     "rollup-plugin-dts": "^6.2.1",
     "tsdown": "^0.9.6",
     "tsx": "^4.19.3",
