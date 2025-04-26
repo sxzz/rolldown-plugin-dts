@@ -49,11 +49,14 @@
     }
   },
   "dependencies": {
+    "@babel/generator": "^7.27.0",
+    "@babel/parser": "^7.27.0",
+    "@babel/types": "^7.27.0",
+    "ast-kit": "^1.4.3",
     "debug": "^4.4.0",
     "dts-resolver": "^1.0.1",
     "get-tsconfig": "^4.10.0",
     "magic-string-ast": "^0.9.1",
-    "oxc-parser": "^0.66.0",
     "oxc-transform": "^0.66.0"
   },
   "devDependencies": {

@@ -1,24 +1,27 @@
+import { parse } from '@babel/parser'
+import { isDeclarationType, isTypeOf } from 'ast-kit'
 import { walk } from 'estree-walker'
 import { MagicStringAST, type MagicString } from 'magic-string-ast'
-import {
-  parseSync,
-  type ArrowFunctionExpression,
-  type Comment,
-  type Declaration,
-  type Expression,
-  type Function,
-  type IdentifierName,
-  type MemberExpression,
-  type Node,
-  type ObjectExpression,
-  type Span,
-  type TSTypeName,
-  type VariableDeclaration,
-} from 'oxc-parser'
 import { getIdentifierRange } from './utils/ast'
 import { filename_dts_to, filename_js_to_dts, RE_DTS } from './utils/filename'
 import { overwriteOrAppend, type Range } from './utils/magic-string'
 import type { Options } from '.'
+import type {
+  ArrowFunctionExpression,
+  Comment,
+  ExportAllDeclaration,
+  Expression,
+  Identifier,
+  ImportDeclaration,
+  MemberExpression,
+  Node,
+  ObjectExpression,
+  TSEntityName,
+  TSExportAssignment,
+  TSExpressionWithTypeArguments,
+  TSImportEqualsDeclaration,
+  VariableDeclaration,
+} from '@babel/types'
 import type { Plugin } from 'rolldown'
 
 const RE_TYPE = /\btype\b/
@@ -35,7 +38,7 @@ const RE_TYPE = /\btype\b/
 // - original range (overwrite or add)
 // - replacement
 
-type Dep = Partial<Node> & Span & { _suffix?: string }
+type Dep = Partial<Node> & { _suffix?: string }
 type DepSymbol = [start: number, end: number, suffix?: string]
 interface SymbolInfo {
   code: string
@@ -114,12 +117,15 @@ export function createFakeJsPlugin({
     transform: {
       filter: { id: RE_DTS },
       handler(code, id) {
-        const { program, comments } = parseSync(id, code)
-        const preserved = collectReferenceDirectives(comments)
+        const { program, comments } = parse(code, {
+          plugins: [['typescript', { dts: true }]],
+          sourceType: 'module',
+        })
+        const preserved = collectReferenceDirectives(comments || [])
         preserveMap.set(id, preserved)
 
         const s = new MagicStringAST(code)
-        for (let node of program.body as (Node & Span)[]) {
+        for (let node of program.body as Node[]) {
           if (rewriteImportExport(s, node)) continue
 
           const sideEffect =
@@ -130,8 +136,10 @@ export function createFakeJsPlugin({
           const isDefaultExport = node.type === 'ExportDefaultDeclaration'
 
           if (
-            (node.type === 'ExportNamedDeclaration' ||
-              node.type === 'ExportDefaultDeclaration') &&
+            isTypeOf(node, [
+              'ExportNamedDeclaration',
+              'ExportDefaultDeclaration',
+            ]) &&
             node.declaration
           ) {
             node = node.declaration
@@ -143,18 +151,14 @@ export function createFakeJsPlugin({
           )
             throw new Error('Only one declaration is supported')
 
-          if (
-            node.type === 'TSDeclareFunction' ||
-            node.type.endsWith('Declaration')
-          ) {
+          if (node.type === 'TSDeclareFunction' || isDeclarationType(node)) {
             const binding =
               node.type === 'VariableDeclaration'
                 ? node.declarations[0].id
-                : (node as Exclude<Declaration | Function, VariableDeclaration>)
-                    .id
+                : (node as any).id
 
             const code = s.sliceNode(node)
-            const offset = node.start
+            const offset = node.start!
 
             let bindingRange: Range
             if (sideEffect) {
@@ -171,18 +175,19 @@ export function createFakeJsPlugin({
             const depsNodes = collectDependencies(s, node, getIdentifierIndex)
             const depsString = stringifyDependencies(s, depsNodes)
             const depsSymbols: DepSymbol[] = depsNodes.map((dep) => [
-              dep.start - offset,
-              dep.end - offset,
+              dep.start! - offset,
+              dep.end! - offset,
               dep._suffix,
             ])
             const needDeclare =
-              (node.type === 'TSEnumDeclaration' ||
-                node.type === 'ClassDeclaration' ||
-                node.type === 'FunctionDeclaration' ||
-                node.type === 'TSDeclareFunction' ||
-                node.type === 'TSModuleDeclaration' ||
-                node.type === 'VariableDeclaration') &&
-              !node.declare
+              isTypeOf(node, [
+                'TSEnumDeclaration',
+                'ClassDeclaration',
+                'FunctionDeclaration',
+                'TSDeclareFunction',
+                'TSModuleDeclaration',
+                'VariableDeclaration',
+              ]) && !node.declare
 
             const symbolId = register({
               code,
@@ -221,7 +226,10 @@ export function createFakeJsPlugin({
         return
       }
 
-      const { program } = parseSync(chunk.fileName, code)
+      const { program } = parse(code, {
+        plugins: ['typescript'],
+        sourceType: 'module',
+      })
       const s = new MagicStringAST(code)
 
       const comments = new Set<string>()
@@ -254,10 +262,7 @@ export function createFakeJsPlugin({
         }
 
         const [symbolIdNode, ...depsNodes] = decl.init.elements as Expression[]
-        if (
-          symbolIdNode?.type !== 'Literal' ||
-          typeof symbolIdNode.value !== 'number'
-        ) {
+        if (symbolIdNode?.type !== 'NumericLiteral') {
           s.removeNode(node)
           continue
         }
@@ -333,13 +338,19 @@ function collectDependencies(
         if (node.superClass) addDependency(node.superClass)
         if (node.implements) {
           for (const implement of node.implements) {
-            addDependency(implement.expression)
+            addDependency(
+              (implement as TSExpressionWithTypeArguments).expression,
+            )
           }
         }
       } else if (
-        node.type === 'MethodDefinition' ||
-        node.type === 'PropertyDefinition' ||
-        node.type === 'TSPropertySignature'
+        isTypeOf(node, [
+          'ObjectMethod',
+          'ObjectProperty',
+          'ClassProperty',
+          'TSPropertySignature',
+          'TSDeclareMethod',
+        ])
       ) {
         if (node.computed && isReferenceId(node.key)) {
           addDependency(node.key)
@@ -354,14 +365,7 @@ function collectDependencies(
           addDependency(node.exprName)
         }
       } else if (node.type === 'TSImportType') {
-        if (
-          node.argument.type !== 'TSLiteralType' ||
-          node.argument.literal.type !== 'Literal' ||
-          typeof node.argument.literal.value !== 'string'
-        )
-          return
-
-        const source = node.argument.literal.value
+        const source = node.argument.value
         const imported = node.qualifier && resolveTSTypeName(node.qualifier)
         const local = importNamespace(
           s,
@@ -386,7 +390,7 @@ function collectDependencies(
   }
 }
 
-function resolveTSTypeName(node: TSTypeName) {
+function resolveTSTypeName(node: TSEntityName) {
   if (node.type === 'Identifier') {
     return node
   }
@@ -395,7 +399,7 @@ function resolveTSTypeName(node: TSTypeName) {
 
 function isReferenceId(
   node?: Node | null,
-): node is (IdentifierName | MemberExpression) & Span {
+): node is Identifier | MemberExpression {
   return (
     !!node && (node.type === 'Identifier' || node.type === 'MemberExpression')
   )
@@ -413,9 +417,11 @@ function stringifyDependencies(s: MagicStringAST, deps: Dep[]) {
 // patch `.d.ts` suffix in import source to `.js`
 function patchImportSource(s: MagicStringAST, node: Node) {
   if (
-    (node.type === 'ImportDeclaration' ||
-      node.type === 'ExportAllDeclaration' ||
-      node.type === 'ExportNamedDeclaration') &&
+    isTypeOf(node, [
+      'ImportDeclaration',
+      'ExportAllDeclaration',
+      'ExportNamedDeclaration',
+    ]) &&
     node.source?.value &&
     RE_DTS.test(node.source.value)
   ) {
@@ -461,7 +467,7 @@ function patchTsNamespace(s: MagicStringAST, nodes: Node[]) {
     let code = `declare namespace ${bindingText} {
   export { `
     for (const properties of (exports as ObjectExpression).properties) {
-      if (properties.type !== 'Property') continue
+      if (properties.type !== 'ObjectProperty') continue
       const exported = s.sliceNode(properties.key)
       const local = s.sliceNode(
         (properties.value as ArrowFunctionExpression).body,
@@ -485,7 +491,14 @@ function patchTsNamespace(s: MagicStringAST, nodes: Node[]) {
 // - import Foo = require("./bar")
 // - export = Foo
 // - export default x
-function rewriteImportExport(s: MagicStringAST, node: Node) {
+function rewriteImportExport(
+  s: MagicStringAST,
+  node: Node,
+): node is
+  | ImportDeclaration
+  | ExportAllDeclaration
+  | TSImportEqualsDeclaration
+  | TSExportAssignment {
   if (
     node.type === 'ImportDeclaration' ||
     (node.type === 'ExportNamedDeclaration' && !node.declaration)
@@ -506,18 +519,18 @@ function rewriteImportExport(s: MagicStringAST, node: Node) {
       node.type === 'ImportDeclaration' ? node.importKind : node.exportKind
     if (kind === 'type' && firstSpecifier) {
       s.overwrite(
-        node.start,
-        firstSpecifier.start,
-        s.slice(node.start, firstSpecifier.start).replace(RE_TYPE, ''),
+        node.start!,
+        firstSpecifier.start!,
+        s.slice(node.start!, firstSpecifier.start!).replace(RE_TYPE, ''),
       )
     }
     return true
   } else if (node.type === 'ExportAllDeclaration') {
     if (node.exportKind === 'type') {
       s.overwrite(
-        node.start,
-        node.source.start,
-        s.slice(node.start, node.source.start).replace(RE_TYPE, ''),
+        node.start!,
+        node.source.start!,
+        s.slice(node.start!, node.source.start!).replace(RE_TYPE, ''),
       )
     }
     return true
@@ -547,12 +560,14 @@ function rewriteImportExport(s: MagicStringAST, node: Node) {
     )
     return true
   }
+
+  return false
 }
 
 function importNamespace(
   s: MagicString,
   source: string,
-  imported: string | null,
+  imported: string | undefined | null,
   getIdentifierIndex: () => number,
 ) {
   const local = `_${getIdentifierIndex()}`
