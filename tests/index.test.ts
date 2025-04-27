@@ -130,6 +130,7 @@ test('paths', async () => {
       dts({
         isolatedDeclarations: true,
         emitDtsOnly: true,
+        resolvePaths: true,
       }),
     ],
     {

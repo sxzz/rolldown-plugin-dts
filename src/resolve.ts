@@ -16,10 +16,28 @@ export const meta = { dtsFile: true } as const
 export function createDtsResolvePlugin({
   tsconfig,
   resolve,
-}: Pick<OptionsResolved, 'tsconfig' | 'resolve'>): Plugin {
+  resolvePaths,
+}: Pick<OptionsResolved, 'tsconfig' | 'resolve' | 'resolvePaths'>): Plugin {
   const resolver = createResolver({
     tsconfig: tsconfig ? (tsconfig as string) : undefined,
   })
+
+  function resolveDependency(id: string, importer: string) {
+    let shouldResolve: boolean
+    if (typeof resolve === 'boolean') {
+      shouldResolve = resolve
+    } else {
+      shouldResolve = resolve.some((pattern) =>
+        typeof pattern === 'string' ? id === pattern : pattern.test(id),
+      )
+    }
+    if (shouldResolve) {
+      const resolution = resolver(id, importer)
+      if (resolution) return { id: resolution, meta }
+    } else {
+      return { id, external: true, meta }
+    }
+  }
 
   return {
     name: 'rolldown-plugin-dts:resolve',
@@ -41,7 +59,11 @@ export function createDtsResolvePlugin({
           if (resolution) return { id: resolution, meta }
         }
 
-        // link to the original module
+        // resolve dependency [pre]
+        if (!resolvePaths && (RE_NODE_MODULES.test(id) || !isRelative(id))) {
+          return resolveDependency(id, importer)
+        }
+
         let resolution = await this.resolve(id, importer, options)
         if (!resolution && !id.endsWith('.d')) {
           resolution = await this.resolve(`${id}.d`, importer, options)
@@ -51,25 +73,13 @@ export function createDtsResolvePlugin({
           return { ...resolution, meta }
         }
 
-        // resolve dependency
+        // resolve dependency [post]
         if (
-          RE_NODE_MODULES.test(resolution?.id || id) ||
-          !isRelative(resolution?.id || id)
+          resolvePaths &&
+          (RE_NODE_MODULES.test(resolution?.id || id) ||
+            !isRelative(resolution?.id || id))
         ) {
-          let shouldResolve: boolean
-          if (typeof resolve === 'boolean') {
-            shouldResolve = resolve
-          } else {
-            shouldResolve = resolve.some((pattern) =>
-              typeof pattern === 'string' ? id === pattern : pattern.test(id),
-            )
-          }
-          if (shouldResolve) {
-            const resolution = resolver(id, importer)
-            if (resolution) return { id: resolution, meta }
-          } else {
-            return { id, external: true, meta }
-          }
+          return resolveDependency(resolution?.id || id, importer)
         }
 
         if (!resolution || resolution.external) {
