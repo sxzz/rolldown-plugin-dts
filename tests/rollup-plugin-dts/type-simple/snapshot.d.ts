@@ -17,6 +17,5 @@ interface N {
   foo(): this;
 }
 declare const O: bigint;
-
 //#endregion
 export { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O };

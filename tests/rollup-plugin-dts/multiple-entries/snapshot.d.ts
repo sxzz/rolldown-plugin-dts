@@ -7,9 +7,7 @@ interface B {}
 export { A, B };
 // main-a.d.ts
 import { A } from "./common.d-I_HN9Sub.js";
-
 export { A };
 // main-b.d.ts
 import { B } from "./common.d-I_HN9Sub.js";
-
 export { B };

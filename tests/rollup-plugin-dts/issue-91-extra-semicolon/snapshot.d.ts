@@ -3,6 +3,5 @@
 interface Connection {
   uri: string;
 }
-
 //#endregion
 export { Connection };

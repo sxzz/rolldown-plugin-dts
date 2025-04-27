@@ -1,13 +1,6 @@
 // index.d.ts
-//#region rolldown:runtime
-
-
-
-//#endregion
-//#region tests/rollup-plugin-dts/re-export-namespace/namespace.d.ts
-
 declare namespace namespace_d_exports {
-  export { A, B, C, D, E, F, GenericC, GenericF, GenericI, GenericT, }
+  export { A, B, C, D, E, F, GenericC, GenericF, GenericI, GenericT };
 }
 interface A {}
 declare function B(): void;

@@ -62,14 +62,13 @@ test('resolve dependencies', async () => {
     path.resolve(dirname, 'fixtures/resolve-dep.ts'),
     [
       dts({
-        resolve: ['magic-string-ast'],
+        resolve: ['oxc-transform'],
         isolatedDeclarations: true,
         emitDtsOnly: true,
       }),
     ],
   )
-  expect(snapshot).contain('declare class MagicString')
-  expect(snapshot).contain('declare class MagicStringAST')
+  expect(snapshot).contain('interface TransformOptions')
 })
 
 test('resolve dts', async () => {

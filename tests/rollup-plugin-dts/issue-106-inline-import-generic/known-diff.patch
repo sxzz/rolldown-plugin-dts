@@ -1,0 +1,15 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,9 +1,7 @@
+ // index.d.ts
+ interface SimpleInterface {}
+-type ObjectWithParam<ParamObj> = {
+-  [Prop in keyof ParamObj]?: any
+-}
++type ObjectWithParam<ParamObj> = { [Prop in keyof ParamObj]?: any }; 
+ declare class CalendarDataManager {
+   emitter: ObjectWithParam<SimpleInterface>
+ }
+ export { CalendarDataManager }

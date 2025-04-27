@@ -1,51 +1,30 @@
+import _generate from '@babel/generator'
 import { parse } from '@babel/parser'
+import * as t from '@babel/types'
 import { isDeclarationType, isTypeOf } from 'ast-kit'
 import { walk } from 'estree-walker'
-import { MagicStringAST, type MagicString } from 'magic-string-ast'
-import { getIdentifierRange } from './utils/ast'
 import { filename_dts_to, filename_js_to_dts, RE_DTS } from './utils/filename'
-import { overwriteOrAppend, type Range } from './utils/magic-string'
 import type { Options } from '.'
-import type {
-  ArrowFunctionExpression,
-  Comment,
-  ExportAllDeclaration,
-  Expression,
-  Identifier,
-  ImportDeclaration,
-  MemberExpression,
-  Node,
-  ObjectExpression,
-  TSEntityName,
-  TSExportAssignment,
-  TSExpressionWithTypeArguments,
-  TSImportEqualsDeclaration,
-  VariableDeclaration,
-} from '@babel/types'
 import type { Plugin } from 'rolldown'
 
-const RE_TYPE = /\btype\b/
+// @ts-expect-error interop default
+const generate: typeof _generate = (_generate.default as undefined) || _generate
 
+// input:
 // export declare function x(xx: X): void
 
-// to:            const x = [1, () => X]
-// after compile: const y = [1, () => Y]
+// to:            const x   = [1, () => X  ]
+// after compile: const x$1 = [1, () => X$1]
 
-// replace X with Y:
-// export declare function y(xx: Y): void
+// replace X with X$1
+// output:
+// export declare function x$1(xx: X$1): void
 
-// how? needs
-// - original range (overwrite or add)
-// - replacement
-
-type Dep = Partial<Node> & { _suffix?: string }
-type DepSymbol = [start: number, end: number, suffix?: string]
+type Dep = t.Expression & { replace?: (newNode: t.Node) => void }
 interface SymbolInfo {
-  code: string
-  binding: Range
-  deps: DepSymbol[]
-  needDeclare: boolean
-  preserveName: boolean
+  decl: t.Declaration
+  binding: t.Identifier
+  deps: Dep[]
 }
 
 export function createFakeJsPlugin({
@@ -54,19 +33,19 @@ export function createFakeJsPlugin({
   let symbolIdx = 0
   let identifierIdx = 0
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
-  const preserveMap = new Map<string /* filename */, string[]>()
+  const commentsMap = new Map<string /* filename */, t.Comment[]>()
 
   function getIdentifierIndex() {
     return identifierIdx++
   }
 
-  function register(info: SymbolInfo) {
+  function registerSymbol(info: SymbolInfo) {
     const symbolId = symbolIdx++
     symbolMap.set(symbolId, info)
     return symbolId
   }
 
-  function retrieve(symbolId: number) {
+  function getSymbol(symbolId: number) {
     return symbolMap.get(symbolId)!
   }
 
@@ -117,107 +96,129 @@ export function createFakeJsPlugin({
     transform: {
       filter: { id: RE_DTS },
       handler(code, id) {
-        const { program, comments } = parse(code, {
+        const file = parse(code, {
           plugins: [['typescript', { dts: true }]],
           sourceType: 'module',
         })
-        const preserved = collectReferenceDirectives(comments || [])
-        preserveMap.set(id, preserved)
+        const { program, comments } = file
 
-        const s = new MagicStringAST(code)
-        for (let node of program.body as Node[]) {
-          if (rewriteImportExport(s, node)) continue
+        if (comments) {
+          const directives = collectReferenceDirectives(comments)
+          commentsMap.set(id, directives)
+        }
+
+        const prependStmts: t.Statement[] = []
+        const appendStmts: t.Statement[] = []
+        const prepend = (stmt: t.Statement) => prependStmts.push(stmt)
+
+        for (const [i, stmt] of program.body.entries()) {
+          const setStmt = (node: t.Node) =>
+            (program.body[i] = inheritNode(stmt, node) as any)
+          if (rewriteImportExport(stmt, setStmt)) continue
 
           const sideEffect =
-            node.type === 'TSModuleDeclaration' && node.kind !== 'namespace'
-
-          const stmt = node
-          // remove `export` modifier
-          const isDefaultExport = node.type === 'ExportDefaultDeclaration'
-
-          if (
-            isTypeOf(node, [
+            stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
+          const isDefaultExport = stmt.type === 'ExportDefaultDeclaration'
+          const isDecl =
+            isTypeOf(stmt, [
               'ExportNamedDeclaration',
               'ExportDefaultDeclaration',
-            ]) &&
-            node.declaration
-          ) {
-            node = node.declaration
-          }
+            ]) && stmt.declaration
+
+          const decl: t.Node = isDecl ? stmt.declaration! : stmt
+          const setDecl = isDecl
+            ? (node: t.Node) =>
+                (stmt.declaration = inheritNode(stmt.declaration!, node) as any)
+            : setStmt
 
           if (
-            node.type === 'VariableDeclaration' &&
-            node.declarations.length !== 1
+            decl.type === 'VariableDeclaration' &&
+            decl.declarations.length !== 1
           )
             throw new Error('Only one declaration is supported')
 
-          if (node.type === 'TSDeclareFunction' || isDeclarationType(node)) {
-            const binding =
-              node.type === 'VariableDeclaration'
-                ? node.declarations[0].id
-                : (node as any).id
+          if (decl.type !== 'TSDeclareFunction' && !isDeclarationType(decl)) {
+            continue
+          }
 
-            const code = s.sliceNode(node)
-            const offset = node.start!
-
-            let bindingRange: Range
-            if (sideEffect) {
-              bindingRange = [0, 0]
-            } else if (binding) {
-              bindingRange = getIdentifierRange(binding, -offset)
-            } else if (isDefaultExport) {
-              const idx = s.sliceNode(node).indexOf('function') + 8
-              bindingRange = [idx, idx]
-            } else {
-              continue
-            }
-
-            const depsNodes = collectDependencies(s, node, getIdentifierIndex)
-            const depsString = stringifyDependencies(s, depsNodes)
-            const depsSymbols: DepSymbol[] = depsNodes.map((dep) => [
-              dep.start! - offset,
-              dep.end! - offset,
-              dep._suffix,
+          if (
+            isTypeOf(decl, [
+              'TSEnumDeclaration',
+              'ClassDeclaration',
+              'FunctionDeclaration',
+              'TSDeclareFunction',
+              'TSModuleDeclaration',
+              'VariableDeclaration',
             ])
-            const needDeclare =
-              isTypeOf(node, [
-                'TSEnumDeclaration',
-                'ClassDeclaration',
-                'FunctionDeclaration',
-                'TSDeclareFunction',
-                'TSModuleDeclaration',
-                'VariableDeclaration',
-              ]) && !node.declare
+          ) {
+            decl.declare = true
+          }
 
-            const symbolId = register({
-              code,
-              binding: bindingRange,
-              deps: depsSymbols,
-              needDeclare,
-              preserveName: sideEffect,
-            })
+          let binding =
+            decl.type === 'VariableDeclaration'
+              ? (decl.declarations[0].id as t.Identifier)
+              : 'id' in decl
+                ? decl.id
+                : null
+          if (!binding) {
+            binding = t.identifier('export_default')
+            // @ts-expect-error
+            decl.id = binding
+          }
+          binding = sideEffect
+            ? t.identifier(`_${identifierIdx++}`)
+            : (binding as t.Identifier)
 
-            const runtime = `[${symbolId}, ${depsString}${depsString && sideEffect ? ', ' : ''}${sideEffect ? 'sideEffect()' : ''}]`
-            const bindingName = sideEffect
-              ? `_${identifierIdx++}`
-              : binding
-                ? s.sliceNode(binding)
-                : 'export_default'
-            if (isDefaultExport) {
-              s.overwriteNode(
-                stmt,
-                `var ${bindingName} = ${runtime};export { ${bindingName} as default }`,
-              )
-            } else {
-              s.overwriteNode(node, `var ${bindingName} = ${runtime};`)
-            }
+          const deps = collectDependencies(decl, getIdentifierIndex, prepend)
+
+          const elements: t.Expression[] = [
+            t.numericLiteral(0),
+            ...deps.map((dep) => t.arrowFunctionExpression([], dep)),
+            ...(sideEffect
+              ? [t.callExpression(t.identifier('sideEffect'), [])]
+              : []),
+          ]
+          const runtime: t.ArrayExpression = t.arrayExpression(elements)
+
+          const symbolId = registerSymbol({ decl, deps, binding })
+          elements[0] = t.numericLiteral(symbolId)
+
+          // var ${binding} = [${symbolId}, () => ${dep}, ..., sideEffect()]
+          const runtimeAssignment: t.VariableDeclaration = {
+            type: 'VariableDeclaration',
+            kind: 'var',
+            declarations: [
+              {
+                type: 'VariableDeclarator',
+                id: { ...binding, typeAnnotation: null },
+                init: runtime,
+              },
+            ],
+          }
+
+          if (isDefaultExport) {
+            // export { ${binding} as default }
+            appendStmts.push(
+              t.exportNamedDeclaration(null, [
+                t.exportSpecifier(binding, t.identifier('default')),
+              ]),
+            )
+            // replace the whole statement
+            setStmt(runtimeAssignment)
+          } else {
+            // replace declaration, keep `export`
+            setDecl(runtimeAssignment)
           }
         }
 
-        if (!s.hasChanged()) return
+        program.body = [...prependStmts, ...program.body, ...appendStmts]
 
-        const str = s.toString()
-        return str
+        const result = generate(file, {
+          comments: true,
+          sourceMaps: true,
+          sourceFileName: id,
+        })
+        return result
       },
     },
 
@@ -226,120 +227,134 @@ export function createFakeJsPlugin({
         return
       }
 
-      const { program } = parse(code, {
-        plugins: ['typescript'],
+      const file = parse(code, {
         sourceType: 'module',
       })
-      const s = new MagicStringAST(code)
+      const { program } = file
 
-      const comments = new Set<string>()
-      for (const id of chunk.moduleIds) {
-        const preserveComments = preserveMap.get(id)
-        if (preserveComments) {
-          preserveComments.forEach((c) => comments.add(c))
-          preserveMap.delete(id)
+      // recover comments
+      if (program.body.length) {
+        const comments = new Set<t.Comment>()
+        const commentsValue = new Set<string>() // deduplicate
+
+        for (const id of chunk.moduleIds) {
+          const preserveComments = commentsMap.get(id)
+          if (preserveComments) {
+            preserveComments.forEach((c) => {
+              const id = c.type + c.value
+              if (commentsValue.has(id)) return
+
+              commentsValue.add(id)
+              comments.add(c)
+            })
+            commentsMap.delete(id)
+          }
+        }
+        if (comments.size) {
+          program.body[0].leadingComments ||= []
+          program.body[0].leadingComments.push(...comments)
         }
       }
-      if (comments.size) s.prepend(`${[...comments].join('\n')}\n`)
 
-      const removedNodes = patchTsNamespace(s, program.body)
+      program.body = patchTsNamespace(program.body)
 
-      for (const node of program.body) {
-        if (removedNodes.has(node)) continue
-        if (patchImportSource(s, node)) continue
+      program.body = program.body
+        .map((node) => {
+          if (patchImportSource(node)) return node
 
-        if (
-          node.type !== 'VariableDeclaration' ||
-          node.declarations.length !== 1
-        )
-          continue
+          if (
+            node.type !== 'VariableDeclaration' ||
+            node.declarations.length !== 1
+          )
+            return node
 
-        const [decl] = node.declarations
+          const [decl] = node.declarations
+          if (decl.init?.type !== 'ArrayExpression' || !decl.init.elements[0]) {
+            return null
+          }
 
-        if (decl.init?.type !== 'ArrayExpression' || !decl.init.elements[0]) {
-          s.removeNode(node)
-          continue
-        }
+          const [symbolIdNode, ...depsFns] = decl.init
+            .elements as t.Expression[]
+          if (symbolIdNode?.type !== 'NumericLiteral') {
+            return null
+          }
 
-        const [symbolIdNode, ...depsNodes] = decl.init.elements as Expression[]
-        if (symbolIdNode?.type !== 'NumericLiteral') {
-          s.removeNode(node)
-          continue
-        }
+          const symbolId = symbolIdNode.value
+          const original = getSymbol(symbolId)
 
-        const symbolId = symbolIdNode.value
-        const { code, binding, deps, needDeclare, preserveName } =
-          retrieve(symbolId)
+          const transformedBinding = {
+            ...decl.id,
+            typeAnnotation: original.binding.typeAnnotation,
+          }
+          overwriteNode(original.binding, transformedBinding)
 
-        const depsRaw = depsNodes
-          .filter((node) => node?.type === 'ArrowFunctionExpression')
-          .map((dep) => s.sliceNode(dep.body))
+          const transformedDeps = depsFns
+            .filter((node) => node?.type === 'ArrowFunctionExpression')
+            .map((node) => node.body)
 
-        const ss = new MagicStringAST(code)
-        if (!preserveName) {
-          overwriteOrAppend(ss, binding, s.sliceNode(decl.id))
-        }
-        for (const dep of deps) {
-          const [start, end, suffix] = dep
-          overwriteOrAppend(ss, [start, end], depsRaw.shift()!, suffix)
-        }
-        if (needDeclare) ss.prepend('declare ')
+          if (original.deps.length) {
+            for (let i = 0; i < original.deps.length; i++) {
+              const originalDep = original.deps[i]
+              if (originalDep.replace) {
+                originalDep.replace(transformedDeps[i])
+              } else {
+                Object.assign(originalDep, transformedDeps[i])
+              }
+            }
+          }
 
-        s.overwriteNode(node, ss.toString())
-      }
+          return inheritNode(node, original.decl)
+        })
+        .filter((node) => !!node)
 
-      const str = s.toString()
-      if (str.trim().length === 0) {
+      if (program.body.length === 0) {
         return 'export { };'
       }
 
-      return str
+      const result = generate(file, {
+        comments: true,
+        sourceMaps: true,
+        sourceFileName: chunk.fileName,
+      })
+
+      return result
     },
   }
 }
 
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
-function collectReferenceDirectives(comment: Comment[]) {
-  return comment
-    .filter((c) => REFERENCE_RE.test(c.value))
-    .map((c) => `//${c.value}`)
+function collectReferenceDirectives(comment: t.Comment[]) {
+  return comment.filter((c) => REFERENCE_RE.test(c.value))
 }
 
 function collectDependencies(
-  s: MagicStringAST,
-  node: Node,
+  node: t.Node,
   getIdentifierIndex: () => number,
+  prepend: (node: t.Statement) => void,
 ): Dep[] {
-  const deps: Set<Dep> = new Set()
+  const deps = new Set<Dep>()
+  const seen = new Set<t.Node>()
 
   ;(walk as any)(node, {
-    leave(node: Node) {
+    leave(node: t.Node) {
       if (node.type === 'ExportNamedDeclaration') {
         for (const specifier of node.specifiers) {
           if (specifier.type === 'ExportSpecifier') {
-            let _suffix: string | undefined
-            if (
-              specifier.local.start === specifier.exported.start &&
-              specifier.local.end === specifier.exported.end
-            ) {
-              _suffix = ` as ${s.sliceNode(specifier.local)}`
-            }
-            addDependency({
-              ...specifier.local,
-              _suffix,
-            })
+            addDependency(specifier.local)
           }
         }
       } else if (node.type === 'TSInterfaceDeclaration' && node.extends) {
         for (const heritage of node.extends || []) {
-          addDependency(heritage.expression)
+          addDependency(TSEntityNameToRuntime(heritage.expression))
         }
       } else if (node.type === 'ClassDeclaration') {
         if (node.superClass) addDependency(node.superClass)
         if (node.implements) {
           for (const implement of node.implements) {
             addDependency(
-              (implement as TSExpressionWithTypeArguments).expression,
+              TSEntityNameToRuntime(
+                (implement as t.TSExpressionWithTypeArguments).expression,
+              ),
             )
           }
         }
@@ -359,26 +374,24 @@ function collectDependencies(
           addDependency(node.value)
         }
       } else if (node.type === 'TSTypeReference') {
-        addDependency(node.typeName)
+        addDependency(TSEntityNameToRuntime(node.typeName))
       } else if (node.type === 'TSTypeQuery') {
+        if (seen.has(node.exprName)) return
         if (node.exprName.type !== 'TSImportType') {
-          addDependency(node.exprName)
+          addDependency(TSEntityNameToRuntime(node.exprName))
         }
       } else if (node.type === 'TSImportType') {
-        const source = node.argument.value
-        const imported = node.qualifier && resolveTSTypeName(node.qualifier)
-        const local = importNamespace(
-          s,
+        seen.add(node)
+        const source = node.argument
+        const imported = node.qualifier
+        const dep = importNamespace(
+          node,
+          imported,
           source,
-          imported && s.sliceNode(imported),
           getIdentifierIndex,
+          prepend,
         )
-        addDependency({
-          type: 'Identifier',
-          name: local,
-          start: node.start,
-          end: imported ? imported.end : node.end,
-        })
+        addDependency(dep)
       }
     },
   })
@@ -390,32 +403,33 @@ function collectDependencies(
   }
 }
 
-function resolveTSTypeName(node: TSEntityName) {
+function TSEntityNameToRuntime(
+  node: t.TSEntityName,
+): t.MemberExpression | t.Identifier {
   if (node.type === 'Identifier') {
     return node
   }
-  return resolveTSTypeName(node.left)
+  const left = TSEntityNameToRuntime(node.left)
+  return Object.assign(node, t.memberExpression(left, node.right))
+}
+
+function getIdFromTSEntityName(node: t.TSEntityName) {
+  if (node.type === 'Identifier') {
+    return node
+  }
+  return getIdFromTSEntityName(node.left)
 }
 
 function isReferenceId(
-  node?: Node | null,
-): node is Identifier | MemberExpression {
+  node?: t.Node | null,
+): node is t.Identifier | t.MemberExpression {
   return (
     !!node && (node.type === 'Identifier' || node.type === 'MemberExpression')
   )
 }
 
-function stringifyDependencies(s: MagicStringAST, deps: Dep[]) {
-  return deps
-    .map(
-      (node) =>
-        `() => ${node.type === 'Identifier' ? node.name! : s.sliceNode(node)}`,
-    )
-    .join(', ')
-}
-
 // patch `.d.ts` suffix in import source to `.js`
-function patchImportSource(s: MagicStringAST, node: Node) {
+function patchImportSource(node: t.Node) {
   if (
     isTypeOf(node, [
       'ImportDeclaration',
@@ -425,26 +439,24 @@ function patchImportSource(s: MagicStringAST, node: Node) {
     node.source?.value &&
     RE_DTS.test(node.source.value)
   ) {
-    s.overwriteNode(
-      node.source,
-      JSON.stringify(filename_dts_to(node.source.value, 'js')),
-    )
+    node.source.value = filename_dts_to(node.source.value, 'js')
     return true
   }
 }
 
-function patchTsNamespace(s: MagicStringAST, nodes: Node[]) {
-  const emptyObjectAssignments = new Map<string, VariableDeclaration>()
-  const removed = new Set<Node>()
+function patchTsNamespace(nodes: t.Statement[]) {
+  const emptyObjectAssignments = new Map<string, t.VariableDeclaration>()
+  const removed = new Set<t.Node>()
 
-  for (const node of nodes) {
+  for (const [i, node] of nodes.entries()) {
     if (
       node.type === 'VariableDeclaration' &&
       node.declarations.length === 1 &&
+      node.declarations[0].id.type === 'Identifier' &&
       node.declarations[0].init?.type === 'ObjectExpression' &&
       node.declarations[0].init.properties.length === 0
     ) {
-      emptyObjectAssignments.set(s.sliceNode(node.declarations[0].id), node)
+      emptyObjectAssignments.set(node.declarations[0].id.name, node)
     }
 
     if (
@@ -456,30 +468,42 @@ function patchTsNamespace(s: MagicStringAST, nodes: Node[]) {
       continue
 
     const [binding, exports] = node.expression.arguments
-    const bindingText = s.sliceNode(binding)
+    if (binding.type !== 'Identifier') continue
+    const bindingText = binding.name
+
     if (emptyObjectAssignments.has(bindingText)) {
       const emptyNode = emptyObjectAssignments.get(bindingText)!
-      s.removeNode(emptyNode)
       emptyObjectAssignments.delete(bindingText)
       removed.add(emptyNode)
     }
 
-    let code = `declare namespace ${bindingText} {
-  export { `
-    for (const properties of (exports as ObjectExpression).properties) {
-      if (properties.type !== 'ObjectProperty') continue
-      const exported = s.sliceNode(properties.key)
-      const local = s.sliceNode(
-        (properties.value as ArrowFunctionExpression).body,
-      )
-      const suffix = exported !== local ? ` as ${exported}` : ''
-      code += `${local}${suffix}, `
+    nodes[i] = {
+      type: 'TSModuleDeclaration',
+      id: binding,
+      kind: 'namespace',
+      declare: true,
+      body: {
+        type: 'TSModuleBlock',
+        body: [
+          {
+            type: 'ExportNamedDeclaration',
+            specifiers: (exports as t.ObjectExpression).properties
+              .filter((property) => property.type === 'ObjectProperty')
+              .map((property) => {
+                const local = (property.value as t.ArrowFunctionExpression)
+                  .body as t.Identifier
+                const exported = property.key as t.Identifier
+                return t.exportSpecifier(local, exported)
+              }),
+            source: null,
+            declaration: null,
+          },
+        ],
+      },
     }
-    code += `}\n}`
-    s.overwriteNode(node, code)
   }
 
-  return removed
+  return nodes.filter((node) => !removed.has(node))
 }
 
 // fix:
@@ -492,72 +516,80 @@ function patchTsNamespace(s: MagicStringAST, nodes: Node[]) {
 // - export = Foo
 // - export default x
 function rewriteImportExport(
-  s: MagicStringAST,
-  node: Node,
+  node: t.Node,
+  set: (node: t.Node) => void,
 ): node is
-  | ImportDeclaration
-  | ExportAllDeclaration
-  | TSImportEqualsDeclaration
-  | TSExportAssignment {
+  | t.ImportDeclaration
+  | t.ExportAllDeclaration
+  | t.TSImportEqualsDeclaration {
   if (
     node.type === 'ImportDeclaration' ||
     (node.type === 'ExportNamedDeclaration' && !node.declaration)
   ) {
     for (const specifier of node.specifiers) {
-      if (
-        (specifier.type === 'ImportSpecifier' &&
-          specifier.importKind === 'type') ||
-        (specifier.type === 'ExportSpecifier' &&
-          specifier.exportKind === 'type')
-      ) {
-        s.overwriteNode(specifier, s.sliceNode(specifier).replace(RE_TYPE, ''))
+      if (specifier.type === 'ImportSpecifier') {
+        specifier.importKind = 'value'
+      } else if (specifier.type === 'ExportSpecifier') {
+        specifier.exportKind = 'value'
       }
     }
 
-    const firstSpecifier = node.specifiers[0]
-    const kind =
-      node.type === 'ImportDeclaration' ? node.importKind : node.exportKind
-    if (kind === 'type' && firstSpecifier) {
-      s.overwrite(
-        node.start!,
-        firstSpecifier.start!,
-        s.slice(node.start!, firstSpecifier.start!).replace(RE_TYPE, ''),
-      )
+    if (node.type === 'ImportDeclaration') {
+      node.importKind = 'value'
+    } else if (node.type === 'ExportNamedDeclaration') {
+      node.exportKind = 'value'
     }
+
     return true
   } else if (node.type === 'ExportAllDeclaration') {
-    if (node.exportKind === 'type') {
-      s.overwrite(
-        node.start!,
-        node.source.start!,
-        s.slice(node.start!, node.source.start!).replace(RE_TYPE, ''),
-      )
-    }
+    node.exportKind = 'value'
     return true
   } else if (node.type === 'TSImportEqualsDeclaration') {
     if (node.moduleReference.type === 'TSExternalModuleReference') {
-      s.overwriteNode(
-        node,
-        `import ${s.sliceNode(node.id)} from ${s.sliceNode(
-          node.moduleReference.expression,
-        )}`,
-      )
+      set({
+        type: 'ImportDeclaration',
+        specifiers: [
+          {
+            type: 'ImportDefaultSpecifier',
+            local: node.id,
+          },
+        ],
+        source: node.moduleReference.expression,
+      })
     }
     return true
-  } else if (node.type === 'TSExportAssignment') {
-    s.overwriteNode(
-      node,
-      `export { ${s.sliceNode(node.expression)} as default }`,
-    )
+  } else if (
+    node.type === 'TSExportAssignment' &&
+    node.expression.type === 'Identifier'
+  ) {
+    set({
+      type: 'ExportNamedDeclaration',
+      specifiers: [
+        {
+          type: 'ExportSpecifier',
+          local: node.expression,
+          exported: {
+            type: 'Identifier',
+            name: 'default',
+          },
+        },
+      ],
+    })
     return true
   } else if (
     node.type === 'ExportDefaultDeclaration' &&
     node.declaration.type === 'Identifier'
   ) {
-    s.overwriteNode(
-      node,
-      `export { ${s.sliceNode(node.declaration)} as default }`,
-    )
+    set({
+      type: 'ExportNamedDeclaration',
+      specifiers: [
+        {
+          type: 'ExportSpecifier',
+          local: node.declaration,
+          exported: t.identifier('default'),
+        },
+      ],
+    })
     return true
   }
 
@@ -565,13 +597,69 @@ function rewriteImportExport(
 }
 
 function importNamespace(
-  s: MagicString,
-  source: string,
-  imported: string | undefined | null,
+  node: t.TSImportType,
+  imported: t.TSEntityName | null | undefined,
+  source: t.StringLiteral,
   getIdentifierIndex: () => number,
-) {
-  const local = `_${getIdentifierIndex()}`
-  const specifiers = imported ? `{ ${imported} as ${local} }` : `* as ${local}`
-  s.prepend(`import ${specifiers} from ${JSON.stringify(source)};\n`)
-  return local
+  prepend: (node: t.Statement) => void,
+): Dep {
+  let local: t.Identifier | t.TSQualifiedName = t.identifier(
+    `_${getIdentifierIndex()}`,
+  )
+
+  // prepend: import * as ${local} from ${source}
+  prepend(t.importDeclaration([t.importNamespaceSpecifier(local)], source))
+
+  if (imported) {
+    const importedLeft = getIdFromTSEntityName(imported)
+    overwriteNode(importedLeft, t.tsQualifiedName(local, { ...importedLeft }))
+    local = imported
+  }
+
+  let replacement: t.Node = node
+  if (node.typeParameters) {
+    overwriteNode(node, t.tsTypeReference(local, node.typeParameters))
+    replacement = local
+  } else {
+    overwriteNode(node, local)
+  }
+
+  const dep: Dep = {
+    ...TSEntityNameToRuntime(local),
+    replace(newNode) {
+      overwriteNode(replacement, newNode)
+    },
+  }
+  return dep
+}
+
+function inheritNode<T extends t.Node>(oldValue: t.Node, newValue: T): T {
+  return {
+    ...newValue,
+    start: oldValue.start,
+    end: oldValue.end,
+    range: oldValue.range,
+    leadingComments: oldValue.leadingComments,
+    innerComments: oldValue.innerComments,
+    trailingComments: oldValue.trailingComments,
+  }
+}
+
+function overwriteNode<T>(node: t.Node, newNode: T): T {
+  const preserve = [
+    'start',
+    'end',
+    'range',
+    'loc',
+    'leadingComments',
+    'innerComments',
+    'trailingComments',
+  ]
+  // clear object keys
+  for (const key of Object.keys(node)) {
+    if (preserve.includes(key)) continue
+    delete (node as any)[key]
+  }
+  Object.assign(node, newNode, { ...node })
+  return node as T
 }

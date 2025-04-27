@@ -5,7 +5,7 @@ Index: diff.patch
 @@ -1,5 +1,8 @@
  // index.d.ts
 +declare namespace defs_d_exports {
-+  export { A, B, C, D, E, F, }
++  export { A, B, C, D, E, F }
 +}
  interface A {}
  declare function B(): void
@@ -28,13 +28,13 @@ Index: diff.patch
 -  export { defs_d_B as B, defs_d_C as C, defs_d_D as D, defs_d_E as E }
 -  export { defs_d_A as A, defs_d_F as F }
 +declare namespace deep_d_exports {
-+  export { defs_d_exports as ns, }
++  export { defs_d_exports as ns }
  }
 -declare namespace deep_d {
 -  export {
 -    defs_d as ns,
 +declare namespace only_one_d_exports {
-+  export { A, }
++  export { A }
  }
 -}
 -type onlyOne_d_A = A

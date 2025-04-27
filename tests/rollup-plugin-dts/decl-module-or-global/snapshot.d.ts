@@ -6,7 +6,5 @@ declare module "babel__core" {
 declare global {
   namespace React {}
 }
-declare var test: any;
-
-//#endregion
+declare var test: any; //#endregion
 export { test };

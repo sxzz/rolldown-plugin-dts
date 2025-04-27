@@ -5,7 +5,5 @@ interface MyInterface {
 }
 declare namespace MyInterface {
   export const b: string;
-}
-
-//#endregion
+} //#endregion
 export { MyInterface };

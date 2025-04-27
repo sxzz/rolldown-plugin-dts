@@ -4,6 +4,5 @@ declare function fn(arg: string): string;
 declare namespace fn {
   var staticProp: string;
 }
-
 //#endregion
 export { fn };

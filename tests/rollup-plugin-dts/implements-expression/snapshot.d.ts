@@ -7,9 +7,7 @@ declare namespace ns {
   class Component<P> {
     props: P;
   }
-}
-
-//#endregion
+} //#endregion
 //#region tests/rollup-plugin-dts/implements-expression/index.d.ts
 interface G {}
 interface MyComponentProps extends ns.Props<G> {

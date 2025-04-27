@@ -5,7 +5,6 @@ interface Cache {
 }
 declare const uniqueId: (prefix?: string) => string;
 declare const Cache: () => Cache;
-
 //#endregion
 //#region tests/rollup-plugin-dts/issue-87/b.d.ts
 interface Cache2 {

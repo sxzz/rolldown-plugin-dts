@@ -4,7 +4,6 @@ interface Stuff$1 {
   id: string;
 }
 declare const Stuff$1: Stuff$1;
-
 //#endregion
 //#region tests/rollup-plugin-dts/issue-111/b.d.ts
 interface Stuff {

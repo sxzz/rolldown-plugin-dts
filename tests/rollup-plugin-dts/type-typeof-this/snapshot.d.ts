@@ -3,6 +3,5 @@
 declare class NumberSchema {
   min: () => typeof this;
 }
-
 //#endregion
 export { NumberSchema };

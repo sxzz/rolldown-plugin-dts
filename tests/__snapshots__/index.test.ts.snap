@@ -9,15 +9,14 @@ type FooType = string;
 interface Interface {}
 declare function fn(arg0: SomeType<FooType>, opt: Interface): void;
 declare enum Enum {
-	A = 0,
-	B = 1,
-	C = 2
+  A = 0,
+  B = 1,
+  C = 2,
 }
 declare class Cls {
-	foo: string;
-	fn(e: Enum): void;
+  foo: string;
+  fn(e: Enum): void;
 }
-
 //#endregion
 export { Cls, Enum, fn, foo };
 // basic.js
@@ -62,28 +61,27 @@ const input2 = {
 
 //#endregion
 export { input2 };
-// input2.d-UeQ5AhiD.d.ts
+// input2.d-C9kTp74Q.d.ts
 //#region shared.d.ts
 interface Shared {
-    shared: string;
+  shared: string;
 }
 declare const shared: Shared;
-
 //#endregion
 //#region input2.d.ts
 interface Input2 extends Shared {
-    input2: string;
+  input2: string;
 }
 declare const input2: Input2;
 
 //#endregion
 export { Input2, input2 as input2$1 };
 // output1.d.ts
-import { Input2 } from "./input2.d-UeQ5AhiD.js";
+import { Input2 } from "./input2.d-C9kTp74Q.js";
 
 //#region input1.d.ts
 interface Input1 extends Input2 {
-    input1: string;
+  input1: string;
 }
 declare const input1: Input1;
 
@@ -101,8 +99,7 @@ const input1 = {
 //#endregion
 export { input1 };
 // output2/index.d.ts
-import { Input2, input2$1 as input2 } from "../input2.d-UeQ5AhiD.js";
-
+import { Input2, input2$1 as input2 } from "../input2.d-C9kTp74Q.js";
 export { Input2, input2 };
 // output2/index.js
 import { input2 } from "../input2-LCiYuoaZ.js";
@@ -115,27 +112,25 @@ exports[`jsdoc 1`] = `
 //#region tests/fixtures/jsdoc.d.ts
 /**
 * named export
-*/
-declare function fn(): number;
+*/declare function fn(): number;
+
 /**
 * options
 */
 interface Options {
-    /**
-     * interface member
-     */
-    foo: string;
-}
-/**
-* type alias
-*/
-type Foo = string;
-/**
-* default export
-*/
-declare const _default: number;
+  /**
+   * interface member
+   */
+  foo: string;
+} /**
+  * type alias
+  */
 
-//#endregion
+type Foo = string; /**
+                   * default export
+                   */
+
+declare const _default: number; //#endregion
 export { Foo, Options, _default as default, fn };
 // jsdoc.js
 //#region tests/fixtures/jsdoc.ts
@@ -166,7 +161,7 @@ export { foo };"
 exports[`resolve dts 1`] = `
 "// index.d.ts
 //#region tests/fixtures/resolve-dts/mod.d.ts
-type Foo = string
+type Foo = string;
 
 //#endregion
 export { Foo };
@@ -177,8 +172,8 @@ export { Foo };
 exports[`tree-shaking 1`] = `
 "// index.d.ts
 //#region tests/fixtures/tree-shaking/mod.d.ts
-type A = string;
 
+type A = string;
 //#endregion
 export { A };
 // index.js
@@ -223,9 +218,8 @@ export { bool, fn, num, str, vfs };
 // entry2.d.ts
 
 interface Unused {
-    foo: string;
+  foo: string;
 }
-
 //#endregion
 export { Unused };"
 `;

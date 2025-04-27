@@ -5,7 +5,7 @@ Index: diff.patch
 @@ -1,14 +1,10 @@
  // index.d.ts
 +declare namespace bar_d_exports {
-+  export { Bar, IBar, }
++  export { Bar, IBar }
 +}
  declare class Bar {}
  interface IBar {}

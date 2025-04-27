@@ -4,7 +4,6 @@ declare function fn(arg: string): string;
 declare namespace fn {
   var staticProp: string;
 }
-
 //#endregion
 //#region tests/rollup-plugin-dts/namespace-definition-rename/b.d.ts
 declare function fn$1(arg: string): string;

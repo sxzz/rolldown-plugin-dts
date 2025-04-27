@@ -1,6 +1,6 @@
 // index.d.ts
-import * as _1 from "foo";
 import * as _0 from "foo";
+import * as _1 from "foo";
 
 //#region tests/rollup-plugin-dts/inline-import-external-namespace/index.d.ts
 interface Foo {

@@ -11,7 +11,5 @@ declare const enum C {
 }
 declare const enum D {
   D = "D",
-}
-
-//#endregion
+} //#endregion
 export { A, B, C, D };

@@ -4,6 +4,5 @@ interface Bar {}
 interface Foo {
   bar: Bar;
 }
-
 //#endregion
 export { Foo };

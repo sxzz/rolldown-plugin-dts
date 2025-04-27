@@ -5,7 +5,7 @@ Index: diff.patch
 @@ -1,12 +1,9 @@
  // index.d.ts
 +declare namespace example_d_exports {
-+  export { Example, dog, }
++  export { Example, dog }
 +}
  interface Example<S extends string> {
    example: S

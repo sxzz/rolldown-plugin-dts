@@ -3,6 +3,5 @@
 declare const depth: {
   [-24]: string;
 };
-
 //#endregion
 export { depth };

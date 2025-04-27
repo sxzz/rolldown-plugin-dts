@@ -1,13 +1,6 @@
 // index.d.ts
-//#region rolldown:runtime
-
-
-
-//#endregion
-//#region tests/rollup-plugin-dts/export-star-as/foo.d.ts
-
 declare namespace foo_d_exports {
-  export { A, }
+  export { A };
 }
 interface A {}
 

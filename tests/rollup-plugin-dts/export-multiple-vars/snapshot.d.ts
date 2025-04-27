@@ -1,7 +1,11 @@
 // index.d.ts
 //#region tests/rollup-plugin-dts/export-multiple-vars/settings.d.ts
-declare type In = { a: string };
-declare type Out = { b: number };
+declare type In = {
+  a: string;
+};
+declare type Out = {
+  b: number;
+};
 
 //#endregion
 //#region tests/rollup-plugin-dts/export-multiple-vars/util.d.ts

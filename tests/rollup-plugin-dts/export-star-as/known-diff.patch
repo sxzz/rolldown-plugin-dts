@@ -9,7 +9,7 @@ Index: diff.patch
 -declare namespace foo_d {
 -  export { foo_d_A as A }
 +declare namespace foo_d_exports {
-+  export { A, }
++  export { A }
  }
 -export { foo_d as foo }
 +interface A {}

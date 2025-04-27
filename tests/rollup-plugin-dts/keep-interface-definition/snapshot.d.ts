@@ -3,7 +3,5 @@
 interface Foo {
   a: string;
   b: Array<number>;
-}
-
-//#endregion
+} //#endregion
 export { Foo };

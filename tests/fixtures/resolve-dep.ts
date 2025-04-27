@@ -1,2 +1,2 @@
-export { MagicStringAST } from 'magic-string-ast'
+export { TransformOptions } from 'oxc-transform'
 export { build } from 'rolldown'

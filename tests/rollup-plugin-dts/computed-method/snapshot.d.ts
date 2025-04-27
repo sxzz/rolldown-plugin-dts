@@ -6,7 +6,11 @@ declare const b: "b";
 
 //#endregion
 //#region tests/rollup-plugin-dts/computed-method/mod.d.ts
-declare const deep: { deep: { a: "deep" } };
+declare const deep: {
+  deep: {
+    a: "deep";
+  };
+};
 
 //#endregion
 //#region tests/rollup-plugin-dts/computed-method/index.d.ts

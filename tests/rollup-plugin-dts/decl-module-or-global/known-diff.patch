@@ -1,0 +1,12 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -4,6 +4,6 @@
+ }
+ declare global {
+   namespace React {}
+ }
+-declare var test: any
++declare var test: any; 
+ export { test }

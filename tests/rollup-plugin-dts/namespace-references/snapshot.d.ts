@@ -21,7 +21,5 @@ declare namespace ns {
   namespace childNS {
     export { Referenced2 as ref };
   }
-}
-
-//#endregion
+} //#endregion
 export { ns };

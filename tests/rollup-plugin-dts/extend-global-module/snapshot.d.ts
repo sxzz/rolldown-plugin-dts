@@ -7,9 +7,7 @@ declare global {
       second: Second$2;
     }
   }
-}
-
-//#endregion
+} //#endregion
 //#region tests/rollup-plugin-dts/extend-global-module/second2.d.ts
 interface Second$1 {}
 declare global {

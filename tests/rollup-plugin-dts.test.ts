@@ -4,9 +4,9 @@ import process from 'node:process'
 import { rolldownBuild, rollupBuild, testFixtures } from '@sxzz/test-utils'
 import { createPatch } from 'diff'
 import { dts as rollupDts } from 'rollup-plugin-dts'
+import { glob } from 'tinyglobby'
 import { expect } from 'vitest'
 import { createFakeJsPlugin } from '../src'
-import { glob } from 'tinyglobby'
 
 const isUpdateEnabled =
   process.env.npm_lifecycle_script?.includes('-u') ||
@@ -62,8 +62,10 @@ await testFixtures(
     if (diff.split('\n').length !== 5) {
       const knownDiff = await readFile(knownDiffPath, 'utf8').catch(() => null)
       if (knownDiff !== diff) {
-        await expect(diff).toMatchFileSnapshot(diffPath)
-        await unlink(knownDiffPath).catch(() => {})
+        await expect(diff).toMatchFileSnapshot(
+          knownDiff ? knownDiffPath : diffPath,
+        )
+        await unlink(knownDiff ? diffPath : knownDiffPath).catch(() => {})
       } else {
         await unlink(diffPath).catch(() => {})
       }
@@ -83,7 +85,7 @@ await testFixtures(
 function cleanupCode(text: string) {
   return `${text
     .replaceAll(/\/\/#region .*\n/g, '')
-    .replaceAll('//#endregion\n', '')
+    .replaceAll('//#endregion', '')
     .replaceAll(/from "(.*)"/g, "from '$1'")
     .replaceAll('export type', 'export') // FIXME
     .split('\n')

@@ -3,6 +3,5 @@
 interface Foo {
   new (): any;
 }
-
 //#endregion
 export { Foo };

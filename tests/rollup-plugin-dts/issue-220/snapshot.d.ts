@@ -6,7 +6,5 @@ declare enum Alphabet {
 }
 declare class Test {
   readonly letter = Alphabet.a;
-}
-
-//#endregion
+} //#endregion
 export { Test };

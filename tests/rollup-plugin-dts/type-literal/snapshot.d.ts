@@ -4,6 +4,5 @@ interface A {}
 declare type Foo = {
   a: A;
 };
-
 //#endregion
 export { Foo };

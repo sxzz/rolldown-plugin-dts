@@ -6,7 +6,5 @@ declare class Foo {
   protected b: B;
   private ma;
   protected mb(): void;
-}
-
-//#endregion
+} //#endregion
 export { Foo };

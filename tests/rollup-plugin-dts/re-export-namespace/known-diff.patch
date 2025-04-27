@@ -5,7 +5,7 @@ Index: diff.patch
 @@ -1,5 +1,8 @@
  // index.d.ts
 +declare namespace namespace_d_exports {
-+  export { A, B, C, D, E, F, GenericC, GenericF, GenericI, GenericT, }
++  export { A, B, C, D, E, F, GenericC, GenericF, GenericI, GenericT }
 +}
  interface A {}
  declare function B(): void

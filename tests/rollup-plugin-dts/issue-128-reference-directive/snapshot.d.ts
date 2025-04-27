@@ -1,6 +1,6 @@
-// common.d-BJvbc4q0.d.ts
-/// <reference types="node" />
+// common.d-CTbT7kRK.d.ts
 //#region tests/rollup-plugin-dts/issue-128-reference-directive/common.d.ts
+/// <reference types="node" />
 interface B {}
 
 //#endregion
@@ -8,7 +8,7 @@ export { B };
 // main-a.d.ts
 /// <reference types="jest" />
 /// <reference types="react" />
-import { B } from "./common.d-BJvbc4q0.js";
+import { B } from "./common.d-CTbT7kRK.js";
 
 //#region tests/rollup-plugin-dts/issue-128-reference-directive/ref-from-a.d.ts
 declare const A = 2;
@@ -21,6 +21,5 @@ declare const a: JSXElements[];
 //#endregion
 export { A, B, JSXElements, a };
 // main-b.d.ts
-import { B } from "./common.d-BJvbc4q0.js";
-
+import { B } from "./common.d-CTbT7kRK.js";
 export { B };

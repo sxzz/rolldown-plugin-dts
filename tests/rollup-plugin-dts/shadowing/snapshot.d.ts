@@ -24,9 +24,7 @@ interface GenericInterface<C = any, D = C> {
 }
 declare function genericFunction<E = any, F = E>(e: E): F;
 declare type ConditionalInfer<G> = G extends Array<Array<infer H>> ? H : never;
-declare type Mapped<I> = {
-  [J in keyof I]: I[J];
-};
+declare type Mapped<I> = { [J in keyof I]: I[J] };
 declare type GenericType<K = any, L = K> = {
   k: K;
   l: L;

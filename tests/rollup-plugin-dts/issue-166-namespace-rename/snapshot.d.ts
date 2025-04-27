@@ -4,7 +4,6 @@ declare const Item$1: () => void;
 declare namespace A {
   export { Item$1 as Item };
 }
-
 //#endregion
 //#region tests/rollup-plugin-dts/issue-166-namespace-rename/b.d.ts
 declare const Item: () => void;
