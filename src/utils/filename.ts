@@ -3,6 +3,7 @@ import path from 'node:path'
 export const RE_JS: RegExp = /\.([cm]?)jsx?$/
 export const RE_TS: RegExp = /\.([cm]?)tsx?$/
 export const RE_DTS: RegExp = /\.d\.([cm]?)ts$/
+export const RE_DTS_MAP: RegExp = /\.d\.([cm]?)ts\.map$/
 export const RE_NODE_MODULES: RegExp = /[\\/]node_modules[\\/]/
 
 export function filename_js_to_dts(id: string): string {

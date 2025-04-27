@@ -3,8 +3,13 @@ import { parse } from '@babel/parser'
 import * as t from '@babel/types'
 import { isDeclarationType, isTypeOf } from 'ast-kit'
 import { walk } from 'estree-walker'
-import { filename_dts_to, filename_js_to_dts, RE_DTS } from './utils/filename'
-import type { Options } from '.'
+import {
+  filename_dts_to,
+  filename_js_to_dts,
+  RE_DTS,
+  RE_DTS_MAP,
+} from './utils/filename'
+import type { OptionsResolved } from '.'
 import type { Plugin } from 'rolldown'
 
 // @ts-expect-error interop default
@@ -29,7 +34,8 @@ interface SymbolInfo {
 
 export function createFakeJsPlugin({
   dtsInput,
-}: Pick<Options, 'dtsInput'>): Plugin {
+  sourcemap,
+}: OptionsResolved): Plugin {
   let symbolIdx = 0
   let identifierIdx = 0
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
@@ -77,6 +83,7 @@ export function createFakeJsPlugin({
       }
       return {
         ...options,
+        sourcemap: sourcemap ? true : options.sourcemap,
         entryFileNames:
           options.entryFileNames ?? (dtsInput ? '[name].ts' : undefined),
         chunkFileNames(chunk) {
@@ -215,7 +222,7 @@ export function createFakeJsPlugin({
 
         const result = generate(file, {
           comments: true,
-          sourceMaps: true,
+          sourceMaps: sourcemap,
           sourceFileName: id,
         })
         return result
@@ -313,11 +320,25 @@ export function createFakeJsPlugin({
 
       const result = generate(file, {
         comments: true,
-        sourceMaps: true,
+        sourceMaps: sourcemap,
         sourceFileName: chunk.fileName,
       })
 
       return result
+    },
+    generateBundle(options, bundle) {
+      for (const chunk of Object.values(bundle)) {
+        if (
+          chunk.type !== 'asset' ||
+          !RE_DTS_MAP.test(chunk.fileName) ||
+          typeof chunk.source !== 'string'
+        )
+          continue
+
+        const maps = JSON.parse(chunk.source)
+        maps.sourcesContent = null
+        chunk.source = JSON.stringify(maps)
+      }
     },
   }
 }
@@ -636,9 +657,6 @@ function importNamespace(
 function inheritNode<T extends t.Node>(oldValue: t.Node, newValue: T): T {
   return {
     ...newValue,
-    start: oldValue.start,
-    end: oldValue.end,
-    range: oldValue.range,
     leadingComments: oldValue.leadingComments,
     innerComments: oldValue.innerComments,
     trailingComments: oldValue.trailingComments,
@@ -646,15 +664,7 @@ function inheritNode<T extends t.Node>(oldValue: t.Node, newValue: T): T {
 }
 
 function overwriteNode<T>(node: t.Node, newNode: T): T {
-  const preserve = [
-    'start',
-    'end',
-    'range',
-    'loc',
-    'leadingComments',
-    'innerComments',
-    'trailingComments',
-  ]
+  const preserve = ['leadingComments', 'innerComments', 'trailingComments']
   // clear object keys
   for (const key of Object.keys(node)) {
     if (preserve.includes(key)) continue

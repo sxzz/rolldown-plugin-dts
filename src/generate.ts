@@ -1,7 +1,4 @@
-import path from 'node:path'
-import process from 'node:process'
-import { createResolver, type Resolver } from 'dts-resolver'
-import { getTsconfig, parseTsconfig } from 'get-tsconfig'
+import { createResolver } from 'dts-resolver'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
 import {
   filename_dts_to,
@@ -9,12 +6,13 @@ import {
   filename_ts_to_dts,
   isRelative,
   RE_DTS,
+  RE_DTS_MAP,
   RE_JS,
   RE_NODE_MODULES,
   RE_TS,
 } from './utils/filename'
 import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc'
-import type { Options } from '.'
+import type { OptionsResolved } from '.'
 import type { Plugin } from 'rolldown'
 import type * as Ts from 'typescript'
 
@@ -32,47 +30,12 @@ export type DtsMap = Map<string, TsModule>
 
 export function createGeneratePlugin({
   tsconfig,
-  compilerOptions,
+  compilerOptions = {},
   isolatedDeclarations,
   resolve = false,
   emitDtsOnly = false,
-}: Pick<
-  Options,
-  | 'isolatedDeclarations'
-  | 'resolve'
-  | 'emitDtsOnly'
-  | 'tsconfig'
-  | 'compilerOptions'
->): Plugin {
+}: OptionsResolved): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
-
-  function resolveOptions(cwd?: string) {
-    if (tsconfig === true || tsconfig == null) {
-      const { config, path } = getTsconfig(cwd) || {}
-      tsconfig = path
-      compilerOptions = {
-        ...config?.compilerOptions,
-        ...compilerOptions,
-      }
-    } else if (typeof tsconfig === 'string') {
-      tsconfig = path.resolve(cwd || process.cwd(), tsconfig)
-      const config = parseTsconfig(tsconfig)
-      compilerOptions = {
-        ...config.compilerOptions,
-        ...compilerOptions,
-      }
-    }
-
-    if (isolatedDeclarations == null) {
-      isolatedDeclarations = !!compilerOptions?.isolatedDeclarations
-    }
-    if (isolatedDeclarations === true) {
-      isolatedDeclarations = {}
-    }
-    if (isolatedDeclarations && isolatedDeclarations.stripInternal == null) {
-      isolatedDeclarations.stripInternal = !!compilerOptions?.stripInternal
-    }
-  }
 
   /**
    * A map of input id to output file name
@@ -84,22 +47,19 @@ export function createGeneratePlugin({
    * ])
    */
   const inputAliasMap = new Map<string, string>()
-  let resolver: Resolver
   let programs: Ts.Program[] = []
+  const resolver = createResolver({
+    tsconfig: tsconfig ? (tsconfig as string) : undefined,
+  })
+
+  if (!isolatedDeclarations) {
+    initTs()
+  }
 
   return {
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      resolveOptions(options.cwd)
-      resolver = createResolver({
-        tsconfig: tsconfig ? (tsconfig as string) : undefined,
-      })
-
-      if (!isolatedDeclarations) {
-        initTs()
-      }
-
       if (!Array.isArray(options.input)) {
         for (const [name, id] of Object.entries(options.input)) {
           let resolved = await this.resolve(id, undefined, {
@@ -253,13 +213,10 @@ export function createGeneratePlugin({
 
         const { code, id, isEntry } = dtsMap.get(dtsId)!
         let dtsCode: string | undefined
+        let map: any
 
         if (isolatedDeclarations) {
-          const result = oxcIsolatedDeclaration(
-            id,
-            code,
-            isolatedDeclarations === true ? {} : isolatedDeclarations,
-          )
+          const result = oxcIsolatedDeclaration(id, code, isolatedDeclarations)
           if (result.errors.length) {
             const [error] = result.errors
             return this.error({
@@ -268,6 +225,10 @@ export function createGeneratePlugin({
             })
           }
           dtsCode = result.code
+          if (result.map) {
+            map = result.map
+            // map.sourcesContent = undefined
+          }
         } else {
           const module = createOrGetTsModule(
             programs,
@@ -290,6 +251,7 @@ export function createGeneratePlugin({
         return {
           code: dtsCode,
           moduleSideEffects: false,
+          map,
         }
       },
     },
@@ -297,7 +259,11 @@ export function createGeneratePlugin({
     generateBundle: emitDtsOnly
       ? (options, bundle) => {
           for (const fileName of Object.keys(bundle)) {
-            if (!RE_DTS.test(fileName)) {
+            if (
+              bundle[fileName].type === 'chunk' &&
+              !RE_DTS.test(fileName) &&
+              !RE_DTS_MAP.test(fileName)
+            ) {
               delete bundle[fileName]
             }
           }

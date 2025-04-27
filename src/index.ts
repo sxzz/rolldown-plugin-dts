@@ -1,11 +1,15 @@
+import path from 'node:path'
+import process from 'node:process'
+import { getTsconfig, parseTsconfig, type TsConfigJson } from 'get-tsconfig'
 import { createDtsInputPlugin } from './dts-input'
 import { createFakeJsPlugin } from './fake-js'
 import { createGeneratePlugin } from './generate'
-import type { TsConfigJson } from 'get-tsconfig'
 import type { IsolatedDeclarationsOptions } from 'oxc-transform'
 import type { Plugin } from 'rolldown'
 
 export interface Options {
+  cwd?: string
+
   /**
    * When entries are `.d.ts` files (instead of `.ts` files), this option should be set to `true`.
    *
@@ -47,19 +51,91 @@ export interface Options {
     | boolean
     | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
 
+  /**
+   * When `true`, the plugin will generate declaration maps for `.d.ts` files.
+   */
+  sourcemap?: boolean
+
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]
 }
 
+type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
+
+export type OptionsResolved = Overwrite<
+  Required<Options>,
+  {
+    tsconfig: string | undefined
+    isolatedDeclarations: IsolatedDeclarationsOptions | false
+  }
+>
+
 export function dts(options: Options = {}): Plugin[] {
+  const resolved = resolveOptions(options)
+
   const plugins: Plugin[] = []
   if (options.dtsInput) {
     plugins.push(createDtsInputPlugin())
   } else {
-    plugins.push(createGeneratePlugin(options))
+    plugins.push(createGeneratePlugin(resolved))
   }
-  plugins.push(createFakeJsPlugin(options))
+  plugins.push(createFakeJsPlugin(resolved))
   return plugins
 }
 
 export { createFakeJsPlugin, createGeneratePlugin }
+
+export function resolveOptions({
+  cwd = process.cwd(),
+  tsconfig,
+  compilerOptions = {},
+  isolatedDeclarations,
+  sourcemap,
+  dtsInput = false,
+  emitDtsOnly = false,
+  resolve = false,
+}: Options): OptionsResolved {
+  if (tsconfig === true || tsconfig == null) {
+    const { config, path } = getTsconfig(cwd) || {}
+    tsconfig = path
+    compilerOptions = {
+      ...config?.compilerOptions,
+      ...compilerOptions,
+    }
+  } else if (typeof tsconfig === 'string') {
+    tsconfig = path.resolve(cwd || process.cwd(), tsconfig)
+    const config = parseTsconfig(tsconfig)
+    compilerOptions = {
+      ...config.compilerOptions,
+      ...compilerOptions,
+    }
+  } else {
+    tsconfig = undefined
+  }
+
+  sourcemap ??= !!compilerOptions.declarationMap
+  compilerOptions.declarationMap = sourcemap
+
+  if (isolatedDeclarations == null) {
+    isolatedDeclarations = !!compilerOptions?.isolatedDeclarations
+  }
+  if (isolatedDeclarations === true) {
+    isolatedDeclarations = {}
+  }
+  if (isolatedDeclarations) {
+    isolatedDeclarations.stripInternal ??= !!compilerOptions?.stripInternal
+    // @ts-expect-error omitted in user options
+    isolatedDeclarations.sourcemap = !!compilerOptions.declarationMap
+  }
+
+  return {
+    cwd,
+    tsconfig,
+    compilerOptions,
+    isolatedDeclarations,
+    sourcemap,
+    dtsInput,
+    emitDtsOnly,
+    resolve,
+  }
+}
