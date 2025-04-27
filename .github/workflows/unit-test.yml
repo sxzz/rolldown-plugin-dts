@@ -62,4 +62,5 @@ jobs:
       - name: Test
         run: pnpm run test
         env:
-          DEBUG: 'rolldown-plugin-dts:*'
+          # DEBUG: 'rolldown-plugin-dts:*'
+          RD_LOG: debug
