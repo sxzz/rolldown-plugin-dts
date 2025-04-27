@@ -61,3 +61,5 @@ jobs:
 
       - name: Test
         run: pnpm run test
+        env:
+          RD_LOG: debug
