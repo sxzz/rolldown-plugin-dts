@@ -65,7 +65,7 @@
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/diff": "^7.0.2",
-    "@types/node": "^22.14.1",
+    "@types/node": "^22.15.2",
     "bumpp": "^10.1.0",
     "diff": "^7.0.0",
     "eslint": "^9.25.1",
@@ -74,7 +74,7 @@
     "rolldown": "1.0.0-beta.8-commit.6aca0ce",
     "rollup-plugin-dts": "^6.2.1",
     "tinyglobby": "^0.2.13",
-    "tsdown": "^0.9.6",
+    "tsdown": "^0.9.8",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2"
