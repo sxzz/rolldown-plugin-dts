@@ -84,13 +84,7 @@ test('input alias', async () => {
   const root = path.resolve(dirname, 'fixtures/alias')
   const { snapshot, chunks } = await rolldownBuild(
     null!,
-    [
-      dts({
-        emitDtsOnly: false, // Generate both JS and DTS files
-        compilerOptions: {},
-        isolatedDeclarations: false,
-      }),
-    ],
+    [dts({ emitDtsOnly: false })],
     {
       cwd: root,
       // A mapping from output chunk names to input files. This mapping should
