@@ -47,6 +47,10 @@ export function createDtsResolvePlugin({
           resolution = await this.resolve(`${id}.d`, importer, options)
         }
 
+        if (resolution?.id.startsWith('\0')) {
+          return { ...resolution, meta }
+        }
+
         // resolve dependency
         if (
           RE_NODE_MODULES.test(resolution?.id || id) ||
