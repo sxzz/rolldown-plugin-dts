@@ -1,3 +1,4 @@
+import Debug from 'debug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
 import {
   filename_ts_to_dts,
@@ -11,6 +12,8 @@ import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc'
 import type { OptionsResolved } from '.'
 import type { Plugin } from 'rolldown'
 import type * as Ts from 'typescript'
+
+const debug = Debug('rolldown-plugin-dts:generate')
 
 export interface TsModule {
   /** `.ts` source code */
@@ -54,13 +57,14 @@ export function createGeneratePlugin({
     async buildStart(options) {
       if (!Array.isArray(options.input)) {
         for (const [name, id] of Object.entries(options.input)) {
-          let resolved = await this.resolve(id, undefined, {
-            skipSelf: true,
-          })
-          resolved ||= await this.resolve(`./${id}`, undefined, {
-            skipSelf: true,
-          })
-          inputAliasMap.set(resolved?.id || id, name)
+          debug('resolving input alias %s -> %s', name, id)
+          let resolved = await this.resolve(id)
+          if (!id.startsWith('./')) {
+            resolved ||= await this.resolve(`./${id}`)
+          }
+          const resolvedId = resolved?.id || id
+          debug('resolved input alias %s -> %s', id, resolvedId)
+          inputAliasMap.set(resolvedId, name)
         }
       }
     },
