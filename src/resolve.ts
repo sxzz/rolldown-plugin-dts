@@ -1,6 +1,5 @@
 import { createResolver } from 'dts-resolver'
 import {
-  filename_dts_to,
   filename_js_to_dts,
   filename_ts_to_dts,
   isRelative,
@@ -43,10 +42,9 @@ export function createDtsResolvePlugin({
         }
 
         // link to the original module
-        const tsImporter = filename_dts_to(importer, 'ts')
-        let resolution = await this.resolve(id, tsImporter, options)
+        let resolution = await this.resolve(id, importer, options)
         if (!resolution && !id.endsWith('.d')) {
-          resolution = await this.resolve(`${id}.d`, tsImporter, options)
+          resolution = await this.resolve(`${id}.d`, importer, options)
         }
 
         // resolve dependency
