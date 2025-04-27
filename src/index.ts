@@ -8,6 +8,9 @@ import type { IsolatedDeclarationsOptions } from 'oxc-transform'
 import type { Plugin } from 'rolldown'
 
 export interface Options {
+  /**
+   * The directory where the the plugin will look for the `tsconfig.json` file.
+   */
   cwd?: string
 
   /**

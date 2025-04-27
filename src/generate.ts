@@ -242,6 +242,7 @@ export function createGeneratePlugin({
             return this.error(result.error)
           }
           dtsCode = result.code
+          map = result.map
         }
 
         if (!dtsCode) {

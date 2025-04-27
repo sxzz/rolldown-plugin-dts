@@ -13,13 +13,36 @@ beforeAll(async () => {
   await rm(tempDir, { recursive: true, force: true })
 })
 
-test('basic', async () => {
-  const dir = path.join(tempDir, 'source-map')
+test('oxc', async () => {
+  const dir = path.join(tempDir, 'source-map-oxc')
   await build({
     input: path.resolve(dirname, 'fixtures/basic.ts'),
-    plugins: [dts({ sourcemap: true, emitDtsOnly: true })],
+    plugins: [
+      dts({
+        isolatedDeclarations: true,
+        sourcemap: true,
+        emitDtsOnly: true,
+      }),
+    ],
     output: { dir },
     write: true,
   })
-  await expectFilesSnapshot(dir, '__snapshots__/source-map-basic.md')
+  await expectFilesSnapshot(dir, '__snapshots__/source-map-oxc.md')
+})
+
+test('tsc', async () => {
+  const dir = path.join(tempDir, 'source-map-tsc')
+  await build({
+    input: path.resolve(dirname, 'fixtures/basic.ts'),
+    plugins: [
+      dts({
+        isolatedDeclarations: false,
+        sourcemap: true,
+        emitDtsOnly: true,
+      }),
+    ],
+    output: { dir },
+    write: true,
+  })
+  await expectFilesSnapshot(dir, '__snapshots__/source-map-tsc.md')
 })

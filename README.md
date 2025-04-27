@@ -32,6 +32,11 @@ You can find a real demo in [here](./rolldown.config.ts).
 ```ts
 interface Options {
   /**
+   * The directory where the the plugin will look for the `tsconfig.json` file.
+   */
+  cwd?: string
+
+  /**
    * When entries are `.d.ts` files (instead of `.ts` files), this option should be set to `true`.
    *
    * If enabled, the plugin will skip generating a `.d.ts` file for the entry point.
@@ -71,6 +76,11 @@ interface Options {
   isolatedDeclarations?:
     | boolean
     | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
+
+  /**
+   * When `true`, the plugin will generate declaration maps for `.d.ts` files.
+   */
+  sourcemap?: boolean
 
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]

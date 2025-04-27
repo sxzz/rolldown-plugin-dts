@@ -123,14 +123,24 @@ function createTsProgram(
   }
 }
 
-export function tscEmit(module: TscModule): { code?: string; error?: string } {
+export function tscEmit(module: TscModule): {
+  code?: string
+  map?: any
+  error?: string
+} {
   const { program, file } = module
   let dtsCode: string | undefined
+  let map: any
   const { emitSkipped, diagnostics } = program.emit(
     file,
-    (_, code) => {
-      debug(`emit dts: ${file.fileName}`)
-      dtsCode = code
+    (fileName, code) => {
+      if (fileName.endsWith('.map')) {
+        debug(`emit dts sourcemap: ${fileName}`)
+        map = JSON.parse(code)
+      } else {
+        debug(`emit dts: ${fileName}`)
+        dtsCode = code
+      }
     },
     undefined,
     true,
@@ -141,7 +151,7 @@ export function tscEmit(module: TscModule): { code?: string; error?: string } {
   if (emitSkipped && diagnostics.length) {
     return { error: ts.formatDiagnostics(diagnostics, formatHost) }
   }
-  return { code: dtsCode }
+  return { code: dtsCode, map }
 }
 
 function getTsModule(dtsMap: DtsMap, tsId: string) {
