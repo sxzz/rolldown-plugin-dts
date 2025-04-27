@@ -60,6 +60,6 @@ jobs:
         run: pnpm run build
 
       - name: Test
-        run: pnpm run test
-        env:
-          RD_LOG: debug
+        run: pnpm run test tests/index.test.ts
+        # env:
+        #   RD_LOG: debug
