@@ -81,7 +81,11 @@ export function createDtsResolvePlugin({
           )
           if (!resolution) return
         } else if (RE_TS.test(resolution.id) && !RE_DTS.test(resolution.id)) {
-          await this.load(resolution)
+          // module is not loaded yet
+          if (!this.getModuleInfo(resolution.id)) {
+            await this.load(resolution)
+          }
+
           // redirect ts to dts
           resolution.id = filename_ts_to_dts(resolution.id)
         }
