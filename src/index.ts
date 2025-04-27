@@ -1,11 +1,15 @@
 import path from 'node:path'
 import process from 'node:process'
+import Debug from 'debug'
 import { getTsconfig, parseTsconfig, type TsConfigJson } from 'get-tsconfig'
 import { createDtsInputPlugin } from './dts-input'
 import { createFakeJsPlugin } from './fake-js'
 import { createGeneratePlugin } from './generate'
+import { createDtsResolvePlugin } from './resolve'
 import type { IsolatedDeclarationsOptions } from 'oxc-transform'
 import type { Plugin } from 'rolldown'
+
+const debug = Debug('rolldown-plugin-dts:options')
 
 export interface Options {
   /**
@@ -74,7 +78,9 @@ export type OptionsResolved = Overwrite<
 >
 
 export function dts(options: Options = {}): Plugin[] {
+  debug('resolving dts options')
   const resolved = resolveOptions(options)
+  debug('resolved dts options %o', resolved)
 
   const plugins: Plugin[] = []
   if (options.dtsInput) {
@@ -82,7 +88,7 @@ export function dts(options: Options = {}): Plugin[] {
   } else {
     plugins.push(createGeneratePlugin(resolved))
   }
-  plugins.push(createFakeJsPlugin(resolved))
+  plugins.push(createDtsResolvePlugin(resolved), createFakeJsPlugin(resolved))
   return plugins
 }
 

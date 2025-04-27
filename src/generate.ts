@@ -1,10 +1,6 @@
-import { createResolver } from 'dts-resolver'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
 import {
-  filename_dts_to,
-  filename_js_to_dts,
   filename_ts_to_dts,
-  isRelative,
   RE_DTS,
   RE_DTS_MAP,
   RE_JS,
@@ -15,8 +11,6 @@ import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc'
 import type { OptionsResolved } from '.'
 import type { Plugin } from 'rolldown'
 import type * as Ts from 'typescript'
-
-export const meta = { dtsFile: true } as const
 
 export interface TsModule {
   /** `.ts` source code */
@@ -29,10 +23,8 @@ export interface TsModule {
 export type DtsMap = Map<string, TsModule>
 
 export function createGeneratePlugin({
-  tsconfig,
   compilerOptions = {},
   isolatedDeclarations,
-  resolve = false,
   emitDtsOnly = false,
 }: OptionsResolved): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
@@ -48,9 +40,6 @@ export function createGeneratePlugin({
    */
   const inputAliasMap = new Map<string, string>()
   let programs: Ts.Program[] = []
-  const resolver = createResolver({
-    tsconfig: tsconfig ? (tsconfig as string) : undefined,
-  })
 
   if (!isolatedDeclarations) {
     initTs()
@@ -89,6 +78,12 @@ export function createGeneratePlugin({
       }
     },
 
+    resolveId(id) {
+      if (dtsMap.has(id)) {
+        return { id }
+      }
+    },
+
     transform: {
       order: 'pre',
       filter: {
@@ -114,89 +109,6 @@ export function createGeneratePlugin({
 
         if (emitDtsOnly) {
           return 'export { }'
-        }
-      },
-    },
-
-    resolveId: {
-      order: 'pre',
-      async handler(id, importer, options) {
-        if (dtsMap.has(id)) {
-          // must be dts entry
-          return { id, meta }
-        }
-
-        if (!importer || !this.getModuleInfo(importer)?.meta.dtsFile) {
-          return
-        }
-        // in dts file
-
-        if (RE_DTS.test(id)) {
-          const resolution = await this.resolve(id, importer, options)
-          if (!resolution) return
-          return { ...resolution, meta }
-        }
-
-        if (RE_NODE_MODULES.test(importer)) {
-          const resolution = resolver(id, importer)
-          if (resolution) return { id: resolution, meta }
-        }
-
-        // link to the original module
-        const tsImporter = filename_dts_to(importer, 'ts')
-        let resolution = await this.resolve(id, tsImporter)
-        if (!resolution && !id.endsWith('.d')) {
-          resolution = await this.resolve(`${id}.d`, tsImporter)
-        }
-
-        // resolve dependency
-        if (
-          RE_NODE_MODULES.test(resolution?.id || id) ||
-          !isRelative(resolution?.id || id)
-        ) {
-          let shouldResolve: boolean
-          if (typeof resolve === 'boolean') {
-            shouldResolve = resolve
-          } else {
-            shouldResolve = resolve.some((pattern) =>
-              typeof pattern === 'string' ? id === pattern : pattern.test(id),
-            )
-          }
-          if (shouldResolve) {
-            const resolution = resolver(id, importer)
-            if (resolution) return { id: resolution, meta }
-          } else {
-            return { id, external: true, meta }
-          }
-        }
-
-        if (!resolution || resolution.external) {
-          return resolution
-        }
-
-        let dtsId: string
-        if (RE_JS.test(resolution.id)) {
-          // resolve dts for js
-          resolution = await this.resolve(
-            filename_js_to_dts(resolution.id),
-            importer,
-            { skipSelf: false },
-          )
-          if (!resolution) return
-          dtsId = resolution.id
-        } else {
-          dtsId = RE_DTS.test(resolution.id)
-            ? resolution.id
-            : filename_ts_to_dts(resolution.id)
-          if (dtsMap.has(dtsId)) {
-            return { id: dtsId, meta }
-          }
-        }
-
-        await this.load(resolution)
-
-        if (RE_DTS.test(resolution.id) || dtsMap.has(dtsId)) {
-          return { id: dtsId, meta }
         }
       },
     },

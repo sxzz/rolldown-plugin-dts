@@ -1,4 +1,3 @@
-import { isRelative, RE_NODE_MODULES } from './utils/filename'
 import type { Plugin } from 'rolldown'
 
 export function createDtsInputPlugin(): Plugin {
@@ -28,17 +27,6 @@ export function createDtsInputPlugin(): Plugin {
           return '[name].d.ts'
         },
       }
-    },
-
-    resolveId: {
-      order: 'pre',
-      handler(id, importer, options) {
-        if (options.isEntry) return
-
-        if (RE_NODE_MODULES.test(id) || !isRelative(id)) {
-          return { id, external: true }
-        }
-      },
     },
   }
 }
