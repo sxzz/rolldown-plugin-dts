@@ -35,7 +35,7 @@ interface SymbolInfo {
 export function createFakeJsPlugin({
   dtsInput,
   sourcemap,
-}: OptionsResolved): Plugin {
+}: Pick<OptionsResolved, 'dtsInput' | 'sourcemap'>): Plugin {
   let symbolIdx = 0
   let identifierIdx = 0
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()

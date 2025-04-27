@@ -24,10 +24,14 @@ await testFixtures(
 
     let error: any
     let [rolldownSnapshot, rollupSnapshot] = await Promise.all([
-      rolldownBuild(entries, [createFakeJsPlugin({ dtsInput: true })], {
-        treeshake: true,
-        external: ['typescript'],
-      }).then(({ snapshot }) => snapshot),
+      rolldownBuild(
+        entries,
+        [createFakeJsPlugin({ dtsInput: true, sourcemap: false })],
+        {
+          treeshake: true,
+          external: ['typescript'],
+        },
+      ).then(({ snapshot }) => snapshot),
       rollupBuild(entries, [rollupDts()], undefined, {
         entryFileNames: '[name].ts',
       }).then(({ snapshot }) => snapshot),

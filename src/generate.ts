@@ -26,7 +26,10 @@ export function createGeneratePlugin({
   compilerOptions = {},
   isolatedDeclarations,
   emitDtsOnly = false,
-}: OptionsResolved): Plugin {
+}: Pick<
+  OptionsResolved,
+  'compilerOptions' | 'isolatedDeclarations' | 'emitDtsOnly'
+>): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
   /**

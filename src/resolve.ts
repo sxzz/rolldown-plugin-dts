@@ -17,7 +17,7 @@ export const meta = { dtsFile: true } as const
 export function createDtsResolvePlugin({
   tsconfig,
   resolve,
-}: OptionsResolved): Plugin {
+}: Pick<OptionsResolved, 'tsconfig' | 'resolve'>): Plugin {
   const resolver = createResolver({
     tsconfig: tsconfig ? (tsconfig as string) : undefined,
   })
