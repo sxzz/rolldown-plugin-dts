@@ -68,11 +68,7 @@ export function createDtsResolvePlugin({
         }
 
         if (RE_TS.test(resolution) && !RE_DTS.test(resolution)) {
-          // FIXME: rolldown bug
-          await Promise.any([
-            this.load({ id: resolution }),
-            new Promise((resolve) => setTimeout(resolve, 200)),
-          ])
+          await this.load({ id: resolution })
 
           // redirect ts to dts
           resolution = filename_ts_to_dts(resolution)
