@@ -79,7 +79,7 @@ export function createDtsResolvePlugin({
           (RE_NODE_MODULES.test(resolution?.id || id) ||
             !isRelative(resolution?.id || id))
         ) {
-          return resolveDependency(resolution?.id || id, importer)
+          return resolveDependency(id, importer)
         }
 
         if (!resolution || resolution.external) {
