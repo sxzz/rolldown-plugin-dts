@@ -2,16 +2,16 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,11 +1,5 @@
+@@ -1,11 +1,6 @@
  // index.d.ts
  /**
- * @description @TODO
-- */
+  * @description @TODO
+  */
 -declare function export_default<T extends object>(
 -  object: T,
 -  initializationObject: {
 -    [x in keyof T]: () => Promise<T[x]>
 -  },
 -): Promise<void>
-+*/declare function export_default<T extends object>(object: T, initializationObject: { [x in keyof T]: () => Promise<T[x]> }): Promise<void>
++declare function export_default<T extends object>(object: T, initializationObject: { [x in keyof T]: () => Promise<T[x]> }): Promise<void>
  export { export_default as default }

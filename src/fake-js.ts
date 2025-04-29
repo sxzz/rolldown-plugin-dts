@@ -119,8 +119,7 @@ export function createFakeJsPlugin({
         const prepend = (stmt: t.Statement) => prependStmts.push(stmt)
 
         for (const [i, stmt] of program.body.entries()) {
-          const setStmt = (node: t.Node) =>
-            (program.body[i] = inheritNode(stmt, node) as any)
+          const setStmt = (node: t.Node) => (program.body[i] = node as any)
           if (rewriteImportExport(stmt, setStmt)) continue
 
           const sideEffect =
@@ -134,8 +133,7 @@ export function createFakeJsPlugin({
 
           const decl: t.Node = isDecl ? stmt.declaration! : stmt
           const setDecl = isDecl
-            ? (node: t.Node) =>
-                (stmt.declaration = inheritNode(stmt.declaration!, node) as any)
+            ? (node: t.Node) => (stmt.declaration = node as any)
             : setStmt
 
           if (
@@ -187,7 +185,18 @@ export function createFakeJsPlugin({
           ]
           const runtime: t.ArrayExpression = t.arrayExpression(elements)
 
-          const symbolId = registerSymbol({ decl, deps, binding })
+          if (decl !== stmt) {
+            decl.innerComments = stmt.innerComments
+            decl.leadingComments = stmt.leadingComments
+            decl.trailingComments = stmt.trailingComments
+            // console.log(decl)
+          }
+
+          const symbolId = registerSymbol({
+            decl,
+            deps,
+            binding,
+          })
           elements[0] = t.numericLiteral(symbolId)
 
           // var ${binding} = [${symbolId}, () => ${dep}, ..., sideEffect()]
@@ -239,30 +248,6 @@ export function createFakeJsPlugin({
       })
       const { program } = file
 
-      // recover comments
-      if (program.body.length) {
-        const comments = new Set<t.Comment>()
-        const commentsValue = new Set<string>() // deduplicate
-
-        for (const id of chunk.moduleIds) {
-          const preserveComments = commentsMap.get(id)
-          if (preserveComments) {
-            preserveComments.forEach((c) => {
-              const id = c.type + c.value
-              if (commentsValue.has(id)) return
-
-              commentsValue.add(id)
-              comments.add(c)
-            })
-            commentsMap.delete(id)
-          }
-        }
-        if (comments.size) {
-          program.body[0].leadingComments ||= []
-          program.body[0].leadingComments.push(...comments)
-        }
-      }
-
       program.body = patchTsNamespace(program.body)
 
       program.body = program.body
@@ -310,12 +295,34 @@ export function createFakeJsPlugin({
             }
           }
 
-          return inheritNode(node, original.decl)
+          return inheritNodeComments(node, original.decl)
         })
         .filter((node) => !!node)
 
       if (program.body.length === 0) {
         return 'export { };'
+      }
+
+      // recover comments
+      const comments = new Set<t.Comment>()
+      const commentsValue = new Set<string>() // deduplicate
+
+      for (const id of chunk.moduleIds) {
+        const preserveComments = commentsMap.get(id)
+        if (preserveComments) {
+          preserveComments.forEach((c) => {
+            const id = c.type + c.value
+            if (commentsValue.has(id)) return
+
+            commentsValue.add(id)
+            comments.add(c)
+          })
+          commentsMap.delete(id)
+        }
+      }
+      if (comments.size) {
+        program.body[0].leadingComments ||= []
+        program.body[0].leadingComments.unshift(...comments)
       }
 
       const result = generate(file, {
@@ -343,9 +350,15 @@ export function createFakeJsPlugin({
   }
 }
 
+// function debug(node: t.Node) {
+//   console.info('----')
+//   console.info(generate(node).code)
+//   console.info('----')
+// }
+
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
-function collectReferenceDirectives(comment: t.Comment[]) {
-  return comment.filter((c) => REFERENCE_RE.test(c.value))
+function collectReferenceDirectives(comment: t.Comment[], negative = false) {
+  return comment.filter((c) => REFERENCE_RE.test(c.value) !== negative)
 }
 
 function collectDependencies(
@@ -655,22 +668,40 @@ function importNamespace(
   return dep
 }
 
-function inheritNode<T extends t.Node>(oldValue: t.Node, newValue: T): T {
-  return {
-    ...newValue,
-    leadingComments: oldValue.leadingComments,
-    innerComments: oldValue.innerComments,
-    trailingComments: oldValue.trailingComments,
-  }
-}
-
 function overwriteNode<T>(node: t.Node, newNode: T): T {
-  const preserve = ['leadingComments', 'innerComments', 'trailingComments']
   // clear object keys
   for (const key of Object.keys(node)) {
-    if (preserve.includes(key)) continue
     delete (node as any)[key]
   }
-  Object.assign(node, newNode, { ...node })
+  Object.assign(node, newNode)
   return node as T
+}
+
+function inheritNodeComments<T extends t.Node>(oldNode: t.Node, newNode: T): T {
+  newNode.leadingComments ||= []
+  newNode.trailingComments ||= []
+
+  const leadingComments = filterHashtag(oldNode.leadingComments)
+  if (leadingComments) {
+    newNode.leadingComments.unshift(...leadingComments)
+  }
+  const trailingComments = filterHashtag(oldNode.trailingComments)
+  if (trailingComments) {
+    newNode.trailingComments.unshift(...trailingComments)
+  }
+
+  newNode.leadingComments = collectReferenceDirectives(
+    newNode.leadingComments,
+    true,
+  )
+  newNode.trailingComments = collectReferenceDirectives(
+    newNode.trailingComments || [],
+    true,
+  )
+
+  return newNode
+
+  function filterHashtag(comments: t.Comment[] | undefined | null) {
+    return comments?.filter((comment) => comment.value.startsWith('#'))
+  }
 }

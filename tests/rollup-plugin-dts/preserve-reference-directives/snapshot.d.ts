@@ -1,6 +1,6 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/preserve-reference-directives/a.d.ts
 /// <reference types="react" />
+//#region tests/rollup-plugin-dts/preserve-reference-directives/a.d.ts
 declare type JSXElements$1 = keyof JSX.IntrinsicElements;
 declare const a: JSXElements$1[];
 

@@ -1,7 +1,7 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/reference-path-remapping/sub/api2.d.ts
 /// <reference path="./ns-api2.d.ts" />
 /// <reference path="./ns-api.d.ts" />
+//#region tests/rollup-plugin-dts/reference-path-remapping/sub/api2.d.ts
 
 declare class C2 {
   public X: x2.I2;

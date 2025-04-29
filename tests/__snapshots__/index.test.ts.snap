@@ -111,25 +111,25 @@ exports[`jsdoc 1`] = `
 "// jsdoc.d.ts
 //#region tests/fixtures/jsdoc.d.ts
 /**
-* named export
-*/declare function fn(): number;
-
+ * named export
+ */
+declare function fn(): number;
 /**
-* options
-*/
+ * options
+ */
 interface Options {
   /**
    * interface member
    */
   foo: string;
-} /**
-  * type alias
-  */
-
-type Foo = string; /**
-                   * default export
-                   */
-
+}
+/**
+ * type alias
+ */
+type Foo = string;
+/**
+ * default export
+ */
 declare const _default: number; //#endregion
 export { Foo, Options, _default as default, fn };
 // jsdoc.js
