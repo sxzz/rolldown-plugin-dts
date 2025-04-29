@@ -1,11 +1,11 @@
 // index.d.ts
-import * as _0 from "typescript";
-import * as _1 from "rollup";
+import * as typescript0 from "typescript";
+import * as rollup1 from "rollup";
 
 //#region tests/rollup-plugin-dts/inline-import-typeof-members/index.d.ts
-type TypeScript = typeof _0;
+type TypeScript = typeof typescript0;
 interface Test {
-  rollup: _1.RollupOptions;
+  rollup: rollup1.RollupOptions;
 }
 
 //#endregion

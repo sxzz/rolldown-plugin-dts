@@ -7,11 +7,11 @@ Index: diff.patch
 -import * as rollup from 'rollup'
 -import * as typescript from 'typescript'
 -type TypeScript = typeof typescript
-+import * as _0 from 'typescript'
-+import * as _1 from 'rollup'
-+type TypeScript = typeof _0
++import * as typescript0 from 'typescript'
++import * as rollup1 from 'rollup'
++type TypeScript = typeof typescript0
  interface Test {
 -  rollup: rollup.RollupOptions
-+  rollup: _1.RollupOptions
++  rollup: rollup1.RollupOptions
  }
  export { Test, TypeScript }
