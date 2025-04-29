@@ -624,8 +624,9 @@ function importNamespace(
   getIdentifierIndex: () => number,
   prepend: (node: t.Statement) => void,
 ): Dep {
+  const sourceText = source.value.replaceAll(/\W/g, '_')
   let local: t.Identifier | t.TSQualifiedName = t.identifier(
-    `_${getIdentifierIndex()}`,
+    `${sourceText}${getIdentifierIndex()}`,
   )
 
   // prepend: import * as ${local} from ${source}
