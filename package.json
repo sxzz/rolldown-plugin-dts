@@ -1,7 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "version": "0.9.7",
-  "packageManager": "pnpm@10.9.0",
+  "packageManager": "pnpm@10.10.0",
   "description": "A Rolldown plugin to bundle dts files",
   "type": "module",
   "license": "MIT",
@@ -49,23 +49,23 @@
     }
   },
   "dependencies": {
-    "@babel/generator": "^7.27.0",
-    "@babel/parser": "^7.27.0",
-    "@babel/types": "^7.27.0",
+    "@babel/generator": "^7.27.1",
+    "@babel/parser": "^7.27.1",
+    "@babel/types": "^7.27.1",
     "ast-kit": "^1.4.3",
     "debug": "^4.4.0",
     "dts-resolver": "^1.0.1",
     "get-tsconfig": "^4.10.0",
-    "oxc-transform": "^0.66.0"
+    "oxc-transform": "^0.67.0"
   },
   "devDependencies": {
-    "@sxzz/eslint-config": "^6.1.2",
+    "@sxzz/eslint-config": "^6.2.0",
     "@sxzz/prettier-config": "^2.2.1",
-    "@sxzz/test-utils": "^0.5.5",
+    "@sxzz/test-utils": "^0.5.6",
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/diff": "^7.0.2",
-    "@types/node": "^22.15.2",
+    "@types/node": "^22.15.3",
     "bumpp": "^10.1.0",
     "diff": "^7.0.0",
     "eslint": "^9.25.1",
@@ -74,8 +74,8 @@
     "rolldown": "1.0.0-beta.8-commit.6aca0ce",
     "rollup-plugin-dts": "^6.2.1",
     "tinyglobby": "^0.2.13",
-    "tsdown": "^0.9.8",
-    "tsx": "^4.19.3",
+    "tsdown": "^0.10.2",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2"
   },
@@ -83,6 +83,7 @@
     "node": ">=20.18.0"
   },
   "resolutions": {
+    "rolldown": "1.0.0-beta.8-commit.6aca0ce",
     "rolldown-plugin-dts": "workspace:*"
   },
   "prettier": "@sxzz/prettier-config"
