@@ -146,7 +146,7 @@ export function createGeneratePlugin({
           dtsCode = result.code
           if (result.map) {
             map = result.map
-            // map.sourcesContent = undefined
+            map.sourcesContent = undefined
           }
         } else {
           const module = createOrGetTsModule(
@@ -164,12 +164,8 @@ export function createGeneratePlugin({
           map = result.map
         }
 
-        if (!dtsCode) {
-          return this.error(new Error(`Failed to generate dts for ${id}`))
-        }
-
         return {
-          code: dtsCode,
+          code: dtsCode || '',
           moduleSideEffects: false,
           map,
         }
