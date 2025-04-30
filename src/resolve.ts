@@ -3,6 +3,7 @@ import {
   filename_js_to_dts,
   filename_ts_to_dts,
   isRelative,
+  RE_CSS,
   RE_DTS,
   RE_JS,
   RE_NODE_MODULES,
@@ -54,6 +55,14 @@ export function createDtsResolvePlugin({
           return
         }
 
+        if (RE_CSS.test(id)) {
+          return {
+            id,
+            external: true,
+            moduleSideEffects: false,
+          }
+        }
+
         if (RE_NODE_MODULES.test(importer)) {
           const resolution = resolver(id, importer)
           if (resolution) return { id: resolution, meta }
@@ -69,8 +78,17 @@ export function createDtsResolvePlugin({
           resolution = await this.resolve(`${id}.d`, importer, options)
         }
 
-        if (resolution?.id.startsWith('\0')) {
-          return { ...resolution, meta }
+        if (resolution?.id) {
+          if (RE_CSS.test(resolution.id)) {
+            return {
+              id,
+              external: true,
+              moduleSideEffects: false,
+            }
+          }
+          if (resolution.id.startsWith('\0')) {
+            return { ...resolution, meta }
+          }
         }
 
         // resolve dependency [post]
