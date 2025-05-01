@@ -3,12 +3,7 @@ import { parse } from '@babel/parser'
 import * as t from '@babel/types'
 import { isDeclarationType, isTypeOf } from 'ast-kit'
 import { walk } from 'estree-walker'
-import {
-  filename_dts_to,
-  filename_js_to_dts,
-  RE_DTS,
-  RE_DTS_MAP,
-} from './utils/filename'
+import { filename_dts_to, RE_DTS, RE_DTS_MAP, RE_JS } from './utils/filename'
 import type { OptionsResolved } from '.'
 import type { Plugin } from 'rolldown'
 
@@ -93,7 +88,7 @@ export function createFakeJsPlugin({
               : options.chunkFileNames) || '[name]-[hash].js'
 
           if (!original.includes('.d') && chunk.name.endsWith('.d')) {
-            return filename_js_to_dts(original)
+            return original.replace(RE_JS, '.$1ts')
           }
           return original
         },
