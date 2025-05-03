@@ -65,13 +65,6 @@ export interface Options {
 
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]
-
-  /**
-   * When `true`, the plugin will resolve `paths` in `tsconfig.json`.
-   *
-   * This option is enabled when `paths` is set in `compilerOptions`.
-   */
-  resolvePaths?: boolean
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
@@ -110,7 +103,6 @@ export function resolveOptions({
   dtsInput = false,
   emitDtsOnly = false,
   resolve = false,
-  resolvePaths,
 }: Options): OptionsResolved {
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
@@ -154,6 +146,5 @@ export function resolveOptions({
     dtsInput,
     emitDtsOnly,
     resolve,
-    resolvePaths: resolvePaths ?? !!compilerOptions?.paths,
   }
 }

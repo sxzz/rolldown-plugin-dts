@@ -69,6 +69,7 @@ test('resolve dependencies', async () => {
     ],
   )
   expect(snapshot).contain('interface TransformOptions')
+  expect(snapshot).not.contain('node_modules/rolldown')
 })
 
 test('resolve dts', async () => {
@@ -124,21 +125,13 @@ test('isolated declaration error', async () => {
 
 test('paths', async () => {
   const root = path.resolve(dirname, 'fixtures/paths')
-  const { snapshot } = await rolldownBuild(
-    path.resolve(root, 'index.ts'),
-    [
-      dts({
-        isolatedDeclarations: true,
-        emitDtsOnly: true,
-        resolvePaths: true,
-      }),
-    ],
-    {
-      resolve: {
-        tsconfigFilename: path.resolve(root, 'tsconfig.json'),
-      },
-    },
-  )
+  const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+    dts({
+      isolatedDeclarations: true,
+      emitDtsOnly: true,
+      tsconfig: path.resolve(root, 'tsconfig.json'),
+    }),
+  ])
   expect(snapshot).toMatchSnapshot()
 })
 
