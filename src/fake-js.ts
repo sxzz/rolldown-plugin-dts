@@ -58,23 +58,6 @@ export function createFakeJsPlugin({
   return {
     name: 'rolldown-plugin-dts:fake-js',
 
-    options: dtsInput
-      ? (options) => {
-          return {
-            ...options,
-            resolve: {
-              extensions: ['.d.ts', '.d.mts', '.d.cts'],
-              extensionAlias: {
-                '.js': ['.d.ts'],
-                '.mjs': ['.d.mts'],
-                '.cjs': ['.d.cts'],
-              },
-              ...options.resolve,
-            },
-          }
-        }
-      : undefined,
-
     outputOptions(options) {
       if (options.format === 'cjs' || options.format === 'commonjs') {
         throw new Error(

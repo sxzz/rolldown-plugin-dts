@@ -75,10 +75,7 @@ export function createDtsResolvePlugin({
         }
 
         if (RE_DTS.test(resolution)) {
-          return {
-            id: resolution,
-            moduleSideEffects: false,
-          }
+          return resolution
         }
       },
     },

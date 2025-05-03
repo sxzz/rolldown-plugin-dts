@@ -6,7 +6,7 @@ import { createPatch } from 'diff'
 import { dts as rollupDts } from 'rollup-plugin-dts'
 import { glob } from 'tinyglobby'
 import { expect } from 'vitest'
-import { createFakeJsPlugin } from '../src'
+import { dts } from '../src'
 
 const isUpdateEnabled =
   process.env.npm_lifecycle_script?.includes('-u') ||
@@ -26,7 +26,13 @@ await testFixtures(
     let [rolldownSnapshot, rollupSnapshot] = await Promise.all([
       rolldownBuild(
         entries,
-        [createFakeJsPlugin({ dtsInput: true, sourcemap: false })],
+        [
+          dts({
+            tsconfig: false,
+            dtsInput: true,
+            sourcemap: false,
+          }),
+        ],
         {
           treeshake: true,
           external: ['typescript'],
