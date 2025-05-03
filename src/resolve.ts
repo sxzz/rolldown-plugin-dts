@@ -9,8 +9,6 @@ import {
 import type { OptionsResolved } from '.'
 import type { Plugin } from 'rolldown'
 
-export const meta = { dtsFile: true } as const
-
 export function createDtsResolvePlugin({
   tsconfig,
   resolve,
@@ -28,11 +26,7 @@ export function createDtsResolvePlugin({
       async handler(id, importer, options) {
         const external = { id, external: true, moduleSideEffects: false }
         // only resolve in dts file
-        if (
-          !importer ||
-          (!RE_DTS.test(importer) &&
-            !this.getModuleInfo(importer)?.meta.dtsFile)
-        ) {
+        if (!importer || !RE_DTS.test(importer)) {
           return
         }
 
@@ -83,7 +77,6 @@ export function createDtsResolvePlugin({
         if (RE_DTS.test(resolution)) {
           return {
             id: resolution,
-            meta,
             moduleSideEffects: false,
           }
         }
