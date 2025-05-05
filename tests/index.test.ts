@@ -38,10 +38,10 @@ test('typescript compiler', async () => {
       {
         name: 'virtual-module',
         resolveId(id) {
-          if (id === '/vfs') return '/vfs.js'
+          if (id === '/vfs') return '/vfs.ts'
         },
         load(id) {
-          if (id === '/vfs.js') return `export const vfs = Math.random()`
+          if (id === '/vfs.ts') return `export const vfs = Math.random()`
         },
       },
       dts({

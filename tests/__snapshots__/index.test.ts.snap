@@ -203,13 +203,15 @@ export { createComponent };"
 
 exports[`typescript compiler 1`] = `
 "// entry1.d.ts
-import { vfs } from "/vfs.js";
-
 
 declare const str = "foo";
 declare const num = 42;
 declare const bool = true;
 declare function fn(arg: typeof str): "foo" | 1;
+
+//#endregion
+
+declare const vfs: number;
 
 //#endregion
 export { bool, fn, num, str, vfs };

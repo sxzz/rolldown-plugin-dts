@@ -24,6 +24,7 @@ export function createDtsResolvePlugin({
     resolveId: {
       order: 'pre',
       async handler(id, importer, options) {
+        const external = { id, external: true, moduleSideEffects: false }
         // only resolve in dts file
         if (!importer || !RE_DTS.test(importer)) {
           return
@@ -41,11 +42,7 @@ export function createDtsResolvePlugin({
         if (!resolution || !RE_TS.test(resolution)) {
           const result = await this.resolve(id, importer, options)
           if (!result || !RE_TS.test(result.id)) {
-            return {
-              id: result?.id || id,
-              external: true,
-              moduleSideEffects: false,
-            }
+            return external
           }
           resolution = result.id
         }
@@ -63,8 +60,7 @@ export function createDtsResolvePlugin({
             )
           }
 
-          if (!shouldResolve)
-            return { id, external: true, moduleSideEffects: false }
+          if (!shouldResolve) return external
         }
 
         if (RE_TS.test(resolution) && !RE_DTS.test(resolution)) {
