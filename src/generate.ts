@@ -1,5 +1,5 @@
 import Debug from 'debug'
-import { isolatedDeclaration as oxcIsolatedDeclaration } from 'oxc-transform'
+import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
 import {
   filename_ts_to_dts,
   RE_DTS,

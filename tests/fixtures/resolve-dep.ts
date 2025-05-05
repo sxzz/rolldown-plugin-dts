@@ -1,2 +1,2 @@
-export { TransformOptions } from 'oxc-transform'
+export { TsConfigResult } from 'get-tsconfig'
 export { build } from 'rolldown'

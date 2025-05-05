@@ -6,8 +6,8 @@ import { createDtsInputPlugin } from './dts-input'
 import { createFakeJsPlugin } from './fake-js'
 import { createGeneratePlugin } from './generate'
 import { createDtsResolvePlugin } from './resolve'
-import type { IsolatedDeclarationsOptions } from 'oxc-transform'
 import type { Plugin } from 'rolldown'
+import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = Debug('rolldown-plugin-dts:options')
 
@@ -49,7 +49,7 @@ export interface Options {
   compilerOptions?: TsConfigJson.CompilerOptions
 
   /**
-   * When `true`, the plugin will generate `.d.ts` files using `oxc-transform`,
+   * When `true`, the plugin will generate `.d.ts` files using Oxc,
    * which is blazingly faster than `typescript` compiler.
    *
    * This option is enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.

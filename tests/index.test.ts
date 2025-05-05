@@ -62,13 +62,13 @@ test('resolve dependencies', async () => {
     path.resolve(dirname, 'fixtures/resolve-dep.ts'),
     [
       dts({
-        resolve: ['oxc-transform'],
+        resolve: ['get-tsconfig'],
         isolatedDeclarations: true,
         emitDtsOnly: true,
       }),
     ],
   )
-  expect(snapshot).contain('interface TransformOptions')
+  expect(snapshot).contain('type TsConfigResult')
   expect(snapshot).not.contain('node_modules/rolldown')
 })
 

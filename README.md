@@ -6,6 +6,8 @@ A Rolldown plugin to generate and bundle dts files.
 
 ## Install
 
+⚠️ Requires `rolldown@1.0.0-beta.8-commit.534fde3` (which is canary) or later.
+
 ```bash
 npm i rolldown-plugin-dts
 ```
@@ -68,7 +70,7 @@ interface Options {
   compilerOptions?: TsConfigJson.CompilerOptions
 
   /**
-   * When `true`, the plugin will generate `.d.ts` files using `oxc-transform`,
+   * When `true`, the plugin will generate `.d.ts` files using Oxc,
    * which is blazingly faster than `typescript` compiler.
    *
    * This option is enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
