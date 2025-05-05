@@ -1,9 +1,9 @@
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { expectFilesSnapshot } from '@sxzz/test-utils'
+import { expectFilesSnapshot, rolldownBuild } from '@sxzz/test-utils'
 import { build } from 'rolldown'
-import { beforeAll, test } from 'vitest'
+import { beforeAll, expect, test } from 'vitest'
 import { dts } from '../src'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -45,4 +45,20 @@ test('tsc', async () => {
     write: true,
   })
   await expectFilesSnapshot(dir, '__snapshots__/source-map-tsc.md')
+})
+
+test('disable dts source map only', async () => {
+  const { chunks } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/basic.ts'),
+    [dts({ sourcemap: false })],
+    {},
+    { sourcemap: true },
+  )
+  expect(chunks.map((chunk) => chunk.fileName)).toMatchInlineSnapshot(`
+    [
+      "basic.d.ts",
+      "basic.js",
+      "basic.js.map",
+    ]
+  `)
 })

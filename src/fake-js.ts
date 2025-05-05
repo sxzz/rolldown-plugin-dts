@@ -319,6 +319,7 @@ export function createFakeJsPlugin({
 
       return result
     },
+
     generateBundle(options, bundle) {
       for (const chunk of Object.values(bundle)) {
         if (
@@ -328,9 +329,13 @@ export function createFakeJsPlugin({
         )
           continue
 
-        const maps = JSON.parse(chunk.source)
-        maps.sourcesContent = null
-        chunk.source = JSON.stringify(maps)
+        if (sourcemap) {
+          const maps = JSON.parse(chunk.source)
+          maps.sourcesContent = null
+          chunk.source = JSON.stringify(maps)
+        } else {
+          delete bundle[chunk.fileName]
+        }
       }
     },
   }
