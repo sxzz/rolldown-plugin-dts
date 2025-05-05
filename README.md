@@ -27,7 +27,7 @@ export default {
 }
 ```
 
-You can find a real demo in [here](./rolldown.config.ts).
+You can find an example in [here](./rolldown.config.ts).
 
 ## Options
 
