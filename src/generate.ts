@@ -87,6 +87,7 @@ export function createGeneratePlugin({
 
     resolveId(id) {
       if (dtsMap.has(id)) {
+        debug('resolve dts id %s', id)
         return { id }
       }
     },
@@ -104,6 +105,7 @@ export function createGeneratePlugin({
         const isEntry = !!mod?.isEntry
         const dtsId = filename_ts_to_dts(id)
         dtsMap.set(dtsId, { code, id, isEntry })
+        debug('register dts source: %s', id)
 
         if (isEntry) {
           const name = inputAliasMap.get(id)
@@ -133,6 +135,7 @@ export function createGeneratePlugin({
         const { code, id, isEntry } = dtsMap.get(dtsId)!
         let dtsCode: string | undefined
         let map: any
+        debug('generate dts %s from %s', dtsId, id)
 
         if (isolatedDeclarations) {
           const result = oxcIsolatedDeclaration(id, code, isolatedDeclarations)

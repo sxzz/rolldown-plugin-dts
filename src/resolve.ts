@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { createResolver } from 'dts-resolver'
 import {
   filename_ts_to_dts,
@@ -39,6 +40,7 @@ export function createDtsResolvePlugin({
         }
 
         let resolution = resolver(id, importer)
+        resolution &&= path.normalize(resolution)
         if (!resolution || !RE_TS.test(resolution)) {
           const result = await this.resolve(id, importer, options)
           if (!result || !RE_TS.test(result.id)) {
