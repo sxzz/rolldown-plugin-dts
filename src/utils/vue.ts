@@ -1,7 +1,7 @@
 import { proxyCreateProgram } from '@volar/typescript'
 import * as vue from '@vue/language-core'
 import Debug from 'debug'
-import { ts } from './tsc'
+import { ts } from './tsc.ts'
 import type Ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:vue')

@@ -2,7 +2,7 @@ import { createRequire } from 'node:module'
 import Debug from 'debug'
 import type { DtsMap } from '../generate.ts'
 import { RE_NODE_MODULES, RE_VUE } from './filename.ts'
-import { createVueProgramFactory } from './vue'
+import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type Ts from 'typescript'
 
