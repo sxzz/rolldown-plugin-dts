@@ -10,4 +10,5 @@ declare global {
 
 <template>
   <div>Vue SFC</div>
+  <slot />
 </template>
