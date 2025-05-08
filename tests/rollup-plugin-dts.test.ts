@@ -6,7 +6,7 @@ import { createPatch } from 'diff'
 import { dts as rollupDts } from 'rollup-plugin-dts'
 import { glob } from 'tinyglobby'
 import { expect } from 'vitest'
-import { dts } from '../src'
+import { dts } from '../src/index.ts'
 
 const isUpdateEnabled =
   process.env.npm_lifecycle_script?.includes('-u') ||

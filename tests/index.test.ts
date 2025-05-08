@@ -2,7 +2,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { expect, test } from 'vitest'
-import { dts } from '../src'
+import { dts } from '../src/index.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 

@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import Debug from 'debug'
-import type { DtsMap } from '../generate'
-import { RE_NODE_MODULES } from './filename'
+import type { DtsMap } from '../generate.ts'
+import { RE_NODE_MODULES } from './filename.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type Ts from 'typescript'
 

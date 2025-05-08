@@ -7,9 +7,9 @@ import {
   RE_JS,
   RE_NODE_MODULES,
   RE_TS,
-} from './utils/filename'
-import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc'
-import type { OptionsResolved } from '.'
+} from './utils/filename.ts'
+import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc.ts'
+import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
 import type * as Ts from 'typescript'
 

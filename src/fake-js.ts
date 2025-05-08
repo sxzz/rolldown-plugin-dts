@@ -8,12 +8,12 @@ import {
   filename_js_to_dts,
   RE_DTS,
   RE_DTS_MAP,
-} from './utils/filename'
-import type { OptionsResolved } from '.'
+} from './utils/filename.ts'
+import type { OptionsResolved } from './index.ts'
 import type { Plugin, RenderedChunk } from 'rolldown'
 
-// @ts-expect-error interop default
-const generate: typeof _generate = (_generate.default as undefined) || _generate
+const generate: typeof _generate.default =
+  (_generate.default as any) || _generate
 
 // input:
 // export declare function x(xx: X): void

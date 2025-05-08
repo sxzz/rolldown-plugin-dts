@@ -6,8 +6,8 @@ import {
   RE_DTS,
   RE_NODE_MODULES,
   RE_TS,
-} from './utils/filename'
-import type { OptionsResolved } from '.'
+} from './utils/filename.ts'
+import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
 
 export function createDtsResolvePlugin({

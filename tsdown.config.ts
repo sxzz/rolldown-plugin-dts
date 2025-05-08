@@ -1,5 +1,5 @@
 import { defineConfig } from 'tsdown'
-import { dts } from './src/index'
+import { dts } from './src/index.ts'
 
 export default defineConfig({
   entry: ['./src/index.ts'],

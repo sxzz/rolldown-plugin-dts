@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { expectFilesSnapshot, rolldownBuild } from '@sxzz/test-utils'
 import { build } from 'rolldown'
 import { beforeAll, expect, test } from 'vitest'
-import { dts } from '../src'
+import { dts } from '../src/index.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const tempDir = path.join(dirname, 'temp')
