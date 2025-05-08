@@ -226,25 +226,18 @@ export { Unused };"
 
 exports[`vue-sfc w/ ts-compiler 1`] = `
 "// main.d.ts
+import * as vue1 from "vue";
+
 //#region tests/fixtures/vue-sfc/App.vue.d.ts
+type __VLS_Props = {
+  foo: string;
+};
 declare global {
   interface Window {
     foo: string;
   }
 }
-declare const __VLS_ctx: InstanceType<__VLS_PickNotAny<typeof __VLS_self, new () => {}>>;
-declare var __VLS_1: {};
-type __VLS_Slots = __VLS_PrettifyGlobal<__VLS_OmitStringIndex<typeof __VLS_ctx.$slots> & {
-  default?: (props: typeof __VLS_1) => any;
-}>;
-declare const __VLS_self: any;
-declare const __VLS_component: any;
-declare const _default: __VLS_WithSlots<typeof __VLS_component, __VLS_Slots>;
-type __VLS_WithSlots<T, S> = T & {
-  new (): {
-    $slots: S;
-  };
-};
+declare const _default: vue1.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue1.ComponentOptionsMixin, vue1.ComponentOptionsMixin, {}, string, vue1.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue1.ComponentProvideOptions, false, {}, any>;
 
 //#endregion
 export { _default as App };"

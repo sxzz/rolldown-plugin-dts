@@ -36,7 +36,6 @@ const defaultCompilerOptions: Ts.CompilerOptions = {
   checkJs: false,
   declarationMap: false,
   skipLibCheck: true,
-  preserveSymlinks: true,
   target: 99 satisfies Ts.ScriptTarget.ESNext,
   resolveJsonModule: true,
 }
