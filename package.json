@@ -54,7 +54,7 @@
     "@babel/types": "^7.27.1",
     "ast-kit": "^1.4.3",
     "debug": "^4.4.0",
-    "dts-resolver": "^1.1.1",
+    "dts-resolver": "^1.1.2",
     "get-tsconfig": "^4.10.0"
   },
   "devDependencies": {
@@ -64,7 +64,7 @@
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/diff": "^7.0.2",
-    "@types/node": "^22.15.16",
+    "@types/node": "^22.15.17",
     "bumpp": "^10.1.0",
     "diff": "^7.0.0",
     "eslint": "^9.26.0",
