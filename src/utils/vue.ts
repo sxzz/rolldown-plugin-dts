@@ -12,7 +12,7 @@ let createVueProgram: typeof Ts.createProgram
 export function createVueProgramFactory(): typeof Ts.createProgram {
   if (createVueProgram) return createVueProgram
 
-  debug('create vue program')
+  debug('loading vue language tools')
   return (createVueProgram = proxyCreateProgram(
     ts,
     ts.createProgram,
