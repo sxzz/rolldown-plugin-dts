@@ -10,6 +10,7 @@ import {
   RE_VUE,
 } from './utils/filename.ts'
 import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc.ts'
+import { createVueProgramFactory } from './utils/vue.ts'
 import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
 import type * as Ts from 'typescript'
@@ -51,6 +52,9 @@ export function createGeneratePlugin({
 
   if (vue || !isolatedDeclarations) {
     initTs()
+    if (vue) {
+      createVueProgramFactory()
+    }
   }
 
   return {
@@ -139,7 +143,7 @@ export function createGeneratePlugin({
         let map: any
         debug('generate dts %s from %s', dtsId, id)
 
-        if (!vue && isolatedDeclarations) {
+        if (isolatedDeclarations && !RE_VUE.test(id)) {
           const result = oxcIsolatedDeclaration(id, code, isolatedDeclarations)
           if (result.errors.length) {
             const [error] = result.errors
