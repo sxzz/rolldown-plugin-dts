@@ -103,101 +103,6 @@ export function createFakeJsPlugin({
     },
   }
 
-  function renderChunk(code: string, chunk: RenderedChunk) {
-    if (!RE_DTS.test(chunk.fileName)) {
-      return
-    }
-
-    const file = parse(code, {
-      sourceType: 'module',
-    })
-    const { program } = file
-
-    program.body = patchTsNamespace(program.body)
-
-    program.body = program.body
-      .map((node) => {
-        if (patchImportSource(node)) return node
-
-        if (
-          node.type !== 'VariableDeclaration' ||
-          node.declarations.length !== 1
-        )
-          return node
-
-        const [decl] = node.declarations
-        if (decl.init?.type !== 'ArrayExpression' || !decl.init.elements[0]) {
-          return null
-        }
-
-        const [symbolIdNode, ...depsFns] = decl.init.elements as t.Expression[]
-        if (symbolIdNode?.type !== 'NumericLiteral') {
-          return null
-        }
-
-        const symbolId = symbolIdNode.value
-        const original = getSymbol(symbolId)
-
-        const transformedBinding = {
-          ...decl.id,
-          typeAnnotation: original.binding.typeAnnotation,
-        }
-        overwriteNode(original.binding, transformedBinding)
-
-        const transformedDeps = depsFns
-          .filter((node) => node?.type === 'ArrowFunctionExpression')
-          .map((node) => node.body)
-
-        if (original.deps.length) {
-          for (let i = 0; i < original.deps.length; i++) {
-            const originalDep = original.deps[i]
-            if (originalDep.replace) {
-              originalDep.replace(transformedDeps[i])
-            } else {
-              Object.assign(originalDep, transformedDeps[i])
-            }
-          }
-        }
-
-        return inheritNodeComments(node, original.decl)
-      })
-      .filter((node) => !!node)
-
-    if (program.body.length === 0) {
-      return 'export { };'
-    }
-
-    // recover comments
-    const comments = new Set<t.Comment>()
-    const commentsValue = new Set<string>() // deduplicate
-
-    for (const id of chunk.moduleIds) {
-      const preserveComments = commentsMap.get(id)
-      if (preserveComments) {
-        preserveComments.forEach((c) => {
-          const id = c.type + c.value
-          if (commentsValue.has(id)) return
-
-          commentsValue.add(id)
-          comments.add(c)
-        })
-        commentsMap.delete(id)
-      }
-    }
-    if (comments.size) {
-      program.body[0].leadingComments ||= []
-      program.body[0].leadingComments.unshift(...comments)
-    }
-
-    const result = generate(file, {
-      comments: true,
-      sourceMaps: sourcemap,
-      sourceFileName: chunk.fileName,
-    })
-
-    return result
-  }
-
   function transform(code: string, id: string) {
     const file = parse(code, {
       plugins: [['typescript', { dts: true }]],
@@ -330,6 +235,101 @@ export function createFakeJsPlugin({
       sourceMaps: sourcemap,
       sourceFileName: id,
     })
+    return result
+  }
+
+  function renderChunk(code: string, chunk: RenderedChunk) {
+    if (!RE_DTS.test(chunk.fileName)) {
+      return
+    }
+
+    const file = parse(code, {
+      sourceType: 'module',
+    })
+    const { program } = file
+
+    program.body = patchTsNamespace(program.body)
+
+    program.body = program.body
+      .map((node) => {
+        if (patchImportSource(node)) return node
+
+        if (
+          node.type !== 'VariableDeclaration' ||
+          node.declarations.length !== 1
+        )
+          return node
+
+        const [decl] = node.declarations
+        if (decl.init?.type !== 'ArrayExpression' || !decl.init.elements[0]) {
+          return null
+        }
+
+        const [symbolIdNode, ...depsFns] = decl.init.elements as t.Expression[]
+        if (symbolIdNode?.type !== 'NumericLiteral') {
+          return null
+        }
+
+        const symbolId = symbolIdNode.value
+        const original = getSymbol(symbolId)
+
+        const transformedBinding = {
+          ...decl.id,
+          typeAnnotation: original.binding.typeAnnotation,
+        }
+        overwriteNode(original.binding, transformedBinding)
+
+        const transformedDeps = depsFns
+          .filter((node) => node?.type === 'ArrowFunctionExpression')
+          .map((node) => node.body)
+
+        if (original.deps.length) {
+          for (let i = 0; i < original.deps.length; i++) {
+            const originalDep = original.deps[i]
+            if (originalDep.replace) {
+              originalDep.replace(transformedDeps[i])
+            } else {
+              Object.assign(originalDep, transformedDeps[i])
+            }
+          }
+        }
+
+        return inheritNodeComments(node, original.decl)
+      })
+      .filter((node) => !!node)
+
+    if (program.body.length === 0) {
+      return 'export { };'
+    }
+
+    // recover comments
+    const comments = new Set<t.Comment>()
+    const commentsValue = new Set<string>() // deduplicate
+
+    for (const id of chunk.moduleIds) {
+      const preserveComments = commentsMap.get(id)
+      if (preserveComments) {
+        preserveComments.forEach((c) => {
+          const id = c.type + c.value
+          if (commentsValue.has(id)) return
+
+          commentsValue.add(id)
+          comments.add(c)
+        })
+        commentsMap.delete(id)
+      }
+    }
+    if (comments.size) {
+      program.body[0].leadingComments ||= []
+      program.body[0].leadingComments.unshift(...comments)
+    }
+
+    const result = generate(file, {
+      comments: true,
+      sourceMaps: sourcemap,
+      sourceFileName: chunk.fileName,
+    })
+
     return result
   }
 
