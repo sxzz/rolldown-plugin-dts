@@ -65,6 +65,11 @@ export interface Options {
 
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]
+
+  /**
+   * When `true`, the plugin will generate `.d.ts` via `vue-tsc`.
+   */
+  vue?: boolean
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
@@ -103,6 +108,7 @@ export function resolveOptions({
   dtsInput = false,
   emitDtsOnly = false,
   resolve = false,
+  vue = false,
 }: Options): OptionsResolved {
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
@@ -146,5 +152,6 @@ export function resolveOptions({
     dtsInput,
     emitDtsOnly,
     resolve,
+    vue,
   }
 }

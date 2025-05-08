@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import Debug from 'debug'
 import type { DtsMap } from '../generate.ts'
-import { RE_NODE_MODULES, RE_VUE } from './filename.ts'
+import { RE_NODE_MODULES } from './filename.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type Ts from 'typescript'
@@ -52,6 +52,7 @@ export function createOrGetTsModule(
   id: string,
   isEntry: boolean,
   dtsMap: DtsMap,
+  vue?: boolean,
 ): TscModule {
   const program = programs.find((program) => {
     if (isEntry) {
@@ -67,7 +68,7 @@ export function createOrGetTsModule(
   }
 
   debug(`create program for module: ${id}`)
-  const module = createTsProgram(compilerOptions, dtsMap, id)
+  const module = createTsProgram(compilerOptions, dtsMap, id, vue)
   debug(`created program for module: ${id}`)
 
   programs.push(module.program)
@@ -78,6 +79,7 @@ function createTsProgram(
   compilerOptions: TsConfigJson.CompilerOptions | undefined,
   dtsMap: DtsMap,
   id: string,
+  vue?: boolean,
 ): TscModule {
   const overrideCompilerOptions: Ts.CompilerOptions =
     ts.convertCompilerOptionsFromJson(compilerOptions, '.').options
@@ -114,11 +116,9 @@ function createTsProgram(
       id,
     ]),
   ]
-  const createProgram = entries.some((id) => RE_VUE.test(id))
-    ? createVueProgramFactory()
-    : ts.createProgram
+  const createProgram = vue ? createVueProgramFactory() : ts.createProgram
   const program = createProgram({
-    rootNames: Array.from(entries),
+    rootNames: entries,
     options,
     host,
   })

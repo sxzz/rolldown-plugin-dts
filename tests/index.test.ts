@@ -167,11 +167,7 @@ test('vue-sfc w/ ts-compiler', async () => {
   const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
     dts({
       emitDtsOnly: true,
-      compilerOptions: {
-        skipLibCheck: true,
-        isolatedDeclarations: false,
-      },
-      isolatedDeclarations: false,
+      vue: true,
     }),
   ])
   expect(snapshot).toMatchSnapshot()

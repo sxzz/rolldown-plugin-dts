@@ -30,9 +30,10 @@ export function createGeneratePlugin({
   compilerOptions = {},
   isolatedDeclarations,
   emitDtsOnly = false,
+  vue,
 }: Pick<
   OptionsResolved,
-  'compilerOptions' | 'isolatedDeclarations' | 'emitDtsOnly'
+  'compilerOptions' | 'isolatedDeclarations' | 'emitDtsOnly' | 'vue'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -48,7 +49,7 @@ export function createGeneratePlugin({
   const inputAliasMap = new Map<string, string>()
   let programs: Ts.Program[] = []
 
-  if (!isolatedDeclarations) {
+  if (vue || !isolatedDeclarations) {
     initTs()
   }
 
@@ -138,7 +139,7 @@ export function createGeneratePlugin({
         let map: any
         debug('generate dts %s from %s', dtsId, id)
 
-        if (isolatedDeclarations) {
+        if (!vue && isolatedDeclarations) {
           const result = oxcIsolatedDeclaration(id, code, isolatedDeclarations)
           if (result.errors.length) {
             const [error] = result.errors
@@ -159,6 +160,7 @@ export function createGeneratePlugin({
             id,
             isEntry,
             dtsMap,
+            vue,
           )
           const result = tscEmit(module)
           if (result.error) {
