@@ -6,6 +6,7 @@ import {
   RE_DTS,
   RE_NODE_MODULES,
   RE_TS,
+  RE_VUE,
 } from './utils/filename.ts'
 import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
@@ -41,7 +42,10 @@ export function createDtsResolvePlugin({
 
         let resolution = resolver(id, importer)
         resolution &&= path.normalize(resolution)
-        if (!resolution || !RE_TS.test(resolution)) {
+        if (
+          !resolution ||
+          (!RE_TS.test(resolution) && !RE_VUE.test(resolution))
+        ) {
           const result = await this.resolve(id, importer, options)
           if (!result || !RE_TS.test(result.id)) {
             return external
@@ -65,7 +69,10 @@ export function createDtsResolvePlugin({
           if (!shouldResolve) return external
         }
 
-        if (RE_TS.test(resolution) && !RE_DTS.test(resolution)) {
+        if (
+          (RE_TS.test(resolution) && !RE_DTS.test(resolution)) ||
+          RE_VUE.test(resolution)
+        ) {
           await this.load({ id: resolution })
 
           // redirect ts to dts

@@ -124,6 +124,13 @@ export function createFakeJsPlugin({
 
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
+      if (
+        sideEffect &&
+        id.endsWith('.vue.d.ts') &&
+        code.slice(stmt.start!, stmt.end!).includes('__VLS_')
+      ) {
+        continue
+      }
       const isDefaultExport = stmt.type === 'ExportDefaultDeclaration'
       const isDecl =
         isTypeOf(stmt, [

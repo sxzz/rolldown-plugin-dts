@@ -2,12 +2,14 @@ import { createRequire } from 'node:module'
 import Debug from 'debug'
 import type { DtsMap } from '../generate.ts'
 import { RE_NODE_MODULES } from './filename.ts'
+import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type Ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:tsc')
 
-let ts: typeof Ts
+// eslint-disable-next-line import/no-mutable-exports
+export let ts: typeof Ts
 let formatHost: Ts.FormatDiagnosticsHost
 
 export function initTs(): void {
@@ -34,7 +36,6 @@ const defaultCompilerOptions: Ts.CompilerOptions = {
   checkJs: false,
   declarationMap: false,
   skipLibCheck: true,
-  preserveSymlinks: true,
   target: 99 satisfies Ts.ScriptTarget.ESNext,
   resolveJsonModule: true,
 }
@@ -50,6 +51,7 @@ export function createOrGetTsModule(
   id: string,
   isEntry: boolean,
   dtsMap: DtsMap,
+  vue?: boolean,
 ): TscModule {
   const program = programs.find((program) => {
     if (isEntry) {
@@ -65,7 +67,7 @@ export function createOrGetTsModule(
   }
 
   debug(`create program for module: ${id}`)
-  const module = createTsProgram(compilerOptions, dtsMap, id)
+  const module = createTsProgram(compilerOptions, dtsMap, id, vue)
   debug(`created program for module: ${id}`)
 
   programs.push(module.program)
@@ -76,6 +78,7 @@ function createTsProgram(
   compilerOptions: TsConfigJson.CompilerOptions | undefined,
   dtsMap: DtsMap,
   id: string,
+  vue?: boolean,
 ): TscModule {
   const overrideCompilerOptions: Ts.CompilerOptions =
     ts.convertCompilerOptionsFromJson(compilerOptions, '.').options
@@ -104,14 +107,20 @@ function createTsProgram(
     return _readFile(fileName)
   }
 
-  const entries = Array.from(dtsMap.values())
-    .filter((v) => v.isEntry)
-    .map((v) => v.id)
-  const program = ts.createProgram(
-    Array.from(new Set([id, ...entries])),
+  const entries = [
+    ...new Set([
+      ...Array.from(dtsMap.values())
+        .filter((v) => v.isEntry)
+        .map((v) => v.id),
+      id,
+    ]),
+  ]
+  const createProgram = vue ? createVueProgramFactory() : ts.createProgram
+  const program = createProgram({
+    rootNames: entries,
     options,
     host,
-  )
+  })
   const sourceFile = program.getSourceFile(id)
   if (!sourceFile) {
     throw new Error(`Source file not found: ${id}`)

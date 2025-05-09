@@ -223,3 +223,22 @@ interface Unused {
 //#endregion
 export { Unused };"
 `;
+
+exports[`vue-sfc w/ ts-compiler 1`] = `
+"// main.d.ts
+import * as vue1 from "vue";
+
+//#region tests/fixtures/vue-sfc/App.vue.d.ts
+type __VLS_Props = {
+  foo: string;
+};
+declare global {
+  interface Window {
+    foo: string;
+  }
+}
+declare const _default: vue1.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue1.ComponentOptionsMixin, vue1.ComponentOptionsMixin, {}, string, vue1.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue1.ComponentProvideOptions, false, {}, any>;
+
+//#endregion
+export { _default as App };"
+`;

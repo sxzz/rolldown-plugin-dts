@@ -7,8 +7,10 @@ import {
   RE_JS,
   RE_NODE_MODULES,
   RE_TS,
+  RE_VUE,
 } from './utils/filename.ts'
 import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc.ts'
+import { createVueProgramFactory } from './utils/vue.ts'
 import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
 import type * as Ts from 'typescript'
@@ -29,9 +31,10 @@ export function createGeneratePlugin({
   compilerOptions = {},
   isolatedDeclarations,
   emitDtsOnly = false,
+  vue,
 }: Pick<
   OptionsResolved,
-  'compilerOptions' | 'isolatedDeclarations' | 'emitDtsOnly'
+  'compilerOptions' | 'isolatedDeclarations' | 'emitDtsOnly' | 'vue'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -47,8 +50,11 @@ export function createGeneratePlugin({
   const inputAliasMap = new Map<string, string>()
   let programs: Ts.Program[] = []
 
-  if (!isolatedDeclarations) {
+  if (vue || !isolatedDeclarations) {
     initTs()
+    if (vue) {
+      createVueProgramFactory()
+    }
   }
 
   return {
@@ -96,7 +102,7 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_TS],
+          include: [RE_TS, RE_VUE],
           exclude: [RE_DTS, RE_NODE_MODULES],
         },
       },
@@ -137,7 +143,7 @@ export function createGeneratePlugin({
         let map: any
         debug('generate dts %s from %s', dtsId, id)
 
-        if (isolatedDeclarations) {
+        if (isolatedDeclarations && !RE_VUE.test(id)) {
           const result = oxcIsolatedDeclaration(id, code, isolatedDeclarations)
           if (result.errors.length) {
             const [error] = result.errors
@@ -158,6 +164,7 @@ export function createGeneratePlugin({
             id,
             isEntry,
             dtsMap,
+            vue,
           )
           const result = tscEmit(module)
           if (result.error) {
