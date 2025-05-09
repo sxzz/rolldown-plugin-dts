@@ -42,13 +42,13 @@
   "peerDependencies": {
     "rolldown": "^1.0.0-beta.8-commit.534fde3",
     "typescript": "^5.0.0",
-    "vue": "^3.0.0"
+    "vue-tsc": "~2.2.0"
   },
   "peerDependenciesMeta": {
     "typescript": {
       "optional": true
     },
-    "vue": {
+    "vue-tsc": {
       "optional": true
     }
   },
@@ -56,8 +56,6 @@
     "@babel/generator": "^7.27.1",
     "@babel/parser": "^7.27.2",
     "@babel/types": "^7.27.1",
-    "@volar/typescript": "^2.4.12",
-    "@vue/language-core": "^2.2.8",
     "ast-kit": "^2.0.0",
     "debug": "^4.4.0",
     "dts-resolver": "^1.1.2",
@@ -71,6 +69,8 @@
     "@types/debug": "^4.1.12",
     "@types/diff": "^7.0.2",
     "@types/node": "^22.15.17",
+    "@volar/typescript": "^2.4.13",
+    "@vue/language-core": "^2.2.10",
     "bumpp": "^10.1.0",
     "diff": "^7.0.0",
     "eslint": "^9.26.0",
@@ -83,7 +83,8 @@
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vitest": "^3.1.3",
-    "vue": "^3.5.13"
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.10"
   },
   "engines": {
     "node": ">=20.18.0"
