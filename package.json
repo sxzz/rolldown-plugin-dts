@@ -52,7 +52,7 @@
     "@babel/generator": "^7.27.1",
     "@babel/parser": "^7.27.2",
     "@babel/types": "^7.27.1",
-    "ast-kit": "^1.4.3",
+    "ast-kit": "^2.0.0",
     "debug": "^4.4.0",
     "dts-resolver": "^1.1.2",
     "get-tsconfig": "^4.10.0"
