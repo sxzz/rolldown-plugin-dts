@@ -58,7 +58,7 @@
     "@babel/types": "^7.27.1",
     "ast-kit": "^2.0.0",
     "debug": "^4.4.0",
-    "dts-resolver": "^1.2.0",
+    "dts-resolver": "^2.0.1",
     "get-tsconfig": "^4.10.0"
   },
   "devDependencies": {
@@ -76,10 +76,10 @@
     "eslint": "^9.26.0",
     "estree-walker": "^3.0.3",
     "prettier": "^3.5.3",
-    "rolldown": "nightly",
+    "rolldown": "canary",
     "rollup-plugin-dts": "^6.2.1",
     "tinyglobby": "^0.2.13",
-    "tsdown": "^0.11.1",
+    "tsdown": "^0.11.4",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vitest": "^3.1.3",
@@ -90,7 +90,7 @@
     "node": ">=20.18.0"
   },
   "resolutions": {
-    "rolldown": "nightly",
+    "rolldown": "canary",
     "rolldown-plugin-dts": "workspace:*"
   },
   "prettier": "@sxzz/prettier-config"

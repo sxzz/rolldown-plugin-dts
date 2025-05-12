@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { createResolver } from 'dts-resolver'
+import { ResolverFactory } from 'rolldown/experimental'
 import {
   filename_ts_to_dts,
   RE_CSS,
@@ -18,6 +19,7 @@ export function createDtsResolvePlugin({
   const resolver = createResolver({
     tsconfig,
     resolveNodeModules: !!resolve,
+    ResolverFactory,
   })
 
   return {
