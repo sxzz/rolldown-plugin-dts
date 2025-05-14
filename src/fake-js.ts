@@ -28,7 +28,7 @@ const generate: typeof _generate.default =
 type Dep = t.Expression & { replace?: (newNode: t.Node) => void }
 interface SymbolInfo {
   decl: t.Declaration
-  binding: t.Identifier
+  bindings: t.Identifier[]
   deps: Dep[]
 }
 
@@ -133,9 +133,6 @@ export function createFakeJsPlugin({
         ? (node: t.Node) => (stmt.declaration = node as any)
         : setStmt
 
-      if (decl.type === 'VariableDeclaration' && decl.declarations.length !== 1)
-        throw new Error('Only one declaration is supported')
-
       if (decl.type !== 'TSDeclareFunction' && !isDeclarationType(decl)) {
         continue
       }
@@ -153,21 +150,23 @@ export function createFakeJsPlugin({
         decl.declare = true
       }
 
-      let binding =
-        decl.type === 'VariableDeclaration'
-          ? (decl.declarations[0].id as t.Identifier)
-          : 'id' in decl
-            ? decl.id
-            : null
-      if (!binding) {
-        binding = t.identifier('export_default')
+      const bindings: t.Identifier[] = []
+      if (decl.type === 'VariableDeclaration') {
+        bindings.push(
+          ...decl.declarations.map((decl) => decl.id as t.Identifier),
+        )
+      } else if ('id' in decl && decl.id) {
+        let binding = decl.id
+        binding = sideEffect
+          ? t.identifier(`_${identifierIdx++}`)
+          : (binding as t.Identifier)
+        bindings.push(binding)
+      } else {
+        const binding = t.identifier('export_default')
+        bindings.push(binding)
         // @ts-expect-error
         decl.id = binding
       }
-      binding = sideEffect
-        ? t.identifier(`_${identifierIdx++}`)
-        : (binding as t.Identifier)
-
       const deps = collectDependencies(decl, namespaceStmts)
 
       const elements: t.Expression[] = [
@@ -183,13 +182,12 @@ export function createFakeJsPlugin({
         decl.innerComments = stmt.innerComments
         decl.leadingComments = stmt.leadingComments
         decl.trailingComments = stmt.trailingComments
-        // console.log(decl)
       }
 
       const symbolId = registerSymbol({
         decl,
         deps,
-        binding,
+        bindings,
       })
       elements[0] = t.numericLiteral(symbolId)
 
@@ -200,9 +198,15 @@ export function createFakeJsPlugin({
         declarations: [
           {
             type: 'VariableDeclarator',
-            id: { ...binding, typeAnnotation: null },
+            id: { ...bindings[0], typeAnnotation: null },
             init: runtime,
           },
+          ...bindings.slice(1).map(
+            (binding): t.VariableDeclarator => ({
+              type: 'VariableDeclarator',
+              id: { ...binding, typeAnnotation: null },
+            }),
+          ),
         ],
       }
 
@@ -210,7 +214,7 @@ export function createFakeJsPlugin({
         // export { ${binding} as default }
         appendStmts.push(
           t.exportNamedDeclaration(null, [
-            t.exportSpecifier(binding, t.identifier('default')),
+            t.exportSpecifier(bindings[0], t.identifier('default')),
           ]),
         )
         // replace the whole statement
@@ -250,12 +254,7 @@ export function createFakeJsPlugin({
     program.body = program.body
       .map((node) => {
         if (patchImportSource(node)) return node
-
-        if (
-          node.type !== 'VariableDeclaration' ||
-          node.declarations.length !== 1
-        )
-          return node
+        if (node.type !== 'VariableDeclaration') return node
 
         const [decl] = node.declarations
         if (decl.init?.type !== 'ArrayExpression' || !decl.init.elements[0]) {
@@ -270,11 +269,13 @@ export function createFakeJsPlugin({
         const symbolId = symbolIdNode.value
         const original = getSymbol(symbolId)
 
-        const transformedBinding = {
-          ...decl.id,
-          typeAnnotation: original.binding.typeAnnotation,
+        for (const [i, decl] of node.declarations.entries()) {
+          const transformedBinding = {
+            ...decl.id,
+            typeAnnotation: original.bindings[i].typeAnnotation,
+          }
+          overwriteNode(original.bindings[i], transformedBinding)
         }
-        overwriteNode(original.binding, transformedBinding)
 
         const transformedDeps = depsFns
           .filter((node) => node?.type === 'ArrowFunctionExpression')

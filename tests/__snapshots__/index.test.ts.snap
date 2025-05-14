@@ -149,6 +149,19 @@ var jsdoc_default = fn();
 export { jsdoc_default as default, fn };"
 `;
 
+exports[`multi declarations 1`] = `
+"// index.d.ts
+//#region tests/fixtures/multi-decls/mod.d.ts
+declare const a: 1, b: 2;
+//#endregion
+//#region tests/fixtures/multi-decls/index.d.ts
+declare const a$1 = 3,
+  b$1 = 3;
+
+//#endregion
+export { a, b, a$1 as c, b$1 as d };"
+`;
+
 exports[`paths 1`] = `
 "// index.d.ts
 //#region tests/fixtures/paths/mod.d.ts

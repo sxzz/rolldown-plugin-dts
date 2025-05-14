@@ -172,3 +172,16 @@ test('vue-sfc w/ ts-compiler', async () => {
   ])
   expect(snapshot).toMatchSnapshot()
 })
+
+test('multi declarations', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/multi-decls/index.ts'),
+    [
+      dts({
+        emitDtsOnly: true,
+        compilerOptions: { isolatedDeclarations: false },
+      }),
+    ],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
