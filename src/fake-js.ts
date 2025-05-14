@@ -83,24 +83,14 @@ export function createFakeJsPlugin({
     },
     renderChunk,
 
-    generateBundle(options, bundle) {
-      for (const chunk of Object.values(bundle)) {
-        if (
-          chunk.type !== 'asset' ||
-          !RE_DTS_MAP.test(chunk.fileName) ||
-          typeof chunk.source !== 'string'
-        )
-          continue
-
-        if (sourcemap) {
-          const maps = JSON.parse(chunk.source)
-          maps.sourcesContent = null
-          chunk.source = JSON.stringify(maps)
-        } else {
-          delete bundle[chunk.fileName]
-        }
-      }
-    },
+    generateBundle: sourcemap
+      ? undefined
+      : (options, bundle) => {
+          for (const chunk of Object.values(bundle)) {
+            if (!RE_DTS_MAP.test(chunk.fileName)) continue
+            delete bundle[chunk.fileName]
+          }
+        },
   }
 
   function transform(code: string, id: string) {
