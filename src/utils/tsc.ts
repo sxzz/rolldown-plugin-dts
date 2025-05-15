@@ -1,20 +1,9 @@
-import { workerData, type MessagePort } from 'node:worker_threads'
-import { createBirpc } from 'birpc'
 import Debug from 'debug'
 import ts from 'typescript'
 import type { DtsMap, TsModule } from '../generate.ts'
 import { RE_NODE_MODULES } from './filename.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
-
-const functions: { emit: typeof emit } = { emit }
-export type TscFunctions = typeof functions
-
-const port: MessagePort = workerData.port
-createBirpc(functions, {
-  post: (data) => port.postMessage(data),
-  on: (fn) => port.on('message', fn),
-})
 
 const debug = Debug('rolldown-plugin-dts:tsc')
 debug(`loaded typescript: ${ts.version}`)
@@ -37,6 +26,7 @@ const defaultCompilerOptions: ts.CompilerOptions = {
   skipLibCheck: true,
   target: 99 satisfies ts.ScriptTarget.ESNext,
   resolveJsonModule: true,
+  moduleResolution: ts.ModuleResolutionKind.Bundler,
 }
 
 export interface TscModule {
@@ -45,6 +35,7 @@ export interface TscModule {
 }
 
 export interface TscOptions {
+  programs: ts.Program[]
   compilerOptions: TsConfigJson.CompilerOptions | undefined
   references: TsConfigJson.References[] | undefined
   id: string
@@ -53,9 +44,8 @@ export interface TscOptions {
   vue?: boolean
 }
 
-const programs: ts.Program[] = []
-
 function createOrGetTsModule({
+  programs,
   compilerOptions,
   references,
   id,
@@ -150,11 +140,13 @@ function createTsProgram(
   }
 }
 
-export function emit(tscOptions: TscOptions): {
+export interface TscResult {
   code?: string
   map?: any
   error?: string
-} {
+}
+
+export function tscEmit(tscOptions: TscOptions): TscResult {
   const module = createOrGetTsModule(tscOptions)
   const { program, file } = module
   let dtsCode: string | undefined

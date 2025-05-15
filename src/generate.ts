@@ -11,11 +11,15 @@ import {
   RE_TS,
   RE_VUE,
 } from './utils/filename.ts'
-import type { TscFunctions, TscOptions } from './utils/tsc.ts'
+import type { TscFunctions } from './utils/tsc-worker.ts'
+import type { TscOptions, TscResult } from './utils/tsc.ts'
 import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
+import type ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:generate')
+
+const WORKER_URL = import.meta.WORKER_URL || './utils/tsc-worker.ts'
 
 export interface TsModule {
   /** `.ts` source code */
@@ -33,6 +37,7 @@ export function createGeneratePlugin({
   isolatedDeclarations,
   emitDtsOnly,
   vue,
+  worker: enableWorker,
 }: Pick<
   OptionsResolved,
   | 'compilerOptions'
@@ -40,6 +45,7 @@ export function createGeneratePlugin({
   | 'isolatedDeclarations'
   | 'emitDtsOnly'
   | 'vue'
+  | 'worker'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -53,12 +59,16 @@ export function createGeneratePlugin({
    * ])
    */
   const inputAliasMap = new Map<string, string>()
+  const programs: ts.Program[] = []
+
   let worker: Worker | undefined
-  let rpc: BirpcReturn<TscFunctions>
-  if (vue || !isolatedDeclarations) {
+  let rpc: BirpcReturn<TscFunctions> | undefined
+  let tscEmit: (options: TscOptions) => TscResult
+
+  if (enableWorker) {
     const channel = new MessageChannel()
     channel.port1.unref()
-    worker = new Worker(new URL('./utils/tsc.ts', import.meta.url), {
+    worker = new Worker(new URL(WORKER_URL, import.meta.url), {
       workerData: { port: channel.port2 },
       transferList: [channel.port2],
     })
@@ -75,6 +85,10 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
+      if ((!enableWorker && !isolatedDeclarations) || vue) {
+        ;({ tscEmit } = await import('./utils/tsc.ts'))
+      }
+
       if (!Array.isArray(options.input)) {
         for (const [name, id] of Object.entries(options.input)) {
           debug('resolving input alias %s -> %s', name, id)
@@ -172,13 +186,7 @@ export function createGeneratePlugin({
             map.sourcesContent = undefined
           }
         } else {
-          if (!worker && !vue) {
-            return this.error(
-              'worker is not initialized, please enable vue option for Vue support',
-            )
-          }
-
-          const options: TscOptions = {
+          const options: Omit<TscOptions, 'programs'> = {
             compilerOptions,
             references,
             id,
@@ -186,7 +194,15 @@ export function createGeneratePlugin({
             dtsMap: Array.from(dtsMap.entries()),
             vue,
           }
-          const result = await rpc.emit(options)
+          let result: TscResult
+          if (enableWorker) {
+            result = await rpc!.emit(options)
+          } else {
+            result = tscEmit({
+              ...options,
+              programs,
+            })
+          }
           if (result.error) {
             return this.error(result.error)
           }
