@@ -1,3 +1,5 @@
+import { MessageChannel, Worker } from 'node:worker_threads'
+import { createBirpc, type BirpcReturn } from 'birpc'
 import Debug from 'debug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
 import {
@@ -9,11 +11,9 @@ import {
   RE_TS,
   RE_VUE,
 } from './utils/filename.ts'
-import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc.ts'
-import { createVueProgramFactory } from './utils/vue.ts'
+import type { TscFunctions, TscOptions } from './utils/tsc.ts'
 import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
-import type * as Ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:generate')
 
@@ -53,13 +53,22 @@ export function createGeneratePlugin({
    * ])
    */
   const inputAliasMap = new Map<string, string>()
-  let programs: Ts.Program[] = []
-
+  let worker: Worker | undefined
+  let rpc: BirpcReturn<TscFunctions>
   if (vue || !isolatedDeclarations) {
-    initTs()
-    if (vue) {
-      createVueProgramFactory()
-    }
+    const channel = new MessageChannel()
+    channel.port1.unref()
+    worker = new Worker(new URL('./utils/tsc.ts', import.meta.url), {
+      workerData: { port: channel.port2 },
+      transferList: [channel.port2],
+    })
+    rpc = createBirpc<TscFunctions>(
+      {},
+      {
+        post: (data) => channel.port1.postMessage(data),
+        on: (fn) => channel.port1.on('message', fn),
+      },
+    )
   }
 
   return {
@@ -140,7 +149,7 @@ export function createGeneratePlugin({
           exclude: [RE_NODE_MODULES],
         },
       },
-      handler(dtsId) {
+      async handler(dtsId) {
         if (!dtsMap.has(dtsId)) return
 
         const { code, id, isEntry } = dtsMap.get(dtsId)!
@@ -163,16 +172,21 @@ export function createGeneratePlugin({
             map.sourcesContent = undefined
           }
         } else {
-          const module = createOrGetTsModule(
-            programs,
+          if (!worker && !vue) {
+            return this.error(
+              'worker is not initialized, please enable vue option for Vue support',
+            )
+          }
+
+          const options: TscOptions = {
             compilerOptions,
             references,
             id,
             isEntry,
-            dtsMap,
+            dtsMap: Array.from(dtsMap.entries()),
             vue,
-          )
-          const result = tscEmit(module)
+          }
+          const result = await rpc.emit(options)
           if (result.error) {
             return this.error(result.error)
           }
@@ -203,7 +217,7 @@ export function createGeneratePlugin({
       : undefined,
 
     buildEnd() {
-      programs = []
+      worker?.terminate()
     },
   }
 }

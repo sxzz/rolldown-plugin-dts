@@ -24,6 +24,9 @@ importers:
       ast-kit:
         specifier: ^2.0.0
         version: 2.0.0
+      birpc:
+        specifier: ^2.3.0
+        version: 2.3.0
       debug:
         specifier: ^4.4.1
         version: 4.4.1
@@ -908,6 +911,9 @@ packages:
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
+
+  birpc@2.3.0:
+    resolution: {integrity: sha512-ijbtkn/F3Pvzb6jHypHRyve2QApOCZDR25D/VnkY2G/lBNcXCTsnsCxgY4k4PkVB7zfwzYbY3O9Lcqe3xufS5g==}
 
   body-parser@2.2.0:
     resolution: {integrity: sha512-02qvAaxv8tp7fBa/mw1ga98OGm+eCbqzJOKoRt70sLmfEEi+jyBYVTDGfCL/k06/4EMk/z01gCe7HoCH/f2LTg==}
@@ -3336,6 +3342,8 @@ snapshots:
       pathe: 2.0.3
 
   balanced-match@1.0.2: {}
+
+  birpc@2.3.0: {}
 
   body-parser@2.2.0:
     dependencies:
