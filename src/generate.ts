@@ -85,7 +85,7 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      if ((!enableWorker && !isolatedDeclarations) || vue) {
+      if (!enableWorker && (!isolatedDeclarations || vue)) {
         ;({ tscEmit } = await import('./utils/tsc.ts'))
       }
 
