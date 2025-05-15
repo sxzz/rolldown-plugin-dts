@@ -59,8 +59,8 @@ export function createGeneratePlugin({
    * ])
    */
   const inputAliasMap = new Map<string, string>()
-  const programs: ts.Program[] = []
 
+  let programs: ts.Program[] = []
   let worker: Worker | undefined
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscEmit: (options: TscOptions) => TscResult
@@ -234,6 +234,7 @@ export function createGeneratePlugin({
 
     buildEnd() {
       worker?.terminate()
+      programs = []
     },
   }
 }
