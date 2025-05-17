@@ -1,6 +1,5 @@
 import { createRequire } from 'node:module'
 import Debug from 'debug'
-import { ts } from './tsc.ts'
 import type Ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:vue')
@@ -31,7 +30,9 @@ function loadVueLanguageTools() {
 }
 
 // credits: https://github.com/vuejs/language-tools/blob/25f40ead59d862b3bd7011f2dd2968f47dfcf629/packages/tsc/index.ts
-export function createVueProgramFactory(): typeof Ts.createProgram {
+export function createVueProgramFactory(
+  ts: typeof Ts,
+): typeof Ts.createProgram {
   if (createVueProgram) return createVueProgram
 
   debug('loading vue language tools')

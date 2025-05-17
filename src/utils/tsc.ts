@@ -1,34 +1,22 @@
-import { createRequire } from 'node:module'
 import Debug from 'debug'
-import type { DtsMap } from '../generate.ts'
+import ts from 'typescript'
+import type { DtsMap, TsModule } from '../generate.ts'
 import { RE_NODE_MODULES } from './filename.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
-import type Ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:tsc')
+debug(`loaded typescript: ${ts.version}`)
 
-// eslint-disable-next-line import/no-mutable-exports
-export let ts: typeof Ts
-let formatHost: Ts.FormatDiagnosticsHost
-
-export function initTs(): void {
-  debug('loading typescript')
-
-  const require = createRequire(import.meta.url)
-  ts = require('typescript')
-  formatHost = {
-    getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
-    getNewLine: () => ts.sys.newLine,
-    getCanonicalFileName: ts.sys.useCaseSensitiveFileNames
-      ? (f) => f
-      : (f) => f.toLowerCase(),
-  }
-
-  debug(`loaded typescript: ${ts.version}`)
+const formatHost: ts.FormatDiagnosticsHost = {
+  getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
+  getNewLine: () => ts.sys.newLine,
+  getCanonicalFileName: ts.sys.useCaseSensitiveFileNames
+    ? (f) => f
+    : (f) => f.toLowerCase(),
 }
 
-const defaultCompilerOptions: Ts.CompilerOptions = {
+const defaultCompilerOptions: ts.CompilerOptions = {
   declaration: true,
   noEmit: false,
   emitDeclarationOnly: true,
@@ -36,24 +24,35 @@ const defaultCompilerOptions: Ts.CompilerOptions = {
   checkJs: false,
   declarationMap: false,
   skipLibCheck: true,
-  target: 99 satisfies Ts.ScriptTarget.ESNext,
+  target: 99 satisfies ts.ScriptTarget.ESNext,
   resolveJsonModule: true,
+  moduleResolution: ts.ModuleResolutionKind.Bundler,
 }
 
 export interface TscModule {
-  program: Ts.Program
-  file: Ts.SourceFile
+  program: ts.Program
+  file: ts.SourceFile
 }
 
-export function createOrGetTsModule(
-  programs: Ts.Program[],
-  compilerOptions: TsConfigJson.CompilerOptions | undefined,
-  references: TsConfigJson.References[] | undefined,
-  id: string,
-  isEntry: boolean,
-  dtsMap: DtsMap,
-  vue?: boolean,
-): TscModule {
+export interface TscOptions {
+  programs: ts.Program[]
+  compilerOptions: TsConfigJson.CompilerOptions | undefined
+  references: TsConfigJson.References[] | undefined
+  id: string
+  isEntry: boolean
+  dtsMap: [string, TsModule][]
+  vue?: boolean
+}
+
+function createOrGetTsModule({
+  programs,
+  compilerOptions,
+  references,
+  id,
+  isEntry,
+  dtsMap,
+  vue,
+}: TscOptions): TscModule {
   const program = programs.find((program) => {
     if (isEntry) {
       return program.getRootFileNames().includes(id)
@@ -68,7 +67,13 @@ export function createOrGetTsModule(
   }
 
   debug(`create program for module: ${id}`)
-  const module = createTsProgram(compilerOptions, references, dtsMap, id, vue)
+  const module = createTsProgram(
+    compilerOptions,
+    references,
+    new Map(dtsMap),
+    id,
+    vue,
+  )
   debug(`created program for module: ${id}`)
 
   programs.push(module.program)
@@ -82,10 +87,10 @@ function createTsProgram(
   id: string,
   vue?: boolean,
 ): TscModule {
-  const overrideCompilerOptions: Ts.CompilerOptions =
+  const overrideCompilerOptions: ts.CompilerOptions =
     ts.convertCompilerOptionsFromJson(compilerOptions, '.').options
 
-  const options: Ts.CompilerOptions = {
+  const options: ts.CompilerOptions = {
     ...defaultCompilerOptions,
     ...overrideCompilerOptions,
   }
@@ -117,7 +122,7 @@ function createTsProgram(
       id,
     ]),
   ]
-  const createProgram = vue ? createVueProgramFactory() : ts.createProgram
+  const createProgram = vue ? createVueProgramFactory(ts) : ts.createProgram
   const program = createProgram({
     rootNames: entries,
     options,
@@ -135,11 +140,14 @@ function createTsProgram(
   }
 }
 
-export function tscEmit(module: TscModule): {
+export interface TscResult {
   code?: string
   map?: any
   error?: string
-} {
+}
+
+export function tscEmit(tscOptions: TscOptions): TscResult {
+  const module = createOrGetTsModule(tscOptions)
   const { program, file } = module
   let dtsCode: string | undefined
   let map: any

@@ -94,6 +94,12 @@ interface Options {
 
   /** Resolve external types used in dts files from `node_modules` */
   resolve?: boolean | (string | RegExp)[]
+
+  /**
+   * When `true`, the plugin will launch a **separate process** for `tsc` or `vue-tsc`.
+   * This allows you to process multiple projects in parallel.
+   */
+  parallel?: boolean
 }
 ```
 

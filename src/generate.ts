@@ -1,3 +1,5 @@
+import { fork, type ChildProcess } from 'node:child_process'
+import { createBirpc, type BirpcReturn } from 'birpc'
 import Debug from 'debug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
 import {
@@ -9,13 +11,15 @@ import {
   RE_TS,
   RE_VUE,
 } from './utils/filename.ts'
-import { createOrGetTsModule, initTs, tscEmit } from './utils/tsc.ts'
-import { createVueProgramFactory } from './utils/vue.ts'
+import type { TscFunctions } from './utils/tsc-worker.ts'
+import type { TscOptions, TscResult } from './utils/tsc.ts'
 import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
-import type * as Ts from 'typescript'
+import type ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:generate')
+
+const WORKER_URL = import.meta.WORKER_URL || './utils/tsc-worker.ts'
 
 export interface TsModule {
   /** `.ts` source code */
@@ -33,6 +37,7 @@ export function createGeneratePlugin({
   isolatedDeclarations,
   emitDtsOnly,
   vue,
+  parallel,
 }: Pick<
   OptionsResolved,
   | 'compilerOptions'
@@ -40,6 +45,7 @@ export function createGeneratePlugin({
   | 'isolatedDeclarations'
   | 'emitDtsOnly'
   | 'vue'
+  | 'parallel'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -53,19 +59,33 @@ export function createGeneratePlugin({
    * ])
    */
   const inputAliasMap = new Map<string, string>()
-  let programs: Ts.Program[] = []
 
-  if (vue || !isolatedDeclarations) {
-    initTs()
-    if (vue) {
-      createVueProgramFactory()
-    }
+  let programs: ts.Program[] = []
+  let childProcess: ChildProcess | undefined
+  let rpc: BirpcReturn<TscFunctions> | undefined
+  let tscEmit: (options: TscOptions) => TscResult
+
+  if (parallel) {
+    childProcess = fork(new URL(WORKER_URL, import.meta.url), {
+      stdio: 'inherit',
+    })
+    rpc = createBirpc<TscFunctions>(
+      {},
+      {
+        post: (data) => childProcess!.send(data),
+        on: (fn) => childProcess!.on('message', fn),
+      },
+    )
   }
 
   return {
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
+      if (!parallel && (!isolatedDeclarations || vue)) {
+        ;({ tscEmit } = await import('./utils/tsc.ts'))
+      }
+
       if (!Array.isArray(options.input)) {
         for (const [name, id] of Object.entries(options.input)) {
           debug('resolving input alias %s -> %s', name, id)
@@ -140,7 +160,7 @@ export function createGeneratePlugin({
           exclude: [RE_NODE_MODULES],
         },
       },
-      handler(dtsId) {
+      async handler(dtsId) {
         if (!dtsMap.has(dtsId)) return
 
         const { code, id, isEntry } = dtsMap.get(dtsId)!
@@ -163,16 +183,23 @@ export function createGeneratePlugin({
             map.sourcesContent = undefined
           }
         } else {
-          const module = createOrGetTsModule(
-            programs,
+          const options: Omit<TscOptions, 'programs'> = {
             compilerOptions,
             references,
             id,
             isEntry,
-            dtsMap,
+            dtsMap: Array.from(dtsMap.entries()),
             vue,
-          )
-          const result = tscEmit(module)
+          }
+          let result: TscResult
+          if (parallel) {
+            result = await rpc!.emit(options)
+          } else {
+            result = tscEmit({
+              ...options,
+              programs,
+            })
+          }
           if (result.error) {
             return this.error(result.error)
           }
@@ -203,6 +230,7 @@ export function createGeneratePlugin({
       : undefined,
 
     buildEnd() {
+      childProcess?.kill()
       programs = []
     },
   }

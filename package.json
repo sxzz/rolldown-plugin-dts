@@ -57,6 +57,7 @@
     "@babel/parser": "^7.27.2",
     "@babel/types": "^7.27.1",
     "ast-kit": "^2.0.0",
+    "birpc": "^2.3.0",
     "debug": "^4.4.1",
     "dts-resolver": "^2.0.1",
     "get-tsconfig": "^4.10.0"
