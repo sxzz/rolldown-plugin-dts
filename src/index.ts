@@ -79,6 +79,10 @@ export interface Options {
    */
   vue?: boolean
 
+  /**
+   * When `true`, the plugin will launch a **separate process** for `tsc` or `vue-tsc`.
+   * This allows you to process multiple projects in parallel.
+   */
   worker?: boolean
 }
 

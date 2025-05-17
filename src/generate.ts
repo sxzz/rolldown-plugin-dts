@@ -1,4 +1,4 @@
-import { MessageChannel, Worker } from 'node:worker_threads'
+import { fork, type ChildProcess } from 'node:child_process'
 import { createBirpc, type BirpcReturn } from 'birpc'
 import Debug from 'debug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
@@ -61,22 +61,19 @@ export function createGeneratePlugin({
   const inputAliasMap = new Map<string, string>()
 
   let programs: ts.Program[] = []
-  let worker: Worker | undefined
+  let childProcess: ChildProcess | undefined
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscEmit: (options: TscOptions) => TscResult
 
   if (enableWorker) {
-    const channel = new MessageChannel()
-    channel.port1.unref()
-    worker = new Worker(new URL(WORKER_URL, import.meta.url), {
-      workerData: { port: channel.port2 },
-      transferList: [channel.port2],
+    childProcess = fork(new URL(WORKER_URL, import.meta.url), {
+      stdio: 'inherit',
     })
     rpc = createBirpc<TscFunctions>(
       {},
       {
-        post: (data) => channel.port1.postMessage(data),
-        on: (fn) => channel.port1.on('message', fn),
+        post: (data) => childProcess!.send(data),
+        on: (fn) => childProcess!.on('message', fn),
       },
     )
   }
@@ -233,7 +230,7 @@ export function createGeneratePlugin({
       : undefined,
 
     buildEnd() {
-      worker?.terminate()
+      childProcess?.kill()
       programs = []
     },
   }
