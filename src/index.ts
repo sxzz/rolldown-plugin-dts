@@ -1,7 +1,12 @@
 import path from 'node:path'
 import process from 'node:process'
 import Debug from 'debug'
-import { getTsconfig, parseTsconfig, type TsConfigJson } from 'get-tsconfig'
+import {
+  getTsconfig,
+  parseTsconfig,
+  type TsConfigJson,
+  type TsConfigJsonResolved,
+} from 'get-tsconfig'
 import { createDtsInputPlugin } from './dts-input.ts'
 import { createFakeJsPlugin } from './fake-js.ts'
 import { createGeneratePlugin } from './generate.ts'
@@ -127,22 +132,27 @@ export function resolveOptions({
   vue = false,
   parallel = false,
 }: Options): OptionsResolved {
+  let resolvedTsconfig: TsConfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
     tsconfig = path
-    compilerOptions = {
-      ...config?.compilerOptions,
-      ...compilerOptions,
-    }
+    resolvedTsconfig = config
   } else if (typeof tsconfig === 'string') {
     tsconfig = path.resolve(cwd || process.cwd(), tsconfig)
-    const config = parseTsconfig(tsconfig)
-    compilerOptions = {
-      ...config.compilerOptions,
-      ...compilerOptions,
-    }
+    resolvedTsconfig = parseTsconfig(tsconfig)
   } else {
     tsconfig = undefined
+  }
+
+  if (resolvedTsconfig) {
+    compilerOptions = {
+      ...resolvedTsconfig?.compilerOptions,
+      ...compilerOptions,
+    }
+    references = [
+      ...(references || []),
+      ...(resolvedTsconfig?.references || []),
+    ]
   }
 
   sourcemap ??= !!compilerOptions.declarationMap
