@@ -37,7 +37,7 @@ export function createGeneratePlugin({
   isolatedDeclarations,
   emitDtsOnly,
   vue,
-  worker: enableWorker,
+  parallel,
 }: Pick<
   OptionsResolved,
   | 'compilerOptions'
@@ -45,7 +45,7 @@ export function createGeneratePlugin({
   | 'isolatedDeclarations'
   | 'emitDtsOnly'
   | 'vue'
-  | 'worker'
+  | 'parallel'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -65,7 +65,7 @@ export function createGeneratePlugin({
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscEmit: (options: TscOptions) => TscResult
 
-  if (enableWorker) {
+  if (parallel) {
     childProcess = fork(new URL(WORKER_URL, import.meta.url), {
       stdio: 'inherit',
     })
@@ -82,7 +82,7 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      if (!enableWorker && (!isolatedDeclarations || vue)) {
+      if (!parallel && (!isolatedDeclarations || vue)) {
         ;({ tscEmit } = await import('./utils/tsc.ts'))
       }
 
@@ -192,7 +192,7 @@ export function createGeneratePlugin({
             vue,
           }
           let result: TscResult
-          if (enableWorker) {
+          if (parallel) {
             result = await rpc!.emit(options)
           } else {
             result = tscEmit({

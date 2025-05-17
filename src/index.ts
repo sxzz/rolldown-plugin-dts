@@ -83,7 +83,7 @@ export interface Options {
    * When `true`, the plugin will launch a **separate process** for `tsc` or `vue-tsc`.
    * This allows you to process multiple projects in parallel.
    */
-  worker?: boolean
+  parallel?: boolean
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
@@ -125,7 +125,7 @@ export function resolveOptions({
   emitDtsOnly = false,
   resolve = false,
   vue = false,
-  worker = false,
+  parallel = false,
 }: Options): OptionsResolved {
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
@@ -171,6 +171,6 @@ export function resolveOptions({
     emitDtsOnly,
     resolve,
     vue,
-    worker,
+    parallel,
   }
 }
