@@ -63,11 +63,19 @@ interface Options {
   tsconfig?: string | boolean
 
   /**
-   * The `compilerOptions` for the TypeScript compiler.
+   * Overrides `compilerOptions` in `tsconfig.json`.
    *
-   * @see https://www.typescriptlang.org/docs/handbook/compiler-options.html
+   * @see https://www.typescriptlang.org/tsconfig/#compilerOptions
    */
   compilerOptions?: TsConfigJson.CompilerOptions
+
+  /**
+   * Overrides `references` in `tsconfig.json`.
+   * Only available when using `tsc` and `vue-tsc` compiler.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#references
+   */
+  references?: TsConfigJson.References[]
 
   /**
    * When `true`, the plugin will generate `.d.ts` files using Oxc,

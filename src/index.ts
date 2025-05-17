@@ -42,11 +42,19 @@ export interface Options {
   tsconfig?: string | boolean
 
   /**
-   * The `compilerOptions` for the TypeScript compiler.
+   * Overrides `compilerOptions` in `tsconfig.json`.
    *
-   * @see https://www.typescriptlang.org/docs/handbook/compiler-options.html
+   * @see https://www.typescriptlang.org/tsconfig/#compilerOptions
    */
   compilerOptions?: TsConfigJson.CompilerOptions
+
+  /**
+   * Overrides `references` in `tsconfig.json`.
+   * Only available when using `tsc` and `vue-tsc` compiler.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#references
+   */
+  references?: TsConfigJson.References[]
 
   /**
    * When `true`, the plugin will generate `.d.ts` files using Oxc,
@@ -79,6 +87,7 @@ export type OptionsResolved = Overwrite<
   {
     tsconfig: string | undefined
     isolatedDeclarations: IsolatedDeclarationsOptions | false
+    references: TsConfigJson.References[] | undefined
   }
 >
 
@@ -103,6 +112,7 @@ export function resolveOptions({
   cwd = process.cwd(),
   tsconfig,
   compilerOptions = {},
+  references,
   isolatedDeclarations,
   sourcemap,
   dtsInput = false,
@@ -147,6 +157,7 @@ export function resolveOptions({
     cwd,
     tsconfig,
     compilerOptions,
+    references,
     isolatedDeclarations,
     sourcemap,
     dtsInput,

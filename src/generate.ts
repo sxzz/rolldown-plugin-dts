@@ -28,13 +28,18 @@ export interface TsModule {
 export type DtsMap = Map<string, TsModule>
 
 export function createGeneratePlugin({
-  compilerOptions = {},
+  compilerOptions,
+  references,
   isolatedDeclarations,
-  emitDtsOnly = false,
+  emitDtsOnly,
   vue,
 }: Pick<
   OptionsResolved,
-  'compilerOptions' | 'isolatedDeclarations' | 'emitDtsOnly' | 'vue'
+  | 'compilerOptions'
+  | 'references'
+  | 'isolatedDeclarations'
+  | 'emitDtsOnly'
+  | 'vue'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -161,6 +166,7 @@ export function createGeneratePlugin({
           const module = createOrGetTsModule(
             programs,
             compilerOptions,
+            references,
             id,
             isEntry,
             dtsMap,

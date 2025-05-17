@@ -48,6 +48,7 @@ export interface TscModule {
 export function createOrGetTsModule(
   programs: Ts.Program[],
   compilerOptions: TsConfigJson.CompilerOptions | undefined,
+  references: TsConfigJson.References[] | undefined,
   id: string,
   isEntry: boolean,
   dtsMap: DtsMap,
@@ -67,7 +68,7 @@ export function createOrGetTsModule(
   }
 
   debug(`create program for module: ${id}`)
-  const module = createTsProgram(compilerOptions, dtsMap, id, vue)
+  const module = createTsProgram(compilerOptions, references, dtsMap, id, vue)
   debug(`created program for module: ${id}`)
 
   programs.push(module.program)
@@ -76,6 +77,7 @@ export function createOrGetTsModule(
 
 function createTsProgram(
   compilerOptions: TsConfigJson.CompilerOptions | undefined,
+  references: TsConfigJson.References[] | undefined,
   dtsMap: DtsMap,
   id: string,
   vue?: boolean,
@@ -120,6 +122,7 @@ function createTsProgram(
     rootNames: entries,
     options,
     host,
+    projectReferences: references,
   })
   const sourceFile = program.getSourceFile(id)
   if (!sourceFile) {
