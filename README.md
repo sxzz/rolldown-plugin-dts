@@ -32,74 +32,87 @@ You can find an example in [here](./rolldown.config.ts).
 ## Options
 
 ```ts
-interface Options {
+export interface Options {
   /**
-   * The directory where the the plugin will look for the `tsconfig.json` file.
+   * The directory in which the plugin will search for the `tsconfig.json` file.
    */
   cwd?: string
 
   /**
-   * When entries are `.d.ts` files (instead of `.ts` files), this option should be set to `true`.
+   * Set to `true` if your entry files are `.d.ts` files instead of `.ts` files.
    *
-   * If enabled, the plugin will skip generating a `.d.ts` file for the entry point.
+   * When enabled, the plugin will skip generating a `.d.ts` file for the entry point.
    */
   dtsInput?: boolean
 
   /**
-   * When `true`, the plugin will only emit `.d.ts` files and remove all other chunks.
+   * If `true`, the plugin will emit only `.d.ts` files and remove all other output chunks.
    *
-   * This feature is particularly beneficial when you need to generate `d.ts` files for the CommonJS format as part of a separate build process.
+   * This is especially useful when generating `.d.ts` files for the CommonJS format as part of a separate build step.
    */
   emitDtsOnly?: boolean
 
   /**
    * The path to the `tsconfig.json` file.
    *
-   * When set to `false`, the plugin will ignore any `tsconfig.json` file.
-   * However, `compilerOptions` can still be specified directly in the options.
+   * If set to `false`, the plugin will ignore any `tsconfig.json` file.
+   * You can still specify `compilerOptions` directly in the options.
    *
-   * @default `tsconfig.json`
+   * @default 'tsconfig.json'
    */
   tsconfig?: string | boolean
 
   /**
-   * Overrides `compilerOptions` in `tsconfig.json`.
+   * Pass a raw `tsconfig.json` object directly to the plugin.
+   *
+   * @see https://www.typescriptlang.org/tsconfig
+   */
+  tsconfigRaw?: Omit<TsConfigJson, 'compilerOptions'>
+
+  /**
+   * Override the `compilerOptions` specified in `tsconfig.json`.
    *
    * @see https://www.typescriptlang.org/tsconfig/#compilerOptions
    */
   compilerOptions?: TsConfigJson.CompilerOptions
 
   /**
-   * Overrides `references` in `tsconfig.json`.
-   * Only available when using `tsc` and `vue-tsc` compiler.
+   * If `true`, the plugin will generate `.d.ts` files using Oxc,
+   * which is significantly faster than the TypeScript compiler.
    *
-   * @see https://www.typescriptlang.org/tsconfig/#references
-   */
-  references?: TsConfigJson.References[]
-
-  /**
-   * When `true`, the plugin will generate `.d.ts` files using Oxc,
-   * which is blazingly faster than `typescript` compiler.
-   *
-   * This option is enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
+   * This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
    */
   isolatedDeclarations?:
     | boolean
     | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
 
   /**
-   * When `true`, the plugin will generate declaration maps for `.d.ts` files.
+   * If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
    */
   sourcemap?: boolean
 
-  /** Resolve external types used in dts files from `node_modules` */
+  /**
+   * Resolve external types used in `.d.ts` files from `node_modules`.
+   */
   resolve?: boolean | (string | RegExp)[]
 
   /**
-   * When `true`, the plugin will launch a **separate process** for `tsc` or `vue-tsc`.
-   * This allows you to process multiple projects in parallel.
+   * If `true`, the plugin will generate `.d.ts` files using `vue-tsc`.
+   */
+  vue?: boolean
+
+  /**
+   * If `true`, the plugin will launch a separate process for `tsc` or `vue-tsc`.
+   * This enables processing multiple projects in parallel.
    */
   parallel?: boolean
+
+  /**
+   * If `true`, the plugin will prepare all files listed in `tsconfig.json` for `tsc` or `vue-tsc`.
+   *
+   * This is especially useful when you have a single `tsconfig.json` for multiple projects in a monorepo.
+   */
+  eager?: boolean
 }
 ```
 

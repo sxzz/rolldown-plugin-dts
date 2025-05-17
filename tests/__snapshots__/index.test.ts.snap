@@ -223,11 +223,7 @@ declare const bool = true;
 declare function fn(arg: typeof str): "foo" | 1;
 
 //#endregion
-
-declare const vfs: number;
-
-//#endregion
-export { bool, fn, num, str, vfs };
+export { bool, fn, num, str };
 // entry2.d.ts
 
 interface Unused {

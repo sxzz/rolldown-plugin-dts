@@ -35,15 +35,6 @@ test('typescript compiler', async () => {
   const { snapshot } = await rolldownBuild(
     [path.resolve(root, 'entry1.ts'), path.resolve(root, 'entry2.ts')],
     [
-      {
-        name: 'virtual-module',
-        resolveId(id) {
-          if (id === '/vfs') return '/vfs.ts'
-        },
-        load(id) {
-          if (id === '/vfs.ts') return `export const vfs = Math.random()`
-        },
-      },
       dts({
         emitDtsOnly: true,
         compilerOptions: {

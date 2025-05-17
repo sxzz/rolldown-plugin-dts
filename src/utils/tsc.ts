@@ -1,12 +1,12 @@
 import Debug from 'debug'
 import ts from 'typescript'
-import type { DtsMap, TsModule } from '../generate.ts'
-import { RE_NODE_MODULES } from './filename.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 
 const debug = Debug('rolldown-plugin-dts:tsc')
 debug(`loaded typescript: ${ts.version}`)
+
+const programs: ts.Program[] = []
 
 const formatHost: ts.FormatDiagnosticsHost = {
   getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
@@ -35,24 +35,16 @@ export interface TscModule {
 }
 
 export interface TscOptions {
-  programs: ts.Program[]
-  compilerOptions: TsConfigJson.CompilerOptions | undefined
-  references: TsConfigJson.References[] | undefined
+  tsconfigRaw: TsConfigJson
+  tsconfigDir: string
+  entries?: string[]
   id: string
   isEntry: boolean
-  dtsMap: [string, TsModule][]
   vue?: boolean
 }
 
-function createOrGetTsModule({
-  programs,
-  compilerOptions,
-  references,
-  id,
-  isEntry,
-  dtsMap,
-  vue,
-}: TscOptions): TscModule {
+function createOrGetTsModule(options: TscOptions): TscModule {
+  const { id, isEntry } = options
   const program = programs.find((program) => {
     if (isEntry) {
       return program.getRootFileNames().includes(id)
@@ -67,67 +59,41 @@ function createOrGetTsModule({
   }
 
   debug(`create program for module: ${id}`)
-  const module = createTsProgram(
-    compilerOptions,
-    references,
-    new Map(dtsMap),
-    id,
-    vue,
-  )
+  const module = createTsProgram(options)
   debug(`created program for module: ${id}`)
 
   programs.push(module.program)
   return module
 }
 
-function createTsProgram(
-  compilerOptions: TsConfigJson.CompilerOptions | undefined,
-  references: TsConfigJson.References[] | undefined,
-  dtsMap: DtsMap,
-  id: string,
-  vue?: boolean,
-): TscModule {
-  const overrideCompilerOptions: ts.CompilerOptions =
-    ts.convertCompilerOptionsFromJson(compilerOptions, '.').options
-
-  const options: ts.CompilerOptions = {
+function createTsProgram({
+  entries,
+  id,
+  tsconfigRaw,
+  tsconfigDir,
+  vue,
+}: TscOptions): TscModule {
+  const parsedCmd = ts.parseJsonConfigFileContent(
+    tsconfigRaw,
+    ts.sys,
+    tsconfigDir,
+  )
+  const compilerOptions: ts.CompilerOptions = {
     ...defaultCompilerOptions,
-    ...overrideCompilerOptions,
+    ...parsedCmd.options,
   }
 
-  const host = ts.createCompilerHost(options, true)
-  const { readFile: _readFile, fileExists: _fileExists } = host
-  host.fileExists = (fileName) => {
-    const module = getTsModule(dtsMap, fileName)
-    if (module) return true
-    if (debug.enabled && !RE_NODE_MODULES.test(fileName)) {
-      debug(`file exists from fs: ${fileName}`)
-    }
-    return _fileExists(fileName)
-  }
-  host.readFile = (fileName) => {
-    const module = getTsModule(dtsMap, fileName)
-    if (module) return module.code
-    if (debug.enabled && !RE_NODE_MODULES.test(fileName)) {
-      debug(`read file from fs: ${fileName}`)
-    }
-    return _readFile(fileName)
-  }
+  const rootNames = entries
+    ? [...new Set([id, ...entries])]
+    : parsedCmd.fileNames
 
-  const entries = [
-    ...new Set([
-      ...Array.from(dtsMap.values())
-        .filter((v) => v.isEntry)
-        .map((v) => v.id),
-      id,
-    ]),
-  ]
+  const host = ts.createCompilerHost(compilerOptions, true)
   const createProgram = vue ? createVueProgramFactory(ts) : ts.createProgram
   const program = createProgram({
-    rootNames: entries,
-    options,
+    rootNames,
+    options: compilerOptions,
     host,
-    projectReferences: references,
+    projectReferences: parsedCmd.projectReferences,
   })
   const sourceFile = program.getSourceFile(id)
   if (!sourceFile) {
@@ -172,10 +138,4 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
     return { error: ts.formatDiagnostics(diagnostics, formatHost) }
   }
   return { code: dtsCode, map }
-}
-
-function getTsModule(dtsMap: DtsMap, tsId: string) {
-  const module = Array.from(dtsMap.values()).find((dts) => dts.id === tsId)
-  if (!module) return
-  return module
 }

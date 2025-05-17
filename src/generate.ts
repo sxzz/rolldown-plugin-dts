@@ -15,7 +15,6 @@ import type { TscFunctions } from './utils/tsc-worker.ts'
 import type { TscOptions, TscResult } from './utils/tsc.ts'
 import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
-import type ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:generate')
 
@@ -32,20 +31,22 @@ export interface TsModule {
 export type DtsMap = Map<string, TsModule>
 
 export function createGeneratePlugin({
-  compilerOptions,
-  references,
+  tsconfigRaw,
+  tsconfigDir,
   isolatedDeclarations,
   emitDtsOnly,
   vue,
   parallel,
+  eager,
 }: Pick<
   OptionsResolved,
-  | 'compilerOptions'
-  | 'references'
+  | 'tsconfigRaw'
+  | 'tsconfigDir'
   | 'isolatedDeclarations'
   | 'emitDtsOnly'
   | 'vue'
   | 'parallel'
+  | 'eager'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -60,7 +61,6 @@ export function createGeneratePlugin({
    */
   const inputAliasMap = new Map<string, string>()
 
-  let programs: ts.Program[] = []
   let childProcess: ChildProcess | undefined
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscEmit: (options: TscOptions) => TscResult
@@ -183,22 +183,24 @@ export function createGeneratePlugin({
             map.sourcesContent = undefined
           }
         } else {
+          const entries = eager
+            ? undefined
+            : Array.from(dtsMap.values())
+                .filter((v) => v.isEntry)
+                .map((v) => v.id)
           const options: Omit<TscOptions, 'programs'> = {
-            compilerOptions,
-            references,
+            tsconfigRaw,
+            tsconfigDir,
+            entries,
             id,
             isEntry,
-            dtsMap: Array.from(dtsMap.entries()),
             vue,
           }
           let result: TscResult
           if (parallel) {
-            result = await rpc!.emit(options)
+            result = await rpc!.tscEmit(options)
           } else {
-            result = tscEmit({
-              ...options,
-              programs,
-            })
+            result = tscEmit(options)
           }
           if (result.error) {
             return this.error(result.error)
@@ -231,7 +233,6 @@ export function createGeneratePlugin({
 
     buildEnd() {
       childProcess?.kill()
-      programs = []
     },
   }
 }
