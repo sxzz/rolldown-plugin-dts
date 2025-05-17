@@ -82,7 +82,13 @@ function createTsProgram({
     ...defaultCompilerOptions,
     ...parsedCmd.options,
   }
-  const rootNames = [...new Set([id, ...(entries || parsedCmd.fileNames)])]
+  const rootNames = [
+    ...new Set(
+      [id, ...(entries || parsedCmd.fileNames)].map((f) =>
+        ts.sys.resolvePath(f),
+      ),
+    ),
+  ]
 
   const host = ts.createCompilerHost(compilerOptions, true)
   const createProgram = vue ? createVueProgramFactory(ts) : ts.createProgram
