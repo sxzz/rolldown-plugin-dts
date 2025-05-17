@@ -163,7 +163,7 @@ export function createGeneratePlugin({
       async handler(dtsId) {
         if (!dtsMap.has(dtsId)) return
 
-        const { code, id, isEntry } = dtsMap.get(dtsId)!
+        const { code, id } = dtsMap.get(dtsId)!
         let dtsCode: string | undefined
         let map: any
         debug('generate dts %s from %s', dtsId, id)
@@ -193,7 +193,6 @@ export function createGeneratePlugin({
             tsconfigDir,
             entries,
             id,
-            isEntry,
             vue,
           }
           let result: TscResult

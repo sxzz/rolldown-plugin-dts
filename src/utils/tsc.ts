@@ -39,17 +39,17 @@ export interface TscOptions {
   tsconfigDir: string
   entries?: string[]
   id: string
-  isEntry: boolean
   vue?: boolean
 }
 
 function createOrGetTsModule(options: TscOptions): TscModule {
-  const { id, isEntry } = options
+  const { id, entries } = options
   const program = programs.find((program) => {
-    if (isEntry) {
-      return program.getRootFileNames().includes(id)
+    const roots = program.getRootFileNames()
+    if (entries) {
+      return entries.every((entry) => roots.includes(entry))
     }
-    return program.getSourceFile(id)
+    return roots.includes(id)
   })
   if (program) {
     const sourceFile = program.getSourceFile(id)
@@ -82,10 +82,7 @@ function createTsProgram({
     ...defaultCompilerOptions,
     ...parsedCmd.options,
   }
-
-  const rootNames = entries
-    ? [...new Set([id, ...entries])]
-    : parsedCmd.fileNames
+  const rootNames = [...new Set([id, ...(entries || parsedCmd.fileNames)])]
 
   const host = ts.createCompilerHost(compilerOptions, true)
   const createProgram = vue ? createVueProgramFactory(ts) : ts.createProgram
@@ -95,6 +92,7 @@ function createTsProgram({
     host,
     projectReferences: parsedCmd.projectReferences,
   })
+
   const sourceFile = program.getSourceFile(id)
   if (!sourceFile) {
     throw new Error(`Source file not found: ${id}`)
