@@ -6,7 +6,7 @@ A Rolldown plugin to generate and bundle dts files.
 
 ## Install
 
-⚠️ Requires `rolldown@1.0.0-beta.8-commit.2a5c6a6` (which is canary) or later.
+⚠️ Requires `rolldown@1.0.0-beta.9` or later.
 
 ```bash
 npm i rolldown-plugin-dts

@@ -3,7 +3,6 @@ import { dts } from './src/index.ts'
 
 export default defineConfig({
   entry: ['./src/index.ts', './src/utils/tsc-worker.ts'],
-  target: 'node20.18',
   platform: 'node',
   dts: false,
   define: {
