@@ -14,6 +14,16 @@ import { createDtsResolvePlugin } from './resolve.ts'
 import type { Plugin } from 'rolldown'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
+export {
+  RE_CSS,
+  RE_DTS,
+  RE_DTS_MAP,
+  RE_JS,
+  RE_NODE_MODULES,
+  RE_TS,
+  RE_VUE,
+} from './utils/filename.ts'
+
 const debug = Debug('rolldown-plugin-dts:options')
 
 export interface Options {
