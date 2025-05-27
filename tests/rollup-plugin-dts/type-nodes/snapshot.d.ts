@@ -23,6 +23,5 @@ declare function operator(a: keyof K): void;
 declare function arrayAndTuple(a: [L, M]): N[];
 declare function predicate(a: any): a is O;
 declare function assertion(a: any): asserts a is P;
-
 //#endregion
 export { arrayAndTuple, assertion, intersection, operator, parenthesized, predicate, union };

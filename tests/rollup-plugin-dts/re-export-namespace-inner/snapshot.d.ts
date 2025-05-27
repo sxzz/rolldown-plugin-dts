@@ -6,6 +6,5 @@ declare namespace inner {
   type Ty = number;
   const num: number;
 }
-
 //#endregion
 export { mod_d_exports as outer };

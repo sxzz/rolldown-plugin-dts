@@ -15,6 +15,5 @@ interface CacheInfo {
   id: number;
 }
 declare const Cache2: () => Cache2;
-
 //#endregion
 export { Cache, Cache2, CacheInfo, uniqueId };

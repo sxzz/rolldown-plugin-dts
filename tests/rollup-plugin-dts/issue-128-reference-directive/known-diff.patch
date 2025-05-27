@@ -4,7 +4,7 @@ Index: diff.patch
 +++ diff.patch
 @@ -1,13 +1,15 @@
 -// main-a.ts
-+// common-dMrhAevA.d.ts
++// common-D72gszVh.d.ts
 +/// <reference types="node" />
 +interface B {}
 +export { B }
@@ -12,7 +12,7 @@ Index: diff.patch
  /// <reference types="jest" />
  /// <reference types="react" />
 -export { B } from './main-b.ts'
-+import { B } from './common-dMrhAevA.js'
++import { B } from './common-D72gszVh.js'
  declare const A = 2
  declare type JSXElements = keyof JSX.IntrinsicElements
  declare const a: JSXElements[]
@@ -23,5 +23,5 @@ Index: diff.patch
 -interface B {}
 +export { A, B, JSXElements, a }
 +// main-b.d.ts
-+import { B } from './common-dMrhAevA.js'
++import { B } from './common-D72gszVh.js'
  export { B }

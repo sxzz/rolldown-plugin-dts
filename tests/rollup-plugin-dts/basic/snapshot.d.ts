@@ -1,7 +1,6 @@
 // index.d.ts
 //#region tests/rollup-plugin-dts/basic/mod.d.ts
 declare const a: string;
-
 //#endregion
 //#region tests/rollup-plugin-dts/basic/foo.d.ts
 declare const foo: number;
@@ -19,6 +18,5 @@ declare class Cls {
   foo: string;
   fn(e: Enum): void;
 }
-
 //#endregion
 export { Cls, bar, fn, foo };

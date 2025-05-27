@@ -12,6 +12,5 @@ declare class Foo {
   method(c: C): D;
   method(e: E): F;
 }
-
 //#endregion
 export { Foo as default };

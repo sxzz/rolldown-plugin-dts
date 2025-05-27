@@ -6,7 +6,6 @@ declare type In = {
 declare type Out = {
   b: number;
 };
-
 //#endregion
 //#region tests/rollup-plugin-dts/export-multiple-vars/util.d.ts
 declare const config: {
@@ -18,6 +17,5 @@ declare const options: {
 declare const params: {
   normalize: (inVar: In) => Out;
 };
-
 //#endregion
 export { In, Out, config, options, params };

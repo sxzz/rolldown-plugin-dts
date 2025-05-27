@@ -7,6 +7,5 @@ type TypeScript = typeof typescript0;
 interface Test {
   rollup: rollup1.RollupOptions;
 }
-
 //#endregion
 export { Test, TypeScript };

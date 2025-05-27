@@ -6,6 +6,5 @@ type Props = {
   onClick: MouseEventHandler<HTMLButtonElement>;
 };
 declare const Button: React.FC<Props>;
-
 //#endregion
 export { Button };

@@ -15,7 +15,8 @@ declare enum Enum {
 declare class Cls {
   foo: string;
   fn(e: Enum): void;
-} //#endregion
+}
+//#endregion
 export { Cls, Enum, fn, foo };
 //# sourceMappingURL=basic.d.ts.map
 ```

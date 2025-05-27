@@ -3,6 +3,5 @@
 interface A {}
 declare const a: A;
 declare function typeQuery(): typeof a;
-
 //#endregion
 export { typeQuery };

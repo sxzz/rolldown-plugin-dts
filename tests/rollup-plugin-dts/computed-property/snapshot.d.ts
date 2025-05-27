@@ -12,6 +12,5 @@ type Klass = {
   [0]: C;
   [Dprop]: D;
 };
-
 //#endregion
 export { Klass };

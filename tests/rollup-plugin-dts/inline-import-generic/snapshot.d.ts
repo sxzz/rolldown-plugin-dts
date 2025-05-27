@@ -8,6 +8,5 @@ interface Bar<T> {
 interface Foo {
   bar: Bar<number>;
 }
-
 //#endregion
 export { Foo };

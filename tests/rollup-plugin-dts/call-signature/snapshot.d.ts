@@ -7,5 +7,6 @@ interface I {
 declare const fn: {
   (arg: string): string;
   staticProp: string;
-}; //#endregion
+};
+//#endregion
 export { I, fn };

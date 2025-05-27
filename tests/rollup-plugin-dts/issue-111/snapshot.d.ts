@@ -10,6 +10,5 @@ interface Stuff {
   id: string;
 }
 declare const Stuff: Stuff;
-
 //#endregion
 export { Stuff as OtherStuff, Stuff$1 as Stuff };

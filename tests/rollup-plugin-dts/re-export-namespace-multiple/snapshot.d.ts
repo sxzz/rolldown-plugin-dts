@@ -11,9 +11,6 @@ declare enum D {
 }
 declare const E: string;
 declare type F = string;
-
-//#endregion
-//#region tests/rollup-plugin-dts/re-export-namespace-multiple/deep.d.ts
 declare namespace deep_d_exports {
   export { defs_d_exports as ns };
 }
@@ -25,6 +22,5 @@ declare namespace only_one_d_exports {
 interface WithA {
   a: A;
 }
-
 //#endregion
 export { WithA, deep_d_exports as deep, defs_d_exports as ns, only_one_d_exports as onlyOne };

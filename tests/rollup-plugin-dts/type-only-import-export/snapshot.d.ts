@@ -21,12 +21,10 @@ export * from "n";
 
 //#region tests/rollup-plugin-dts/type-only-import-export/foo.d.ts
 interface Foo {}
-
 //#endregion
 //#region tests/rollup-plugin-dts/type-only-import-export/bar.d.ts
 declare class BarType {}
 declare class BarValue {}
-
 //#endregion
 //#region tests/rollup-plugin-dts/type-only-import-export/index.d.ts
 
@@ -34,5 +32,6 @@ interface O$1 {}
 declare class X {}
 interface Foo$1 {
   inline: string;
-} //#endregion
+}
+//#endregion
 export { A, B, B1 as B2, B1 as B3, BarType, BarValue, C, C as C1, D, E3 as E2, E3, E4, F, Foo, Foo$1 as FooInlne, G, G1, H1, I, J, K1, L, M1, O, O$1 as O1, X, E as default };

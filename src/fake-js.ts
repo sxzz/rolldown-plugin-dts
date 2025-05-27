@@ -232,7 +232,7 @@ export function createFakeJsPlugin({
     ]
 
     const result = generate(file, {
-      comments: true,
+      comments: false,
       sourceMaps: sourcemap,
       sourceFileName: id,
     })
@@ -674,29 +674,18 @@ function overwriteNode<T>(node: t.Node, newNode: T): T {
 
 function inheritNodeComments<T extends t.Node>(oldNode: t.Node, newNode: T): T {
   newNode.leadingComments ||= []
-  newNode.trailingComments ||= []
 
-  const leadingComments = filterHashtag(oldNode.leadingComments)
+  const leadingComments = oldNode.leadingComments?.filter((comment) =>
+    comment.value.startsWith('#'),
+  )
   if (leadingComments) {
     newNode.leadingComments.unshift(...leadingComments)
-  }
-  const trailingComments = filterHashtag(oldNode.trailingComments)
-  if (trailingComments) {
-    newNode.trailingComments.unshift(...trailingComments)
   }
 
   newNode.leadingComments = collectReferenceDirectives(
     newNode.leadingComments,
     true,
   )
-  newNode.trailingComments = collectReferenceDirectives(
-    newNode.trailingComments || [],
-    true,
-  )
 
   return newNode
-
-  function filterHashtag(comments: t.Comment[] | undefined | null) {
-    return comments?.filter((comment) => comment.value.startsWith('#'))
-  }
 }

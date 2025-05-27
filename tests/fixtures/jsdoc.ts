@@ -1,3 +1,10 @@
+import type { Plugin } from 'rolldown'
+
+/**
+ * with imports
+ */
+export interface RollupMdiFontminOptions extends Plugin {}
+
 /**
  * named export
  */

@@ -6,6 +6,5 @@ interface Foo {
   ns1: foo0;
   ns2: typeof foo0;
 }
-
 //#endregion
 export { Foo };

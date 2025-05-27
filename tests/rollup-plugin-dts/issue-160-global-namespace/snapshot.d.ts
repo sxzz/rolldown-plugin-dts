@@ -2,7 +2,6 @@
 //#region tests/rollup-plugin-dts/issue-160-global-namespace/mod.d.ts
 interface A {}
 interface B {}
-
 //#endregion
 //#region tests/rollup-plugin-dts/issue-160-global-namespace/index.d.ts
 declare global {
@@ -13,6 +12,5 @@ declare global {
     export { A, B };
   }
 }
-
 //#endregion
 export { A };

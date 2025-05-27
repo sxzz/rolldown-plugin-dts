@@ -32,6 +32,5 @@ declare function fn<T = G>(g: T, h: Gen<H>): void;
 declare type TyFn = <T = J>(j: T, k: Gen<K>) => L;
 declare type TyCtor = new <T = M>(m: T, n: Gen<N>) => O;
 interface I2 extends Gen<P> {}
-
 //#endregion
 export { Cl, I1, I2, Ty, TyCtor, TyFn, fn };

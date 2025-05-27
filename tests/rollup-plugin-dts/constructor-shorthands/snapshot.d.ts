@@ -7,6 +7,5 @@ declare class Foo {
   protected b: B;
   constructor(a: A, b: B);
 }
-
 //#endregion
 export { Foo };

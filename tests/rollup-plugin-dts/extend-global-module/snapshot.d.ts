@@ -7,7 +7,8 @@ declare global {
       second: Second$2;
     }
   }
-} //#endregion
+}
+//#endregion
 //#region tests/rollup-plugin-dts/extend-global-module/second2.d.ts
 interface Second$1 {}
 declare global {
@@ -17,14 +18,12 @@ declare global {
     }
   }
 }
-
 //#endregion
 //#region tests/rollup-plugin-dts/extend-global-module/second3.d.ts
 interface Second {}
 declare module "foobar" {
   const second3: Second;
 }
-
 //#endregion
 //#region tests/rollup-plugin-dts/extend-global-module/index.d.ts
 interface First {}
@@ -36,6 +35,5 @@ declare global {
   }
 }
 declare const e: any;
-
 //#endregion
 export { e as default };

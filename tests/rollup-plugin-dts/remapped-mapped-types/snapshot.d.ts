@@ -2,7 +2,6 @@
 //#region tests/rollup-plugin-dts/remapped-mapped-types/foo.d.ts
 type Getters<T> = { [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K] };
 type MyExclude<T, U> = T extends U ? never : T;
-
 //#endregion
 //#region tests/rollup-plugin-dts/remapped-mapped-types/index.d.ts
 interface Person {
@@ -17,6 +16,5 @@ interface Circle {
   radius: number;
 }
 type KindlessCircle = RemoveKindField<Circle>;
-
 //#endregion
 export { KindlessCircle, LazyPerson };

@@ -10,6 +10,5 @@ declare const nDef: number;
 declare const aDef: Array<number>;
 declare const tuple: [number, string];
 declare const unique: unique symbol;
-
 //#endregion
 export { aDef, aLit, nDef, nLit, nLitDef, sDef, sLit, sLitDef, tuple, unique };

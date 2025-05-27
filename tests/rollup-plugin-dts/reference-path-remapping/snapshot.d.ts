@@ -5,7 +5,8 @@
 
 declare class C2 {
   public X: x2.I2;
-} //#endregion
+}
+//#endregion
 //#region tests/rollup-plugin-dts/reference-path-remapping/index.d.ts
 declare class C1 {
   public X: x1.I1;

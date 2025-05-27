@@ -9,6 +9,5 @@ declare class D {
   set b(_: B);
   readonly c: C;
 }
-
 //#endregion
 export { D };

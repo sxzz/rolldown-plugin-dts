@@ -3,7 +3,6 @@ import { inspect } from "util";
 
 //#region tests/rollup-plugin-dts/computed-method/b.d.ts
 declare const b: "b";
-
 //#endregion
 //#region tests/rollup-plugin-dts/computed-method/mod.d.ts
 declare const deep: {
@@ -11,7 +10,6 @@ declare const deep: {
     a: "deep";
   };
 };
-
 //#endregion
 //#region tests/rollup-plugin-dts/computed-method/index.d.ts
 declare class Test {
@@ -19,6 +17,5 @@ declare class Test {
   [b](): string;
   [deep.deep.a]: string;
 }
-
 //#endregion
 export { Test };

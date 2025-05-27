@@ -4,15 +4,15 @@ Index: diff.patch
 +++ diff.patch
 @@ -1,6 +1,10 @@
 -// main-a.ts
-+// common-VNQ3nt5C.d.ts
++// common-BCs1CRq6.d.ts
  interface A {}
  interface B {}
  export { A, B }
 -// main-b.ts
 -export { B } from './main-a.ts'
 +// main-a.d.ts
-+import { A } from './common-VNQ3nt5C.js'
++import { A } from './common-BCs1CRq6.js'
 +export { A }
 +// main-b.d.ts
-+import { B } from './common-VNQ3nt5C.js'
++import { B } from './common-BCs1CRq6.js'
 +export { B }

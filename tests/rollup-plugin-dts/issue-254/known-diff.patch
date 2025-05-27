@@ -6,7 +6,7 @@ Index: diff.patch
  }
  declare namespace Bar {
    export enum F {}
- } 
+ }
 -export { Bar }
 -export { Foo }
 +export { Bar, Foo }
