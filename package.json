@@ -89,8 +89,5 @@
   "engines": {
     "node": ">=20.18.0"
   },
-  "resolutions": {
-    "rolldown-plugin-dts": "workspace:*"
-  },
   "prettier": "@sxzz/prettier-config"
 }
