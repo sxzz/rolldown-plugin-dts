@@ -41,11 +41,15 @@
     "prepublishOnly": "pnpm run build"
   },
   "peerDependencies": {
+    "@typescript/native-preview": ">=7.0.0-dev.20250601.1",
     "rolldown": "^1.0.0-beta.9",
     "typescript": "^5.0.0",
     "vue-tsc": "~2.2.0"
   },
   "peerDependenciesMeta": {
+    "@typescript/native-preview": {
+      "optional": true
+    },
     "typescript": {
       "optional": true
     },
@@ -70,6 +74,7 @@
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/node": "^22.15.29",
+    "@typescript/native-preview": "7.0.0-dev.20250601.1",
     "@volar/typescript": "^2.4.14",
     "@vue/language-core": "^2.2.10",
     "bumpp": "^10.1.1",

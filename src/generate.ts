@@ -1,4 +1,8 @@
-import { fork, type ChildProcess } from 'node:child_process'
+import { fork, spawn, type ChildProcess } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { createBirpc, type BirpcReturn } from 'birpc'
 import Debug from 'debug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
@@ -20,6 +24,13 @@ const debug = Debug('rolldown-plugin-dts:generate')
 
 const WORKER_URL = import.meta.WORKER_URL || './utils/tsc-worker.ts'
 
+const spawnAsync = (...args: Parameters<typeof spawn>) =>
+  new Promise<void>((resolve, reject) => {
+    const child = spawn(...args)
+    child.on('close', () => resolve())
+    child.on('error', (error) => reject(error))
+  })
+
 export interface TsModule {
   /** `.ts` source code */
   code: string
@@ -40,6 +51,7 @@ export function createGeneratePlugin({
   vue,
   parallel,
   eager,
+  tsgo,
 }: Pick<
   OptionsResolved,
   | 'cwd'
@@ -51,6 +63,7 @@ export function createGeneratePlugin({
   | 'vue'
   | 'parallel'
   | 'eager'
+  | 'tsgo'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -68,8 +81,9 @@ export function createGeneratePlugin({
   let childProcess: ChildProcess | undefined
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscEmit: (options: TscOptions) => TscResult
+  let tsgoDist: string | undefined
 
-  if (parallel) {
+  if (!tsgo && parallel) {
     childProcess = fork(new URL(WORKER_URL, import.meta.url), {
       stdio: 'inherit',
     })
@@ -86,7 +100,29 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      if (!parallel && (!isolatedDeclarations || vue)) {
+      if (tsgo) {
+        const tsgoPkg = import.meta.resolve(
+          '@typescript/native-preview/package.json',
+        )
+        const { default: getExePath } = await import(
+          new URL('./lib/getExePath.js', tsgoPkg).href
+        )
+        const tsgo = getExePath()
+        tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
+        await spawnAsync(
+          tsgo,
+          [
+            '--noEmit',
+            'false',
+            '--declaration',
+            '--emitDeclarationOnly',
+            ...(tsconfig ? ['-p', tsconfig] : []),
+            '--outDir',
+            tsgoDist,
+          ],
+          { stdio: 'inherit' },
+        )
+      } else if (!parallel && (!isolatedDeclarations || vue)) {
         ;({ tscEmit } = await import('./utils/tsc.ts'))
       }
 
@@ -176,7 +212,24 @@ export function createGeneratePlugin({
         let map: SourceMapInput | undefined
         debug('generate dts %s from %s', dtsId, id)
 
-        if (isolatedDeclarations && !RE_VUE.test(id)) {
+        if (tsgo) {
+          if (RE_VUE.test(id))
+            throw new Error('tsgo does not support Vue files.')
+          const dtsPath = path.resolve(
+            tsgoDist!,
+            path.relative(
+              path.resolve(typeof tsgo === 'string' ? tsgo : 'src'),
+              filename_ts_to_dts(id),
+            ),
+          )
+          if (existsSync(dtsPath)) {
+            dtsCode = await readFile(dtsPath, 'utf8')
+          } else {
+            throw new Error(
+              `tsgo did not generate dts file for ${id}, please check your tsconfig.`,
+            )
+          }
+        } else if (isolatedDeclarations && !RE_VUE.test(id)) {
           const result = oxcIsolatedDeclaration(id, code, isolatedDeclarations)
           if (result.errors.length) {
             const [error] = result.errors
@@ -240,8 +293,12 @@ export function createGeneratePlugin({
         }
       : undefined,
 
-    buildEnd() {
+    async buildEnd() {
       childProcess?.kill()
+      if (tsgoDist) {
+        await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
+        tsgoDist = undefined
+      }
     },
   }
 }
