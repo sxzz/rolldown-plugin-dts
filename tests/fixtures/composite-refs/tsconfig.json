@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "references": [
+    {
+      "path": "./tsconfig.1.json"
+    },
+    {
+      "path": "./tsconfig.2.json"
+    }
+  ],
+  "compilerOptions": {
+    "composite": true,
+  },
+  "include": []
+}

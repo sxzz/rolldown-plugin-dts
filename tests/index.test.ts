@@ -176,3 +176,20 @@ test('multi declarations', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test('composite references', async () => {
+  const root = path.resolve(dirname, 'fixtures/composite-refs')
+  const { snapshot } = await rolldownBuild(
+    [
+      path.resolve(root, 'dir1/input1.ts'),
+      path.resolve(root, 'dir2/input2.ts'),
+    ],
+    [
+      dts({
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        compilerOptions: { isolatedDeclarations: false },
+      }),
+    ],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
