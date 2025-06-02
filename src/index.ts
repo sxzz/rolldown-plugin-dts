@@ -78,17 +78,16 @@ export interface Options {
    * project.
    *
    * Otherwise, if this option is `false`, `rolldown-plugin-dts` will write
-   * down all built files into memory and leave a small footprint in your
-   * disk.
+   * built files only into memory and leave a small footprint in your disk.
    *
    * Enabling this option will decrease the build time by caching previous build
    * results. This is helpful when you have a large project with multiple
    * referenced projects.
    *
-   * By default, `incremental` is `true` if your tsconfig.json has
+   * By default, `incremental` is `true` if your tsconfig has
    * [`incremental`](https://www.typescriptlang.org/tsconfig/#incremental) or
    * [`tsBuildInfoFile`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile)
-   * option.
+   * enabled.
    *
    * This option is only used when {@link Options.isolatedDeclarations} is
    * `false`.
