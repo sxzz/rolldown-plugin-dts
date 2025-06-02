@@ -8,7 +8,7 @@ import {
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
-} from './utils/filename.ts'
+} from './filename.ts'
 import type { OptionsResolved } from './index.ts'
 import type { Plugin } from 'rolldown'
 

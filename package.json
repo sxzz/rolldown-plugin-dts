@@ -23,6 +23,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
+    "./filename": "./dist/filename.js",
     "./package.json": "./package.json"
   },
   "publishConfig": {

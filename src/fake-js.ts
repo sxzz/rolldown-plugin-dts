@@ -8,7 +8,7 @@ import {
   filename_js_to_dts,
   RE_DTS,
   RE_DTS_MAP,
-} from './utils/filename.ts'
+} from './filename.ts'
 import type { OptionsResolved } from './index.ts'
 import type { Plugin, RenderedChunk } from 'rolldown'
 
