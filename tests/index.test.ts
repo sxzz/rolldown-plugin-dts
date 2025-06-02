@@ -1,6 +1,8 @@
+import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
+import { glob } from 'tinyglobby'
 import { expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 
@@ -177,8 +179,15 @@ test('multi declarations', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
-test('composite references', async () => {
+test.only('composite references', async () => {
   const root = path.resolve(dirname, 'fixtures/composite-refs')
+
+  // The outDir in tsconfig files.
+  const tempDir = path.resolve(root, 'temp')
+
+  // Ensure .tsbuildinfo files do not exist before the test
+  await fs.rm(tempDir, { recursive: true, force: true })
+
   const { snapshot } = await rolldownBuild(
     [
       path.resolve(root, 'dir1/input1.ts'),
@@ -192,4 +201,47 @@ test('composite references', async () => {
     ],
   )
   expect(snapshot).toMatchSnapshot()
+
+  // Ensure .tsbuildinfo files are not created after the test
+  const tsBuildInfoFiles = await glob('**/*.tsbuildinfo', {
+    cwd: tempDir,
+    absolute: false,
+  })
+  expect(tsBuildInfoFiles).toHaveLength(0)
+})
+
+test.only('composite references incremental', async () => {
+  const root = path.resolve(dirname, 'fixtures/composite-refs-incremental')
+
+  // The outDir in tsconfig files.
+  const tempDir = path.resolve(root, 'temp')
+
+  // Ensure .tsbuildinfo files do not exist before the test
+  await fs.rm(tempDir, { recursive: true, force: true })
+
+  const { snapshot } = await rolldownBuild(
+    [
+      path.resolve(root, 'dir1/input1.ts'),
+      path.resolve(root, 'dir2/input2.ts'),
+    ],
+    [
+      dts({
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        compilerOptions: { isolatedDeclarations: false },
+      }),
+    ],
+  )
+  expect(snapshot).toMatchSnapshot()
+
+  // Ensure .tsbuildinfo files are created after the test
+  const tsBuildInfoFiles = await glob('**/*.tsbuildinfo', {
+    cwd: tempDir,
+    absolute: false,
+  })
+  expect(tsBuildInfoFiles).toMatchInlineSnapshot(`
+    [
+      "dir1/tsconfig.1.tsbuildinfo",
+      "dir2/tsconfig.2.tsbuildinfo",
+    ]
+  `)
 })

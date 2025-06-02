@@ -1,6 +1,7 @@
 import path from 'node:path'
 import Debug from 'debug'
 import ts from 'typescript'
+import { fsSystem, memorySystem } from './tsc-system.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'
@@ -40,6 +41,7 @@ export interface TscOptions {
   tsconfig?: string
   tsconfigRaw: TsConfigJson
   cwd: string
+  incremental: boolean
   entries?: string[]
   id: string
   vue?: boolean
@@ -74,22 +76,20 @@ function createOrGetTsModule(options: TscOptions): TscModule {
 // This is designed for a project (e.g. tsconfig.json) that has "references" to
 // other composite projects (e.g., tsconfig.node.json and tsconfig.app.json).
 //
-// The build result will be cached in the `.tsbuildinfo` file so that the next
-// time the project is built (without changes) the build will be super fast.
-function buildSolution(tsconfig: string) {
-  debug(`building projects for ${tsconfig}`)
-
-  // Update the system to log tsc output to the debug
-  const system: ts.System = {
-    ...ts.sys,
-    write: (s: string): void => {
-      debug(s)
-    },
-  }
+// If `incremental` is `true`, the build result will be cached in the
+// `.tsbuildinfo` file so that the next time the project is built (without
+// changes) the build will be super fast. If `incremental` is `false`, the
+// `.tsbuildinfo` file will only be written to the memory.
+function buildSolution(tsconfig: string, incremental: boolean) {
+  debug(`building projects for ${tsconfig} with incremental: ${incremental}`)
+  const system = incremental ? fsSystem : memorySystem
 
   const host = ts.createSolutionBuilderHost(system)
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
-    force: false,
+    // If `incremental` is `false`, we want to force the builder to rebuild the
+    // project even if the project is already built (i.e., `.tsbuildinfo` exists
+    // on the disk).
+    force: !incremental,
     verbose: true,
   })
 
@@ -102,18 +102,19 @@ function createTsProgram({
   id,
   tsconfig,
   tsconfigRaw,
+  incremental,
   vue,
   cwd,
 }: TscOptions): TscModule {
   const parsedCmd = ts.parseJsonConfigFileContent(
     tsconfigRaw,
-    ts.sys,
+    fsSystem,
     tsconfig ? path.dirname(tsconfig) : cwd,
   )
 
   // If the tsconfig has project references, build the project tree.
   if (tsconfig && parsedCmd.projectReferences?.length) {
-    buildSolution(tsconfig)
+    buildSolution(tsconfig, incremental)
   }
 
   const compilerOptions: ts.CompilerOptions = {
@@ -123,12 +124,18 @@ function createTsProgram({
   const rootNames = [
     ...new Set(
       [id, ...(entries || parsedCmd.fileNames)].map((f) =>
-        ts.sys.resolvePath(f),
+        fsSystem.resolvePath(f),
       ),
     ),
   ]
 
   const host = ts.createCompilerHost(compilerOptions, true)
+
+  // Try to read files from memory first, which was added by `buildSolution`
+  host.readFile = fsSystem.readFile
+  host.fileExists = fsSystem.fileExists
+  host.directoryExists = fsSystem.directoryExists
+
   const createProgram = vue ? createVueProgramFactory(ts) : ts.createProgram
   const program = createProgram({
     rootNames,
@@ -141,7 +148,7 @@ function createTsProgram({
 
   if (!sourceFile) {
     debug(`source file not found in program: ${id}`)
-    if (!ts.sys.fileExists(id)) {
+    if (!fsSystem.fileExists(id)) {
       debug(`File ${id} does not exist on disk.`)
       throw new Error(`Source file not found: ${id}`)
     } else {

@@ -63,6 +63,31 @@ const input2 = "input2";
 export { input2 };"
 `;
 
+exports[`composite references incremental 1`] = `
+"// input1.d.ts
+//#region tests/fixtures/composite-refs-incremental/dir1/input1.d.ts
+declare const input1 = "input1";
+//#endregion
+export { input1 };
+// input1.js
+//#region tests/fixtures/composite-refs-incremental/dir1/input1.ts
+const input1 = "input1";
+
+//#endregion
+export { input1 };
+// input2.d.ts
+//#region tests/fixtures/composite-refs-incremental/dir2/input2.d.ts
+declare const input2 = "input2";
+//#endregion
+export { input2 };
+// input2.js
+//#region tests/fixtures/composite-refs-incremental/dir2/input2.ts
+const input2 = "input2";
+
+//#endregion
+export { input2 };"
+`;
+
 exports[`dts input 1`] = `
 "// index.d.ts
 //#region tests/fixtures/dts-input.d.ts
