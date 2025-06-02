@@ -179,7 +179,7 @@ test('multi declarations', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
-test.only('composite references', async () => {
+test('composite references', async () => {
   const root = path.resolve(dirname, 'fixtures/composite-refs')
 
   // The outDir in tsconfig files.
@@ -210,7 +210,7 @@ test.only('composite references', async () => {
   expect(tsBuildInfoFiles).toHaveLength(0)
 })
 
-test.only('composite references incremental', async () => {
+test('composite references incremental', async () => {
   const root = path.resolve(dirname, 'fixtures/composite-refs-incremental')
 
   // The outDir in tsconfig files.
