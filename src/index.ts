@@ -117,7 +117,6 @@ export type OptionsResolved = Overwrite<
     tsconfig: string | undefined
     isolatedDeclarations: IsolatedDeclarationsOptions | false
     tsconfigRaw: TsConfigJson
-    tsconfigDir: string
   }
 >
 
@@ -177,7 +176,6 @@ export function resolveOptions({
     ...overriddenTsconfigRaw,
     compilerOptions,
   }
-  const tsconfigDir = tsconfig ? path.dirname(tsconfig) : cwd
 
   if (isolatedDeclarations == null) {
     isolatedDeclarations = !!compilerOptions?.isolatedDeclarations
@@ -194,7 +192,6 @@ export function resolveOptions({
   return {
     cwd,
     tsconfig,
-    tsconfigDir,
     tsconfigRaw,
     isolatedDeclarations,
     sourcemap,

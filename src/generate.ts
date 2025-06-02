@@ -14,7 +14,7 @@ import {
 import type { TscFunctions } from './utils/tsc-worker.ts'
 import type { TscOptions, TscResult } from './utils/tsc.ts'
 import type { OptionsResolved } from './index.ts'
-import type { Plugin } from 'rolldown'
+import type { Plugin, SourceMapInput } from 'rolldown'
 
 const debug = Debug('rolldown-plugin-dts:generate')
 
@@ -31,8 +31,9 @@ export interface TsModule {
 export type DtsMap = Map<string, TsModule>
 
 export function createGeneratePlugin({
+  tsconfig,
   tsconfigRaw,
-  tsconfigDir,
+  cwd,
   isolatedDeclarations,
   emitDtsOnly,
   vue,
@@ -40,8 +41,9 @@ export function createGeneratePlugin({
   eager,
 }: Pick<
   OptionsResolved,
+  | 'cwd'
+  | 'tsconfig'
   | 'tsconfigRaw'
-  | 'tsconfigDir'
   | 'isolatedDeclarations'
   | 'emitDtsOnly'
   | 'vue'
@@ -169,7 +171,7 @@ export function createGeneratePlugin({
 
         const { code, id } = dtsMap.get(dtsId)!
         let dtsCode: string | undefined
-        let map: any
+        let map: SourceMapInput | undefined
         debug('generate dts %s from %s', dtsId, id)
 
         if (isolatedDeclarations && !RE_VUE.test(id)) {
@@ -193,8 +195,9 @@ export function createGeneratePlugin({
                 .filter((v) => v.isEntry)
                 .map((v) => v.id)
           const options: Omit<TscOptions, 'programs'> = {
+            tsconfig,
             tsconfigRaw,
-            tsconfigDir,
+            cwd,
             entries,
             id,
             vue,
