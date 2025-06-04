@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "types": [],
+    "outDir": "${configDir}/temp/dir1"
+  },
+  "include": [
+    "${configDir}/dir1/**/*.ts"
+  ]
+}

@@ -64,6 +64,37 @@ export interface Options {
   tsconfigRaw?: Omit<TsConfigJson, 'compilerOptions'>
 
   /**
+   * If your tsconfig.json has
+   * [`references`](https://www.typescriptlang.org/tsconfig/#references) option,
+   * `rolldown-plugin-dts` will use [`tsc
+   * -b`](https://www.typescriptlang.org/docs/handbook/project-references.html#build-mode-for-typescript)
+   * to build the project and all referenced projects before emitting `.d.ts`
+   * files.
+   *
+   * In such case, if this option is `true`, `rolldown-plugin-dts` will write
+   * down all built files into your disk, including
+   * [`.tsbuildinfo`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile)
+   * and other built files. This is equivalent to running `tsc -b` in your
+   * project.
+   *
+   * Otherwise, if this option is `false`, `rolldown-plugin-dts` will write
+   * built files only into memory and leave a small footprint in your disk.
+   *
+   * Enabling this option will decrease the build time by caching previous build
+   * results. This is helpful when you have a large project with multiple
+   * referenced projects.
+   *
+   * By default, `incremental` is `true` if your tsconfig has
+   * [`incremental`](https://www.typescriptlang.org/tsconfig/#incremental) or
+   * [`tsBuildInfoFile`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile)
+   * enabled.
+   *
+   * This option is only used when {@link Options.isolatedDeclarations} is
+   * `false`.
+   */
+  incremental?: boolean
+
+  /**
    * Override the `compilerOptions` specified in `tsconfig.json`.
    *
    * @see https://www.typescriptlang.org/tsconfig/#compilerOptions
@@ -117,7 +148,6 @@ export type OptionsResolved = Overwrite<
     tsconfig: string | undefined
     isolatedDeclarations: IsolatedDeclarationsOptions | false
     tsconfigRaw: TsConfigJson
-    tsconfigDir: string
   }
 >
 
@@ -141,6 +171,7 @@ export { createFakeJsPlugin, createGeneratePlugin }
 export function resolveOptions({
   cwd = process.cwd(),
   tsconfig,
+  incremental = false,
   compilerOptions = {},
   tsconfigRaw: overriddenTsconfigRaw = {},
   isolatedDeclarations,
@@ -169,6 +200,8 @@ export function resolveOptions({
     ...compilerOptions,
   }
 
+  incremental ||=
+    compilerOptions.incremental || !!compilerOptions.tsBuildInfoFile
   sourcemap ??= !!compilerOptions.declarationMap
   compilerOptions.declarationMap = sourcemap
 
@@ -177,7 +210,6 @@ export function resolveOptions({
     ...overriddenTsconfigRaw,
     compilerOptions,
   }
-  const tsconfigDir = tsconfig ? path.dirname(tsconfig) : cwd
 
   if (isolatedDeclarations == null) {
     isolatedDeclarations = !!compilerOptions?.isolatedDeclarations
@@ -194,8 +226,8 @@ export function resolveOptions({
   return {
     cwd,
     tsconfig,
-    tsconfigDir,
     tsconfigRaw,
+    incremental,
     isolatedDeclarations,
     sourcemap,
     dtsInput,
