@@ -124,7 +124,7 @@ This is especially useful when you have a single `tsconfig.json` for multiple pr
 - Set to `true` to enable `tsgo` for the current project.
 - If a string is provided, it should be the root path of your source files.
 
-> [!NOTE]
+> [!WARNING]
 > This option is experimental and not yet recommended for production environments.
 
 ## Differences from `rollup-plugin-dts`
