@@ -200,12 +200,8 @@ export function resolveOptions({
     ...compilerOptions,
   }
 
-  if (compilerOptions.incremental) {
-    incremental = true
-  } else if (compilerOptions.tsBuildInfoFile) {
-    incremental = true
-  }
-
+  incremental ||=
+    compilerOptions.incremental || !!compilerOptions.tsBuildInfoFile
   sourcemap ??= !!compilerOptions.declarationMap
   compilerOptions.declarationMap = sourcemap
 

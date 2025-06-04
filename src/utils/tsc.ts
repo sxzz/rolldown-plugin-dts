@@ -71,15 +71,15 @@ function createOrGetTsModule(options: TscOptions): TscModule {
   return module
 }
 
-// Build the root project and all its dependencies projects.
-//
-// This is designed for a project (e.g. tsconfig.json) that has "references" to
-// other composite projects (e.g., tsconfig.node.json and tsconfig.app.json).
-//
-// If `incremental` is `true`, the build result will be cached in the
-// `.tsbuildinfo` file so that the next time the project is built (without
-// changes) the build will be super fast. If `incremental` is `false`, the
-// `.tsbuildinfo` file will only be written to the memory.
+/**
+ * Build the root project and all its dependencies projects.
+ * This is designed for a project (e.g. tsconfig.json) that has "references" to
+ * other composite projects (e.g., tsconfig.node.json and tsconfig.app.json).
+ * If `incremental` is `true`, the build result will be cached in the
+ * `.tsbuildinfo` file so that the next time the project is built (without
+ * changes) the build will be super fast. If `incremental` is `false`, the
+ * `.tsbuildinfo` file will only be written to the memory.
+ */
 function buildSolution(tsconfig: string, incremental: boolean) {
   debug(`building projects for ${tsconfig} with incremental: ${incremental}`)
   const system = incremental ? fsSystem : memorySystem
