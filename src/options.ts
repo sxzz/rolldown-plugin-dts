@@ -120,6 +120,15 @@ export interface Options {
    * This is especially useful when you have a single `tsconfig.json` for multiple projects in a monorepo.
    */
   eager?: boolean
+
+  /**
+   * **[Experimental]** Enables DTS generation using `tsgo`.
+   *
+   * To use this option, make sure `@typescript/native-preview` is installed as a dependency.
+   *
+   * **Note:** This option is not yet recommended for production environments.
+   */
+  tsgo?: boolean | string
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
@@ -132,6 +141,8 @@ export type OptionsResolved = Overwrite<
     tsconfigRaw: TsConfigJson
   }
 >
+
+let warnedTsgo = false
 
 export function resolveOptions({
   cwd = process.cwd(),
@@ -147,6 +158,7 @@ export function resolveOptions({
   vue = false,
   parallel = false,
   eager = false,
+  tsgo = false,
 }: Options): OptionsResolved {
   let resolvedTsconfig: TsConfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
@@ -188,6 +200,13 @@ export function resolveOptions({
     isolatedDeclarations.sourcemap = !!compilerOptions.declarationMap
   }
 
+  if (tsgo && !warnedTsgo) {
+    console.warn(
+      'The `tsgo` option is experimental and may change in the future.',
+    )
+    warnedTsgo = true
+  }
+
   return {
     cwd,
     tsconfig,
@@ -201,5 +220,6 @@ export function resolveOptions({
     vue,
     parallel,
     eager,
+    tsgo,
   }
 }
