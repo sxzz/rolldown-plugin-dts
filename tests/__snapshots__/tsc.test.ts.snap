@@ -1,0 +1,149 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`tsc > composite references 1`] = `
+"// input1.d.ts
+//#region tests/fixtures/composite-refs/dir1/input1.d.ts
+declare const input1 = "input1";
+//#endregion
+export { input1 };
+// input1.js
+//#region tests/fixtures/composite-refs/dir1/input1.ts
+const input1 = "input1";
+
+//#endregion
+export { input1 };
+// input2.d.ts
+//#region tests/fixtures/composite-refs/dir2/input2.d.ts
+declare const input2 = "input2";
+//#endregion
+export { input2 };
+// input2.js
+//#region tests/fixtures/composite-refs/dir2/input2.ts
+const input2 = "input2";
+
+//#endregion
+export { input2 };"
+`;
+
+exports[`tsc > composite references incremental 1`] = `
+"// input1.d.ts
+//#region tests/fixtures/composite-refs-incremental/dir1/input1.d.ts
+declare const input1 = "input1";
+//#endregion
+export { input1 };
+// input1.js
+//#region tests/fixtures/composite-refs-incremental/dir1/input1.ts
+const input1 = "input1";
+
+//#endregion
+export { input1 };
+// input2.d.ts
+//#region tests/fixtures/composite-refs-incremental/dir2/input2.d.ts
+declare const input2 = "input2";
+//#endregion
+export { input2 };
+// input2.js
+//#region tests/fixtures/composite-refs-incremental/dir2/input2.ts
+const input2 = "input2";
+
+//#endregion
+export { input2 };"
+`;
+
+exports[`tsc > jsdoc 1`] = `
+"// jsdoc.d.ts
+import { Plugin } from "rolldown";
+
+//#region tests/fixtures/jsdoc.d.ts
+
+/**
+ * with imports
+ */
+interface RollupMdiFontminOptions extends Plugin {}
+/**
+ * named export
+ */
+declare function fn(): number;
+/**
+ * options
+ */
+interface Options {
+  /**
+   * interface member
+   */
+  foo: string;
+}
+/**
+ * type alias
+ */
+type Foo = string;
+/**
+ * default export
+ */
+declare const _default: number;
+//#endregion
+export { Foo, Options, RollupMdiFontminOptions, _default as default, fn };
+// jsdoc.js
+//#region tests/fixtures/jsdoc.ts
+/**
+* named export
+*/
+function fn() {
+	return 42;
+}
+/**
+* default export
+*/
+var jsdoc_default = fn();
+
+//#endregion
+export { jsdoc_default as default, fn };"
+`;
+
+exports[`tsc > multi declarations 1`] = `
+"// index.d.ts
+//#region tests/fixtures/multi-decls/mod.d.ts
+declare const a: 1, b: 2;
+//#endregion
+//#region tests/fixtures/multi-decls/index.d.ts
+declare const a$1 = 3,
+  b$1 = 3;
+//#endregion
+export { a, b, a$1 as c, b$1 as d };"
+`;
+
+exports[`tsc > typescript compiler 1`] = `
+"// entry1.d.ts
+
+declare const str = "foo";
+declare const num = 42;
+declare const bool = true;
+declare function fn(arg: typeof str): "foo" | 1;
+//#endregion
+export { bool, fn, num, str };
+// entry2.d.ts
+
+interface Unused {
+  foo: string;
+}
+//#endregion
+export { Unused };"
+`;
+
+exports[`tsc > vue-sfc w/ ts-compiler 1`] = `
+"// main.d.ts
+import * as vue1 from "vue";
+
+//#region tests/fixtures/vue-sfc/App.vue.d.ts
+type __VLS_Props = {
+  foo: string;
+};
+declare global {
+  interface Window {
+    foo: string;
+  }
+}
+declare const _default: vue1.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue1.ComponentOptionsMixin, vue1.ComponentOptionsMixin, {}, string, vue1.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue1.ComponentProvideOptions, false, {}, any>;
+//#endregion
+export { _default as App };"
+`;
