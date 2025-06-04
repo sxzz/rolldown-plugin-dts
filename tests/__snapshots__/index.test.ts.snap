@@ -47,7 +47,7 @@ export { Foo };"
 `;
 
 exports[`input alias 1`] = `
-"// input2-BXeuhxGi.d.ts
+"// input2-CcmD5Ns-.d.ts
 //#region shared.d.ts
 interface Shared {
   shared: string;
@@ -60,7 +60,7 @@ interface Input2 extends Shared {
 }
 declare const input2: Input2;
 //#endregion
-export { Input2, input2 as input2$1 };
+export { Input2, input2 };
 // input2-LCiYuoaZ.js
 //#region shared.ts
 const shared = { shared: "shared" };
@@ -75,7 +75,7 @@ const input2 = {
 //#endregion
 export { input2 };
 // output1.d.ts
-import { Input2 } from "./input2-BXeuhxGi.js";
+import { Input2 } from "./input2-CcmD5Ns-.js";
 
 //#region input1.d.ts
 interface Input1 extends Input2 {
@@ -96,7 +96,7 @@ const input1 = {
 //#endregion
 export { input1 };
 // output2/index.d.ts
-import { Input2, input2$1 as input2 } from "../input2-BXeuhxGi.js";
+import { Input2, input2 } from "../input2-CcmD5Ns-.js";
 export { Input2, input2 };
 // output2/index.js
 import { input2 } from "../input2-LCiYuoaZ.js";

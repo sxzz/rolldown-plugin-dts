@@ -82,7 +82,7 @@
     "eslint": "^9.28.0",
     "estree-walker": "^3.0.3",
     "prettier": "^3.5.3",
-    "rolldown": "1.0.0-beta.10",
+    "rolldown": "1.0.0-beta.11-commit.f051675",
     "rollup-plugin-dts": "^6.2.1",
     "tinyglobby": "^0.2.14",
     "tsdown": "^0.12.6",
@@ -94,6 +94,9 @@
   },
   "engines": {
     "node": ">=20.18.0"
+  },
+  "resolutions": {
+    "rolldown": "1.0.0-beta.11-commit.f051675"
   },
   "prettier": "@sxzz/prettier-config"
 }
