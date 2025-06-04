@@ -142,6 +142,8 @@ export type OptionsResolved = Overwrite<
   }
 >
 
+let warnedTsgo = false
+
 export function resolveOptions({
   cwd = process.cwd(),
   tsconfig,
@@ -198,10 +200,11 @@ export function resolveOptions({
     isolatedDeclarations.sourcemap = !!compilerOptions.declarationMap
   }
 
-  if (tsgo) {
+  if (tsgo && !warnedTsgo) {
     console.warn(
       'The `tsgo` option is experimental and may change in the future.',
     )
+    warnedTsgo = true
   }
 
   return {
