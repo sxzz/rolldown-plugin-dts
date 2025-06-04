@@ -32,24 +32,33 @@ You can find an example in [here](./rolldown.config.ts).
 ## Options
 
 Configuration options for the plugin.
+Certainly! Here’s your documentation with simplified section titles (just the option name, no type annotation):
 
-### `cwd?: string`
+---
+
+### cwd
 
 The directory in which the plugin will search for the `tsconfig.json` file.
 
-### `dtsInput?: boolean`
+---
+
+### dtsInput
 
 Set to `true` if your entry files are `.d.ts` files instead of `.ts` files.
 
 When enabled, the plugin will skip generating a `.d.ts` file for the entry point.
 
-### `emitDtsOnly?: boolean`
+---
+
+### emitDtsOnly
 
 If `true`, the plugin will emit only `.d.ts` files and remove all other output chunks.
 
 This is especially useful when generating `.d.ts` files for the CommonJS format as part of a separate build step.
 
-### `tsconfig?: string | boolean`
+---
+
+### tsconfig
 
 The path to the `tsconfig.json` file.
 
@@ -58,13 +67,17 @@ The path to the `tsconfig.json` file.
 
 **Default:** `'tsconfig.json'`
 
-### `tsconfigRaw?: Omit<TsConfigJson, 'compilerOptions'>`
+---
+
+### tsconfigRaw
 
 Pass a raw `tsconfig.json` object directly to the plugin.
 
 See: [TypeScript tsconfig documentation](https://www.typescriptlang.org/tsconfig)
 
-### `incremental?: boolean`
+---
+
+### incremental
 
 Controls how project references and incremental builds are handled:
 
@@ -77,46 +90,62 @@ Enabling this option can speed up builds by caching previous results, which is h
 **Default:** `true` if your `tsconfig` has [`incremental`](https://www.typescriptlang.org/tsconfig/#incremental) or [`tsBuildInfoFile`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile) enabled.
 
 > [!NOTE]
-> This option is only used when [`isolatedDeclarations`](#isolateddeclarations-boolean--omitisolateddeclarationsoptions-sourcemap) is `false`.
+> This option is only used when [`isolatedDeclarations`](#isolateddeclarations) is `false`.
 
-### `compilerOptions?: TsConfigJson.CompilerOptions`
+---
+
+### compilerOptions
 
 Override the `compilerOptions` specified in `tsconfig.json`.
 
 See: [TypeScript compilerOptions documentation](https://www.typescriptlang.org/tsconfig/#compilerOptions)
 
-### `isolatedDeclarations?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>`
+---
+
+### isolatedDeclarations
 
 If `true`, the plugin will generate `.d.ts` files using [Oxc](https://oxc.rs/docs/guide/usage/transformer.html), which is significantly faster than the TypeScript compiler.
 
 This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
 
-### `sourcemap?: boolean`
+---
+
+### sourcemap
 
 If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
 
-### `resolve?: boolean | (string | RegExp)[]`
+---
+
+### resolve
 
 Resolve external types used in `.d.ts` files from `node_modules`.
 
 - If `true`, all external types are resolved.
 - If an array, only types matching the provided strings or regular expressions are resolved.
 
-### `vue?: boolean`
+---
+
+### vue
 
 If `true`, the plugin will generate `.d.ts` files using `vue-tsc`.
 
-### `parallel?: boolean`
+---
+
+### parallel
 
 If `true`, the plugin will launch a separate process for `tsc` or `vue-tsc`, enabling parallel processing of multiple projects.
 
-### `eager?: boolean`
+---
+
+### eager
 
 If `true`, the plugin will prepare all files listed in `tsconfig.json` for `tsc` or `vue-tsc`.
 
 This is especially useful when you have a single `tsconfig.json` for multiple projects in a monorepo.
 
-### `tsgo?: boolean | string`
+---
+
+### tsgo
 
 **[Experimental]** Enables DTS generation using [`tsgo`](https://github.com/microsoft/typescript-go).
 
@@ -126,6 +155,8 @@ This is especially useful when you have a single `tsconfig.json` for multiple pr
 
 > [!WARNING]
 > This option is experimental and not yet recommended for production environments.
+
+---
 
 ## Differences from `rollup-plugin-dts`
 
