@@ -126,3 +126,13 @@ test('dts input', async () => {
   })
   expect(snapshot).toMatchSnapshot()
 })
+
+test('same-name output', async () => {
+  const { chunks } = await rolldownBuild(
+    [path.resolve(dirname, 'fixtures/same-name/index.ts')],
+    [dts()],
+    {},
+    { preserveModules: true, entryFileNames: 'foo.d.ts' },
+  )
+  expect(chunks.every((chunk) => chunk.fileName.endsWith('.d.ts'))).toBe(true)
+})
