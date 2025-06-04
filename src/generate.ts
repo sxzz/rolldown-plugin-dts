@@ -11,9 +11,9 @@ import {
   RE_TS,
   RE_VUE,
 } from './filename.ts'
+import type { OptionsResolved } from './options.ts'
 import type { TscFunctions } from './utils/tsc-worker.ts'
 import type { TscOptions, TscResult } from './utils/tsc.ts'
-import type { OptionsResolved } from './index.ts'
 import type { Plugin, SourceMapInput } from 'rolldown'
 
 const debug = Debug('rolldown-plugin-dts:generate')

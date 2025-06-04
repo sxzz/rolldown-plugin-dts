@@ -9,7 +9,7 @@ import {
   RE_DTS,
   RE_DTS_MAP,
 } from './filename.ts'
-import type { OptionsResolved } from './index.ts'
+import type { OptionsResolved } from './options.ts'
 import type { Plugin, RenderedChunk } from 'rolldown'
 
 const generate: typeof _generate.default =

@@ -9,7 +9,7 @@ import {
   RE_TS,
   RE_VUE,
 } from './filename.ts'
-import type { OptionsResolved } from './index.ts'
+import type { OptionsResolved } from './options.ts'
 import type { Plugin } from 'rolldown'
 
 export function createDtsResolvePlugin({

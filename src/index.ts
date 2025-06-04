@@ -34,4 +34,9 @@ export function dts(options: Options = {}): Plugin[] {
   return plugins
 }
 
-export { createFakeJsPlugin, createGeneratePlugin }
+export {
+  createFakeJsPlugin,
+  createGeneratePlugin,
+  resolveOptions,
+  type Options,
+}
