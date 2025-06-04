@@ -76,7 +76,8 @@ Enabling this option can speed up builds by caching previous results, which is h
 
 **Default:** `true` if your `tsconfig` has [`incremental`](https://www.typescriptlang.org/tsconfig/#incremental) or [`tsBuildInfoFile`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile) enabled.
 
-> **Note:** This option is only used when [`isolatedDeclarations`](#isolateddeclarations-boolean--omitisolateddeclarationsoptions-sourcemap) is `false`.
+> [!NOTE]
+> This option is only used when [`isolatedDeclarations`](#isolateddeclarations-boolean--omitisolateddeclarationsoptions-sourcemap) is `false`.
 
 ### `compilerOptions?: TsConfigJson.CompilerOptions`
 
@@ -114,6 +115,17 @@ If `true`, the plugin will launch a separate process for `tsc` or `vue-tsc`, ena
 If `true`, the plugin will prepare all files listed in `tsconfig.json` for `tsc` or `vue-tsc`.
 
 This is especially useful when you have a single `tsconfig.json` for multiple projects in a monorepo.
+
+### `tsgo?: boolean | string`
+
+**[Experimental]** Enables DTS generation using [`tsgo`](https://github.com/microsoft/typescript-go).
+
+- To use this option, ensure that `@typescript/native-preview` is installed as a dependency.
+- Set to `true` to enable `tsgo` for the current project.
+- If a string is provided, it should be the root path of your source files.
+
+> [!NOTE]
+> This option is experimental and not yet recommended for production environments.
 
 ## Differences from `rollup-plugin-dts`
 
