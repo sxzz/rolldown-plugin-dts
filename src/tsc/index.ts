@@ -1,15 +1,42 @@
 import path from 'node:path'
 import Debug from 'debug'
 import ts from 'typescript'
-import { fsSystem, memorySystem } from './system.ts'
+import { createFsSystem, createMemorySystem } from './system.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'
 
+export interface TscContext {
+  programs: ts.Program[]
+  files: Map<string, string>
+}
+
+export interface TscModule {
+  program: ts.Program
+  file: ts.SourceFile
+}
+
+export interface TscOptions {
+  tsconfig?: string
+  tsconfigRaw: TsConfigJson
+  cwd: string
+  incremental: boolean
+  entries?: string[]
+  id: string
+  vue?: boolean
+  context?: TscContext
+}
+
 const debug = Debug('rolldown-plugin-dts:tsc')
 debug(`loaded typescript: ${ts.version}`)
 
-const programs: ts.Program[] = []
+export function createContext(): TscContext {
+  const programs: ts.Program[] = []
+  const files = new Map<string, string>()
+  return { programs, files }
+}
+
+const globalContext: TscContext = createContext()
 
 const formatHost: ts.FormatDiagnosticsHost = {
   getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
@@ -32,24 +59,9 @@ const defaultCompilerOptions: ts.CompilerOptions = {
   moduleResolution: ts.ModuleResolutionKind.Bundler,
 }
 
-export interface TscModule {
-  program: ts.Program
-  file: ts.SourceFile
-}
-
-export interface TscOptions {
-  tsconfig?: string
-  tsconfigRaw: TsConfigJson
-  cwd: string
-  incremental: boolean
-  entries?: string[]
-  id: string
-  vue?: boolean
-}
-
 function createOrGetTsModule(options: TscOptions): TscModule {
-  const { id, entries } = options
-  const program = programs.find((program) => {
+  const { id, entries, context = globalContext } = options
+  const program = context.programs.find((program) => {
     const roots = program.getRootFileNames()
     if (entries) {
       return entries.every((entry) => roots.includes(entry))
@@ -67,7 +79,7 @@ function createOrGetTsModule(options: TscOptions): TscModule {
   const module = createTsProgram(options)
   debug(`created program for module: ${id}`)
 
-  programs.push(module.program)
+  context.programs.push(module.program)
   return module
 }
 
@@ -80,9 +92,15 @@ function createOrGetTsModule(options: TscOptions): TscModule {
  * changes) the build will be super fast. If `incremental` is `false`, the
  * `.tsbuildinfo` file will only be written to the memory.
  */
-function buildSolution(tsconfig: string, incremental: boolean) {
+function buildSolution(
+  tsconfig: string,
+  incremental: boolean,
+  context: TscContext,
+) {
   debug(`building projects for ${tsconfig} with incremental: ${incremental}`)
-  const system = incremental ? fsSystem : memorySystem
+  const system = (incremental ? createFsSystem : createMemorySystem)(
+    context.files,
+  )
 
   const host = ts.createSolutionBuilderHost(system)
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
@@ -105,7 +123,9 @@ function createTsProgram({
   incremental,
   vue,
   cwd,
+  context = globalContext,
 }: TscOptions): TscModule {
+  const fsSystem = createFsSystem(context.files)
   const parsedCmd = ts.parseJsonConfigFileContent(
     tsconfigRaw,
     fsSystem,
@@ -114,7 +134,7 @@ function createTsProgram({
 
   // If the tsconfig has project references, build the project tree.
   if (tsconfig && parsedCmd.projectReferences?.length) {
-    buildSolution(tsconfig, incremental)
+    buildSolution(tsconfig, incremental, context)
   }
 
   const compilerOptions: ts.CompilerOptions = {

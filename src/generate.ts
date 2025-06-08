@@ -16,7 +16,7 @@ import {
   RE_VUE,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
-import type { TscOptions, TscResult } from './tsc/index.ts'
+import type { TscContext, TscOptions, TscResult } from './tsc/index.ts'
 import type { TscFunctions } from './tsc/worker.ts'
 import type { Plugin, SourceMapInput } from 'rolldown'
 
@@ -80,7 +80,8 @@ export function createGeneratePlugin({
 
   let childProcess: ChildProcess | undefined
   let rpc: BirpcReturn<TscFunctions> | undefined
-  let tscEmit: (options: TscOptions) => TscResult
+  let tscModule: typeof import('./tsc/index.ts')
+  let tscContext: TscContext | undefined
   let tsgoDist: string | undefined
 
   if (!tsgo && parallel) {
@@ -123,7 +124,8 @@ export function createGeneratePlugin({
           { stdio: 'inherit' },
         )
       } else if (!parallel && (!isolatedDeclarations || vue)) {
-        ;({ tscEmit } = await import('./tsc/index.ts'))
+        tscModule = await import('./tsc/index.ts')
+        tscContext = eager ? undefined : tscModule.createContext()
       }
 
       if (!Array.isArray(options.input)) {
@@ -257,12 +259,13 @@ export function createGeneratePlugin({
             entries,
             id,
             vue,
+            context: tscContext,
           }
           let result: TscResult
           if (parallel) {
             result = await rpc!.tscEmit(options)
           } else {
-            result = tscEmit(options)
+            result = tscModule.tscEmit(options)
           }
           if (result.error) {
             return this.error(result.error)
@@ -297,8 +300,8 @@ export function createGeneratePlugin({
       childProcess?.kill()
       if (tsgoDist) {
         await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
-        tsgoDist = undefined
       }
+      tscContext = tsgoDist = undefined
     },
   }
 }

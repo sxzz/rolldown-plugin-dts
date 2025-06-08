@@ -99,12 +99,12 @@ describe('tsc', () => {
       cwd: tempDir,
       absolute: false,
     })
-    expect(tsBuildInfoFiles).toMatchInlineSnapshot(`
-    [
-      "dir1/tsconfig.1.tsbuildinfo",
-      "dir2/tsconfig.2.tsbuildinfo",
-    ]
-  `)
+    expect(tsBuildInfoFiles.sort()).toMatchInlineSnapshot(`
+      [
+        "dir1/tsconfig.1.tsbuildinfo",
+        "dir2/tsconfig.2.tsbuildinfo",
+      ]
+    `)
   })
 
   test('vue-sfc w/ ts-compiler', async () => {
