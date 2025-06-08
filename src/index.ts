@@ -4,7 +4,7 @@ import { createDtsInputPlugin } from './dts-input.ts'
 import { createFakeJsPlugin } from './fake-js.ts'
 import { createGeneratePlugin } from './generate.ts'
 import { resolveOptions, type Options } from './options.ts'
-import { createDtsResolvePlugin } from './resolve.ts'
+import { createDtsResolvePlugin } from './resolver.ts'
 import type { Plugin } from 'rolldown'
 
 export {

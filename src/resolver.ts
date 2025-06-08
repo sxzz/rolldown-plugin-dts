@@ -23,7 +23,7 @@ export function createDtsResolvePlugin({
   })
 
   return {
-    name: 'rolldown-plugin-dts:resolve',
+    name: 'rolldown-plugin-dts:resolver',
 
     resolveId: {
       order: 'pre',
