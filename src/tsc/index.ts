@@ -1,7 +1,7 @@
 import path from 'node:path'
 import Debug from 'debug'
 import ts from 'typescript'
-import { fsSystem, memorySystem } from './tsc-system.ts'
+import { fsSystem, memorySystem } from './system.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'

@@ -16,13 +16,13 @@ import {
   RE_VUE,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
-import type { TscFunctions } from './utils/tsc-worker.ts'
-import type { TscOptions, TscResult } from './utils/tsc.ts'
+import type { TscOptions, TscResult } from './tsc/index.ts'
+import type { TscFunctions } from './tsc/worker.ts'
 import type { Plugin, SourceMapInput } from 'rolldown'
 
 const debug = Debug('rolldown-plugin-dts:generate')
 
-const WORKER_URL = import.meta.WORKER_URL || './utils/tsc-worker.ts'
+const WORKER_URL = import.meta.WORKER_URL || './tsc/worker.ts'
 
 const spawnAsync = (...args: Parameters<typeof spawn>) =>
   new Promise<void>((resolve, reject) => {
@@ -123,7 +123,7 @@ export function createGeneratePlugin({
           { stdio: 'inherit' },
         )
       } else if (!parallel && (!isolatedDeclarations || vue)) {
-        ;({ tscEmit } = await import('./utils/tsc.ts'))
+        ;({ tscEmit } = await import('./tsc/index.ts'))
       }
 
       if (!Array.isArray(options.input)) {
