@@ -74,7 +74,7 @@
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/node": "^22.15.30",
-    "@typescript/native-preview": "7.0.0-dev.20250608.1",
+    "@typescript/native-preview": "7.0.0-dev.20250609.1",
     "@volar/typescript": "^2.4.14",
     "@vue/language-core": "^2.2.10",
     "bumpp": "^10.1.1",
@@ -82,7 +82,7 @@
     "eslint": "^9.28.0",
     "estree-walker": "^3.0.3",
     "prettier": "^3.5.3",
-    "rolldown": "1.0.0-beta.11-commit.f051675",
+    "rolldown": "1.0.0-beta.13",
     "rollup-plugin-dts": "^6.2.1",
     "tinyglobby": "^0.2.14",
     "tsdown": "^0.12.7",
@@ -96,7 +96,7 @@
     "node": ">=20.18.0"
   },
   "resolutions": {
-    "rolldown": "1.0.0-beta.11-commit.f051675"
+    "rolldown": "1.0.0-beta.13"
   },
   "prettier": "@sxzz/prettier-config"
 }
