@@ -102,27 +102,7 @@ export function createGeneratePlugin({
 
     async buildStart(options) {
       if (tsgo) {
-        const tsgoPkg = import.meta.resolve(
-          '@typescript/native-preview/package.json',
-        )
-        const { default: getExePath } = await import(
-          new URL('./lib/getExePath.js', tsgoPkg).href
-        )
-        const tsgo = getExePath()
-        tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
-        await spawnAsync(
-          tsgo,
-          [
-            '--noEmit',
-            'false',
-            '--declaration',
-            '--emitDeclarationOnly',
-            ...(tsconfig ? ['-p', tsconfig] : []),
-            '--outDir',
-            tsgoDist,
-          ],
-          { stdio: 'inherit' },
-        )
+        tsgoDist = await runTsgo(cwd, tsconfig)
       } else if (!parallel && (!isolatedDeclarations || vue)) {
         tscModule = await import('./tsc/index.ts')
         tscContext = eager ? undefined : tscModule.createContext()
@@ -219,14 +199,12 @@ export function createGeneratePlugin({
             throw new Error('tsgo does not support Vue files.')
           const dtsPath = path.resolve(
             tsgoDist!,
-            path.relative(
-              path.resolve(typeof tsgo === 'string' ? tsgo : 'src'),
-              filename_ts_to_dts(id),
-            ),
+            path.relative(path.resolve(cwd), filename_ts_to_dts(id)),
           )
           if (existsSync(dtsPath)) {
             dtsCode = await readFile(dtsPath, 'utf8')
           } else {
+            debug('[tsgo]', dtsPath, 'is missing')
             throw new Error(
               `tsgo did not generate dts file for ${id}, please check your tsconfig.`,
             )
@@ -298,10 +276,38 @@ export function createGeneratePlugin({
 
     async buildEnd() {
       childProcess?.kill()
-      if (tsgoDist) {
+      if (!debug.enabled && tsgoDist) {
         await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
       }
       tscContext = tsgoDist = undefined
     },
   }
+}
+
+async function runTsgo(root: string, tsconfig?: string) {
+  const tsgoPkg = import.meta.resolve('@typescript/native-preview/package.json')
+  const { default: getExePath } = await import(
+    new URL('./lib/getExePath.js', tsgoPkg).href
+  )
+  const tsgo = getExePath()
+  const tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
+  debug('[tsgo] tsgoDist', tsgoDist)
+
+  await spawnAsync(
+    tsgo,
+    [
+      '--noEmit',
+      'false',
+      '--declaration',
+      '--emitDeclarationOnly',
+      ...(tsconfig ? ['-p', tsconfig] : []),
+      '--outDir',
+      tsgoDist,
+      '--rootDir',
+      root,
+    ],
+    { stdio: 'inherit' },
+  )
+
+  return tsgoDist
 }

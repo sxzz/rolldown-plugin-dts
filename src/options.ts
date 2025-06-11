@@ -128,7 +128,7 @@ export interface Options {
    *
    * **Note:** This option is not yet recommended for production environments.
    */
-  tsgo?: boolean | string
+  tsgo?: boolean
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
