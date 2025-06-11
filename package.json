@@ -1,6 +1,6 @@
 {
   "name": "rolldown-plugin-dts",
-  "version": "0.13.10",
+  "version": "0.13.11",
   "packageManager": "pnpm@10.12.1",
   "description": "A Rolldown plugin to bundle dts files",
   "type": "module",
