@@ -149,9 +149,9 @@ This is especially useful when you have a single `tsconfig.json` for multiple pr
 
 **[Experimental]** Enables DTS generation using [`tsgo`](https://github.com/microsoft/typescript-go).
 
-- To use this option, ensure that `@typescript/native-preview` is installed as a dependency.
-- Set to `true` to enable `tsgo` for the current project.
-- If a string is provided, it should be the root path of your source files.
+To use this option, ensure that `@typescript/native-preview` is installed as a dependency.
+
+`tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
 
 > [!WARNING]
 > This option is experimental and not yet recommended for production environments.

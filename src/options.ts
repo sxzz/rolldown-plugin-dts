@@ -127,6 +127,7 @@ export interface Options {
    * To use this option, make sure `@typescript/native-preview` is installed as a dependency.
    *
    * **Note:** This option is not yet recommended for production environments.
+   * `tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
    */
   tsgo?: boolean
 }
