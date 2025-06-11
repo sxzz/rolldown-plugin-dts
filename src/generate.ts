@@ -305,6 +305,7 @@ async function runTsgo(root: string, tsconfig?: string) {
       tsgoDist,
       '--rootDir',
       root,
+      '--noCheck',
     ],
     { stdio: 'inherit' },
   )
