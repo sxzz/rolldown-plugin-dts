@@ -9,7 +9,10 @@ A Rolldown plugin to generate and bundle dts files.
 Requires **`rolldown@1.0.0-beta.9`** or later.
 
 ```bash
-npm i rolldown-plugin-dts
+npm i -D rolldown-plugin-dts
+
+npm i -D typescript # install TypeScript if isolatedDeclarations is not enabled
+npm i -D @typescript/native-preview # install TypeScript Go if tsgo is enabled
 ```
 
 ## Usage
