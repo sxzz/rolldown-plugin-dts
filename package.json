@@ -62,31 +62,31 @@
     "@babel/parser": "^7.27.5",
     "@babel/types": "^7.27.6",
     "ast-kit": "^2.1.0",
-    "birpc": "^2.3.0",
+    "birpc": "^2.4.0",
     "debug": "^4.4.1",
     "dts-resolver": "^2.1.1",
     "get-tsconfig": "^4.10.1"
   },
   "devDependencies": {
-    "@sxzz/eslint-config": "^7.0.2",
+    "@sxzz/eslint-config": "^7.0.3",
     "@sxzz/prettier-config": "^2.2.1",
     "@sxzz/test-utils": "^0.5.6",
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
-    "@types/node": "^24.0.0",
-    "@typescript/native-preview": "7.0.0-dev.20250611.1",
+    "@types/node": "^24.0.3",
+    "@typescript/native-preview": "7.0.0-dev.20250616.1",
     "@volar/typescript": "^2.4.14",
     "@vue/language-core": "^2.2.10",
     "bumpp": "^10.1.1",
     "diff": "^8.0.2",
-    "eslint": "^9.28.0",
+    "eslint": "^9.29.0",
     "estree-walker": "^3.0.3",
     "prettier": "^3.5.3",
-    "rolldown": "1.0.0-beta.14",
+    "rolldown": "1.0.0-beta.16",
     "rollup-plugin-dts": "^6.2.1",
     "tinyglobby": "^0.2.14",
-    "tsdown": "^0.12.7",
-    "tsx": "^4.20.0",
+    "tsdown": "^0.12.8",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vitest": "^3.2.3",
     "vue": "^3.5.16",
@@ -96,7 +96,7 @@
     "node": ">=20.18.0"
   },
   "resolutions": {
-    "rolldown": "1.0.0-beta.14"
+    "rolldown": "1.0.0-beta.16"
   },
   "prettier": "@sxzz/prettier-config"
 }
