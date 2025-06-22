@@ -253,6 +253,7 @@ export function createFakeJsPlugin({
 
     program.body = program.body
       .map((node) => {
+        if (isHelperImport(node)) return null
         if (patchImportSource(node)) return node
         if (node.type !== 'VariableDeclaration') return node
 
@@ -492,6 +493,16 @@ function isReferenceId(
 ): node is t.Identifier | t.MemberExpression {
   return (
     !!node && (node.type === 'Identifier' || node.type === 'MemberExpression')
+  )
+}
+
+function isHelperImport(node: t.Node) {
+  return (
+    node.type === 'ImportDeclaration' &&
+    node.specifiers.length === 1 &&
+    node.specifiers[0].type === 'ImportSpecifier' &&
+    node.specifiers[0].imported.type === 'Identifier' &&
+    node.specifiers[0].imported.name === '__export'
   )
 }
 
