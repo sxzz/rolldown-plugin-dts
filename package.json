@@ -1,7 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "version": "0.13.12",
-  "packageManager": "pnpm@10.12.2",
+  "packageManager": "pnpm@10.12.4",
   "description": "A Rolldown plugin to bundle dts files",
   "type": "module",
   "license": "MIT",
@@ -59,8 +59,8 @@
   },
   "dependencies": {
     "@babel/generator": "^7.27.5",
-    "@babel/parser": "^7.27.5",
-    "@babel/types": "^7.27.6",
+    "@babel/parser": "^7.27.7",
+    "@babel/types": "^7.27.7",
     "ast-kit": "^2.1.0",
     "birpc": "^2.4.0",
     "debug": "^4.4.1",
@@ -69,23 +69,23 @@
   },
   "devDependencies": {
     "@sxzz/eslint-config": "^7.0.4",
-    "@sxzz/prettier-config": "^2.2.1",
+    "@sxzz/prettier-config": "^2.2.3",
     "@sxzz/test-utils": "^0.5.6",
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
-    "@types/node": "^24.0.3",
-    "@typescript/native-preview": "7.0.0-dev.20250623.1",
-    "@volar/typescript": "^2.4.14",
+    "@types/node": "^24.0.6",
+    "@typescript/native-preview": "7.0.0-dev.20250627.1",
+    "@volar/typescript": "^2.4.15",
     "@vue/language-core": "^2.2.10",
     "bumpp": "^10.2.0",
     "diff": "^8.0.2",
-    "eslint": "^9.29.0",
+    "eslint": "^9.30.0",
     "estree-walker": "^3.0.3",
-    "prettier": "^3.6.0",
-    "rolldown": "1.0.0-beta.19",
+    "prettier": "^3.6.2",
+    "rolldown": "^1.0.0-beta.21",
     "rollup-plugin-dts": "^6.2.1",
     "tinyglobby": "^0.2.14",
-    "tsdown": "^0.12.8",
+    "tsdown": "^0.12.9",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",
@@ -94,9 +94,6 @@
   },
   "engines": {
     "node": ">=20.18.0"
-  },
-  "resolutions": {
-    "rolldown": "1.0.0-beta.19"
   },
   "prettier": "@sxzz/prettier-config"
 }
