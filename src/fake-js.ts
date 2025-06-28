@@ -500,9 +500,12 @@ function isHelperImport(node: t.Node) {
   return (
     node.type === 'ImportDeclaration' &&
     node.specifiers.length === 1 &&
-    node.specifiers[0].type === 'ImportSpecifier' &&
-    node.specifiers[0].imported.type === 'Identifier' &&
-    node.specifiers[0].imported.name === '__export'
+    node.specifiers.every(
+      (spec) =>
+        spec.type === 'ImportSpecifier' &&
+        spec.imported.type === 'Identifier' &&
+        ['__export', '__reExport'].includes(spec.imported.name),
+    )
   )
 }
 
