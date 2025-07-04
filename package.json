@@ -44,7 +44,7 @@
     "@typescript/native-preview": ">=7.0.0-dev.20250601.1",
     "rolldown": "^1.0.0-beta.9",
     "typescript": "^5.0.0",
-    "vue-tsc": "~2.2.0"
+    "vue-tsc": "~2.2.0 || ~3.0.0"
   },
   "peerDependenciesMeta": {
     "@typescript/native-preview": {
@@ -75,8 +75,8 @@
     "@types/debug": "^4.1.12",
     "@types/node": "^24.0.7",
     "@typescript/native-preview": "7.0.0-dev.20250630.1",
-    "@volar/typescript": "^2.4.15",
-    "@vue/language-core": "^2.2.10",
+    "@volar/typescript": "^2.4.17",
+    "@vue/language-core": "^3.0.1",
     "bumpp": "^10.2.0",
     "diff": "^8.0.2",
     "eslint": "^9.30.0",
@@ -90,7 +90,7 @@
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",
     "vue": "^3.5.17",
-    "vue-tsc": "^2.2.10"
+    "vue-tsc": "^3.0.1"
   },
   "engines": {
     "node": ">=20.18.0"
