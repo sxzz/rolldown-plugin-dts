@@ -118,6 +118,18 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
+  test('vue-sfc w/ ts-compiler w/ vueCompilerOptions in tsconfig', async () => {
+    const root = path.resolve(dirname, 'fixtures/vue-sfc-fallthrough')
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
+      dts({
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        emitDtsOnly: true,
+        vue: true,
+      }),
+    ])
+    expect(snapshot).toMatchSnapshot()
+  })
+
   test('jsdoc', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/jsdoc.ts'),

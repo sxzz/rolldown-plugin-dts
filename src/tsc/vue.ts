@@ -41,15 +41,15 @@ export function createVueProgramFactory(
     ts,
     ts.createProgram,
     (ts, options) => {
-      const { configFilePath } = options.options
-      const vueOptions =
-        typeof configFilePath === 'string'
-          ? vue.createParsedCommandLine(
-              ts,
-              ts.sys,
-              configFilePath.replaceAll('\\', '/'),
-            ).vueOptions
-          : vue.getDefaultCompilerOptions()
+      const $rootDir = options.options.$rootDir as string
+      const $configRaw = options.options.$configRaw as
+        | (Ts.TsConfigSourceFile & { vueCompilerOptions?: any })
+        | undefined
+
+      const resolver = new vue.CompilerOptionsResolver()
+      resolver.addConfig($configRaw?.vueCompilerOptions ?? {}, $rootDir)
+      const vueOptions = resolver.build()
+
       const vueLanguagePlugin = vue.createVueLanguagePlugin<string>(
         ts,
         options.options,
