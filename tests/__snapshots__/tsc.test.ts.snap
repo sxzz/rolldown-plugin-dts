@@ -112,6 +112,20 @@ declare const a$1 = 3,
 export { a, b, a$1 as c, b$1 as d };"
 `;
 
+exports[`tsc > references 1`] = `
+"// index.d.ts
+//#region tests/fixtures/refs/src/index.d.ts
+declare const a = 1;
+//#endregion
+export { a };
+// index.js
+//#region tests/fixtures/refs/src/index.ts
+const a = 1;
+
+//#endregion
+export { a };"
+`;
+
 exports[`tsc > typescript compiler 1`] = `
 "// entry1.d.ts
 
