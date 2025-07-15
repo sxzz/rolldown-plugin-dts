@@ -40,6 +40,22 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
+  test('references', async () => {
+    const root = path.resolve(dirname, 'fixtures/refs')
+
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(root, 'src/index.ts')],
+      [
+        dts({
+          tsconfig: path.resolve(root, 'tsconfig.json'),
+          compilerOptions: { isolatedDeclarations: false },
+        }),
+      ],
+    )
+
+    expect(snapshot).toMatchSnapshot()
+  })
+
   test('composite references', async () => {
     const root = path.resolve(dirname, 'fixtures/composite-refs')
 
