@@ -126,10 +126,11 @@ function createTsProgram({
   context = globalContext,
 }: TscOptions): TscModule {
   const fsSystem = createFsSystem(context.files)
+  const baseDir = tsconfig ? path.dirname(tsconfig) : cwd
   const parsedCmd = ts.parseJsonConfigFileContent(
     tsconfigRaw,
     fsSystem,
-    tsconfig ? path.dirname(tsconfig) : cwd,
+    baseDir,
   )
 
   // If the tsconfig has project references, build the project tree.
@@ -140,6 +141,8 @@ function createTsProgram({
   const compilerOptions: ts.CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedCmd.options,
+    $configRaw: parsedCmd.raw,
+    $rootDir: baseDir,
   }
   const rootNames = [
     ...new Set(
