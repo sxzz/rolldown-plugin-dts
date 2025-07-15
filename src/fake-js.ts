@@ -42,7 +42,7 @@ export function createFakeJsPlugin({
   sourcemap,
 }: Pick<OptionsResolved, 'dtsInput' | 'sourcemap'>): Plugin {
   let symbolIdx = 0
-  let identifierIdx = 0
+  const identifierMap: Record<string, number> = Object.create(null)
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
 
@@ -158,7 +158,7 @@ export function createFakeJsPlugin({
       } else if ('id' in decl && decl.id) {
         let binding = decl.id
         binding = sideEffect
-          ? t.identifier(`_${identifierIdx++}`)
+          ? t.identifier(`_${getIdentifierIndex('')}`)
           : (binding as t.Identifier)
         bindings.push(binding)
       } else {
@@ -332,8 +332,11 @@ export function createFakeJsPlugin({
     return result
   }
 
-  function getIdentifierIndex() {
-    return identifierIdx++
+  function getIdentifierIndex(name: string) {
+    if (name in identifierMap) {
+      return identifierMap[name]++
+    }
+    return (identifierMap[name] = 0)
   }
 
   function registerSymbol(info: SymbolInfo) {
@@ -423,7 +426,7 @@ export function createFakeJsPlugin({
   ): Dep {
     const sourceText = source.value.replaceAll(/\W/g, '_')
     let local: t.Identifier | t.TSQualifiedName = t.identifier(
-      `${sourceText}${getIdentifierIndex()}`,
+      `${sourceText}${getIdentifierIndex(sourceText)}`,
     )
 
     if (namespaceStmts.has(source.value)) {

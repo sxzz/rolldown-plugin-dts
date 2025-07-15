@@ -132,7 +132,7 @@ export { Unused };"
 
 exports[`tsc > vue-sfc w/ ts-compiler 1`] = `
 "// main.d.ts
-import * as vue1 from "vue";
+import * as vue0 from "vue";
 
 //#region tests/fixtures/vue-sfc/App.vue.d.ts
 type __VLS_Props = {
@@ -143,7 +143,7 @@ declare global {
     foo: string;
   }
 }
-declare const _default: vue1.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue1.ComponentOptionsMixin, vue1.ComponentOptionsMixin, {}, string, vue1.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue1.ComponentProvideOptions, false, {}, any>;
+declare const _default: vue0.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue0.ComponentOptionsMixin, vue0.ComponentOptionsMixin, {}, string, vue0.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue0.ComponentProvideOptions, false, {}, any>;
 //#endregion
 export { _default as App };"
 `;
