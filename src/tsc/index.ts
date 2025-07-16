@@ -111,8 +111,74 @@ function buildSolution(
     verbose: true,
   })
 
-  const exitStatus = builder.build()
+  // Collect all projects in the solution using the `getCustomTransformers`
+  // callback. This doesn't seem to be the intended use of the callback, but
+  // it's an easy way to collect all projects at any nesting level without the
+  // need to implement the traversing logic ourselves.
+  //
+  // A project is a string that represents the path to the project's `tsconfig`
+  // file.
+  const projects: string[] = []
+  const getCustomTransformers = (project: string): ts.CustomTransformers => {
+    projects.push(project)
+    return {}
+  }
+
+  const exitStatus = builder.build(
+    undefined,
+    undefined,
+    undefined,
+    getCustomTransformers,
+  )
+
   debug(`built solution for ${tsconfig} with exit status ${exitStatus}`)
+  return Array.from(new Set(projects))
+}
+
+function findProjectContainingFile(
+  projects: string[],
+  targetFile: string,
+  fsSystem: ts.System,
+): { parsedConfig: ts.ParsedCommandLine; tsconfigPath: string } | undefined {
+  const resolvedTargetFile = fsSystem.resolvePath(targetFile)
+
+  for (const tsconfigPath of projects) {
+    const parsedConfig = parseTsconfig(tsconfigPath, fsSystem)
+    if (
+      parsedConfig &&
+      parsedConfig.fileNames.some(
+        (fileName) => fsSystem.resolvePath(fileName) === resolvedTargetFile,
+      )
+    ) {
+      return { parsedConfig, tsconfigPath }
+    }
+  }
+}
+
+function parseTsconfig(
+  tsconfigPath: string,
+  fsSystem: ts.System,
+): ts.ParsedCommandLine | undefined {
+  const diagnostics: ts.Diagnostic[] = []
+
+  const parsedConfig = ts.getParsedCommandLineOfConfigFile(
+    tsconfigPath,
+    undefined,
+    {
+      ...fsSystem,
+      onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
+        diagnostics.push(diagnostic)
+      },
+    },
+  )
+
+  if (diagnostics.length) {
+    throw new Error(
+      `[rolldown-plugin-dts] Unable to read ${tsconfigPath}: ${ts.formatDiagnostics(diagnostics, formatHost)}`,
+    )
+  }
+
+  return parsedConfig
 }
 
 function createTsProgram({
@@ -127,26 +193,69 @@ function createTsProgram({
 }: TscOptions): TscModule {
   const fsSystem = createFsSystem(context.files)
   const baseDir = tsconfig ? path.dirname(tsconfig) : cwd
-  const parsedCmd = ts.parseJsonConfigFileContent(
+  const parsedConfig = ts.parseJsonConfigFileContent(
     tsconfigRaw,
     fsSystem,
     baseDir,
   )
 
   // If the tsconfig has project references, build the project tree.
-  if (tsconfig && parsedCmd.projectReferences?.length) {
-    buildSolution(tsconfig, incremental, context)
+  if (tsconfig && parsedConfig.projectReferences?.length) {
+    // Build the project tree and collect all projects.
+    const projectPaths = buildSolution(tsconfig, incremental, context)
+    debug(`collected projects: ${JSON.stringify(projectPaths)}`)
+
+    // Find which project contains the source file
+    const project = findProjectContainingFile(projectPaths, id, fsSystem)
+
+    if (project) {
+      debug(`Creating program for project: ${project.tsconfigPath}`)
+
+      return createTsProgramFromParsedConfig({
+        parsedConfig: project.parsedConfig,
+        fsSystem,
+        baseDir: path.dirname(project.tsconfigPath),
+        id,
+        entries,
+        vue,
+      })
+    }
   }
 
+  // If the tsconfig doesn't have project references, create a single program
+  // for the root project.
+  return createTsProgramFromParsedConfig({
+    parsedConfig,
+    fsSystem,
+    baseDir,
+    id,
+    entries,
+    vue,
+  })
+}
+
+function createTsProgramFromParsedConfig({
+  parsedConfig,
+  fsSystem,
+  baseDir,
+  id,
+  entries,
+  vue,
+}: {
+  parsedConfig: ts.ParsedCommandLine
+  fsSystem: ts.System
+  baseDir: string
+} & Pick<TscOptions, 'entries' | 'vue' | 'id'>): TscModule {
   const compilerOptions: ts.CompilerOptions = {
     ...defaultCompilerOptions,
-    ...parsedCmd.options,
-    $configRaw: parsedCmd.raw,
+    ...parsedConfig.options,
+    $configRaw: parsedConfig.raw,
     $rootDir: baseDir,
   }
+
   const rootNames = [
     ...new Set(
-      [id, ...(entries || parsedCmd.fileNames)].map((f) =>
+      [id, ...(entries || parsedConfig.fileNames)].map((f) =>
         fsSystem.resolvePath(f),
       ),
     ),
@@ -164,7 +273,7 @@ function createTsProgram({
     rootNames,
     options: compilerOptions,
     host,
-    projectReferences: parsedCmd.projectReferences,
+    projectReferences: parsedConfig.projectReferences,
   })
 
   const sourceFile = program.getSourceFile(id)
