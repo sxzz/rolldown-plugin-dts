@@ -1,7 +1,7 @@
 import _generate from '@babel/generator'
 import { parse } from '@babel/parser'
 import * as t from '@babel/types'
-import { isDeclarationType, isTypeOf } from 'ast-kit'
+import { isDeclarationType, isTypeOf, resolveString } from 'ast-kit'
 import { walk } from 'estree-walker'
 import {
   filename_dts_to,
@@ -45,6 +45,7 @@ export function createFakeJsPlugin({
   const identifierMap: Record<string, number> = Object.create(null)
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
+  const typeOnlyMap = new Map<string, string[]>()
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
@@ -99,6 +100,7 @@ export function createFakeJsPlugin({
       sourceType: 'module',
     })
     const { program, comments } = file
+    const typeOnlyIds: string[] = []
 
     if (comments) {
       const directives = collectReferenceDirectives(comments)
@@ -110,7 +112,7 @@ export function createFakeJsPlugin({
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (node: t.Node) => (program.body[i] = node as any)
-      if (rewriteImportExport(stmt, setStmt)) continue
+      if (rewriteImportExport(stmt, setStmt, typeOnlyIds)) continue
 
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
@@ -231,6 +233,8 @@ export function createFakeJsPlugin({
       ...appendStmts,
     ]
 
+    typeOnlyMap.set(id, typeOnlyIds)
+
     const result = generate(file, {
       comments: false,
       sourceMaps: sourcemap,
@@ -244,6 +248,12 @@ export function createFakeJsPlugin({
       return
     }
 
+    const typeOnlyIds: string[] = []
+    for (const module of chunk.moduleIds) {
+      const ids = typeOnlyMap.get(module)
+      if (ids) typeOnlyIds.push(...ids)
+    }
+
     const file = parse(code, {
       sourceType: 'module',
     })
@@ -254,7 +264,7 @@ export function createFakeJsPlugin({
     program.body = program.body
       .map((node) => {
         if (isHelperImport(node)) return null
-        if (patchImportSource(node)) return node
+        if (patchImportExport(node, typeOnlyIds)) return node
         if (node.type !== 'VariableDeclaration') return node
 
         const [decl] = node.declarations
@@ -513,18 +523,31 @@ function isHelperImport(node: t.Node) {
 }
 
 // patch `.d.ts` suffix in import source to `.js`
-function patchImportSource(node: t.Node) {
+function patchImportExport(node: t.Node, typeOnlyIds: string[]) {
   if (
     isTypeOf(node, [
       'ImportDeclaration',
       'ExportAllDeclaration',
       'ExportNamedDeclaration',
-    ]) &&
-    node.source?.value &&
-    RE_DTS.test(node.source.value)
+    ])
   ) {
-    node.source.value = filename_dts_to(node.source.value, 'js')
-    return true
+    if (typeOnlyIds.length && node.type === 'ExportNamedDeclaration') {
+      for (const spec of node.specifiers) {
+        const name = resolveString(spec.exported)
+        if (typeOnlyIds.includes(name)) {
+          if (spec.type === 'ExportSpecifier') {
+            spec.exportKind = 'type'
+          } else {
+            node.exportKind = 'type'
+          }
+        }
+      }
+    }
+
+    if (node.source?.value && RE_DTS.test(node.source.value)) {
+      node.source.value = filename_dts_to(node.source.value, 'js')
+      return true
+    }
   }
 }
 
@@ -595,13 +618,14 @@ function patchTsNamespace(nodes: t.Statement[]) {
 // - import { type ... } from '...'
 // - export type { ... }
 // - export { type ... }
-// - export type * as '...'
+// - export type * as x '...'
 // - import Foo = require("./bar")
 // - export = Foo
 // - export default x
 function rewriteImportExport(
   node: t.Node,
   set: (node: t.Node) => void,
+  typeOnlyIds: string[],
 ): node is
   | t.ImportDeclaration
   | t.ExportAllDeclaration
@@ -611,6 +635,22 @@ function rewriteImportExport(
     (node.type === 'ExportNamedDeclaration' && !node.declaration)
   ) {
     for (const specifier of node.specifiers) {
+      if (
+        ('exportKind' in specifier && specifier.exportKind === 'type') ||
+        ('exportKind' in node && node.exportKind === 'type')
+      ) {
+        typeOnlyIds.push(
+          resolveString(
+            (
+              specifier as
+                | t.ExportSpecifier
+                | t.ExportDefaultSpecifier
+                | t.ExportNamespaceSpecifier
+            ).exported,
+          ),
+        )
+      }
+
       if (specifier.type === 'ImportSpecifier') {
         specifier.importKind = 'value'
       } else if (specifier.type === 'ExportSpecifier') {

@@ -128,7 +128,7 @@ exports[`tree-shaking 1`] = `
 
 type A = string;
 //#endregion
-export { A };
+export { type A };
 // index.js
 "
 `;
@@ -151,4 +151,21 @@ function createComponent() {
 
 //#endregion
 export { createComponent };"
+`;
+
+exports[`type-only export 1`] = `
+"// index.d.ts
+//#endregion
+//#region tests/fixtures/type-only-export/mod.d.ts
+declare class A {}
+declare class B {}
+declare namespace namespace_d_exports {
+  export { ns };
+}
+declare const ns = 42;
+//#endregion
+//#region tests/fixtures/type-only-export/all.d.ts
+declare const all = 42;
+//#endregion
+export { A as RuntimeA, type A as TypeA, type B as TypeB, A as TypeC, all, type namespace_d_exports as ns };"
 `;

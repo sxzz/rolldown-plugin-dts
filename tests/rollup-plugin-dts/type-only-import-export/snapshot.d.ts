@@ -34,4 +34,4 @@ interface Foo$1 {
   inline: string;
 }
 //#endregion
-export { A, B, B1 as B2, B1 as B3, BarType, BarValue, C, C as C1, D, E3 as E2, E3, E4, F, Foo, Foo$1 as FooInlne, G, G1, H1, I, J, K1, L, M1, O, O$1 as O1, X, E as default };
+export { A, type B, type B1 as B2, type B1 as B3, BarType, BarValue, C, C as C1, type D, type E3 as E2, E3, E4, F, type Foo, type Foo$1 as FooInlne, G, G1, H1, I, type J, type K1, type L, type M1, type O, O$1 as O1, type X, E as default };

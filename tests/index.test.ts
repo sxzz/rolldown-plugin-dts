@@ -136,3 +136,11 @@ test('same-name output', async () => {
   )
   expect(chunks.every((chunk) => chunk.fileName.endsWith('.d.ts'))).toBe(true)
 })
+
+test('type-only export', async () => {
+  const { snapshot } = await rolldownBuild(
+    [path.resolve(dirname, 'fixtures/type-only-export/index.ts')],
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
