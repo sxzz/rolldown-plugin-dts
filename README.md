@@ -148,6 +148,17 @@ This is especially useful when you have a single `tsconfig.json` for multiple pr
 
 ---
 
+### newContext
+
+If `true`, the plugin will create a new isolated context for each build,
+ensuring that previously generated `.d.ts` code and caches are not reused.
+
+By default, the plugin may reuse internal caches or incremental build artifacts
+to speed up repeated builds. Enabling this option forces a clean context,
+guaranteeing that all type definitions are generated from scratch.
+
+---
+
 ### tsgo
 
 **[Experimental]** Enables DTS generation using [`tsgo`](https://github.com/microsoft/typescript-go).

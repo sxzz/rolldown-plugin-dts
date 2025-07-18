@@ -52,6 +52,7 @@ export function createGeneratePlugin({
   parallel,
   eager,
   tsgo,
+  newContext,
 }: Pick<
   OptionsResolved,
   | 'cwd'
@@ -64,6 +65,7 @@ export function createGeneratePlugin({
   | 'parallel'
   | 'eager'
   | 'tsgo'
+  | 'newContext'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -105,7 +107,9 @@ export function createGeneratePlugin({
         tsgoDist = await runTsgo(cwd, tsconfig)
       } else if (!parallel && (!isolatedDeclarations || vue)) {
         tscModule = await import('./tsc/index.ts')
-        tscContext = eager ? undefined : tscModule.createContext()
+        if (newContext) {
+          tscContext = tscModule.createContext()
+        }
       }
 
       if (!Array.isArray(options.input)) {
@@ -279,7 +283,10 @@ export function createGeneratePlugin({
       if (!debug.enabled && tsgoDist) {
         await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
       }
-      tscContext = tsgoDist = undefined
+      tsgoDist = undefined
+      if (newContext) {
+        tscContext = undefined
+      }
     },
   }
 }

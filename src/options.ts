@@ -130,6 +130,18 @@ export interface Options {
    * `tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
    */
   tsgo?: boolean
+
+  /**
+   * If `true`, the plugin will create a new isolated context for each build,
+   * ensuring that previously generated `.d.ts` code and caches are not reused.
+   *
+   * By default, the plugin may reuse internal caches or incremental build artifacts
+   * to speed up repeated builds. Enabling this option forces a clean context,
+   * guaranteeing that all type definitions are generated from scratch.
+   *
+   * **Default:** `false`
+   */
+  newContext?: boolean
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
@@ -160,6 +172,7 @@ export function resolveOptions({
   parallel = false,
   eager = false,
   tsgo = false,
+  newContext = false,
 }: Options): OptionsResolved {
   let resolvedTsconfig: TsConfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
@@ -222,5 +235,6 @@ export function resolveOptions({
     parallel,
     eager,
     tsgo,
+    newContext,
   }
 }
