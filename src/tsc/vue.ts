@@ -46,10 +46,11 @@ export function createVueProgramFactory(
         | (Ts.TsConfigSourceFile & { vueCompilerOptions?: any })
         | undefined
 
-      const resolver = new vue.CompilerOptionsResolver()
+      const resolver = new vue.CompilerOptionsResolver(ts.sys.fileExists)
       resolver.addConfig($configRaw?.vueCompilerOptions ?? {}, $rootDir)
       const vueOptions = resolver.build()
 
+      vue.writeGlobalTypes(vueOptions, ts.sys.writeFile)
       const vueLanguagePlugin = vue.createVueLanguagePlugin<string>(
         ts,
         options.options,

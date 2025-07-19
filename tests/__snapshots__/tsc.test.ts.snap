@@ -157,7 +157,7 @@ declare global {
     foo: string;
   }
 }
-declare const _default: vue0.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue0.ComponentOptionsMixin, vue0.ComponentOptionsMixin, {}, string, vue0.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue0.ComponentProvideOptions, false, {}, any>;
+declare const _default: vue0.DefineComponent<__VLS_Props, void, {}, {}, {}, vue0.ComponentOptionsMixin, vue0.ComponentOptionsMixin, {}, string, vue0.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue0.ComponentProvideOptions, false, {}, any>;
 //#endregion
 export { _default as App };"
 `;
@@ -352,7 +352,7 @@ declare const _default: vue0.DefineComponent<{
   onVnodeUpdated?: ((vnode: vue0.VNode, oldVNode: vue0.VNode) => void) | ((vnode: vue0.VNode, oldVNode: vue0.VNode) => void)[];
   onVnodeBeforeUnmount?: ((vnode: vue0.VNode) => void) | ((vnode: vue0.VNode) => void)[];
   onVnodeUnmounted?: ((vnode: vue0.VNode) => void) | ((vnode: vue0.VNode) => void)[];
-}, {}, {}, {}, {}, vue0.ComponentOptionsMixin, vue0.ComponentOptionsMixin, {}, string, vue0.PublicProps, Readonly<{
+}, void, {}, {}, {}, vue0.ComponentOptionsMixin, vue0.ComponentOptionsMixin, {}, string, vue0.PublicProps, Readonly<{
   foo: string;
   bar?: string;
   innerHTML?: string;
