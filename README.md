@@ -35,7 +35,6 @@ You can find an example in [here](./rolldown.config.ts).
 ## Options
 
 Configuration options for the plugin.
-Certainly! Here’s your documentation with simplified section titles (just the option name, no type annotation):
 
 ---
 
