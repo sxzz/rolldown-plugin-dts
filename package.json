@@ -68,7 +68,7 @@
     "get-tsconfig": "^4.10.1"
   },
   "devDependencies": {
-    "@sxzz/eslint-config": "^7.1.0",
+    "@sxzz/eslint-config": "^7.1.1",
     "@sxzz/prettier-config": "^2.2.3",
     "@sxzz/test-utils": "^0.5.7",
     "@types/babel__generator": "^7.27.0",
