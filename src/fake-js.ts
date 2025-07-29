@@ -175,7 +175,7 @@ export function createFakeJsPlugin({
         t.numericLiteral(0),
         ...deps.map((dep) => t.arrowFunctionExpression([], dep)),
         ...(sideEffect
-          ? [t.callExpression(t.identifier('sideEffect'), [])]
+          ? [t.callExpression(t.identifier('sideEffect'), [bindings[0]])]
           : []),
       ]
       const runtime: t.ArrayExpression = t.arrayExpression(elements)
