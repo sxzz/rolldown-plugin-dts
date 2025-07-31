@@ -50,6 +50,17 @@ const input2 = "input2";
 export { input2 };"
 `;
 
+exports[`tsc > js 1`] = `
+"// main.d.ts
+/**
+ * Does bar.
+ *
+ * @param {string} baz
+ * @returns {void}
+ */
+export declare function foo(baz: string): void"
+`;
+
 exports[`tsc > jsdoc 1`] = `
 "// jsdoc.d.ts
 import { Plugin } from "rolldown";

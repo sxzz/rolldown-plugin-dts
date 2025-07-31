@@ -157,7 +157,7 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_TS, RE_VUE],
+          include: [RE_TS, RE_JS, RE_VUE],
           exclude: [RE_DTS, RE_NODE_MODULES],
         },
       },
