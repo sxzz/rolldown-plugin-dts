@@ -158,6 +158,15 @@ guaranteeing that all type definitions are generated from scratch.
 
 ---
 
+### emitJs
+
+If `true`, the plugin will emit `.d.ts` files for `.js` files as well.
+This is useful when you want to generate type definitions for JavaScript files with JSDoc comments.
+
+Enabled by default when `allowJs` in compilerOptions is `true`.
+
+---
+
 ### tsgo
 
 **[Experimental]** Enables DTS generation using [`tsgo`](https://github.com/microsoft/typescript-go).
