@@ -70,7 +70,7 @@
   "devDependencies": {
     "@sxzz/eslint-config": "^7.1.1",
     "@sxzz/prettier-config": "^2.2.3",
-    "@sxzz/test-utils": "^0.5.8",
+    "@sxzz/test-utils": "^0.5.9",
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/node": "^24.1.0",
