@@ -50,17 +50,6 @@ const input2 = "input2";
 export { input2 };"
 `;
 
-exports[`tsc > js 1`] = `
-"// main.d.ts
-/**
- * Does bar.
- *
- * @param {string} baz
- * @returns {void}
- */
-export declare function foo(baz: string): void"
-`;
-
 exports[`tsc > jsdoc 1`] = `
 "// jsdoc.d.ts
 import { Plugin } from "rolldown";
@@ -109,6 +98,20 @@ var jsdoc_default = fn();
 
 //#endregion
 export { jsdoc_default as default, fn };"
+`;
+
+exports[`tsc > jsdoc in js 1`] = `
+"// main.d.ts
+//#region tests/fixtures/jsdoc-js/main.d.ts
+/**
+ * Does bar.
+ *
+ * @param {string} baz
+ * @returns {void}
+ */
+declare function foo(baz: string): void;
+//#endregion
+export { foo };"
 `;
 
 exports[`tsc > multi declarations 1`] = `

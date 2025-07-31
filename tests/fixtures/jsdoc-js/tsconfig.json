@@ -2,7 +2,6 @@
   "compilerOptions": {
     "checkJs": true,
     "declaration": true,
-    "declarationMap": true,
     "emitDeclarationOnly": true
   }
 }
