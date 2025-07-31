@@ -153,4 +153,15 @@ describe('tsc', () => {
     )
     expect(snapshot).toMatchSnapshot()
   })
+
+  test('jsdoc in js', async () => {
+    const root = path.resolve(dirname, 'fixtures/jsdoc-js')
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.js'), [
+      dts({
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        emitDtsOnly: true,
+      }),
+    ])
+    expect(snapshot).toMatchSnapshot()
+  })
 })

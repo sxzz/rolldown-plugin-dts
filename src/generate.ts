@@ -7,7 +7,7 @@ import { createBirpc, type BirpcReturn } from 'birpc'
 import Debug from 'debug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
 import {
-  filename_ts_to_dts,
+  filename_to_dts,
   RE_DTS,
   RE_DTS_MAP,
   RE_JS,
@@ -53,6 +53,7 @@ export function createGeneratePlugin({
   eager,
   tsgo,
   newContext,
+  emitJs,
 }: Pick<
   OptionsResolved,
   | 'cwd'
@@ -66,6 +67,7 @@ export function createGeneratePlugin({
   | 'eager'
   | 'tsgo'
   | 'newContext'
+  | 'emitJs'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -157,14 +159,14 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_TS, RE_VUE],
+          include: [RE_TS, RE_VUE, ...(emitJs ? [RE_JS] : [])],
           exclude: [RE_DTS, RE_NODE_MODULES],
         },
       },
       handler(code, id) {
         const mod = this.getModuleInfo(id)
         const isEntry = !!mod?.isEntry
-        const dtsId = filename_ts_to_dts(id)
+        const dtsId = filename_to_dts(id)
         dtsMap.set(dtsId, { code, id, isEntry })
         debug('register dts source: %s', id)
 
@@ -203,7 +205,7 @@ export function createGeneratePlugin({
             throw new Error('tsgo does not support Vue files.')
           const dtsPath = path.resolve(
             tsgoDist!,
-            path.relative(path.resolve(cwd), filename_ts_to_dts(id)),
+            path.relative(path.resolve(cwd), filename_to_dts(id)),
           )
           if (existsSync(dtsPath)) {
             dtsCode = await readFile(dtsPath, 'utf8')

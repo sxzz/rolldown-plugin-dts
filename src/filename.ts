@@ -11,8 +11,11 @@ export const RE_VUE: RegExp = /\.vue$/
 export function filename_js_to_dts(id: string): string {
   return id.replace(RE_JS, '.d.$1ts')
 }
-export function filename_ts_to_dts(id: string): string {
-  return id.replace(RE_VUE, '.vue.ts').replace(RE_TS, '.d.$1ts')
+export function filename_to_dts(id: string): string {
+  return id
+    .replace(RE_VUE, '.vue.ts')
+    .replace(RE_TS, '.d.$1ts')
+    .replace(RE_JS, '.d.$1ts')
 }
 export function filename_dts_to(id: string, ext: 'js' | 'ts'): string {
   return id.replace(RE_DTS, `.$1${ext}`)

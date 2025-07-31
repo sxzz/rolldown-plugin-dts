@@ -2,7 +2,7 @@ import path from 'node:path'
 import { createResolver } from 'dts-resolver'
 import { ResolverFactory } from 'rolldown/experimental'
 import {
-  filename_ts_to_dts,
+  filename_to_dts,
   RE_CSS,
   RE_DTS,
   RE_NODE_MODULES,
@@ -78,7 +78,7 @@ export function createDtsResolvePlugin({
           await this.load({ id: resolution })
 
           // redirect ts to dts
-          resolution = filename_ts_to_dts(resolution)
+          resolution = filename_to_dts(resolution)
         }
 
         if (RE_DTS.test(resolution)) {

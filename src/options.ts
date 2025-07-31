@@ -139,9 +139,17 @@ export interface Options {
    * to speed up repeated builds. Enabling this option forces a clean context,
    * guaranteeing that all type definitions are generated from scratch.
    *
-   * **Default:** `false`
+   * @default false
    */
   newContext?: boolean
+
+  /**
+   * If `true`, the plugin will emit `.d.ts` files for `.js` files as well.
+   * This is useful when you want to generate type definitions for JavaScript files with JSDoc comments.
+   *
+   * Enabled by default when `allowJs` in compilerOptions is `true`.
+   */
+  emitJs?: boolean
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
@@ -173,6 +181,7 @@ export function resolveOptions({
   eager = false,
   tsgo = false,
   newContext = false,
+  emitJs,
 }: Options): OptionsResolved {
   let resolvedTsconfig: TsConfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
@@ -214,6 +223,8 @@ export function resolveOptions({
     isolatedDeclarations.sourcemap = !!compilerOptions.declarationMap
   }
 
+  emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
+
   if (tsgo && !warnedTsgo) {
     console.warn(
       'The `tsgo` option is experimental and may change in the future.',
@@ -236,5 +247,6 @@ export function resolveOptions({
     eager,
     tsgo,
     newContext,
+    emitJs,
   }
 }
