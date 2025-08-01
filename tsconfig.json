@@ -13,6 +13,7 @@
     "declaration": true,
     "isolatedDeclarations": true,
     "noEmit": true,
+    "erasableSyntaxOnly": true,
     "esModuleInterop": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
