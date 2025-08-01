@@ -86,7 +86,6 @@
     "rollup-plugin-dts": "^6.2.1",
     "tinyglobby": "^0.2.14",
     "tsdown": "^0.13.0",
-    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",
     "vue": "^3.5.18",
