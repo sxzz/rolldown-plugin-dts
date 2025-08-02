@@ -1,15 +1,11 @@
 import path from 'node:path'
 import Debug from 'debug'
 import ts from 'typescript'
+import { globalContext, type TscContext } from './context.ts'
 import { createFsSystem, createMemorySystem } from './system.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'
-
-export interface TscContext {
-  programs: ts.Program[]
-  files: Map<string, string>
-}
 
 export interface TscModule {
   program: ts.Program
@@ -29,24 +25,6 @@ export interface TscOptions {
 
 const debug = Debug('rolldown-plugin-dts:tsc')
 debug(`loaded typescript: ${ts.version}`)
-
-export function createContext(): TscContext {
-  const programs: ts.Program[] = []
-  const files = new Map<string, string>()
-  return { programs, files }
-}
-
-export function invalidateContextFile(context: TscContext, file: string): void {
-  debug(`invalidating context file: ${file}`)
-  context.files.delete(file)
-  context.programs = context.programs.filter((program) => {
-    return !program
-      .getSourceFiles()
-      .some((sourceFile) => sourceFile.fileName === file)
-  })
-}
-
-export const globalContext: TscContext = createContext()
 
 const formatHost: ts.FormatDiagnosticsHost = {
   getCurrentDirectory: () => ts.sys.getCurrentDirectory(),

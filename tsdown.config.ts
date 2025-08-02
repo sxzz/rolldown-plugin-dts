@@ -6,6 +6,7 @@ export default defineConfig({
     index: './src/index.ts',
     filename: './src/filename.ts',
     tsc: './src/tsc/index.ts',
+    'tsc-context': './src/tsc/context.ts',
     'tsc-worker': './src/tsc/worker.ts',
   },
   platform: 'node',
@@ -13,6 +14,7 @@ export default defineConfig({
   define: {
     'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.js'),
   },
+  exports: true,
   plugins: [
     dts({
       oxc: true,

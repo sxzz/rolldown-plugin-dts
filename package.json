@@ -24,6 +24,9 @@
   "exports": {
     ".": "./dist/index.js",
     "./filename": "./dist/filename.js",
+    "./tsc": "./dist/tsc.js",
+    "./tsc-context": "./dist/tsc-context.js",
+    "./tsc-worker": "./dist/tsc-worker.js",
     "./package.json": "./package.json"
   },
   "publishConfig": {

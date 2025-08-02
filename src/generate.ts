@@ -14,8 +14,14 @@ import {
   RE_TS,
   RE_VUE,
 } from './filename.ts'
+import {
+  createContext,
+  globalContext,
+  invalidateContextFile,
+  type TscContext,
+} from './tsc/context.ts'
 import type { OptionsResolved } from './options.ts'
-import type { TscContext, TscOptions, TscResult } from './tsc/index.ts'
+import type { TscOptions, TscResult } from './tsc/index.ts'
 import type { TscFunctions } from './tsc/worker.ts'
 import type { BirpcReturn } from 'birpc'
 import type { Plugin, SourceMapInput } from 'rolldown'
@@ -113,7 +119,7 @@ export function createGeneratePlugin({
         } else {
           tscModule = await import('./tsc/index.ts')
           if (newContext) {
-            tscContext = tscModule.createContext()
+            tscContext = createContext()
           }
         }
       }
@@ -297,10 +303,7 @@ export function createGeneratePlugin({
 
     watchChange(id) {
       if (tscModule) {
-        tscModule.invalidateContextFile(
-          tscContext || tscModule.globalContext,
-          id,
-        )
+        invalidateContextFile(tscContext || globalContext, id)
       }
     },
   }
