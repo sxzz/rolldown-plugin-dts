@@ -28,7 +28,7 @@ test('resolve dependencies', async () => {
     [
       dts({
         resolve: ['get-tsconfig'],
-        isolatedDeclarations: true,
+        oxc: true,
         emitDtsOnly: true,
       }),
     ],
@@ -78,7 +78,7 @@ test('isolated declaration error', async () => {
     [
       dts({
         emitDtsOnly: true,
-        isolatedDeclarations: true,
+        oxc: true,
       }),
     ],
   ).catch((error: any) => error)
@@ -92,7 +92,7 @@ test('paths', async () => {
   const root = path.resolve(dirname, 'fixtures/paths')
   const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
     dts({
-      isolatedDeclarations: true,
+      oxc: true,
       emitDtsOnly: true,
       tsconfig: path.resolve(root, 'tsconfig.json'),
     }),

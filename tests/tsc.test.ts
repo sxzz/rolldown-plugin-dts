@@ -20,7 +20,7 @@ describe('tsc', () => {
             skipLibCheck: true,
             isolatedDeclarations: false,
           },
-          isolatedDeclarations: false,
+          oxc: false,
         }),
       ],
     )
@@ -149,7 +149,7 @@ describe('tsc', () => {
   test('jsdoc', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/jsdoc.ts'),
-      [dts({ isolatedDeclarations: false })],
+      [dts({ oxc: false })],
     )
     expect(snapshot).toMatchSnapshot()
   })

@@ -46,7 +46,7 @@ export function createGeneratePlugin({
   tsconfigRaw,
   incremental,
   cwd,
-  isolatedDeclarations,
+  oxc,
   emitDtsOnly,
   vue,
   parallel,
@@ -60,7 +60,7 @@ export function createGeneratePlugin({
   | 'tsconfig'
   | 'tsconfigRaw'
   | 'incremental'
-  | 'isolatedDeclarations'
+  | 'oxc'
   | 'emitDtsOnly'
   | 'vue'
   | 'parallel'
@@ -107,7 +107,7 @@ export function createGeneratePlugin({
     async buildStart(options) {
       if (tsgo) {
         tsgoDist = await runTsgo(cwd, tsconfig)
-      } else if (!parallel && (!isolatedDeclarations || vue)) {
+      } else if (!parallel && (!oxc || vue)) {
         tscModule = await import('./tsc/index.ts')
         if (newContext) {
           tscContext = tscModule.createContext()
@@ -215,8 +215,8 @@ export function createGeneratePlugin({
               `tsgo did not generate dts file for ${id}, please check your tsconfig.`,
             )
           }
-        } else if (isolatedDeclarations && !RE_VUE.test(id)) {
-          const result = oxcIsolatedDeclaration(id, code, isolatedDeclarations)
+        } else if (oxc && !RE_VUE.test(id)) {
+          const result = oxcIsolatedDeclaration(id, code, oxc)
           if (result.errors.length) {
             const [error] = result.errors
             return this.error({

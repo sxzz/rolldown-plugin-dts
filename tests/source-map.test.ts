@@ -19,7 +19,7 @@ test('oxc', async () => {
     input: path.resolve(dirname, 'fixtures/basic.ts'),
     plugins: [
       dts({
-        isolatedDeclarations: true,
+        oxc: true,
         sourcemap: true,
         emitDtsOnly: true,
       }),
@@ -36,7 +36,7 @@ test('tsc', async () => {
     input: path.resolve(dirname, 'fixtures/basic.ts'),
     plugins: [
       dts({
-        isolatedDeclarations: false,
+        oxc: false,
         sourcemap: true,
         emitDtsOnly: true,
       }),

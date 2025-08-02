@@ -71,7 +71,7 @@ export interface Options {
    * [`tsBuildInfoFile`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile)
    * enabled.
    *
-   * This option is only used when {@link Options.isolatedDeclarations} is
+   * This option is only used when {@link Options.oxc} is
    * `false`.
    */
   incremental?: boolean
@@ -89,9 +89,7 @@ export interface Options {
    *
    * This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
    */
-  isolatedDeclarations?:
-    | boolean
-    | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
+  oxc?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
 
   /**
    * If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
@@ -148,6 +146,8 @@ export interface Options {
    * This is useful when you want to generate type definitions for JavaScript files with JSDoc comments.
    *
    * Enabled by default when `allowJs` in compilerOptions is `true`.
+   * This option is only used when {@link Options.oxc} is
+   * `false`.
    */
   emitJs?: boolean
 }
@@ -158,7 +158,7 @@ export type OptionsResolved = Overwrite<
   Required<Omit<Options, 'compilerOptions'>>,
   {
     tsconfig: string | undefined
-    isolatedDeclarations: IsolatedDeclarationsOptions | false
+    oxc: IsolatedDeclarationsOptions | false
     tsconfigRaw: TsConfigJson
   }
 >
@@ -171,7 +171,7 @@ export function resolveOptions({
   incremental = false,
   compilerOptions = {},
   tsconfigRaw: overriddenTsconfigRaw = {},
-  isolatedDeclarations,
+  oxc,
   sourcemap,
   dtsInput = false,
   emitDtsOnly = false,
@@ -211,16 +211,16 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  if (isolatedDeclarations == null) {
-    isolatedDeclarations = !!compilerOptions?.isolatedDeclarations
+  if (oxc == null) {
+    oxc = !!compilerOptions?.isolatedDeclarations
   }
-  if (isolatedDeclarations === true) {
-    isolatedDeclarations = {}
+  if (oxc === true) {
+    oxc = {}
   }
-  if (isolatedDeclarations) {
-    isolatedDeclarations.stripInternal ??= !!compilerOptions?.stripInternal
+  if (oxc) {
+    oxc.stripInternal ??= !!compilerOptions?.stripInternal
     // @ts-expect-error omitted in user options
-    isolatedDeclarations.sourcemap = !!compilerOptions.declarationMap
+    oxc.sourcemap = !!compilerOptions.declarationMap
   }
 
   emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
@@ -237,7 +237,7 @@ export function resolveOptions({
     tsconfig,
     tsconfigRaw,
     incremental,
-    isolatedDeclarations,
+    oxc,
     sourcemap,
     dtsInput,
     emitDtsOnly,
