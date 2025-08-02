@@ -126,6 +126,13 @@ By default, the plugin may reuse internal caches or incremental build artifacts
 to speed up repeated builds. Enabling this option forces a clean context,
 guaranteeing that all type definitions are generated from scratch.
 
+`invalidateContextFile` API can be used to clear invalidated files from the context.
+
+```ts
+import { globalContext, invalidateContextFile } from 'rolldown-plugin-dts/tsc'
+invalidateContextFile(globalContext, 'src/foo.ts')
+```
+
 #### `emitJs`
 
 If `true`, the plugin will emit `.d.ts` files for `.js` files as well.

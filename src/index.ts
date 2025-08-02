@@ -5,7 +5,6 @@ import { createFakeJsPlugin } from './fake-js.ts'
 import { createGeneratePlugin } from './generate.ts'
 import { resolveOptions, type Options } from './options.ts'
 import { createDtsResolvePlugin } from './resolver.ts'
-import { createContext, type TscContext } from './tsc/index.ts'
 import type { Plugin } from 'rolldown'
 
 export {
@@ -36,10 +35,8 @@ export function dts(options: Options = {}): Plugin[] {
 }
 
 export {
-  createContext,
   createFakeJsPlugin,
   createGeneratePlugin,
   resolveOptions,
   type Options,
-  type TscContext,
 }

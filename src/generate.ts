@@ -82,7 +82,7 @@ export function createGeneratePlugin({
    */
   const inputAliasMap = new Map<string, string>()
 
-  let isWatch = false
+  // let isWatch = false
   let childProcess: ChildProcess | undefined
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscModule: typeof import('./tsc/index.ts')
@@ -93,7 +93,7 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      isWatch = this.meta.watchMode
+      // isWatch = this.meta.watchMode
 
       if (tsgo) {
         tsgoDist = await runTsgo(cwd, tsconfig)
@@ -248,7 +248,6 @@ export function createGeneratePlugin({
             id,
             vue,
             context: tscContext,
-            isWatch,
           }
           let result: TscResult
           if (parallel) {
@@ -293,6 +292,15 @@ export function createGeneratePlugin({
       tsgoDist = undefined
       if (newContext) {
         tscContext = undefined
+      }
+    },
+
+    watchChange(id) {
+      if (tscModule) {
+        tscModule.invalidateContextFile(
+          tscContext || tscModule.globalContext,
+          id,
+        )
       }
     },
   }
