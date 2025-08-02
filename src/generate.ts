@@ -3,7 +3,6 @@ import { existsSync } from 'node:fs'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { createBirpc, type BirpcReturn } from 'birpc'
 import Debug from 'debug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
 import {
@@ -18,6 +17,7 @@ import {
 import type { OptionsResolved } from './options.ts'
 import type { TscContext, TscOptions, TscResult } from './tsc/index.ts'
 import type { TscFunctions } from './tsc/worker.ts'
+import type { BirpcReturn } from 'birpc'
 import type { Plugin, SourceMapInput } from 'rolldown'
 
 const debug = Debug('rolldown-plugin-dts:generate')
@@ -82,35 +82,39 @@ export function createGeneratePlugin({
    */
   const inputAliasMap = new Map<string, string>()
 
+  let isWatch = false
   let childProcess: ChildProcess | undefined
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscModule: typeof import('./tsc/index.ts')
   let tscContext: TscContext | undefined
   let tsgoDist: string | undefined
 
-  if (!tsgo && parallel) {
-    childProcess = fork(new URL(WORKER_URL, import.meta.url), {
-      stdio: 'inherit',
-    })
-    rpc = createBirpc<TscFunctions>(
-      {},
-      {
-        post: (data) => childProcess!.send(data),
-        on: (fn) => childProcess!.on('message', fn),
-      },
-    )
-  }
-
   return {
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
+      isWatch = this.meta.watchMode
+
       if (tsgo) {
         tsgoDist = await runTsgo(cwd, tsconfig)
-      } else if (!parallel && (!oxc || vue)) {
-        tscModule = await import('./tsc/index.ts')
-        if (newContext) {
-          tscContext = tscModule.createContext()
+      } else if (!oxc) {
+        // tsc
+        if (parallel) {
+          childProcess = fork(new URL(WORKER_URL, import.meta.url), {
+            stdio: 'inherit',
+          })
+          rpc = (await import('birpc')).createBirpc<TscFunctions>(
+            {},
+            {
+              post: (data) => childProcess!.send(data),
+              on: (fn) => childProcess!.on('message', fn),
+            },
+          )
+        } else {
+          tscModule = await import('./tsc/index.ts')
+          if (newContext) {
+            tscContext = tscModule.createContext()
+          }
         }
       }
 
@@ -244,6 +248,7 @@ export function createGeneratePlugin({
             id,
             vue,
             context: tscContext,
+            isWatch,
           }
           let result: TscResult
           if (parallel) {
