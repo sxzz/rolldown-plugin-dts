@@ -58,7 +58,7 @@ export function createFakeJsPlugin({
       }
       return {
         ...options,
-        sourcemap: sourcemap ? true : options.sourcemap,
+        sourcemap: options.sourcemap || sourcemap,
         entryFileNames:
           options.entryFileNames ?? (dtsInput ? '[name].ts' : undefined),
         chunkFileNames(chunk) {
