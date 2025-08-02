@@ -211,9 +211,7 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  if (oxc == null) {
-    oxc = !!compilerOptions?.isolatedDeclarations
-  }
+  oxc ??= !!(compilerOptions?.isolatedDeclarations && !vue && !tsgo)
   if (oxc === true) {
     oxc = {}
   }
@@ -224,6 +222,24 @@ export function resolveOptions({
   }
 
   emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
+
+  if (tsgo) {
+    if (vue) {
+      throw new Error(
+        '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `vue` option. Please disable one of them.',
+      )
+    }
+    if (oxc) {
+      throw new Error(
+        '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `oxc` option. Please disable one of them.',
+      )
+    }
+  }
+  if (oxc && vue) {
+    throw new Error(
+      '[rolldown-plugin-dts] The `oxc` option is not compatible with the `vue` option. Please disable one of them.',
+    )
+  }
 
   if (tsgo && !warnedTsgo) {
     console.warn(
