@@ -36,31 +36,25 @@ You can find an example in [here](./rolldown.config.ts).
 
 Configuration options for the plugin.
 
----
+### General Options
 
-### cwd
+#### `cwd`
 
 The directory in which the plugin will search for the `tsconfig.json` file.
 
----
-
-### dtsInput
+#### `dtsInput`
 
 Set to `true` if your entry files are `.d.ts` files instead of `.ts` files.
 
 When enabled, the plugin will skip generating a `.d.ts` file for the entry point.
 
----
-
-### emitDtsOnly
+#### `emitDtsOnly`
 
 If `true`, the plugin will emit only `.d.ts` files and remove all other output chunks.
 
 This is especially useful when generating `.d.ts` files for the CommonJS format as part of a separate build step.
 
----
-
-### tsconfig
+#### `tsconfig`
 
 The path to the `tsconfig.json` file.
 
@@ -69,17 +63,35 @@ The path to the `tsconfig.json` file.
 
 **Default:** `'tsconfig.json'`
 
----
-
-### tsconfigRaw
+#### `tsconfigRaw`
 
 Pass a raw `tsconfig.json` object directly to the plugin.
 
 See: [TypeScript tsconfig documentation](https://www.typescriptlang.org/tsconfig)
 
----
+#### `compilerOptions`
 
-### incremental
+Override the `compilerOptions` specified in `tsconfig.json`.
+
+See: [TypeScript compilerOptions documentation](https://www.typescriptlang.org/tsconfig/#compilerOptions)
+
+#### `sourcemap`
+
+If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
+
+#### `resolve`
+
+Resolve external types used in `.d.ts` files from `node_modules`.
+
+- If `true`, all external types are resolved.
+- If an array, only types matching the provided strings or regular expressions are resolved.
+
+### `tsc` Options
+
+> [!NOTE]
+> These options are only applicable when `oxc` and `tsgo` are not enabled.
+
+#### `incremental`
 
 Controls how project references and incremental builds are handled:
 
@@ -91,63 +103,21 @@ Enabling this option can speed up builds by caching previous results, which is h
 
 **Default:** `true` if your `tsconfig` has [`incremental`](https://www.typescriptlang.org/tsconfig/#incremental) or [`tsBuildInfoFile`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile) enabled.
 
-> [!NOTE]
-> This option is only used when [`isolatedDeclarations`](#isolateddeclarations) is `false`.
-
----
-
-### compilerOptions
-
-Override the `compilerOptions` specified in `tsconfig.json`.
-
-See: [TypeScript compilerOptions documentation](https://www.typescriptlang.org/tsconfig/#compilerOptions)
-
----
-
-### isolatedDeclarations
-
-If `true`, the plugin will generate `.d.ts` files using [Oxc](https://oxc.rs/docs/guide/usage/transformer.html), which is significantly faster than the TypeScript compiler.
-
-This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
-
----
-
-### sourcemap
-
-If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
-
----
-
-### resolve
-
-Resolve external types used in `.d.ts` files from `node_modules`.
-
-- If `true`, all external types are resolved.
-- If an array, only types matching the provided strings or regular expressions are resolved.
-
----
-
-### vue
+#### `vue`
 
 If `true`, the plugin will generate `.d.ts` files using `vue-tsc`.
 
----
-
-### parallel
+#### `parallel`
 
 If `true`, the plugin will launch a separate process for `tsc` or `vue-tsc`, enabling parallel processing of multiple projects.
 
----
-
-### eager
+#### `eager`
 
 If `true`, the plugin will prepare all files listed in `tsconfig.json` for `tsc` or `vue-tsc`.
 
 This is especially useful when you have a single `tsconfig.json` for multiple projects in a monorepo.
 
----
-
-### newContext
+#### `newContext`
 
 If `true`, the plugin will create a new isolated context for each build,
 ensuring that previously generated `.d.ts` code and caches are not reused.
@@ -156,29 +126,33 @@ By default, the plugin may reuse internal caches or incremental build artifacts
 to speed up repeated builds. Enabling this option forces a clean context,
 guaranteeing that all type definitions are generated from scratch.
 
----
-
-### emitJs
+#### `emitJs`
 
 If `true`, the plugin will emit `.d.ts` files for `.js` files as well.
 This is useful when you want to generate type definitions for JavaScript files with JSDoc comments.
 
 Enabled by default when `allowJs` in compilerOptions is `true`.
 
----
+### Oxc
 
-### tsgo
+#### `oxc`
+
+If `true`, the plugin will generate `.d.ts` files using [Oxc](https://oxc.rs/docs/guide/usage/transformer.html), which is significantly faster than the TypeScript compiler.
+
+This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
+
+### TypeScript Go
+
+> [!WARNING]
+> This feature is experimental and not yet recommended for production environments.
+
+#### `tsgo`
 
 **[Experimental]** Enables DTS generation using [`tsgo`](https://github.com/microsoft/typescript-go).
 
 To use this option, ensure that `@typescript/native-preview` is installed as a dependency.
 
-`tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
-
-> [!WARNING]
-> This option is experimental and not yet recommended for production environments.
-
----
+`tsconfigRaw` option will be ignored when this option is enabled.
 
 ## Differences from `rollup-plugin-dts`
 
