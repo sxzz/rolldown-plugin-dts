@@ -50,6 +50,7 @@ export type DtsMap = Map<string, TsModule>
 export function createGeneratePlugin({
   tsconfig,
   tsconfigRaw,
+  build,
   incremental,
   cwd,
   oxc,
@@ -65,6 +66,7 @@ export function createGeneratePlugin({
   | 'cwd'
   | 'tsconfig'
   | 'tsconfigRaw'
+  | 'build'
   | 'incremental'
   | 'oxc'
   | 'emitDtsOnly'
@@ -248,6 +250,7 @@ export function createGeneratePlugin({
           const options: Omit<TscOptions, 'programs'> = {
             tsconfig,
             tsconfigRaw,
+            build,
             incremental,
             cwd,
             entries,

@@ -8,7 +8,8 @@ import {
 } from 'get-tsconfig'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
-export interface Options {
+//#region General Options
+export interface GeneralOptions {
   /**
    * The directory in which the plugin will search for the `tsconfig.json` file.
    */
@@ -46,6 +47,36 @@ export interface Options {
   tsconfigRaw?: Omit<TsConfigJson, 'compilerOptions'>
 
   /**
+   * Override the `compilerOptions` specified in `tsconfig.json`.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#compilerOptions
+   */
+  compilerOptions?: TsConfigJson.CompilerOptions
+
+  /**
+   * If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
+   */
+  sourcemap?: boolean
+
+  /**
+   * Resolve external types used in `.d.ts` files from `node_modules`.
+   */
+  resolve?: boolean | (string | RegExp)[]
+}
+
+//#region tsc Options
+export interface TscOptions {
+  /**
+   * Build mode for the TypeScript compiler:
+   *
+   * - If `true`, the plugin will use [`tsc -b`](https://www.typescriptlang.org/docs/handbook/project-references.html#build-mode-for-typescript) to build the project and all referenced projects before emitting `.d.ts` files.
+   * - If `false`, the plugin will use [`tsc`](https://www.typescriptlang.org/docs/handbook/compiler-options.html) to emit `.d.ts` files without building referenced projects.
+   *
+   * @default false
+   */
+  build?: boolean
+
+  /**
    * If your tsconfig.json has
    * [`references`](https://www.typescriptlang.org/tsconfig/#references) option,
    * `rolldown-plugin-dts` will use [`tsc
@@ -77,31 +108,6 @@ export interface Options {
   incremental?: boolean
 
   /**
-   * Override the `compilerOptions` specified in `tsconfig.json`.
-   *
-   * @see https://www.typescriptlang.org/tsconfig/#compilerOptions
-   */
-  compilerOptions?: TsConfigJson.CompilerOptions
-
-  /**
-   * If `true`, the plugin will generate `.d.ts` files using Oxc,
-   * which is significantly faster than the TypeScript compiler.
-   *
-   * This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
-   */
-  oxc?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
-
-  /**
-   * If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
-   */
-  sourcemap?: boolean
-
-  /**
-   * Resolve external types used in `.d.ts` files from `node_modules`.
-   */
-  resolve?: boolean | (string | RegExp)[]
-
-  /**
    * If `true`, the plugin will generate `.d.ts` files using `vue-tsc`.
    */
   vue?: boolean
@@ -118,16 +124,6 @@ export interface Options {
    * This is especially useful when you have a single `tsconfig.json` for multiple projects in a monorepo.
    */
   eager?: boolean
-
-  /**
-   * **[Experimental]** Enables DTS generation using `tsgo`.
-   *
-   * To use this option, make sure `@typescript/native-preview` is installed as a dependency.
-   *
-   * **Note:** This option is not yet recommended for production environments.
-   * `tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
-   */
-  tsgo?: boolean
 
   /**
    * If `true`, the plugin will create a new isolated context for each build,
@@ -152,6 +148,30 @@ export interface Options {
   emitJs?: boolean
 }
 
+export interface Options extends GeneralOptions, TscOptions {
+  //#region Oxc
+
+  /**
+   * If `true`, the plugin will generate `.d.ts` files using Oxc,
+   * which is significantly faster than the TypeScript compiler.
+   *
+   * This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
+   */
+  oxc?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
+
+  //#region TypeScript Go
+
+  /**
+   * **[Experimental]** Enables DTS generation using `tsgo`.
+   *
+   * To use this option, make sure `@typescript/native-preview` is installed as a dependency.
+   *
+   * **Note:** This option is not yet recommended for production environments.
+   * `tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
+   */
+  tsgo?: boolean
+}
+
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 
 export type OptionsResolved = Overwrite<
@@ -167,21 +187,25 @@ let warnedTsgo = false
 
 export function resolveOptions({
   cwd = process.cwd(),
-  tsconfig,
-  incremental = false,
-  compilerOptions = {},
-  tsconfigRaw: overriddenTsconfigRaw = {},
-  oxc,
-  sourcemap,
   dtsInput = false,
   emitDtsOnly = false,
+  tsconfig,
+  tsconfigRaw: overriddenTsconfigRaw = {},
+  compilerOptions = {},
+  sourcemap,
   resolve = false,
+
+  // tsc
+  build = false,
+  incremental = false,
   vue = false,
   parallel = false,
   eager = false,
-  tsgo = false,
   newContext = false,
   emitJs,
+
+  oxc,
+  tsgo = false,
 }: Options): OptionsResolved {
   let resolvedTsconfig: TsConfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
@@ -250,19 +274,23 @@ export function resolveOptions({
 
   return {
     cwd,
-    tsconfig,
-    tsconfigRaw,
-    incremental,
-    oxc,
-    sourcemap,
     dtsInput,
     emitDtsOnly,
+    tsconfig,
+    tsconfigRaw,
+    sourcemap,
     resolve,
+
+    // tsc
+    build,
+    incremental,
     vue,
     parallel,
     eager,
-    tsgo,
     newContext,
     emitJs,
+
+    oxc,
+    tsgo,
   }
 }

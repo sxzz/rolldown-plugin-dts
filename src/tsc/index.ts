@@ -16,6 +16,7 @@ export interface TscOptions {
   tsconfig?: string
   tsconfigRaw: TsConfigJson
   cwd: string
+  build: boolean
   incremental: boolean
   entries?: string[]
   id: string
@@ -174,6 +175,7 @@ function createTsProgram({
   id,
   tsconfig,
   tsconfigRaw,
+  build,
   incremental,
   vue,
   cwd,
@@ -188,7 +190,7 @@ function createTsProgram({
   )
 
   // If the tsconfig has project references, build the project tree.
-  if (tsconfig && parsedConfig.projectReferences?.length) {
+  if (tsconfig && build) {
     // Build the project tree and collect all projects.
     const projectPaths = buildSolution(tsconfig, incremental, context)
     debug(`collected projects: ${JSON.stringify(projectPaths)}`)

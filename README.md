@@ -91,11 +91,19 @@ Resolve external types used in `.d.ts` files from `node_modules`.
 > [!NOTE]
 > These options are only applicable when `oxc` and `tsgo` are not enabled.
 
+#### `build`
+
+Build mode for the TypeScript compiler:
+
+- If `true`, the plugin will use [`tsc -b`](https://www.typescriptlang.org/docs/handbook/project-references.html#build-mode-for-typescript) to build the project and all referenced projects before emitting `.d.ts` files.
+- If `false`, the plugin will use [`tsc`](https://www.typescriptlang.org/docs/handbook/compiler-options.html) to emit `.d.ts` files without building referenced projects.
+
+**Default:** `false`
+
 #### `incremental`
 
 Controls how project references and incremental builds are handled:
 
-- If your `tsconfig.json` uses [`references`](https://www.typescriptlang.org/tsconfig/#references), the plugin will use [`tsc -b`](https://www.typescriptlang.org/docs/handbook/project-references.html#build-mode-for-typescript) to build the project and all referenced projects before emitting `.d.ts` files.
 - If `incremental` is `true`, all built files (including [`.tsbuildinfo`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile)) will be written to disk, similar to running `tsc -b` in your project.
 - If `incremental` is `false`, built files are kept in memory, minimizing disk usage.
 
