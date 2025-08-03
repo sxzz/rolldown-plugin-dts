@@ -270,7 +270,8 @@ export function createGeneratePlugin({
           dtsCode = result.code
           map = result.map
         }
-        dtsCode = dtsCode?.replace(/(?:^|\n)\/\/[@#][\t ]*sourceMappingURL=\S*\s*$/g, '');
+        const sourceMapRE = /(?:^|\n)\/\/[@#][\t ]*sourceMappingURL=\S*\s*$/g
+        dtsCode = dtsCode?.replace(sourceMapRE, '')
 
         return {
           code: dtsCode || '',
