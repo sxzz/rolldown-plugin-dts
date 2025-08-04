@@ -35,11 +35,7 @@ export function createDtsResolvePlugin({
         }
 
         if (RE_CSS.test(id)) {
-          return {
-            id,
-            external: true,
-            moduleSideEffects: false,
-          }
+          return external
         }
 
         let resolution = resolver(id, importer)
