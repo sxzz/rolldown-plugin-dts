@@ -49,6 +49,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           compilerOptions: { isolatedDeclarations: false },
+          build: true,
         }),
       ],
     )
@@ -74,6 +75,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           compilerOptions: { isolatedDeclarations: false },
+          build: true,
         }),
       ],
     )
@@ -105,6 +107,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           compilerOptions: { isolatedDeclarations: false },
+          build: true,
         }),
       ],
     )
