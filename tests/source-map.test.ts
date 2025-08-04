@@ -13,10 +13,12 @@ beforeAll(async () => {
   await rm(tempDir, { recursive: true, force: true })
 })
 
+const input = path.resolve(dirname, 'fixtures/source-map.ts')
+
 test('oxc', async () => {
   const dir = path.join(tempDir, 'source-map-oxc')
   await build({
-    input: path.resolve(dirname, 'fixtures/basic.ts'),
+    input,
     plugins: [
       dts({
         oxc: true,
@@ -33,7 +35,7 @@ test('oxc', async () => {
 test('tsc', async () => {
   const dir = path.join(tempDir, 'source-map-tsc')
   await build({
-    input: path.resolve(dirname, 'fixtures/basic.ts'),
+    input,
     plugins: [
       dts({
         oxc: false,
@@ -49,16 +51,16 @@ test('tsc', async () => {
 
 test('disable dts source map only', async () => {
   const { chunks } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/basic.ts'),
+    input,
     [dts({ sourcemap: false })],
     {},
     { sourcemap: true },
   )
   expect(chunks.map((chunk) => chunk.fileName)).toMatchInlineSnapshot(`
     [
-      "basic.d.ts",
-      "basic.js",
-      "basic.js.map",
+      "source-map.d.ts",
+      "source-map.js",
+      "source-map.js.map",
     ]
   `)
 })

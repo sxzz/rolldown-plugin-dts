@@ -744,5 +744,9 @@ function inheritNodeComments<T extends t.Node>(oldNode: t.Node, newNode: T): T {
     true,
   )
 
+  newNode.trailingComments = newNode.trailingComments?.filter(
+    (comment) => !comment.value.startsWith('# sourceMappingURL'),
+  )
+
   return newNode
 }
