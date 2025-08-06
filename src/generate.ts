@@ -171,24 +171,28 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_TS, RE_VUE, ...(emitJs ? [RE_JS] : [])],
+          include: [RE_JS, RE_TS, RE_VUE],
           exclude: [RE_DTS, RE_NODE_MODULES],
         },
       },
       handler(code, id) {
-        const mod = this.getModuleInfo(id)
-        const isEntry = !!mod?.isEntry
-        const dtsId = filename_to_dts(id)
-        dtsMap.set(dtsId, { code, id, isEntry })
-        debug('register dts source: %s', id)
+        const shouldEmit = !RE_JS.test(id) || emitJs
 
-        if (isEntry) {
-          const name = inputAliasMap.get(id)
-          this.emitFile({
-            type: 'chunk',
-            id: dtsId,
-            name: name ? `${name}.d` : undefined,
-          })
+        if (shouldEmit) {
+          const mod = this.getModuleInfo(id)
+          const isEntry = !!mod?.isEntry
+          const dtsId = filename_to_dts(id)
+          dtsMap.set(dtsId, { code, id, isEntry })
+          debug('register dts source: %s', id)
+
+          if (isEntry) {
+            const name = inputAliasMap.get(id)
+            this.emitFile({
+              type: 'chunk',
+              id: dtsId,
+              name: name ? `${name}.d` : undefined,
+            })
+          }
         }
 
         if (emitDtsOnly) {
