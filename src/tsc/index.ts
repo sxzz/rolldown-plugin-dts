@@ -300,6 +300,8 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
   debug(`got source file: ${file.fileName}`)
   let dtsCode: string | undefined
   let map: SourceMapInput | undefined
+
+  // fix #77
   const stripPrivateFields: ts.TransformerFactory<ts.SourceFile> = (ctx) => {
     const visitor = (node: ts.Node) => {
       if (ts.isPropertySignature(node) && ts.isPrivateIdentifier(node.name)) {
@@ -316,6 +318,7 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
     return (sourceFile) =>
       ts.visitNode(sourceFile, visitor, ts.isSourceFile) ?? sourceFile
   }
+
   const { emitSkipped, diagnostics } = program.emit(
     file,
     (fileName, code) => {
