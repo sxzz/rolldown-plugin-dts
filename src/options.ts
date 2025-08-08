@@ -62,6 +62,15 @@ export interface GeneralOptions {
    * Resolve external types used in `.d.ts` files from `node_modules`.
    */
   resolve?: boolean | (string | RegExp)[]
+
+  /**
+   * Determines how the default export is emitted.
+   *
+   * If set to `true`, and you are only exporting a single item using `export default ...`,
+   * the output will use `export = ...` instead of the standard ES module syntax.
+   * This is useful for compatibility with CommonJS.
+   */
+  cjsDefault?: boolean
 }
 
 //#region tsc Options
@@ -194,6 +203,7 @@ export function resolveOptions({
   compilerOptions = {},
   sourcemap,
   resolve = false,
+  cjsDefault = false,
 
   // tsc
   build = false,
@@ -280,6 +290,7 @@ export function resolveOptions({
     tsconfigRaw,
     sourcemap,
     resolve,
+    cjsDefault,
 
     // tsc
     build,

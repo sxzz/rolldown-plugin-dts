@@ -38,6 +38,23 @@ var Cls = class {
 export { Cls, Enum, fn, foo };"
 `;
 
+exports[`cjs exports 1`] = `
+"// cjs-exports.js
+
+//#region tests/fixtures/cjs-exports.ts
+var cjs_exports_default = 42;
+
+//#endregion
+module.exports = cjs_exports_default;"
+`;
+
+exports[`cjs exports 2`] = `
+"// cjs-exports.d.ts
+//#region tests/fixtures/cjs-exports.d.ts
+declare const _default: number;
+export = _default;"
+`;
+
 exports[`dts input 1`] = `
 "// index.d.ts
 //#region tests/fixtures/dts-input.d.ts

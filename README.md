@@ -86,6 +86,14 @@ Resolve external types used in `.d.ts` files from `node_modules`.
 - If `true`, all external types are resolved.
 - If an array, only types matching the provided strings or regular expressions are resolved.
 
+#### `cjsDefault`
+
+Determines how the default export is emitted.
+
+If set to `true`, and you are only exporting a single item using `export default ...`,
+the output will use `export = ...` instead of the standard ES module syntax.
+This is useful for compatibility with CommonJS.
+
 ### `tsc` Options
 
 > [!NOTE]

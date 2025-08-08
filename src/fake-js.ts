@@ -40,7 +40,8 @@ type NamespaceMap = Map<
 export function createFakeJsPlugin({
   dtsInput,
   sourcemap,
-}: Pick<OptionsResolved, 'dtsInput' | 'sourcemap'>): Plugin {
+  cjsDefault,
+}: Pick<OptionsResolved, 'dtsInput' | 'sourcemap' | 'cjsDefault'>): Plugin {
   let symbolIdx = 0
   const identifierMap: Record<string, number> = Object.create(null)
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
@@ -264,7 +265,12 @@ export function createFakeJsPlugin({
     program.body = program.body
       .map((node) => {
         if (isHelperImport(node)) return null
-        if (patchImportExport(node, typeOnlyIds)) return node
+
+        const newNode = patchImportExport(node, typeOnlyIds, cjsDefault)
+        if (newNode) {
+          return newNode
+        }
+
         if (node.type !== 'VariableDeclaration') return node
 
         const [decl] = node.declarations
@@ -523,7 +529,11 @@ function isHelperImport(node: t.Node) {
 }
 
 // patch `.d.ts` suffix in import source to `.js`
-function patchImportExport(node: t.Node, typeOnlyIds: string[]) {
+function patchImportExport(
+  node: t.Node,
+  typeOnlyIds: string[],
+  cjsDefault: boolean,
+): t.Statement | undefined {
   if (
     isTypeOf(node, [
       'ImportDeclaration',
@@ -546,7 +556,22 @@ function patchImportExport(node: t.Node, typeOnlyIds: string[]) {
 
     if (node.source?.value && RE_DTS.test(node.source.value)) {
       node.source.value = filename_dts_to(node.source.value, 'js')
-      return true
+      return node
+    }
+
+    if (
+      cjsDefault &&
+      node.type === 'ExportNamedDeclaration' &&
+      !node.source &&
+      node.specifiers.length === 1 &&
+      node.specifiers[0].type === 'ExportSpecifier' &&
+      resolveString(node.specifiers[0].exported) === 'default'
+    ) {
+      const defaultExport = node.specifiers[0] as t.ExportSpecifier
+      return {
+        type: 'TSExportAssignment',
+        expression: defaultExport.local,
+      }
     }
   }
 }

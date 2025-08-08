@@ -144,3 +144,23 @@ test('type-only export', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test.only('cjs exports', async () => {
+  {
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/cjs-exports.ts')],
+      [],
+      {},
+      { format: 'cjs', exports: 'auto' },
+    )
+    expect(snapshot).toMatchSnapshot()
+  }
+
+  {
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/cjs-exports.ts')],
+      [dts({ emitDtsOnly: true, cjsDefault: true })],
+    )
+    expect(snapshot).toMatchSnapshot()
+  }
+})
