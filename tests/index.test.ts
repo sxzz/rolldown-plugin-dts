@@ -145,7 +145,7 @@ test('type-only export', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
-test.only('cjs exports', async () => {
+test('cjs exports', async () => {
   {
     const { snapshot } = await rolldownBuild(
       [path.resolve(dirname, 'fixtures/cjs-exports.ts')],
