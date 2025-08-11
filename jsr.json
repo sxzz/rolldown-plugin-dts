@@ -1,0 +1,20 @@
+{
+  "name": "@sxzz/rolldown-plugin-dts",
+  "version": "0.15.6",
+  "exports": {
+    ".": "./src/index.ts",
+    "./filename": "./src/filename.ts",
+    "./tsc": "./src/tsc/index.ts",
+    "./tsc-context": "./src/tsc/context.ts",
+    "./tsc-worker": "./src/tsc/worker.ts"
+  },
+  "publish": {
+    "include": [
+      "src",
+      "package.json",
+      "jsr.json",
+      "README.md",
+      "LICENSE"
+    ]
+  }
+}
