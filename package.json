@@ -2,8 +2,16 @@
   "name": "rolldown-plugin-dts",
   "version": "0.15.6",
   "packageManager": "pnpm@10.14.0",
-  "description": "A Rolldown plugin to bundle dts files",
+  "description": "A Rolldown plugin to generate and bundle dts files.",
   "type": "module",
+  "keywords": [
+    "rolldown",
+    "plugin",
+    "dts",
+    "typescript",
+    "vue",
+    "jsdoc"
+  ],
   "license": "MIT",
   "homepage": "https://github.com/sxzz/rolldown-plugin-dts#readme",
   "bugs": {
