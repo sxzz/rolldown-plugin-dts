@@ -7,3 +7,5 @@ on:
 jobs:
   release:
     uses: sxzz/workflows/.github/workflows/release-commit.yml@v1
+    with:
+      compact: true
