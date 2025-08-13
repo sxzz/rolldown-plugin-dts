@@ -298,6 +298,15 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
   const module = createOrGetTsModule(tscOptions)
   const { program, file } = module
   debug(`got source file: ${file.fileName}`)
+
+  const preEmitDiagnostics = ts.getPreEmitDiagnostics(program)
+  const errors = preEmitDiagnostics.filter(
+    (d: ts.Diagnostic) => d.category === ts.DiagnosticCategory.Error,
+  )
+  if (errors.length > 0) {
+    return { error: ts.formatDiagnostics(errors, formatHost) }
+  }
+
   let dtsCode: string | undefined
   let map: SourceMapInput | undefined
 
