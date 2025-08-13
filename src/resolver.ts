@@ -73,11 +73,19 @@ export function createDtsResolvePlugin({
           !dtsResolution ||
           (!RE_TS.test(dtsResolution) && !RE_VUE.test(dtsResolution))
         ) {
-          if (
+          const unresolved =
             !rolldownResolution ||
             (!RE_TS.test(rolldownResolution.id) &&
               !RE_VUE.test(rolldownResolution.id))
-          ) {
+
+          if (unresolved) {
+            // For relative/absolute type imports, surface an error instead of
+            // silently externalizing so users know a local type file is missing.
+            const isRelativeOrAbsolute =
+              id.startsWith('.') || path.isAbsolute(id)
+            if (isRelativeOrAbsolute) {
+              return this.error(`Cannot resolve import '${id}' from '${importer}'`)
+            }
             return external
           }
           dtsResolution = rolldownResolution.id
