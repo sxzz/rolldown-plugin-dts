@@ -170,4 +170,18 @@ describe('tsc', () => {
     ])
     expect(snapshot).toMatchSnapshot()
   })
+
+  test('fail on type errors', async () => {
+    await expect(() =>
+      rolldownBuild(path.resolve(dirname, 'fixtures/type-error.ts'), [
+        dts({
+          emitDtsOnly: true,
+          oxc: false,
+          compilerOptions: {
+            isolatedDeclarations: false,
+          },
+        }),
+      ]),
+    ).rejects.toThrow('error TS2322')
+  })
 })
