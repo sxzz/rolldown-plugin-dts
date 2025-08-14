@@ -262,7 +262,6 @@ export function createGeneratePlugin({
             vue,
             context: tscContext,
           }
-
           let result: TscResult
           if (parallel) {
             result = await rpc!.tscEmit(options)
