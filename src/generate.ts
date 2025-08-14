@@ -263,10 +263,6 @@ export function createGeneratePlugin({
             context: tscContext,
           }
 
-          options.tsconfigRaw.compilerOptions ??= {}
-          options.tsconfigRaw.compilerOptions.module = 'preserve'
-          options.tsconfigRaw.compilerOptions.moduleResolution = 'bundler'
-
           let result: TscResult
           if (parallel) {
             result = await rpc!.tscEmit(options)
