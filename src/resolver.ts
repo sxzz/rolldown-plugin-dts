@@ -84,7 +84,9 @@ export function createDtsResolvePlugin({
             const isRelativeOrAbsolute =
               id.startsWith('.') || path.isAbsolute(id)
             if (isRelativeOrAbsolute) {
-              return this.error(`Cannot resolve import '${id}' from '${importer}'`)
+              return this.error(
+                `Cannot resolve import '${id}' from '${importer}'`,
+              )
             }
             return external
           }
