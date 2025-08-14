@@ -17,6 +17,8 @@ describe('tsc', () => {
         dts({
           emitDtsOnly: true,
           compilerOptions: {
+            module: 'preserve',
+            moduleResolution: 'bundler',
             skipLibCheck: true,
             isolatedDeclarations: false,
           },
@@ -33,7 +35,11 @@ describe('tsc', () => {
       [
         dts({
           emitDtsOnly: true,
-          compilerOptions: { isolatedDeclarations: false },
+          compilerOptions: {
+            module: 'preserve',
+            moduleResolution: 'bundler',
+            isolatedDeclarations: false,
+          },
         }),
       ],
     )

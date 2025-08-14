@@ -298,7 +298,6 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
   const module = createOrGetTsModule(tscOptions)
   const { program, file } = module
   debug(`got source file: ${file.fileName}`)
-
   let dtsCode: string | undefined
   let map: SourceMapInput | undefined
 
