@@ -253,6 +253,16 @@ function createTsProgramFromParsedConfig({
     $rootDir: baseDir,
   }
 
+  // When aggregating files from multiple project references, inherited
+  // rootDir, outDir, and declarationDir from a specific tsconfig can cause
+  // incorrect relative paths in emitted declaration sourcemaps. Let TS infer a
+  // common root by removing it. Also clear outDir/declarationDir so TS does not
+  // try to compute paths relative to a leaf project output when emitting a
+  // unified program.
+  delete compilerOptions.rootDir
+  delete compilerOptions.outDir
+  delete compilerOptions.declarationDir
+
   const rootNames = [
     ...new Set(
       [id, ...(entries || parsedConfig.fileNames)].map((f) =>
