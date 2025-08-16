@@ -63,11 +63,8 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
-  test('composite references with shared types should generate correct sourcemaps', async () => {
-    const root = path.resolve(
-      dirname,
-      'fixtures/composite-refs-sourcemap/package-a',
-    )
+  test('should generate correct sourcemaps for a complex composite project with conflicting tsconfig options', async () => {
+    const root = path.resolve(dirname, 'fixtures/composite-refs-sourcemap')
 
     const { chunks } = await rolldownBuild(
       [path.resolve(root, 'src/react/index.ts')],
@@ -79,6 +76,8 @@ describe('tsc', () => {
           emitDtsOnly: true,
         }),
       ],
+      {},
+      { dir: path.resolve(root, 'actual-output/react') },
     )
 
     const sourcemapChunk = chunks.find((chunk) =>
@@ -91,9 +90,8 @@ describe('tsc', () => {
     const sources: string[] = sourcemap.sources.map((s: string) =>
       s.replaceAll('\\\\', '/'),
     )
-    expect(sources.every((s) => s.endsWith('.ts'))).toBe(true)
-    expect(sources.some((s) => s.endsWith('/src/types.ts'))).toBe(true)
-    expect(sources.some((s) => s.endsWith('/src/react/index.ts'))).toBe(true)
+    const expectedSources = ['../../src/types.ts', '../../src/react/index.ts']
+    expect(sources.sort()).toEqual(expectedSources.sort())
     expect(
       sourcemap.sourcesContent === undefined ||
         (Array.isArray(sourcemap.sourcesContent) &&

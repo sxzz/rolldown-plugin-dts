@@ -1,0 +1,153 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files and files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: tests/fixtures/composite-refs-sourcemap
+- Files matching these patterns are excluded: .cursor/, *.test.ts
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+tests/
+  fixtures/
+    composite-refs-sourcemap/
+      src/
+        react/
+          index.ts
+        server/
+          index.ts
+        types.ts
+      tsconfig.json
+      tsconfig.react.json
+      tsconfig.server.json
+      tsconfig.shared.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="tests/fixtures/composite-refs-sourcemap/src/react/index.ts">
+import { sharedValue } from "../types";
+export type { Toast } from "../types"
+export const testValue = sharedValue;
+</file>
+
+<file path="tests/fixtures/composite-refs-sourcemap/src/server/index.ts">
+export type { Toast } from "../types"
+</file>
+
+<file path="tests/fixtures/composite-refs-sourcemap/src/types.ts">
+export type Toast = {
+  title: string
+  description?: string
+  duration?: number
+  type: "info" | "success" | "error" | "warning"
+  notificationId?: string
+}
+
+export const sharedValue = 1;
+</file>
+
+<file path="tests/fixtures/composite-refs-sourcemap/tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.react.json" },
+    { "path": "./tsconfig.server.json" }
+  ]
+}
+</file>
+
+<file path="tests/fixtures/composite-refs-sourcemap/tsconfig.react.json">
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "baseUrl": ".",
+    "outDir": "build/react",
+    "rootDir": "src",
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
+    "skipLibCheck": true,
+    "isolatedDeclarations": false,
+  },
+  "include": ["src/react"],
+  "references": [{ "path": "./tsconfig.shared.json" }]
+}
+</file>
+
+<file path="tests/fixtures/composite-refs-sourcemap/tsconfig.server.json">
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "baseUrl": ".",
+    "outDir": "build/server",
+    "rootDir": "src",
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
+    "skipLibCheck": true,
+    "isolatedDeclarations": false,
+  },
+  "include": ["src/server"],
+  "references": [{ "path": "./tsconfig.shared.json" }]
+}
+</file>
+
+<file path="tests/fixtures/composite-refs-sourcemap/tsconfig.shared.json">
+{
+  "files": ["src/types.ts"],
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "build/shared",
+    "rootDir": "src",
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
+    "skipLibCheck": true,
+    "isolatedDeclarations": false,
+  }
+}
+</file>
+
+</files>
