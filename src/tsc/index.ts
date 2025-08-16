@@ -253,12 +253,21 @@ function createTsProgramFromParsedConfig({
     $rootDir: baseDir,
   }
 
-  // When aggregating files from multiple project references, inherited
-  // rootDir, outDir, and declarationDir from a specific tsconfig can cause
-  // incorrect relative paths in emitted declaration sourcemaps. Let TS infer a
-  // common root by removing it. Also clear outDir/declarationDir so TS does not
-  // try to compute paths relative to a leaf project output when emitting a
-  // unified program.
+  // When creating a single, comprehensive program from multiple project references,
+  // the `outDir`, `declarationDir`, and `rootDir` options from the original tsconfigs
+  // become misleading and must be removed to ensure correct sourcemap paths.
+  //
+  // - `outDir` / `declarationDir`: These cause TSC to generate incorrect relative
+  //   paths in sourcemaps because the plugin, not TSC, controls the final output
+  //   location. For example, TSC might calculate paths relative to a `build/`
+  //   directory while the plugin saves the output to `dist/`. Removing them forces
+  //   TSC to calculate paths as if the output were co-located with the sources,
+  //   producing correct and portable paths.
+  //
+  // - `rootDir`: This is removed to allow TSC to correctly infer the common
+  //   root directory from the complete, aggregated set of input files. This ensures
+  //   the most stable and correct relative paths, regardless of the original
+  //   project structure.
   delete compilerOptions.rootDir
   delete compilerOptions.outDir
   delete compilerOptions.declarationDir
