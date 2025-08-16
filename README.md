@@ -1,6 +1,8 @@
-# rolldown-plugin-dts [![npm](https://img.shields.io/npm/v/rolldown-plugin-dts.svg)](https://npmjs.com/package/rolldown-plugin-dts)
+# rolldown-plugin-dts
 
-[![Unit Test](https://github.com/sxzz/rolldown-plugin-dts/actions/workflows/unit-test.yml/badge.svg)](https://github.com/sxzz/rolldown-plugin-dts/actions/workflows/unit-test.yml)
+[![npm version][npm-version-src]][npm-version-href]
+[![npm downloads][npm-downloads-src]][npm-downloads-href]
+[![Unit Test][unit-test-src]][unit-test-href]
 
 A Rolldown plugin to generate and bundle dts files.
 
@@ -175,7 +177,7 @@ This option is automatically enabled when `isolatedDeclarations` in `compilerOpt
 
 To use this option, ensure that `@typescript/native-preview` is installed as a dependency.
 
-`tsconfigRaw` option will be ignored when this option is enabled.
+`tsconfigRaw` and `compilerOptions` options will be ignored when this option is enabled.
 
 ## Differences from `rollup-plugin-dts`
 
@@ -212,3 +214,12 @@ Furthermore, the test suite is authorized by them and distributed under the MIT 
 ## License
 
 [MIT](./LICENSE) License © 2025 [三咲智子 Kevin Deng](https://github.com/sxzz)
+
+<!-- Badges -->
+
+[npm-version-src]: https://img.shields.io/npm/v/rolldown-plugin-dts.svg
+[npm-version-href]: https://npmjs.com/package/rolldown-plugin-dts
+[npm-downloads-src]: https://img.shields.io/npm/dm/rolldown-plugin-dts
+[npm-downloads-href]: https://www.npmcharts.com/compare/rolldown-plugin-dts?interval=30
+[unit-test-src]: https://github.com/sxzz/rolldown-plugin-dts/actions/workflows/unit-test.yml/badge.svg
+[unit-test-href]: https://github.com/sxzz/rolldown-plugin-dts/actions/workflows/unit-test.yml
