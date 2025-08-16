@@ -124,8 +124,6 @@ function buildSolution(
   return Array.from(new Set(projects))
 }
 
-// removed: findProjectContainingFile — replaced by comprehensive program creation
-
 function parseTsconfig(
   tsconfigPath: string,
   fsSystem: ts.System,
