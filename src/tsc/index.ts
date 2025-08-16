@@ -124,25 +124,7 @@ function buildSolution(
   return Array.from(new Set(projects))
 }
 
-function findProjectContainingFile(
-  projects: string[],
-  targetFile: string,
-  fsSystem: ts.System,
-): { parsedConfig: ts.ParsedCommandLine; tsconfigPath: string } | undefined {
-  const resolvedTargetFile = fsSystem.resolvePath(targetFile)
-
-  for (const tsconfigPath of projects) {
-    const parsedConfig = parseTsconfig(tsconfigPath, fsSystem)
-    if (
-      parsedConfig &&
-      parsedConfig.fileNames.some(
-        (fileName) => fsSystem.resolvePath(fileName) === resolvedTargetFile,
-      )
-    ) {
-      return { parsedConfig, tsconfigPath }
-    }
-  }
-}
+// removed: findProjectContainingFile — replaced by comprehensive program creation
 
 function parseTsconfig(
   tsconfigPath: string,
@@ -191,25 +173,53 @@ function createTsProgram({
 
   // If the tsconfig has project references, build the project tree.
   if (tsconfig && build) {
-    // Build the project tree and collect all projects.
+    // Step 1: Run the solution build to populate in-memory .d.ts for references.
     const projectPaths = buildSolution(tsconfig, incremental, context)
     debug(`collected projects: ${JSON.stringify(projectPaths)}`)
 
-    // Find which project contains the source file
-    const project = findProjectContainingFile(projectPaths, id, fsSystem)
+    // Step 2: Aggregate all original source files from all referenced projects
+    // into a single list to build one comprehensive Program.
+    const allFileNames = new Set<string>(
+      parsedConfig.fileNames.map((f) => fsSystem.resolvePath(f)),
+    )
 
-    if (project) {
-      debug(`Creating program for project: ${project.tsconfigPath}`)
-
-      return createTsProgramFromParsedConfig({
-        parsedConfig: project.parsedConfig,
-        fsSystem,
-        baseDir: path.dirname(project.tsconfigPath),
-        id,
-        entries,
-        vue,
-      })
+    for (const projectPath of projectPaths) {
+      const projectConfig = parseTsconfig(projectPath, fsSystem)
+      if (projectConfig) {
+        for (const fileName of projectConfig.fileNames) {
+          allFileNames.add(fsSystem.resolvePath(fileName))
+        }
+      }
     }
+
+    // Ensure the current entry and any explicitly passed entries are included.
+    allFileNames.add(fsSystem.resolvePath(id))
+    if (entries) {
+      for (const entry of entries) {
+        allFileNames.add(fsSystem.resolvePath(entry))
+      }
+    }
+
+    // Step 3: Create a new parsed config that includes ALL source files.
+    const combinedParsedConfig: ts.ParsedCommandLine = {
+      ...parsedConfig,
+      fileNames: Array.from(allFileNames),
+      projectReferences: undefined,
+    }
+
+    debug(
+      `Creating a single comprehensive program with ${combinedParsedConfig.fileNames.length} files.`,
+    )
+
+    // Step 4: Create the program from this complete configuration.
+    return createTsProgramFromParsedConfig({
+      parsedConfig: combinedParsedConfig,
+      fsSystem,
+      baseDir, // Base directory should still be from the root tsconfig
+      id,
+      entries: undefined,
+      vue,
+    })
   }
 
   // If the tsconfig doesn't have project references, create a single program
