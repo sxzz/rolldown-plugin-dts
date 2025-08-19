@@ -14,12 +14,7 @@ import {
   RE_TS,
   RE_VUE,
 } from './filename.ts'
-import {
-  createContext,
-  globalContext,
-  invalidateContextFile,
-  type TscContext,
-} from './tsc/context.ts'
+import { createContext, globalContext, type TscContext } from './tsc/context.ts'
 import type { OptionsResolved } from './options.ts'
 import type { TscOptions, TscResult } from './tsc/index.ts'
 import type { TscFunctions } from './tsc/worker.ts'
@@ -216,6 +211,9 @@ export function createGeneratePlugin({
         let map: SourceMapInput | undefined
         debug('generate dts %s from %s', dtsId, id)
 
+        // Ensure the virtual dts module is invalidated whenever the source changes
+        this.addWatchFile(id)
+
         if (tsgo) {
           if (RE_VUE.test(id))
             throw new Error('tsgo does not support Vue files.')
@@ -308,9 +306,13 @@ export function createGeneratePlugin({
       }
     },
 
-    watchChange(id) {
+    watchChange() {
       if (tscModule) {
-        invalidateContextFile(tscContext || globalContext, id)
+        const ctx = tscContext || globalContext
+        ctx.files.clear()
+        ctx.programs = []
+      } else if (rpc) {
+        rpc.reset()
       }
     },
   }

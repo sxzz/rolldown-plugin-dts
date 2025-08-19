@@ -25,3 +25,9 @@ export function invalidateContextFile(context: TscContext, file: string): void {
 }
 
 export const globalContext: TscContext = createContext()
+
+export function resetContext(context: TscContext): void {
+  debug('resetting tsc context')
+  context.files.clear()
+  context.programs = []
+}

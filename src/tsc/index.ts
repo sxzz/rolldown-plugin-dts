@@ -49,26 +49,11 @@ const defaultCompilerOptions: ts.CompilerOptions = {
 }
 
 function createOrGetTsModule(options: TscOptions): TscModule {
-  const { id, entries, context = globalContext } = options
-  const program = context.programs.find((program) => {
-    const roots = program.getRootFileNames()
-    if (entries) {
-      return entries.every((entry) => roots.includes(entry))
-    }
-    return roots.includes(id)
-  })
-  if (program) {
-    const sourceFile = program.getSourceFile(id)
-    if (sourceFile) {
-      return { program, file: sourceFile }
-    }
-  }
-
-  debug(`create program for module: ${id}`)
+  const { id, context = globalContext } = options
+  debug(`create new program for module: ${id}`)
   const module = createTsProgram(options)
-  debug(`created program for module: ${id}`)
-
-  context.programs.push(module.program)
+  // Replace cached programs with the latest to avoid unbounded growth
+  context.programs = [module.program]
   return module
 }
 
@@ -93,10 +78,8 @@ function buildSolution(
 
   const host = ts.createSolutionBuilderHost(system)
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
-    // If `incremental` is `false`, we want to force the builder to rebuild the
-    // project even if the project is already built (i.e., `.tsbuildinfo` exists
-    // on the disk).
-    force: !incremental,
+    // Aggressively rebuild to ensure fresh .d.ts in watch mode.
+    force: true,
     verbose: true,
   })
 
@@ -172,6 +155,7 @@ function createTsProgram({
   // If the tsconfig has project references, build the project tree.
   if (tsconfig && build) {
     // Step 1: Run the solution build to populate in-memory .d.ts for references.
+    // In watch mode we may have cleared the context; always rebuild the solution.
     const projectPaths = buildSolution(tsconfig, incremental, context)
     debug(`collected projects: ${JSON.stringify(projectPaths)}`)
 
@@ -322,6 +306,12 @@ export interface TscResult {
 
 export function tscEmit(tscOptions: TscOptions): TscResult {
   debug(`running tscEmit ${tscOptions.id}`)
+  // Aggressively avoid stale programs in watch: always recreate the Program
+  const currentContext = tscOptions.context || globalContext
+  if (currentContext.programs.length > 0) {
+    debug('clearing cached TypeScript programs before emit')
+    currentContext.programs = []
+  }
   const module = createOrGetTsModule(tscOptions)
   const { program, file } = module
   debug(`got source file: ${file.fileName}`)
