@@ -55,7 +55,7 @@ declare const _default: number;
 export = _default;"
 `;
 
-exports[`dts input 1`] = `
+exports[`dts input > builds 1`] = `
 "// index.d.ts
 //#region tests/fixtures/dts-input.d.ts
 declare class Foo {}

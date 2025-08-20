@@ -144,18 +144,17 @@ export function createGeneratePlugin({
       return {
         ...options,
         entryFileNames(chunk) {
-          const original =
-            (typeof options.entryFileNames === 'function'
-              ? options.entryFileNames(chunk)
-              : options.entryFileNames) || '[name].js'
+          const { entryFileNames } = options
+          const nameTemplate =
+            (typeof entryFileNames === 'function'
+              ? entryFileNames(chunk)
+              : entryFileNames) || '[name].js'
 
-          if (!chunk.name.endsWith('.d')) return original
-
-          // already a dts file
-          if (RE_DTS.test(original)) {
-            return original.replace('[name]', chunk.name.slice(0, -2))
+          if (chunk.name.endsWith('.d') && RE_JS.test(nameTemplate)) {
+            return nameTemplate.replace(RE_JS, '.$1ts')
           }
-          return original.replace(RE_JS, '.$1ts')
+
+          return nameTemplate
         },
       }
     },

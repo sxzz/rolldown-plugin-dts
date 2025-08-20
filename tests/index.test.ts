@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
-import { expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -118,23 +118,194 @@ test('tree-shaking', async () => {
   expect(snapshot).matchSnapshot()
 })
 
-test('dts input', async () => {
-  const { snapshot } = await rolldownBuild(null!, [dts({ dtsInput: true })], {
-    input: {
-      index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
-    },
+describe('dts input', () => {
+  test('builds', async () => {
+    const { snapshot, chunks } = await rolldownBuild(
+      null!,
+      [dts({ dtsInput: true })],
+      {
+        input: {
+          index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+        },
+      },
+    )
+    expect(chunks[0].fileName).toBe('index.d.ts')
+    expect(snapshot).toMatchSnapshot()
   })
-  expect(snapshot).toMatchSnapshot()
+
+  test('.d in chunk name', async () => {
+    const { chunks } = await rolldownBuild(null!, [dts({ dtsInput: true })], {
+      input: {
+        'index.d': path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+      },
+    })
+    expect(chunks[0].fileName).toBe('index.d.ts')
+  })
+
+  test('full extension in chunk name', async () => {
+    const { chunks } = await rolldownBuild(null!, [dts({ dtsInput: true })], {
+      input: {
+        'index.d.mts': path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+      },
+    })
+    expect(chunks[0].fileName).toBe('index.d.mts')
+  })
+
+  test('custom entryFileNames with .d', async () => {
+    const { chunks } = await rolldownBuild(
+      null!,
+      [dts({ dtsInput: true })],
+      {
+        input: {
+          index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+        },
+      },
+      {
+        entryFileNames: '[name].d.cts',
+      },
+    )
+    expect(chunks[0].fileName).toBe('index.d.cts')
+  })
+
+  test('custom entryFileNames without .d', async () => {
+    const { chunks } = await rolldownBuild(
+      null!,
+      [dts({ dtsInput: true })],
+      {
+        input: {
+          index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+        },
+      },
+      {
+        entryFileNames: '[name].mts',
+      },
+    )
+    expect(chunks[0].fileName).toBe('index.d.mts')
+  })
+
+  test('custom entryFileNames function', async () => {
+    const { chunks } = await rolldownBuild(
+      null!,
+      [dts({ dtsInput: true })],
+      {
+        input: {
+          index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+        },
+      },
+      {
+        entryFileNames: () => '[name].mts',
+      },
+    )
+    expect(chunks[0].fileName).toBe('index.d.mts')
+  })
+
+  test('invalid entryFileNames gets overridden with stripped .d', async () => {
+    const { chunks } = await rolldownBuild(
+      null!,
+      [dts({ dtsInput: true })],
+      {
+        input: {
+          'index.d': path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+        },
+      },
+      {
+        entryFileNames: '[name].invalid',
+      },
+    )
+    expect(chunks[0].fileName).toBe('index.d.ts')
+  })
+
+  test('invalid entryFileNames gets overridden and preserves subextension', async () => {
+    const { chunks } = await rolldownBuild(
+      null!,
+      [dts({ dtsInput: true })],
+      {
+        input: {
+          'index.asdf': path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+        },
+      },
+      {
+        entryFileNames: '[name].invalid',
+      },
+    )
+    expect(chunks[0].fileName).toBe('index.asdf.d.ts')
+  })
 })
 
-test('same-name output', async () => {
-  const { chunks } = await rolldownBuild(
-    [path.resolve(dirname, 'fixtures/same-name/index.ts')],
-    [dts()],
-    {},
-    { preserveModules: true, entryFileNames: 'foo.d.ts' },
-  )
-  expect(chunks.every((chunk) => chunk.fileName.endsWith('.d.ts'))).toBe(true)
+describe('entryFileNames', () => {
+  test('.mjs -> .d.mts', async () => {
+    const { chunks } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [dts()],
+      {},
+      {
+        entryFileNames: '[name].mjs',
+      },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    expect(chunkNames).toStrictEqual(['basic.d.mts', 'basic.mjs'])
+  })
+
+  test('.cjs -> .d.cts', async () => {
+    const { chunks } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [dts()],
+      {},
+      {
+        entryFileNames: '[name].cjs',
+      },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    expect(chunkNames).toStrictEqual(['basic.cjs', 'basic.d.cts'])
+  })
+
+  test('.mjs -> .d.mts with custom chunk name', async () => {
+    const { chunks } = await rolldownBuild(
+      null!,
+      [dts()],
+      {
+        input: {
+          custom: path.resolve(dirname, 'fixtures/basic.ts'),
+        },
+      },
+      {
+        entryFileNames: '[name].mjs',
+      },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    expect(chunkNames).toStrictEqual(['custom.d.mts', 'custom.mjs'])
+  })
+
+  test('preserves invalid extension', async () => {
+    const { chunks } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [dts()],
+      {},
+      {
+        entryFileNames: '[name].invalid',
+      },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    expect(chunkNames).toStrictEqual(['basic.d.invalid', 'basic.invalid'])
+  })
+
+  test('same-name output (for JS & DTS)', async () => {
+    const { chunks } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/same-name/index.ts')],
+      [dts()],
+      {},
+      {
+        preserveModules: true,
+        entryFileNames: 'foo.d.ts',
+      },
+    )
+
+    expect(chunks.every((chunk) => chunk.fileName.endsWith('.d.ts'))).toBe(true)
+  })
 })
 
 test('type-only export', async () => {
