@@ -169,18 +169,14 @@ describe('dts input', () => {
 
   test('custom entryFileNames without .d', async () => {
     const { chunks } = await rolldownBuild(
-      null!,
+      [path.resolve(dirname, 'fixtures/dts-input.d.ts')],
       [dts({ dtsInput: true })],
-      {
-        input: {
-          index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
-        },
-      },
+      {},
       {
         entryFileNames: '[name].mts',
       },
     )
-    expect(chunks[0].fileName).toBe('index.d.mts')
+    expect(chunks[0].fileName).toBe('dts-input.d.mts')
   })
 
   test('custom entryFileNames function', async () => {
@@ -229,6 +225,29 @@ describe('dts input', () => {
       },
     )
     expect(chunks[0].fileName).toBe('index.asdf.d.ts')
+  })
+
+  test('chunk file names', async () => {
+    const { snapshot, chunks } = await rolldownBuild(
+      [
+        path.resolve(dirname, 'fixtures/dts-multi-input/input1.d.ts'),
+        path.resolve(dirname, 'fixtures/dts-multi-input/input2.d.ts'),
+      ],
+      [dts({ dtsInput: true })],
+      {},
+      {
+        entryFileNames: '[name].mts',
+      },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    expect(chunkNames).toStrictEqual([
+      'input1.d.mts',
+      'input2.d.mts',
+      'types-VwSK8P_f.d.ts',
+    ])
+
+    expect(snapshot).toMatchSnapshot()
   })
 })
 
@@ -305,6 +324,29 @@ describe('entryFileNames', () => {
     )
 
     expect(chunks.every((chunk) => chunk.fileName.endsWith('.d.ts'))).toBe(true)
+  })
+
+  test('chunk file names', async () => {
+    const { chunks, snapshot } = await rolldownBuild(
+      [
+        path.resolve(dirname, 'fixtures/alias/input1.ts'),
+        path.resolve(dirname, 'fixtures/alias/input2.ts'),
+      ],
+      [dts({ emitDtsOnly: true })],
+      {},
+      {
+        entryFileNames: '[name].mjs',
+      },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    expect(chunkNames).toStrictEqual([
+      'input1.d.mts',
+      'input2-CzdQ8V-e.d.ts',
+      'input2.d.mts',
+    ])
+
+    expect(snapshot).toMatchSnapshot()
   })
 })
 
