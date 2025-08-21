@@ -57,24 +57,35 @@ export function createFakeJsPlugin({
           '[rolldown-plugin-dts] Cannot bundle dts files with `cjs` format.',
         )
       }
+      const { chunkFileNames } = options
       return {
         ...options,
         sourcemap: options.sourcemap || sourcemap,
         entryFileNames:
           options.entryFileNames ?? (dtsInput ? '[name].ts' : undefined),
         chunkFileNames(chunk) {
-          const original =
-            (typeof options.chunkFileNames === 'function'
-              ? options.chunkFileNames(chunk)
-              : options.chunkFileNames) || '[name]-[hash].js'
+          const nameTemplate =
+            (typeof chunkFileNames === 'function'
+              ? chunkFileNames(chunk)
+              : chunkFileNames) || '[name]-[hash].js'
 
-          if (!original.includes('.d') && chunk.name.endsWith('.d')) {
-            return filename_js_to_dts(original).replace(
-              '[name]',
-              chunk.name.slice(0, -2),
+          if (chunk.name.endsWith('.d')) {
+            const renderedNameWithoutD = filename_js_to_dts(
+              nameTemplate.replace('[name]', chunk.name.slice(0, -2)),
             )
+            if (RE_DTS.test(renderedNameWithoutD)) {
+              return renderedNameWithoutD
+            }
+
+            const renderedName = filename_js_to_dts(
+              nameTemplate.replace('[name]', chunk.name),
+            )
+            if (RE_DTS.test(renderedName)) {
+              return renderedName
+            }
           }
-          return original
+
+          return nameTemplate
         },
       }
     },

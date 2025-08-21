@@ -119,7 +119,17 @@ test('tree-shaking', async () => {
 })
 
 describe('dts input', () => {
-  test('builds', async () => {
+  test('input array', async () => {
+    const { snapshot, chunks } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/dts-input.d.ts')],
+      [dts({ dtsInput: true })],
+      {},
+    )
+    expect(chunks[0].fileName).toBe('dts-input.d.ts')
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test('input object', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       null!,
       [dts({ dtsInput: true })],
@@ -227,7 +237,7 @@ describe('dts input', () => {
     expect(chunks[0].fileName).toBe('index.asdf.d.ts')
   })
 
-  test('chunk file names', async () => {
+  test('default chunk name', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       [
         path.resolve(dirname, 'fixtures/dts-multi-input/input1.d.ts'),
@@ -245,6 +255,29 @@ describe('dts input', () => {
       'input1.d.mts',
       'input2.d.mts',
       'types-VwSK8P_f.d.ts',
+    ])
+
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test.only('custom chunk name', async () => {
+    const { snapshot, chunks } = await rolldownBuild(
+      [
+        path.resolve(dirname, 'fixtures/dts-multi-input/input1.d.ts'),
+        path.resolve(dirname, 'fixtures/dts-multi-input/input2.d.ts'),
+      ],
+      [dts({ dtsInput: true })],
+      {},
+      {
+        chunkFileNames: 'chunks/[hash]-[name].ts',
+      },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    expect(chunkNames).toStrictEqual([
+      'chunks/DqALGAwS-types.d.ts',
+      'input1.d.ts',
+      'input2.d.ts',
     ])
 
     expect(snapshot).toMatchSnapshot()
@@ -326,7 +359,7 @@ describe('entryFileNames', () => {
     expect(chunks.every((chunk) => chunk.fileName.endsWith('.d.ts'))).toBe(true)
   })
 
-  test('chunk file names', async () => {
+  test('default chunk name', async () => {
     const { chunks, snapshot } = await rolldownBuild(
       [
         path.resolve(dirname, 'fixtures/alias/input1.ts'),
@@ -344,6 +377,29 @@ describe('entryFileNames', () => {
       'input1.d.mts',
       'input2-CzdQ8V-e.d.ts',
       'input2.d.mts',
+    ])
+
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test('custom chunk name', async () => {
+    const { snapshot, chunks } = await rolldownBuild(
+      [
+        path.resolve(dirname, 'fixtures/dts-multi-input/input1.d.ts'),
+        path.resolve(dirname, 'fixtures/dts-multi-input/input2.d.ts'),
+      ],
+      [dts({ emitDtsOnly: true })],
+      {},
+      {
+        chunkFileNames: 'chunks/[hash]-[name].js',
+      },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    expect(chunkNames).toStrictEqual([
+      'chunks/DqALGAwS-types.d.ts',
+      'input1.d.ts',
+      'input2.d.ts',
     ])
 
     expect(snapshot).toMatchSnapshot()

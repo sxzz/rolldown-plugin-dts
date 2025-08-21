@@ -55,17 +55,17 @@ declare const _default: number;
 export = _default;"
 `;
 
-exports[`dts input > builds 1`] = `
-"// index.d.ts
-//#region tests/fixtures/dts-input.d.ts
-declare class Foo {}
+exports[`dts input > custom chunk name 1`] = `
+"// chunks/DqALGAwS-types.d.ts
+//#region tests/fixtures/dts-multi-input/types.d.ts
+interface User {
+  id: string;
+  name: string;
+}
 //#endregion
-export { Foo };"
-`;
-
-exports[`dts input > chunk file names 1`] = `
-"// input1.d.mts
-import { User } from "./types-VwSK8P_f.js";
+export { User };
+// input1.d.ts
+import { User } from "./chunks/DqALGAwS-types.js";
 
 //#region tests/fixtures/dts-multi-input/input1.d.ts
 interface ApiResponse {
@@ -73,23 +73,15 @@ interface ApiResponse {
 }
 //#endregion
 export { ApiResponse };
-// input2.d.mts
-import { User } from "./types-VwSK8P_f.js";
+// input2.d.ts
+import { User } from "./chunks/DqALGAwS-types.js";
 
 //#region tests/fixtures/dts-multi-input/input2.d.ts
 interface UserWithAge extends User {
   age: number;
 }
 //#endregion
-export { UserWithAge };
-// types-VwSK8P_f.d.ts
-//#region tests/fixtures/dts-multi-input/types.d.ts
-interface User {
-  id: string;
-  name: string;
-}
-//#endregion
-export { User };"
+export { UserWithAge };"
 `;
 
 exports[`dts input 1`] = `
@@ -98,36 +90,6 @@ exports[`dts input 1`] = `
 declare class Foo {}
 //#endregion
 export { Foo };"
-`;
-
-exports[`entryFileNames > chunk file names 1`] = `
-"// input1.d.mts
-import { Input2 } from "./input2-CzdQ8V-e.js";
-
-//#region tests/fixtures/alias/input1.d.ts
-interface Input1 extends Input2 {
-  input1: string;
-}
-declare const input1: Input1;
-//#endregion
-export { Input1, input1 };
-// input2-CzdQ8V-e.d.ts
-//#region tests/fixtures/alias/shared.d.ts
-interface Shared {
-  shared: string;
-}
-declare const shared: Shared;
-//#endregion
-//#region tests/fixtures/alias/input2.d.ts
-interface Input2 extends Shared {
-  input2: string;
-}
-declare const input2: Input2;
-//#endregion
-export { Input2, input2 };
-// input2.d.mts
-import { Input2, input2 } from "./input2-CzdQ8V-e.js";
-export { Input2, input2 };"
 `;
 
 exports[`input alias 1`] = `
