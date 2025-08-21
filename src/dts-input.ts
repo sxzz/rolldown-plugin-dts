@@ -1,4 +1,4 @@
-import { RE_DTS } from './filename.ts'
+import { RE_DTS, replaceTemplateName, resolveTemplateFn } from './filename.ts'
 import type { Plugin } from 'rolldown'
 
 export function createDtsInputPlugin(): Plugin {
@@ -24,18 +24,15 @@ export function createDtsInputPlugin(): Plugin {
         entryFileNames(chunk) {
           const { entryFileNames } = options
           if (entryFileNames) {
-            const nameTemplate =
-              typeof entryFileNames === 'function'
-                ? entryFileNames(chunk)
-                : entryFileNames
+            const nameTemplate = resolveTemplateFn(entryFileNames, chunk)
 
-            const renderedName = nameTemplate.replace('[name]', chunk.name)
+            const renderedName = replaceTemplateName(nameTemplate, chunk.name)
             if (RE_DTS.test(renderedName)) {
               return nameTemplate
             }
 
-            const renderedNameWithD = nameTemplate.replace(
-              '[name]',
+            const renderedNameWithD = replaceTemplateName(
+              nameTemplate,
               `${chunk.name}.d`,
             )
             if (RE_DTS.test(renderedNameWithD)) {

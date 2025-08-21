@@ -8,6 +8,8 @@ import {
   filename_js_to_dts,
   RE_DTS,
   RE_DTS_MAP,
+  replaceTemplateName,
+  resolveTemplateFn,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
 import type { Plugin, RenderedChunk } from 'rolldown'
@@ -64,21 +66,21 @@ export function createFakeJsPlugin({
         entryFileNames:
           options.entryFileNames ?? (dtsInput ? '[name].ts' : undefined),
         chunkFileNames(chunk) {
-          const nameTemplate =
-            (typeof chunkFileNames === 'function'
-              ? chunkFileNames(chunk)
-              : chunkFileNames) || '[name]-[hash].js'
+          const nameTemplate = resolveTemplateFn(
+            chunkFileNames || '[name]-[hash].js',
+            chunk,
+          )
 
           if (chunk.name.endsWith('.d')) {
             const renderedNameWithoutD = filename_js_to_dts(
-              nameTemplate.replace('[name]', chunk.name.slice(0, -2)),
+              replaceTemplateName(nameTemplate, chunk.name.slice(0, -2)),
             )
             if (RE_DTS.test(renderedNameWithoutD)) {
               return renderedNameWithoutD
             }
 
             const renderedName = filename_js_to_dts(
-              nameTemplate.replace('[name]', chunk.name),
+              replaceTemplateName(nameTemplate, chunk.name),
             )
             if (RE_DTS.test(renderedName)) {
               return renderedName
