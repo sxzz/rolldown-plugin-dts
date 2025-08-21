@@ -1,3 +1,5 @@
+import type { ChunkFileNamesFunction, PreRenderedChunk } from 'rolldown'
+
 export const RE_JS: RegExp = /\.([cm]?)jsx?$/
 export const RE_TS: RegExp = /\.([cm]?)tsx?$/
 export const RE_DTS: RegExp = /\.d\.([cm]?)ts$/
@@ -17,4 +19,15 @@ export function filename_to_dts(id: string): string {
 }
 export function filename_dts_to(id: string, ext: 'js' | 'ts'): string {
   return id.replace(RE_DTS, `.$1${ext}`)
+}
+
+export function resolveTemplateFn(
+  fn: string | ChunkFileNamesFunction,
+  chunk: PreRenderedChunk,
+): string {
+  return typeof fn === 'function' ? fn(chunk) : fn
+}
+
+export function replaceTemplateName(template: string, name: string): string {
+  return template.replaceAll('[name]', name)
 }
