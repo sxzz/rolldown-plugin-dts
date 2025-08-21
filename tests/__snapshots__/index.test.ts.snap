@@ -129,14 +129,6 @@ declare class Foo {}
 export { Foo };"
 `;
 
-exports[`dts input 1`] = `
-"// index.d.ts
-//#region tests/fixtures/dts-input.d.ts
-declare class Foo {}
-//#endregion
-export { Foo };"
-`;
-
 exports[`entryFileNames > custom chunk name 1`] = `
 "// chunks/DqALGAwS-types.d.ts
 //#region tests/fixtures/dts-multi-input/types.d.ts
