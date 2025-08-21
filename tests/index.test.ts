@@ -260,7 +260,7 @@ describe('dts input', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
-  test.only('custom chunk name', async () => {
+  test('custom chunk name', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       [
         path.resolve(dirname, 'fixtures/dts-multi-input/input1.d.ts'),
