@@ -40,10 +40,9 @@ type NamespaceMap = Map<
 >
 
 export function createFakeJsPlugin({
-  dtsInput,
   sourcemap,
   cjsDefault,
-}: Pick<OptionsResolved, 'dtsInput' | 'sourcemap' | 'cjsDefault'>): Plugin {
+}: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault'>): Plugin {
   let symbolIdx = 0
   const identifierMap: Record<string, number> = Object.create(null)
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
@@ -63,8 +62,6 @@ export function createFakeJsPlugin({
       return {
         ...options,
         sourcemap: options.sourcemap || sourcemap,
-        entryFileNames:
-          options.entryFileNames ?? (dtsInput ? '[name].ts' : undefined),
         chunkFileNames(chunk) {
           const nameTemplate = resolveTemplateFn(
             chunkFileNames || '[name]-[hash].js',
