@@ -83,7 +83,6 @@ export function createDtsResolvePlugin({
 
         // Externalize non-bundled node_modules dependencies
         if (
-          resolve &&
           // request resolved to inside node_modules
           RE_NODE_MODULES.test(dtsResolution) &&
           // User doesn't want to bundle this module
