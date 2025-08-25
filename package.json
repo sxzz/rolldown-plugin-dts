@@ -75,7 +75,7 @@
     "ast-kit": "^2.1.2",
     "birpc": "^2.5.0",
     "debug": "^4.4.1",
-    "dts-resolver": "^2.1.1",
+    "dts-resolver": "^2.1.2",
     "get-tsconfig": "^4.10.1"
   },
   "devDependencies": {
@@ -85,12 +85,12 @@
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/node": "^24.3.0",
-    "@typescript/native-preview": "7.0.0-dev.20250820.1",
+    "@typescript/native-preview": "7.0.0-dev.20250824.1",
     "@volar/typescript": "^2.4.23",
     "@vue/language-core": "^3.0.6",
     "bumpp": "^10.2.3",
     "diff": "^8.0.2",
-    "eslint": "^9.33.0",
+    "eslint": "^9.34.0",
     "estree-walker": "^3.0.3",
     "prettier": "^3.6.2",
     "rolldown": "^1.0.0-beta.33",
@@ -99,7 +99,7 @@
     "tsdown": "^0.14.1",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
-    "vue": "^3.5.18",
+    "vue": "^3.5.19",
     "vue-tsc": "^3.0.6"
   },
   "engines": {
