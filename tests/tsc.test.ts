@@ -186,4 +186,21 @@ describe('tsc', () => {
       ]),
     ).rejects.toThrow('error TS2322')
   })
+
+  test('builds composite project', async () => {
+    const built = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/composite-includes/index.ts'),
+      [
+        dts({
+          oxc: false,
+          tsconfig: path.resolve(
+            dirname,
+            'fixtures/composite-includes/tsconfig.json',
+          ),
+        }),
+      ],
+    )
+
+    console.log(built)
+  })
 })
