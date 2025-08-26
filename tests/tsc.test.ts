@@ -187,6 +187,7 @@ describe('tsc', () => {
     ).rejects.toThrow('error TS2322')
   })
 
+  // https://github.com/sxzz/rolldown-plugin-dts/issues/90
   test('builds composite project', async () => {
     const built = await rolldownBuild(
       path.resolve(dirname, 'fixtures/composite-includes/index.ts'),
