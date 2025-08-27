@@ -275,6 +275,7 @@ export function createFakeJsPlugin({
     program.body = program.body
       .map((node) => {
         if (isHelperImport(node)) return null
+        if (node.type === 'ExpressionStatement') return null
 
         const newNode = patchImportExport(node, typeOnlyIds, cjsDefault)
         if (newNode) {
