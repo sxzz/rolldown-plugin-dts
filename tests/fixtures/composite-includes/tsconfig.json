@@ -3,5 +3,8 @@
     "composite": true,
     "noEmit": true,
   },
-  "include": ["src"],
+  "files": [
+    "index.ts",
+    "foo.ts",
+  ],
 }
