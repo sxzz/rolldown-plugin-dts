@@ -34,7 +34,9 @@ export function dts(options: Options = {}): Plugin[] {
   return plugins
 }
 
+const alexValue = 1
 export {
+  alexValue,
   createFakeJsPlugin,
   createGeneratePlugin,
   resolveOptions,
