@@ -49,26 +49,20 @@ const defaultCompilerOptions: ts.CompilerOptions = {
 }
 
 function createOrGetTsModule(options: TscOptions): TscModule {
-  const { id, entries, context = globalContext } = options
-  const program = context.programs.find((program) => {
-    const roots = program.getRootFileNames()
-    if (entries) {
-      return entries.every((entry) => roots.includes(entry))
-    }
-    return roots.includes(id)
-  })
-  if (program) {
-    const sourceFile = program.getSourceFile(id)
-    if (sourceFile) {
-      return { program, file: sourceFile }
-    }
+  const { id, context = globalContext } = options
+  // Try to reuse an existing program that already contains this source file
+  const reused = context.programs.find((program) => program.getSourceFile(id))
+  if (reused) {
+    const file = reused.getSourceFile(id)!
+    return { program: reused, file }
   }
 
   debug(`create program for module: ${id}`)
   const module = createTsProgram(options)
   debug(`created program for module: ${id}`)
 
-  context.programs.push(module.program)
+  // Keep only one cached program to avoid unbounded growth
+  context.programs = [module.program]
   return module
 }
 
@@ -93,9 +87,7 @@ function buildSolution(
 
   const host = ts.createSolutionBuilderHost(system)
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
-    // If `incremental` is `false`, we want to force the builder to rebuild the
-    // project even if the project is already built (i.e., `.tsbuildinfo` exists
-    // on the disk).
+    // Respect incremental builds where possible; only force when not incremental.
     force: !incremental,
     verbose: true,
   })
@@ -172,6 +164,7 @@ function createTsProgram({
   // If the tsconfig has project references, build the project tree.
   if (tsconfig && build) {
     // Step 1: Run the solution build to populate in-memory .d.ts for references.
+    // In watch mode we may have cleared the context; always rebuild the solution.
     const projectPaths = buildSolution(tsconfig, incremental, context)
     debug(`collected projects: ${JSON.stringify(projectPaths)}`)
 
@@ -217,6 +210,7 @@ function createTsProgram({
       id,
       entries: undefined,
       vue,
+      oldProgram: context.programs[0],
     })
   }
 
@@ -229,6 +223,7 @@ function createTsProgram({
     id,
     entries,
     vue,
+    oldProgram: context.programs[0],
   })
 }
 
@@ -239,11 +234,14 @@ function createTsProgramFromParsedConfig({
   id,
   entries,
   vue,
+  oldProgram,
 }: {
   parsedConfig: ts.ParsedCommandLine
   fsSystem: ts.System
   baseDir: string
-} & Pick<TscOptions, 'entries' | 'vue' | 'id'>): TscModule {
+} & Pick<TscOptions, 'entries' | 'vue' | 'id'> & {
+    oldProgram?: ts.Program
+  }): TscModule {
   const compilerOptions: ts.CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
@@ -290,6 +288,7 @@ function createTsProgramFromParsedConfig({
     rootNames,
     options: compilerOptions,
     host,
+    oldProgram,
     projectReferences: parsedConfig.projectReferences,
   })
 
@@ -318,6 +317,7 @@ export interface TscResult {
   code?: string
   map?: SourceMapInput
   error?: string
+  watchedFiles?: string[]
 }
 
 export function tscEmit(tscOptions: TscOptions): TscResult {
@@ -327,6 +327,7 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
   debug(`got source file: ${file.fileName}`)
   let dtsCode: string | undefined
   let map: SourceMapInput | undefined
+  const watchedFiles = program.getSourceFiles().map((sf) => sf.fileName)
 
   // fix #77
   const stripPrivateFields: ts.TransformerFactory<ts.SourceFile> = (ctx) => {
@@ -387,5 +388,5 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
     dtsCode = file.getFullText()
   }
 
-  return { code: dtsCode, map }
+  return { code: dtsCode, map, watchedFiles }
 }

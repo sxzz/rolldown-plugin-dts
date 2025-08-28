@@ -214,7 +214,11 @@ export function createGeneratePlugin({
         const { code, id } = dtsMap.get(dtsId)!
         let dtsCode: string | undefined
         let map: SourceMapInput | undefined
+        let watched: string[] | undefined
         debug('generate dts %s from %s', dtsId, id)
+
+        // Ensure the virtual dts module is invalidated whenever the source changes
+        this.addWatchFile(id)
 
         if (tsgo) {
           if (RE_VUE.test(id))
@@ -273,13 +277,22 @@ export function createGeneratePlugin({
           }
           dtsCode = result.code
           map = result.map
+          watched = result.watchedFiles
         }
 
-        return {
+        const loaded = {
           code: dtsCode || '',
           moduleSideEffects: false,
           map,
+        } as const
+
+        // Ensure changes to any source in the active Program bubble up
+        // to this virtual module in watch mode.
+        if (watched && this.addWatchFile) {
+          for (const f of watched) this.addWatchFile(f)
         }
+
+        return loaded
       },
     },
 
@@ -310,7 +323,10 @@ export function createGeneratePlugin({
 
     watchChange(id) {
       if (tscModule) {
-        invalidateContextFile(tscContext || globalContext, id)
+        const ctx = tscContext || globalContext
+        invalidateContextFile(ctx, id)
+      } else if (rpc) {
+        rpc.invalidate(id)
       }
     },
   }
