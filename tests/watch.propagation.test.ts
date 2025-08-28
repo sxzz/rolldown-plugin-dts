@@ -42,6 +42,10 @@ async function waitForBundleEnd(w: RolldownWatcher, timeoutMs = 30000) {
   })
 }
 
+// This test verifies watch-mode propagation end-to-end using rolldown + the dts plugin.
+// It builds once, checks the emitted d.ts, then edits source files (adding a new
+// type and re-export). The watcher should pick up the changes and rebuild. After
+// the rebuild, the new type re-export must appear in the generated index.d.ts.
 describe('watch', () => {
   test('watch propagation end-to-end', async () => {
     const root = path.resolve(dirname, 'fixtures/composite-refs-sourcemap')
