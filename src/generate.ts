@@ -1,10 +1,11 @@
 import { fork, spawn, type ChildProcess } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, realpathSync } from 'node:fs'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import Debug from 'debug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
+import ts from 'typescript'
 import {
   filename_to_dts,
   RE_DTS,
@@ -324,8 +325,19 @@ export function createGeneratePlugin({
     watchChange(id) {
       if (tscModule) {
         const ctx = tscContext || globalContext
+        // Targeted invalidation with normalized path
+        let normalized = id
+        try {
+          const real = (realpathSync as any).native as
+            | ((p: string) => string)
+            | undefined
+          if (real) normalized = real(id)
+        } catch {}
+        normalized = ts.sys.resolvePath(normalized)
+        if (!ts.sys.useCaseSensitiveFileNames)
+          normalized = normalized.toLowerCase()
         // Targeted invalidation to keep incremental reuse effective
-        invalidateContextFile(ctx, id)
+        invalidateContextFile(ctx, normalized)
       } else if (rpc) {
         rpc.invalidate(id)
       }
