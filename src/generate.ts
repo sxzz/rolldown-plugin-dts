@@ -13,6 +13,8 @@ import {
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
+  replaceTemplateName,
+  resolveTemplateFn,
 } from './filename.ts'
 import {
   createContext,
@@ -144,18 +146,22 @@ export function createGeneratePlugin({
       return {
         ...options,
         entryFileNames(chunk) {
-          const original =
-            (typeof options.entryFileNames === 'function'
-              ? options.entryFileNames(chunk)
-              : options.entryFileNames) || '[name].js'
+          const { entryFileNames } = options
+          const nameTemplate = resolveTemplateFn(
+            entryFileNames || '[name].js',
+            chunk,
+          )
 
-          if (!chunk.name.endsWith('.d')) return original
-
-          // already a dts file
-          if (RE_DTS.test(original)) {
-            return original.replace('[name]', chunk.name.slice(0, -2))
+          if (chunk.name.endsWith('.d')) {
+            if (RE_DTS.test(nameTemplate)) {
+              return replaceTemplateName(nameTemplate, chunk.name.slice(0, -2))
+            }
+            if (RE_JS.test(nameTemplate)) {
+              return nameTemplate.replace(RE_JS, '.$1ts')
+            }
           }
-          return original.replace(RE_JS, '.$1ts')
+
+          return nameTemplate
         },
       }
     },

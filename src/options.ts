@@ -59,7 +59,13 @@ export interface GeneralOptions {
   sourcemap?: boolean
 
   /**
-   * Resolve external types used in `.d.ts` files from `node_modules`.
+   * Controls whether type definitions from `node_modules` are bundled into your final `.d.ts` file or kept as external `import` statements.
+   * 
+   * By default, dependencies are external, resulting in `import { Type } from 'some-package'`. When bundled, this `import` is removed, and the type definitions from `some-package` are copied directly into your file.
+
+   * - `true`: Bundles all dependencies.
+   * - `false`: (Default) Keeps all dependencies external.
+   * - `(string | RegExp)[]`: Bundles only dependencies matching the provided strings or regular expressions (e.g. `['pkg-a', /^@scope\//]`).
    */
   resolve?: boolean | (string | RegExp)[]
 

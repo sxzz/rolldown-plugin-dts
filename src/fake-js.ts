@@ -8,6 +8,8 @@ import {
   filename_js_to_dts,
   RE_DTS,
   RE_DTS_MAP,
+  replaceTemplateName,
+  resolveTemplateFn,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
 import type { Plugin, RenderedChunk } from 'rolldown'
@@ -38,10 +40,9 @@ type NamespaceMap = Map<
 >
 
 export function createFakeJsPlugin({
-  dtsInput,
   sourcemap,
   cjsDefault,
-}: Pick<OptionsResolved, 'dtsInput' | 'sourcemap' | 'cjsDefault'>): Plugin {
+}: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault'>): Plugin {
   let symbolIdx = 0
   const identifierMap: Record<string, number> = Object.create(null)
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
@@ -57,24 +58,33 @@ export function createFakeJsPlugin({
           '[rolldown-plugin-dts] Cannot bundle dts files with `cjs` format.',
         )
       }
+      const { chunkFileNames } = options
       return {
         ...options,
         sourcemap: options.sourcemap || sourcemap,
-        entryFileNames:
-          options.entryFileNames ?? (dtsInput ? '[name].ts' : undefined),
         chunkFileNames(chunk) {
-          const original =
-            (typeof options.chunkFileNames === 'function'
-              ? options.chunkFileNames(chunk)
-              : options.chunkFileNames) || '[name]-[hash].js'
+          const nameTemplate = resolveTemplateFn(
+            chunkFileNames || '[name]-[hash].js',
+            chunk,
+          )
 
-          if (!original.includes('.d') && chunk.name.endsWith('.d')) {
-            return filename_js_to_dts(original).replace(
-              '[name]',
-              chunk.name.slice(0, -2),
+          if (chunk.name.endsWith('.d')) {
+            const renderedNameWithoutD = filename_js_to_dts(
+              replaceTemplateName(nameTemplate, chunk.name.slice(0, -2)),
             )
+            if (RE_DTS.test(renderedNameWithoutD)) {
+              return renderedNameWithoutD
+            }
+
+            const renderedName = filename_js_to_dts(
+              replaceTemplateName(nameTemplate, chunk.name),
+            )
+            if (RE_DTS.test(renderedName)) {
+              return renderedName
+            }
           }
-          return original
+
+          return nameTemplate
         },
       }
     },
@@ -265,6 +275,7 @@ export function createFakeJsPlugin({
     program.body = program.body
       .map((node) => {
         if (isHelperImport(node)) return null
+        if (node.type === 'ExpressionStatement') return null
 
         const newNode = patchImportExport(node, typeOnlyIds, cjsDefault)
         if (newNode) {

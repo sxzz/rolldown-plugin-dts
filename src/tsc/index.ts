@@ -364,19 +364,8 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
     // @ts-expect-error private API: forceDtsEmit
     true,
   )
-  const emitErrors = diagnostics.filter(
-    (d: ts.Diagnostic) => d.category === ts.DiagnosticCategory.Error,
-  )
-  if (emitErrors.length > 0) {
-    return { error: ts.formatDiagnostics(emitErrors, formatHost) }
-  }
-  if (emitSkipped) {
-    const errors = ts
-      .getPreEmitDiagnostics(program)
-      .filter((d: ts.Diagnostic) => d.category === ts.DiagnosticCategory.Error)
-    if (errors.length > 0) {
-      return { error: ts.formatDiagnostics(errors, formatHost) }
-    }
+  if (emitSkipped && diagnostics.length) {
+    return { error: ts.formatDiagnostics(diagnostics, formatHost) }
   }
 
   // If TypeScript skipped emitting because the file is already a .d.ts (e.g. a
