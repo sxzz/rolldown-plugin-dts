@@ -1,13 +1,13 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { watch as rolldownWatch, type RollupWatcher } from 'rolldown'
+import { watch as rolldownWatch } from 'rolldown'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
-async function waitForBundleEnd(w: RollupWatcher, timeoutMs = 30000) {
+async function waitForBundleEnd(w: any, timeoutMs = 30000) {
   return await new Promise<void>((resolve, reject) => {
     const timer = setTimeout(() => {
       cleanup()
@@ -38,7 +38,7 @@ async function waitForBundleEnd(w: RollupWatcher, timeoutMs = 30000) {
 describe('watch', () => {
   test('watch propagation end-to-end', async () => {
     const root = path.resolve(dirname, 'fixtures/composite-refs-sourcemap')
-    const outDir = path.resolve(root, 'actual-watch/react')
+    const outDir = path.resolve(root, 'dist/react')
     const input = path.resolve(root, 'src/react/index.ts')
     const sharedPath = path.resolve(root, 'src/types.ts')
     const reactEntry = path.resolve(root, 'src/react/index.ts')
