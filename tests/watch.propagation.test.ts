@@ -1,37 +1,44 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { watch as rolldownWatch } from 'rolldown'
+import {
+  watch as rolldownWatch,
+  type RolldownWatcher,
+  type RolldownWatcherEvent,
+  type WatchOptions,
+} from 'rolldown'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
-async function waitForBundleEnd(w: any, timeoutMs = 30000) {
+async function waitForBundleEnd(w: RolldownWatcher, timeoutMs = 30000) {
   return await new Promise<void>((resolve, reject) => {
     const timer = setTimeout(() => {
       cleanup()
       reject(new Error('watch timed out'))
     }, timeoutMs)
-    const onEvent = (event: any) => {
+    const onEvent = (event: RolldownWatcherEvent) => {
       if (event.code === 'BUNDLE_END') {
         cleanup()
         resolve()
       } else if (event.code === 'ERROR') {
         cleanup()
-        reject(event.error || new Error('watch error'))
+        reject(
+          event.error instanceof Error ? event.error : new Error('watch error'),
+        )
       }
     }
-    const on = (w as any).on || (w as any).addEventListener
-    const off =
-      (w as any).off ||
-      (w as any).removeEventListener ||
-      (w as any).removeListener
+    const handler = onEvent as unknown as Parameters<RolldownWatcher['on']>[1]
+    const on = w.on?.bind(w)
+    const off = (
+      w as unknown as { off?: (e: 'event', h: typeof handler) => void }
+    ).off?.bind(w)
     function cleanup() {
       clearTimeout(timer)
-      if (off) off.call(w, 'event', onEvent)
+      if (off) off('event', handler)
     }
-    if (on) on.call(w, 'event', onEvent)
+    if (on) on('event', handler)
   })
 }
 
@@ -55,7 +62,7 @@ describe('watch', () => {
     await fs.writeFile(sharedPath, originalShared, 'utf8')
     await fs.writeFile(reactEntry, originalReact, 'utf8')
 
-    const watcher = rolldownWatch({
+    const watchOptions: WatchOptions = {
       input,
       plugins: [
         dts({
@@ -69,7 +76,8 @@ describe('watch', () => {
       output: {
         dir: outDir,
       },
-    } as any)
+    }
+    const watcher = rolldownWatch(watchOptions)
 
     try {
       // first build
