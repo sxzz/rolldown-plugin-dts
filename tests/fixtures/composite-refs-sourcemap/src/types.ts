@@ -7,3 +7,4 @@ export type Toast = {
 }
 
 export const sharedValue = 1;
+

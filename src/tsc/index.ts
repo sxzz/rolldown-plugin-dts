@@ -50,9 +50,18 @@ const defaultCompilerOptions: ts.CompilerOptions = {
 
 function createOrGetTsModule(options: TscOptions): TscModule {
   const { id, context = globalContext } = options
-  debug(`create new program for module: ${id}`)
+  // Try to reuse an existing program that already contains this source file
+  const reused = context.programs.find((program) => program.getSourceFile(id))
+  if (reused) {
+    const file = reused.getSourceFile(id)!
+    return { program: reused, file }
+  }
+
+  debug(`create program for module: ${id}`)
   const module = createTsProgram(options)
-  // Replace cached programs with the latest to avoid unbounded growth
+  debug(`created program for module: ${id}`)
+
+  // Keep only one cached program to avoid unbounded growth
   context.programs = [module.program]
   return module
 }
@@ -78,8 +87,8 @@ function buildSolution(
 
   const host = ts.createSolutionBuilderHost(system)
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
-    // Aggressively rebuild to ensure fresh .d.ts in watch mode.
-    force: true,
+    // Respect incremental builds where possible; only force when not incremental.
+    force: !incremental,
     verbose: true,
   })
 
@@ -201,6 +210,7 @@ function createTsProgram({
       id,
       entries: undefined,
       vue,
+      oldProgram: context.programs[0],
     })
   }
 
@@ -213,6 +223,7 @@ function createTsProgram({
     id,
     entries,
     vue,
+    oldProgram: context.programs[0],
   })
 }
 
@@ -223,11 +234,14 @@ function createTsProgramFromParsedConfig({
   id,
   entries,
   vue,
+  oldProgram,
 }: {
   parsedConfig: ts.ParsedCommandLine
   fsSystem: ts.System
   baseDir: string
-} & Pick<TscOptions, 'entries' | 'vue' | 'id'>): TscModule {
+} & Pick<TscOptions, 'entries' | 'vue' | 'id'> & {
+    oldProgram?: ts.Program
+  }): TscModule {
   const compilerOptions: ts.CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
@@ -274,6 +288,7 @@ function createTsProgramFromParsedConfig({
     rootNames,
     options: compilerOptions,
     host,
+    oldProgram,
     projectReferences: parsedConfig.projectReferences,
   })
 
@@ -302,21 +317,17 @@ export interface TscResult {
   code?: string
   map?: SourceMapInput
   error?: string
+  watchedFiles?: string[]
 }
 
 export function tscEmit(tscOptions: TscOptions): TscResult {
   debug(`running tscEmit ${tscOptions.id}`)
-  // Aggressively avoid stale programs in watch: always recreate the Program
-  const currentContext = tscOptions.context || globalContext
-  if (currentContext.programs.length > 0) {
-    debug('clearing cached TypeScript programs before emit')
-    currentContext.programs = []
-  }
   const module = createOrGetTsModule(tscOptions)
   const { program, file } = module
   debug(`got source file: ${file.fileName}`)
   let dtsCode: string | undefined
   let map: SourceMapInput | undefined
+  const watchedFiles = program.getSourceFiles().map((sf) => sf.fileName)
 
   // fix #77
   const stripPrivateFields: ts.TransformerFactory<ts.SourceFile> = (ctx) => {
@@ -377,5 +388,5 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
     dtsCode = file.getFullText()
   }
 
-  return { code: dtsCode, map }
+  return { code: dtsCode, map, watchedFiles }
 }

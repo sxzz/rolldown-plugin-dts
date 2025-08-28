@@ -99,6 +99,93 @@ describe('tsc', () => {
     ).toBe(true)
   })
 
+  test('composite refs watch propagation', async () => {
+    const root = path.resolve(dirname, 'fixtures/composite-refs-sourcemap')
+
+    // Ensure fixture is in baseline state before first build
+    const sharedPath = path.resolve(root, 'src/types.ts')
+    const reactEntry = path.resolve(root, 'src/react/index.ts')
+    let originalShared = await fs.readFile(sharedPath, 'utf8')
+    let originalReact = await fs.readFile(reactEntry, 'utf8')
+    if (originalShared.includes('export type NewExport')) {
+      originalShared = originalShared.replace(
+        /\nexport type NewExport[\s\S]*?\n?$/,
+        '\n',
+      )
+      await fs.writeFile(sharedPath, originalShared, 'utf8')
+    }
+    if (originalReact.includes('export type { NewExport }')) {
+      originalReact = originalReact.replace(
+        /\nexport type \{ NewExport \} from "\.\.\/types"\n?$/,
+        '\n',
+      )
+      await fs.writeFile(reactEntry, originalReact, 'utf8')
+    }
+
+    // First build: react uses shared types
+    const { chunks: chunks1 } = await rolldownBuild(
+      [path.resolve(root, 'src/react/index.ts')],
+      [
+        dts({
+          tsconfig: path.resolve(root, 'tsconfig.react.json'),
+          build: true,
+          emitDtsOnly: true,
+          parallel: false,
+          newContext: true,
+        }),
+      ],
+      {},
+      { dir: path.resolve(root, 'actual-output/react') },
+    )
+
+    const dtsChunk1 = chunks1.find((c) => c.fileName.endsWith('.d.ts'))!
+    const dtsCode1 = (dtsChunk1 as any).code
+      ? String((dtsChunk1 as any).code)
+      : String((dtsChunk1 as any).source)
+    expect(dtsCode1).toContain('export { type Toast')
+    expect(dtsCode1).toContain('testValue')
+
+    // Change shared type and re-export it from react entry
+    originalShared = await fs.readFile(sharedPath, 'utf8')
+    originalReact = await fs.readFile(reactEntry, 'utf8')
+    await fs.writeFile(
+      sharedPath,
+      `${originalShared}\nexport type NewExport = { added: true }\n`,
+      'utf8',
+    )
+    await fs.writeFile(
+      reactEntry,
+      `${originalReact}\nexport type { NewExport } from "../types"\n`,
+      'utf8',
+    )
+
+    // Second build: should pick up NewExport in react .d.ts
+    const { chunks: chunks2 } = await rolldownBuild(
+      [path.resolve(root, 'src/react/index.ts')],
+      [
+        dts({
+          tsconfig: path.resolve(root, 'tsconfig.react.json'),
+          build: true,
+          emitDtsOnly: true,
+          parallel: false,
+          newContext: true,
+        }),
+      ],
+      {},
+      { dir: path.resolve(root, 'actual-output/react-2') },
+    )
+
+    const dtsChunk2 = chunks2.find((c) => c.fileName.endsWith('.d.ts'))!
+    const dtsCode2 = (dtsChunk2 as any).code
+      ? String((dtsChunk2 as any).code)
+      : String((dtsChunk2 as any).source)
+    expect(dtsCode2).toContain('export { type NewExport')
+
+    // restore fixture files
+    await fs.writeFile(sharedPath, originalShared, 'utf8')
+    await fs.writeFile(reactEntry, originalReact, 'utf8')
+  })
+
   test('composite references', async () => {
     const root = path.resolve(dirname, 'fixtures/composite-refs')
 

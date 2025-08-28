@@ -24,6 +24,22 @@
 - Approach: build a single comprehensive Program (flattened sources) while normalizing compiler options for correct sourcemaps (remove `rootDir`, `outDir`, `declarationDir`).
 - Watch-mode correctness for `.d.ts` was not guaranteed then; that is what we later fixed.
 
+#### What changed between branches (diff highlights)
+
+- Program creation and caching
+  - fix/#80: Reused `context.programs` when possible; created Program on-demand and cached it.
+  - fix/watch-tsc-dts: Always creates a new Program for every emit and replaces cache (`context.programs = [program]`). Additionally, `tscEmit` clears cached programs before emit.
+- Solution builder behavior
+  - fix/#80: `force: !incremental` (respects incremental builds; avoids rebuilds when not needed).
+  - fix/watch-tsc-dts: `force: true` (always rebuilds the entire solution in watch).
+- Invalidation strategy
+  - fix/#80: Targeted invalidation via `invalidateContextFile(file)`.
+  - fix/watch-tsc-dts: Global resets on `watchChange()` (clears `files` and `programs`, or `rpc.reset()`), plus `this.addWatchFile(id)` to ensure virtual module invalidation.
+- Aggregation approach (from fix/#80 and retained in fix/watch-tsc-dts)
+  - Build a single comprehensive Program by aggregating all `.ts` sources from all referenced projects; remove `rootDir`, `outDir`, `declarationDir` to fix sourcemap paths.
+
+Net effect: In watch mode, every change triggers a solution rebuild and a fresh, large Program recreation, then repeats per entry during emits.
+
 #### Changes that introduced correctness (but slowed builds)
 
 - Branch: `fix/watch-tsc-dts`.
@@ -54,6 +70,12 @@
 - Sourcemaps: correct (per `fix/#80`).
 - Performance: large packages with 30+ entries are still slow; a single change can lead to large `.d.ts` work even with incremental reuse.
 
+#### Why it happens (root cause)
+
+- The aggregated Program contains sources from all referenced projects, inflating graph size.
+- Watch invalidation now clears caches and forces full solution rebuilds on every change.
+- Program is recreated before emits and not reused across entries; with many entries, the cost multiplies.
+
 #### Likely cause of slowness
 
 - Flattening referenced projects into a single aggregated Program increases root set and type graph size for each emit.
@@ -82,6 +104,32 @@
 
 7. Add profiling hooks
    - Enable TS perf logging and measure time distribution (solution build vs createProgram vs emit). Add a benchmark script for reproducible measurements across branches.
+
+#### Proposed clean architecture (preserve sourcemaps + watch correctness)
+
+1. Long-lived aggregated Program per tsconfig root (preferred immediate fix)
+
+- Keep the aggregated Program approach from fix/#80 to guarantee sourcemaps to `.ts`.
+- Reuse a single Program across all entries and emits. Pass `oldProgram` into `ts.createProgram` to enable incremental updates.
+- Revert aggressive resets: on `watchChange(file)`, call targeted `invalidateContextFile(file)` and mark context dirty without clearing everything.
+- Solution builder: restore `force: !incremental`. Only rerun when referenced outputs actually change. Coalesce concurrent builds.
+
+2. Reduce scope of aggregated sources (medium-term)
+
+- Instead of union of all referenced projects' `fileNames`, compute the transitive closure of files reachable from the active entry set using TS module resolution, and include only those in the aggregated Program.
+- Keep removal of `rootDir`/`outDir`/`declarationDir`. Verify sourcemaps remain identical to fix/#80.
+
+3. Output/change skipping (low-risk optimization)
+
+- Cache last-emitted `.d.ts` and `.map` content hashes per entry; skip writing and avoid downstream IO churn when unchanged. Avoid repeated emits when inputs did not change.
+
+4. Smarter solution rebuild trigger
+
+- Track `.tsbuildinfo`/`.d.ts` versions in memory; rerun solution build only if referenced outputs changed. Avoid rebuilding solution for leaf-only edits.
+
+Acceptance remains:
+
+- Sourcemaps identical to fix/#80; watch correctness maintained; rebuilds in seconds on single-file changes even with many entries.
 
 #### Branch pointers
 

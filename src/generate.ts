@@ -14,7 +14,12 @@ import {
   RE_TS,
   RE_VUE,
 } from './filename.ts'
-import { createContext, globalContext, type TscContext } from './tsc/context.ts'
+import {
+  createContext,
+  globalContext,
+  invalidateContextFile,
+  type TscContext,
+} from './tsc/context.ts'
 import type { OptionsResolved } from './options.ts'
 import type { TscOptions, TscResult } from './tsc/index.ts'
 import type { TscFunctions } from './tsc/worker.ts'
@@ -209,6 +214,7 @@ export function createGeneratePlugin({
         const { code, id } = dtsMap.get(dtsId)!
         let dtsCode: string | undefined
         let map: SourceMapInput | undefined
+        let watched: string[] | undefined
         debug('generate dts %s from %s', dtsId, id)
 
         // Ensure the virtual dts module is invalidated whenever the source changes
@@ -271,13 +277,22 @@ export function createGeneratePlugin({
           }
           dtsCode = result.code
           map = result.map
+          watched = result.watchedFiles
         }
 
-        return {
+        const loaded = {
           code: dtsCode || '',
           moduleSideEffects: false,
           map,
+        } as const
+
+        // Ensure changes to any source in the active Program bubble up
+        // to this virtual module in watch mode.
+        if (watched && this.addWatchFile) {
+          for (const f of watched) this.addWatchFile(f)
         }
+
+        return loaded
       },
     },
 
@@ -306,13 +321,13 @@ export function createGeneratePlugin({
       }
     },
 
-    watchChange() {
+    watchChange(id) {
       if (tscModule) {
         const ctx = tscContext || globalContext
-        ctx.files.clear()
-        ctx.programs = []
+        // Targeted invalidation to keep incremental reuse effective
+        invalidateContextFile(ctx, id)
       } else if (rpc) {
-        rpc.reset()
+        rpc.invalidate(id)
       }
     },
   }
