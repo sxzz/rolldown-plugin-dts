@@ -1,12 +1,18 @@
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import Debug from 'debug'
 import ts from 'typescript'
-import { globalContext, type TscContext } from './context.ts'
+import {
+  globalContext,
+  type ParsedProject,
+  type SourceFileToProjectMap,
+  type TscContext,
+} from './context.ts'
 import { createFsSystem, createMemorySystem } from './system.ts'
 import { customTransformers } from './transformer.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
-import type { SourceMapInput } from 'rolldown'
+import type { ExistingRawSourceMap, SourceMapInput } from 'rolldown'
 
 export interface TscModule {
   program: ts.Program
@@ -73,78 +79,6 @@ function createOrGetTsModule(options: TscOptions): TscModule {
   return module
 }
 
-/**
- * Build the root project and all its dependencies projects.
- * This is designed for a project (e.g. tsconfig.json) that has "references" to
- * other composite projects (e.g., tsconfig.node.json and tsconfig.app.json).
- * If `incremental` is `true`, the build result will be cached in the
- * `.tsbuildinfo` file so that the next time the project is built (without
- * changes) the build will be super fast. If `incremental` is `false`, the
- * `.tsbuildinfo` file will only be written to the memory.
- */
-function buildSolution(
-  tsconfig: string,
-  incremental: boolean,
-  context: TscContext,
-) {
-  debug(`building projects for ${tsconfig} with incremental: ${incremental}`)
-  const system = (incremental ? createFsSystem : createMemorySystem)(
-    context.files,
-  )
-
-  const host = ts.createSolutionBuilderHost(system)
-  const builder = ts.createSolutionBuilder(host, [tsconfig], {
-    // If `incremental` is `false`, we want to force the builder to rebuild the
-    // project even if the project is already built (i.e., `.tsbuildinfo` exists
-    // on the disk).
-    force: !incremental,
-    verbose: true,
-  })
-
-  // Collect all projects in the solution using the `getCustomTransformers`
-  // callback. This doesn't seem to be the intended use of the callback, but
-  // it's an easy way to collect all projects at any nesting level without the
-  // need to implement the traversing logic ourselves.
-  //
-  // A project is a string that represents the path to the project's `tsconfig`
-  // file.
-  const projects: string[] = []
-  const getCustomTransformers = (project: string): ts.CustomTransformers => {
-    projects.push(project)
-    return {}
-  }
-
-  const exitStatus = builder.build(
-    undefined,
-    undefined,
-    undefined,
-    getCustomTransformers,
-  )
-
-  debug(`built solution for ${tsconfig} with exit status ${exitStatus}`)
-  return Array.from(new Set(projects))
-}
-
-function findProjectContainingFile(
-  projects: string[],
-  targetFile: string,
-  fsSystem: ts.System,
-): { parsedConfig: ts.ParsedCommandLine; tsconfigPath: string } | undefined {
-  const resolvedTargetFile = fsSystem.resolvePath(targetFile)
-
-  for (const tsconfigPath of projects) {
-    const parsedConfig = parseTsconfig(tsconfigPath, fsSystem)
-    if (
-      parsedConfig &&
-      parsedConfig.fileNames.some(
-        (fileName) => fsSystem.resolvePath(fileName) === resolvedTargetFile,
-      )
-    ) {
-      return { parsedConfig, tsconfigPath }
-    }
-  }
-}
-
 function parseTsconfig(
   tsconfigPath: string,
   fsSystem: ts.System,
@@ -176,8 +110,6 @@ function createTsProgram({
   id,
   tsconfig,
   tsconfigRaw,
-  build,
-  incremental,
   vue,
   cwd,
   context = globalContext,
@@ -190,31 +122,7 @@ function createTsProgram({
     baseDir,
   )
 
-  // If the tsconfig has project references, build the project tree.
-  if (tsconfig && build) {
-    // Build the project tree and collect all projects.
-    const projectPaths = buildSolution(tsconfig, incremental, context)
-    debug(`collected projects: ${JSON.stringify(projectPaths)}`)
-
-    // Find which project contains the source file
-    const project = findProjectContainingFile(projectPaths, id, fsSystem)
-
-    if (project) {
-      debug(`Creating program for project: ${project.tsconfigPath}`)
-
-      return createTsProgramFromParsedConfig({
-        parsedConfig: project.parsedConfig,
-        fsSystem,
-        baseDir: path.dirname(project.tsconfigPath),
-        id,
-        entries,
-        vue,
-      })
-    }
-  }
-
-  // If the tsconfig doesn't have project references, create a single program
-  // for the root project.
+  debug(`Creating program for root project: ${baseDir}`)
   return createTsProgramFromParsedConfig({
     parsedConfig,
     fsSystem,
@@ -254,11 +162,6 @@ function createTsProgramFromParsedConfig({
 
   const host = ts.createCompilerHost(compilerOptions, true)
 
-  // Try to read files from memory first, which was added by `buildSolution`
-  host.readFile = fsSystem.readFile
-  host.fileExists = fsSystem.fileExists
-  host.directoryExists = fsSystem.directoryExists
-
   const createProgram = vue ? createVueProgramFactory(ts) : ts.createProgram
   const program = createProgram({
     rootNames,
@@ -271,6 +174,15 @@ function createTsProgramFromParsedConfig({
 
   if (!sourceFile) {
     debug(`source file not found in program: ${id}`)
+
+    const hasReferences = !!parsedConfig.projectReferences?.length
+
+    if (hasReferences) {
+      throw new Error(
+        `[rolldown-plugin-dts] Unable to load ${id}. You have "references" in your tsconfig file. Maybe you want to add \`dts: { build: true }\` in your config?`,
+      )
+    }
+
     if (!fsSystem.fileExists(id)) {
       debug(`File ${id} does not exist on disk.`)
       throw new Error(`Source file not found: ${id}`)
@@ -296,6 +208,18 @@ export interface TscResult {
 
 export function tscEmit(tscOptions: TscOptions): TscResult {
   debug(`running tscEmit ${tscOptions.id}`)
+
+  if (tscOptions.build) {
+    return tscEmitBuild(tscOptions)
+  } else {
+    return tscEmitClassic(tscOptions)
+  }
+}
+
+// Emit file using `tsc` mode (without `--build` flag).
+function tscEmitClassic(tscOptions: TscOptions): TscResult {
+  debug(`running tscEmitClassic ${tscOptions.id}`)
+
   const module = createOrGetTsModule(tscOptions)
   const { program, file } = module
   debug(`got source file: ${file.fileName}`)
@@ -333,4 +257,243 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
   }
 
   return { code: dtsCode, map }
+}
+
+// Emit file using `tsc --build` mode.
+function tscEmitBuild(tscOptions: TscOptions): TscResult {
+  const { id, tsconfig, incremental, context = globalContext } = tscOptions
+  debug(
+    `running tscEmitBuild id: ${id}, tsconfig: ${tsconfig}, incremental: ${incremental}`,
+  )
+
+  if (!tsconfig) {
+    return {
+      error: '[rolldown-plugin-dts] build mode requires a tsconfig path',
+    }
+  }
+
+  const fsSystem = (incremental ? createFsSystem : createMemorySystem)(
+    context.files,
+  )
+
+  const resolvedId = fsSystem.resolvePath(id)
+
+  if (resolvedId !== id) {
+    debug(`resolved id from ${id} to ${resolvedId}`)
+  }
+
+  // Build projects (if necessary) and collect all projects.
+  const sourceFileToProjectMap = getOrBuildProjects(
+    context,
+    fsSystem,
+    tsconfig,
+    !incremental,
+  )
+
+  const project = sourceFileToProjectMap.get(resolvedId)
+  if (!project) {
+    debug(`unable to locate a project containing ${resolvedId}`)
+    return {
+      error: `Unable to locate ${id} from the given tsconfig file ${tsconfig}`,
+    }
+  }
+  debug(`loaded project ${project.tsconfigPath} for ${id}`)
+
+  const ignoreCase = !fsSystem.useCaseSensitiveFileNames
+  const outputFiles = ts.getOutputFileNames(
+    project.parsedConfig,
+    resolvedId,
+    ignoreCase,
+  )
+
+  debug('outputFiles %O', outputFiles)
+
+  let code: string | undefined
+  let map: ExistingRawSourceMap | undefined
+
+  for (const outputFile of outputFiles) {
+    if (outputFile.endsWith('.d.ts')) {
+      if (!fsSystem.fileExists(outputFile)) {
+        console.warn(`[rolldown-plugin-dts] Unable to read file ${outputFile}`)
+        continue
+      }
+      code = fsSystem.readFile(outputFile)
+      continue
+    }
+
+    if (outputFile.endsWith('.d.ts.map')) {
+      if (!fsSystem.fileExists(outputFile)) {
+        console.warn(`[rolldown-plugin-dts] Unable to read file ${outputFile}`)
+        continue
+      }
+
+      const text = fsSystem.readFile(outputFile)
+      if (!text) {
+        console.warn(`[rolldown-plugin-dts] Unexpected empty ${outputFile}`)
+        continue
+      }
+
+      map = JSON.parse(text)
+      if (!map || map.sourceRoot) {
+        continue
+      }
+
+      // Since `outputFile` and `resolvedId` might locate in different
+      // directories, we need to explicitly set the `sourceRoot` of the source
+      // map so that the final sourcemap has correct paths in `sources` field.
+      const outputFileDir = path.posix.dirname(
+        pathToFileURL(outputFile).pathname,
+      )
+      const resolvedIdDir = path.posix.dirname(
+        pathToFileURL(resolvedId).pathname,
+      )
+      if (outputFileDir !== resolvedIdDir) {
+        map.sourceRoot = path.posix.relative(resolvedIdDir, outputFileDir)
+      }
+    }
+  }
+
+  if (code) {
+    return { code, map }
+  }
+
+  if (incremental) {
+    debug(`incremental build failed`)
+    // Fallback to non-incremental (force) build.
+    //
+    // This can happen if users delete the emitted files from `tsc --build`, but
+    // still keep the `.tsbuildinfo` file exist. In this case, `tsc --build`
+    // will skip the build, but the `.d.ts` file we need doesn't actually exist.
+    return tscEmitBuild({ ...tscOptions, incremental: false })
+  }
+
+  debug(`unable to build .d.ts file for ${id}`)
+
+  // Try to locate the cause of the failure and provide a helpful error message
+  if (project.parsedConfig.options.declaration !== true) {
+    return {
+      error: `Unable to build .d.ts file for ${id}; Make sure the "declaration" option is set to true in ${project.tsconfigPath}`,
+    }
+  }
+
+  return {
+    error: `Unable to build .d.ts file for ${id}; This seems like a bug of rolldown-plugin-dts. Please report this issue to https://github.com/sxzz/rolldown-plugin-dts/issues`,
+  }
+}
+
+function getOrBuildProjects(
+  context: TscContext,
+  fsSystem: ts.System,
+  tsconfig: string,
+  force: boolean,
+): SourceFileToProjectMap {
+  let projectMap = context.projects.get(tsconfig)
+  if (projectMap) {
+    debug(`skip building projects for ${tsconfig}`)
+    return projectMap
+  }
+
+  projectMap = buildProjects(fsSystem, tsconfig, force)
+  context.projects.set(tsconfig, projectMap)
+  return projectMap
+}
+
+/**
+ * Use TypeScript compiler to build all projects referenced
+ */
+function buildProjects(
+  fsSystem: ts.System,
+  tsconfig: string,
+  force: boolean,
+): SourceFileToProjectMap {
+  debug(`start building projects for ${tsconfig}`)
+
+  // Collect all projects from the tsconfig file and its references. A project
+  // is a string that represents the path to the project's `tsconfig` file.
+  const projects = collectProjectGraph(tsconfig, fsSystem)
+  debug(
+    'collected %d projects: %j',
+    projects.length,
+    projects.map((project) => project.tsconfigPath),
+  )
+
+  const host = ts.createSolutionBuilderHost(
+    fsSystem,
+    createProgramWithPatchedCompilerOptions,
+  )
+  const builder = ts.createSolutionBuilder(host, [tsconfig], {
+    force,
+    verbose: true,
+  })
+
+  const exitStatus = builder.build(
+    undefined,
+    undefined,
+    undefined,
+    () => customTransformers,
+  )
+
+  debug(`built solution for ${tsconfig} with exit status ${exitStatus}`)
+
+  const sourceFileToProjectMap: SourceFileToProjectMap = new Map()
+
+  for (const project of projects) {
+    for (const fileName of project.parsedConfig.fileNames) {
+      sourceFileToProjectMap.set(fsSystem.resolvePath(fileName), project)
+    }
+  }
+
+  return sourceFileToProjectMap
+}
+
+/**
+ * Collects all referenced projects from the given entry tsconfig file.
+ */
+function collectProjectGraph(
+  rootTsconfigPath: string,
+  fsSystem: ts.System,
+): ParsedProject[] {
+  const seen = new Set<string>()
+  const projects: ParsedProject[] = []
+  const stack = [fsSystem.resolvePath(rootTsconfigPath)]
+  while (true) {
+    const tsconfigPath = stack.pop()
+    if (!tsconfigPath) break
+
+    if (seen.has(tsconfigPath)) continue
+    seen.add(tsconfigPath)
+
+    const parsedConfig = parseTsconfig(tsconfigPath, fsSystem)
+    if (!parsedConfig) continue
+
+    parsedConfig.options = patchCompilerOptions(parsedConfig.options)
+
+    projects.push({ tsconfigPath, parsedConfig })
+
+    for (const ref of parsedConfig.projectReferences ?? []) {
+      stack.push(ts.resolveProjectReferencePath(ref))
+    }
+  }
+  return projects
+}
+
+// To ensure we can get `.d.ts` and `.d.ts.map` files from `tsc --build` mode,
+// we need to enforce certain compiler options.
+function patchCompilerOptions(options: ts.CompilerOptions): ts.CompilerOptions {
+  return {
+    ...options,
+    noEmit: false,
+    declaration: true,
+    declarationMap: true,
+  }
+}
+
+const createProgramWithPatchedCompilerOptions: ts.CreateProgram<
+  ts.EmitAndSemanticDiagnosticsBuilderProgram
+> = (rootNames, options, ...args) => {
+  return ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+    rootNames,
+    patchCompilerOptions(options ?? {}),
+    ...args,
+  )
 }
