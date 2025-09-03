@@ -3,6 +3,7 @@ import Debug from 'debug'
 import ts from 'typescript'
 import { globalContext, type TscContext } from './context.ts'
 import { createFsSystem, createMemorySystem } from './system.ts'
+import { customTransformers } from './transformer.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'
@@ -301,24 +302,6 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
   let dtsCode: string | undefined
   let map: SourceMapInput | undefined
 
-  // fix #77
-  const stripPrivateFields: ts.TransformerFactory<ts.SourceFile> = (ctx) => {
-    const visitor = (node: ts.Node) => {
-      if (ts.isPropertySignature(node) && ts.isPrivateIdentifier(node.name)) {
-        return ctx.factory.updatePropertySignature(
-          node,
-          node.modifiers,
-          ctx.factory.createStringLiteral(node.name.text),
-          node.questionToken,
-          node.type,
-        )
-      }
-      return ts.visitEachChild(node, visitor, ctx)
-    }
-    return (sourceFile) =>
-      ts.visitNode(sourceFile, visitor, ts.isSourceFile) ?? sourceFile
-  }
-
   const { emitSkipped, diagnostics } = program.emit(
     file,
     (fileName, code) => {
@@ -332,7 +315,7 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
     },
     undefined,
     true,
-    { afterDeclarations: [stripPrivateFields] },
+    customTransformers,
     // @ts-expect-error private API: forceDtsEmit
     true,
   )
