@@ -306,8 +306,6 @@ function tscEmitBuild(tscOptions: TscOptions): TscResult {
     ignoreCase,
   )
 
-  debug('outputFiles %O', outputFiles)
-
   let code: string | undefined
   let map: ExistingRawSourceMap | undefined
 
