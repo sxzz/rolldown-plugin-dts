@@ -321,13 +321,12 @@ function tscEmitBuild(tscOptions: TscOptions): TscResult {
 
     if (outputFile.endsWith('.d.ts.map')) {
       if (!fsSystem.fileExists(outputFile)) {
-        console.warn(`[rolldown-plugin-dts] Unable to read file ${outputFile}`)
         continue
       }
 
       const text = fsSystem.readFile(outputFile)
       if (!text) {
-        console.warn(`[rolldown-plugin-dts] Unexpected empty ${outputFile}`)
+        console.warn(`[rolldown-plugin-dts] Unexpected sourcemap ${outputFile}`)
         continue
       }
 
