@@ -27,6 +27,7 @@ export interface TscOptions {
   incremental: boolean
   entries?: string[]
   id: string
+  sourcemap: boolean
   vue?: boolean
   context?: TscContext
 }
@@ -261,7 +262,13 @@ function tscEmitClassic(tscOptions: TscOptions): TscResult {
 
 // Emit file using `tsc --build` mode.
 function tscEmitBuild(tscOptions: TscOptions): TscResult {
-  const { id, tsconfig, incremental, context = globalContext } = tscOptions
+  const {
+    id,
+    tsconfig,
+    incremental,
+    context = globalContext,
+    sourcemap,
+  } = tscOptions
   debug(
     `running tscEmitBuild id: ${id}, tsconfig: ${tsconfig}, incremental: ${incremental}`,
   )
@@ -288,6 +295,7 @@ function tscEmitBuild(tscOptions: TscOptions): TscResult {
     fsSystem,
     tsconfig,
     !incremental,
+    sourcemap,
   )
 
   const project = sourceFileToProjectMap.get(resolvedId)
@@ -383,6 +391,7 @@ function getOrBuildProjects(
   fsSystem: ts.System,
   tsconfig: string,
   force: boolean,
+  sourcemap: boolean,
 ): SourceFileToProjectMap {
   let projectMap = context.projects.get(tsconfig)
   if (projectMap) {
@@ -390,7 +399,7 @@ function getOrBuildProjects(
     return projectMap
   }
 
-  projectMap = buildProjects(fsSystem, tsconfig, force)
+  projectMap = buildProjects(fsSystem, tsconfig, force, sourcemap)
   context.projects.set(tsconfig, projectMap)
   return projectMap
 }
@@ -402,12 +411,13 @@ function buildProjects(
   fsSystem: ts.System,
   tsconfig: string,
   force: boolean,
+  sourcemap: boolean,
 ): SourceFileToProjectMap {
   debug(`start building projects for ${tsconfig}`)
 
   // Collect all projects from the tsconfig file and its references. A project
   // is a string that represents the path to the project's `tsconfig` file.
-  const projects = collectProjectGraph(tsconfig, fsSystem)
+  const projects = collectProjectGraph(tsconfig, fsSystem, force, sourcemap)
   debug(
     'collected %d projects: %j',
     projects.length,
@@ -427,7 +437,10 @@ function buildProjects(
     undefined,
     undefined,
     undefined,
-    () => customTransformers,
+    (project) => {
+      debug(`transforming project ${project}`)
+      return customTransformers
+    },
   )
 
   debug(`built solution for ${tsconfig} with exit status ${exitStatus}`)
@@ -449,6 +462,8 @@ function buildProjects(
 function collectProjectGraph(
   rootTsconfigPath: string,
   fsSystem: ts.System,
+  force: boolean,
+  sourcemap: boolean,
 ): ParsedProject[] {
   const seen = new Set<string>()
   const projects: ParsedProject[] = []
@@ -463,7 +478,11 @@ function collectProjectGraph(
     const parsedConfig = parseTsconfig(tsconfigPath, fsSystem)
     if (!parsedConfig) continue
 
-    parsedConfig.options = patchCompilerOptions(parsedConfig.options)
+    parsedConfig.options = patchCompilerOptions(parsedConfig.options, {
+      tsconfigPath,
+      force,
+      sourcemap,
+    })
 
     projects.push({ tsconfigPath, parsedConfig })
 
@@ -475,14 +494,51 @@ function collectProjectGraph(
 }
 
 // To ensure we can get `.d.ts` and `.d.ts.map` files from `tsc --build` mode,
-// we need to enforce certain compiler options.
-function patchCompilerOptions(options: ts.CompilerOptions): ts.CompilerOptions {
-  return {
-    ...options,
-    noEmit: false,
-    declaration: true,
-    declarationMap: true,
+// we need to enforce certain compiler options. Notice that changing compiler
+// options will invalidate the cache, so it's better to set the correct value in
+// tsconfig files in the first place. Therefore, we print some warnings if the
+// values are not set correctly.
+function patchCompilerOptions(
+  options: ts.CompilerOptions,
+  extraOptions: {
+    tsconfigPath: string
+    force: boolean
+    sourcemap: boolean
+  } | null,
+): ts.CompilerOptions {
+  const noEmit: boolean = options.noEmit ?? false
+  const declaration: boolean =
+    options.declaration ?? (options.composite ? true : false)
+  const declarationMap: boolean = options.declarationMap ?? false
+
+  const shouldPrintWarning = extraOptions?.tsconfigPath && !extraOptions.force
+
+  if (noEmit === true) {
+    options = { ...options, noEmit: false }
+    if (shouldPrintWarning) {
+      console.warn(
+        `[rolldown-plugin-dts] ${extraOptions.tsconfigPath} has "noEmit" set to true. Please set it to false to generate declaration files.`,
+      )
+    }
   }
+  if (declaration === false) {
+    options = { ...options, declaration: true }
+    if (shouldPrintWarning) {
+      console.warn(
+        `[rolldown-plugin-dts] ${extraOptions.tsconfigPath} has "declaration" set to false. Please set it to true to generate declaration files.`,
+      )
+    }
+  }
+  if (declarationMap === false && extraOptions?.sourcemap) {
+    options = { ...options, declarationMap: true }
+    if (shouldPrintWarning) {
+      console.warn(
+        `[rolldown-plugin-dts] ${extraOptions.tsconfigPath} has "declarationMap" set to false. Please set it to true if you want to generate source maps for declaration files.`,
+      )
+    }
+  }
+
+  return options
 }
 
 const createProgramWithPatchedCompilerOptions: ts.CreateProgram<
@@ -490,7 +546,7 @@ const createProgramWithPatchedCompilerOptions: ts.CreateProgram<
 > = (rootNames, options, ...args) => {
   return ts.createEmitAndSemanticDiagnosticsBuilderProgram(
     rootNames,
-    patchCompilerOptions(options ?? {}),
+    patchCompilerOptions(options ?? {}, null),
     ...args,
   )
 }
