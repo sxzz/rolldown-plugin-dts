@@ -57,7 +57,7 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
-  test.fails('composite projects sourcemap #80', async () => {
+  test('composite projects sourcemap #80', async () => {
     const root = path.resolve(dirname, 'fixtures/composite-refs-sourcemap')
 
     const { chunks } = await rolldownBuild(

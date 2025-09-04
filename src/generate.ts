@@ -63,6 +63,7 @@ export function createGeneratePlugin({
   tsgo,
   newContext,
   emitJs,
+  sourcemap,
 }: Pick<
   OptionsResolved,
   | 'cwd'
@@ -78,6 +79,7 @@ export function createGeneratePlugin({
   | 'tsgo'
   | 'newContext'
   | 'emitJs'
+  | 'sourcemap'
 >): Plugin {
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -265,6 +267,7 @@ export function createGeneratePlugin({
             cwd,
             entries,
             id,
+            sourcemap,
             vue,
             context: tscContext,
           }
