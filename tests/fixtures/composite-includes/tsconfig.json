@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": true,
+  },
+  "files": [
+    "index.ts",
+    "foo.ts",
+  ],
+}

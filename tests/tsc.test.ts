@@ -17,6 +17,8 @@ describe('tsc', () => {
         dts({
           emitDtsOnly: true,
           compilerOptions: {
+            module: 'preserve',
+            moduleResolution: 'bundler',
             skipLibCheck: true,
             isolatedDeclarations: false,
           },
@@ -33,7 +35,11 @@ describe('tsc', () => {
       [
         dts({
           emitDtsOnly: true,
-          compilerOptions: { isolatedDeclarations: false },
+          compilerOptions: {
+            module: 'preserve',
+            moduleResolution: 'bundler',
+            isolatedDeclarations: false,
+          },
         }),
       ],
     )
@@ -172,6 +178,9 @@ describe('tsc', () => {
       dts({
         emitDtsOnly: true,
         vue: true,
+        compilerOptions: {
+          isolatedDeclarations: false,
+        },
       }),
     ])
     expect(snapshot).toMatchSnapshot()
@@ -206,5 +215,33 @@ describe('tsc', () => {
       }),
     ])
     expect(snapshot).toMatchSnapshot()
+  })
+
+  test('fail on type errors', async () => {
+    await expect(() =>
+      rolldownBuild(path.resolve(dirname, 'fixtures/type-error.ts'), [
+        dts({
+          oxc: false,
+        }),
+      ]),
+    ).rejects.toThrow('error TS2322')
+  })
+
+  // https://github.com/sxzz/rolldown-plugin-dts/issues/90
+  test('builds composite project', async () => {
+    const built = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/composite-includes/index.ts'),
+      [
+        dts({
+          oxc: false,
+          tsconfig: path.resolve(
+            dirname,
+            'fixtures/composite-includes/tsconfig.json',
+          ),
+        }),
+      ],
+    )
+
+    console.log(built)
   })
 })
