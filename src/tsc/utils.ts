@@ -1,5 +1,13 @@
 import ts from 'typescript'
 
+export const formatHost: ts.FormatDiagnosticsHost = {
+  getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
+  getNewLine: () => ts.sys.newLine,
+  getCanonicalFileName: ts.sys.useCaseSensitiveFileNames
+    ? (f) => f
+    : (f) => f.toLowerCase(),
+}
+
 // fix #77
 const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
   ctx,
