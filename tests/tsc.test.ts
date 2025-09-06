@@ -124,9 +124,7 @@ describe('tsc', () => {
     )
 
     const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
-    const sources: string[] = (sourcemap.sources || [])
-      .filter((s) => s != null)
-      .map((s: string) => s.replaceAll('\\\\', '/'))
+    const sources = sourcemap.sources || []
     const expectedSources = ['../../src/types.ts', '../../src/react/index.ts']
     expect(sources.sort()).toEqual(expectedSources.sort())
     expect(sourcemap.sourcesContent).toBeOneOf([undefined, []])
