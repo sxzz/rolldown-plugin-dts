@@ -8,7 +8,7 @@ declare const a = 1;
 export { a };
 //# sourceMappingURL=index.d.ts.map
 // index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../../../../../../../../../src/index.ts"],"sourcesContent":[],"mappings":";cAAa,CAAA"}
+{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"sourcesContent":[],"mappings":";cAAa,CAAA"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;

@@ -73,9 +73,10 @@ describe('tsc', () => {
       { dir: path.resolve(root, 'dist') },
     )
     const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
+    expect(sourcemap.sourceRoot).toBeFalsy()
     expect(sourcemap.sources).toMatchInlineSnapshot(`
       [
-        "../../../../../../../../../src/index.ts",
+        "../src/index.ts",
       ]
     `)
     expect(snapshot).toMatchSnapshot()
@@ -96,6 +97,7 @@ describe('tsc', () => {
       { dir: path.resolve(root, 'dist') },
     )
     const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
+    expect(sourcemap.sourceRoot).toBeFalsy()
     expect(sourcemap.sources).toMatchInlineSnapshot(`
       [
         "../src/index.d.ts",

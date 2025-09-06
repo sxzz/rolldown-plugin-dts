@@ -3,10 +3,10 @@ import Debug from 'debug'
 import ts from 'typescript'
 import { globalContext } from './context.ts'
 import { createFsSystem } from './system.ts'
-import { customTransformers, formatHost } from './utils.ts'
+import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TscModule, TscOptions, TscResult } from './types.ts'
-import type { SourceMapInput } from 'rolldown'
+import type { ExistingRawSourceMap } from 'rolldown'
 
 const debug = Debug('rolldown-plugin-dts:tsc-compiler')
 
@@ -150,7 +150,7 @@ export function tscEmitCompiler(tscOptions: TscOptions): TscResult {
   const { program, file } = module
   debug(`got source file: ${file.fileName}`)
   let dtsCode: string | undefined
-  let map: SourceMapInput | undefined
+  let map: ExistingRawSourceMap | undefined
 
   const { emitSkipped, diagnostics } = program.emit(
     file,
@@ -158,6 +158,7 @@ export function tscEmitCompiler(tscOptions: TscOptions): TscResult {
       if (fileName.endsWith('.map')) {
         debug(`emit dts sourcemap: ${fileName}`)
         map = JSON.parse(code)
+        setSourceMapRoot(map, fileName, tscOptions.id)
       } else {
         debug(`emit dts: ${fileName}`)
         dtsCode = code
