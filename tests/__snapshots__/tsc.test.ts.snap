@@ -1,5 +1,45 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`tsc > compiler project sourcemap (build: false) 2`] = `
+"// index.d.ts
+//#region tests/fixtures/deep-source-map/src/index.d.ts
+declare const a = 1;
+//#endregion
+export { a };
+//# sourceMappingURL=index.d.ts.map
+// index.d.ts.map
+{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"sourcesContent":[],"mappings":";cAAa,CAAA"}
+// index.js
+//#region tests/fixtures/deep-source-map/src/index.ts
+const a = 1;
+
+//#endregion
+export { a };
+//# sourceMappingURL=index.js.map
+// index.js.map
+{"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
+`;
+
+exports[`tsc > compiler project sourcemap (build: true) 2`] = `
+"// index.d.ts
+//#region tests/fixtures/deep-source-map/src/index.d.ts
+declare const a = 1;
+//#endregion
+export { a };
+//# sourceMappingURL=index.d.ts.map
+// index.d.ts.map
+{"version":3,"file":"index.d.ts","names":["a"],"sources":["../src/index.d.ts"],"sourcesContent":["export declare const a = 1;\\n"],"mappings":";cAAqBA,CAAAA"}
+// index.js
+//#region tests/fixtures/deep-source-map/src/index.ts
+const a = 1;
+
+//#endregion
+export { a };
+//# sourceMappingURL=index.js.map
+// index.js.map
+{"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
+`;
+
 exports[`tsc > composite references 1`] = `
 "// input1.d.ts
 //#region tests/fixtures/composite-refs/dir1/input1.d.ts

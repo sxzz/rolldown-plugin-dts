@@ -1,5 +1,3 @@
-import path from 'node:path'
-import { pathToFileURL } from 'node:url'
 import Debug from 'debug'
 import ts from 'typescript'
 import {
@@ -9,7 +7,7 @@ import {
   type TscContext,
 } from './context.ts'
 import { createFsSystem, createMemorySystem } from './system.ts'
-import { customTransformers, formatHost } from './utils.ts'
+import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import type { TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 
@@ -94,22 +92,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
       }
 
       map = JSON.parse(text)
-      if (!map || map.sourceRoot) {
-        continue
-      }
-
-      // Since `outputFile` and `resolvedId` might locate in different
-      // directories, we need to explicitly set the `sourceRoot` of the source
-      // map so that the final sourcemap has correct paths in `sources` field.
-      const outputFileDir = path.posix.dirname(
-        pathToFileURL(outputFile).pathname,
-      )
-      const resolvedIdDir = path.posix.dirname(
-        pathToFileURL(resolvedId).pathname,
-      )
-      if (outputFileDir !== resolvedIdDir) {
-        map.sourceRoot = path.posix.relative(resolvedIdDir, outputFileDir)
-      }
+      setSourceMapRoot(map, outputFile, resolvedId)
     }
   }
 

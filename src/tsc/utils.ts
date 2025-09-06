@@ -1,4 +1,7 @@
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import ts from 'typescript'
+import type { ExistingRawSourceMap } from 'rolldown'
 
 export const formatHost: ts.FormatDiagnosticsHost = {
   getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
@@ -30,4 +33,32 @@ const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
 
 export const customTransformers: ts.CustomTransformers = {
   afterDeclarations: [stripPrivateFields],
+}
+
+// Since the output directory of tsc and rolldown-plugin-dts might be different,
+// we need to explicitly set the `sourceRoot` of the source map so that the
+// final sourcemap has correct paths in `sources` field.
+export function setSourceMapRoot(
+  map: ExistingRawSourceMap | undefined,
+  // The original path of the source map file (e.g. configured by tsconfig.json `outDir` and emitted by tsc)
+  originalFilePath: string,
+  // The final path of the source map file (e.g. emitted by rolldown-plugin-dts)
+  finalFilePath: string,
+): void {
+  if (!map) {
+    return
+  }
+
+  // Don't override the sourceRoot if it's already set.
+  if (map.sourceRoot) {
+    return
+  }
+
+  const originalDir = path.posix.dirname(
+    pathToFileURL(originalFilePath).pathname,
+  )
+  const finalDir = path.posix.dirname(pathToFileURL(finalFilePath).pathname)
+  if (originalDir !== finalDir) {
+    map.sourceRoot = path.posix.relative(finalDir, originalDir)
+  }
 }

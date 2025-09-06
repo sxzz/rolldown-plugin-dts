@@ -5,6 +5,7 @@ import { rolldownBuild } from '@sxzz/test-utils'
 import { glob } from 'tinyglobby'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
+import { findSourceMapChunk } from './utils.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -57,6 +58,54 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
+  test('compiler project sourcemap (build: false)', async () => {
+    const root = path.resolve(dirname, 'fixtures/deep-source-map')
+    const { snapshot, chunks } = await rolldownBuild(
+      [path.resolve(root, 'src/index.ts')],
+      [
+        dts({
+          tsconfig: path.resolve(root, 'tsconfig.json'),
+          sourcemap: true,
+          build: false,
+        }),
+      ],
+      {},
+      { dir: path.resolve(root, 'dist') },
+    )
+    const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
+    expect(sourcemap.sourceRoot).toBeFalsy()
+    expect(sourcemap.sources).toMatchInlineSnapshot(`
+      [
+        "../src/index.ts",
+      ]
+    `)
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test('compiler project sourcemap (build: true)', async () => {
+    const root = path.resolve(dirname, 'fixtures/deep-source-map')
+    const { snapshot, chunks } = await rolldownBuild(
+      [path.resolve(root, 'src/index.ts')],
+      [
+        dts({
+          tsconfig: path.resolve(root, 'tsconfig.json'),
+          sourcemap: true,
+          build: true,
+        }),
+      ],
+      {},
+      { dir: path.resolve(root, 'dist') },
+    )
+    const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
+    expect(sourcemap.sourceRoot).toBeFalsy()
+    expect(sourcemap.sources).toMatchInlineSnapshot(`
+      [
+        "../src/index.d.ts",
+      ]
+    `)
+    expect(snapshot).toMatchSnapshot()
+  })
+
   test('composite projects sourcemap #80', async () => {
     const root = path.resolve(dirname, 'fixtures/composite-refs-sourcemap')
 
@@ -74,24 +123,8 @@ describe('tsc', () => {
       { dir: path.resolve(root, 'actual-output/react') },
     )
 
-    const sourcemapChunk = chunks.find((chunk) =>
-      chunk.fileName.endsWith('.d.ts.map'),
-    )
-
-    if (!sourcemapChunk) {
-      throw new Error('Sourcemap chunk not found')
-    }
-    if (sourcemapChunk.type !== 'asset') {
-      throw new Error('Sourcemap chunk is not an asset')
-    }
-    if (typeof sourcemapChunk.source !== 'string') {
-      throw new TypeError('Sourcemap chunk source is not a string')
-    }
-
-    const sourcemap = JSON.parse(sourcemapChunk.source)
-    const sources: string[] = sourcemap.sources.map((s: string) =>
-      s.replaceAll('\\\\', '/'),
-    )
+    const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
+    const sources = sourcemap.sources || []
     const expectedSources = ['../../src/types.ts', '../../src/react/index.ts']
     expect(sources.sort()).toEqual(expectedSources.sort())
     expect(sourcemap.sourcesContent).toBeOneOf([undefined, []])
