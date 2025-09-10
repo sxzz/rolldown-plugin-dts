@@ -21,7 +21,7 @@
     "type": "git",
     "url": "git+https://github.com/sxzz/rolldown-plugin-dts.git"
   },
-  "author": "三咲智子 Kevin Deng <sxzz@sxzz.moe>",
+  "author": "Kevin Deng <sxzz@sxzz.moe>",
   "funding": "https://github.com/sponsors/sxzz",
   "files": [
     "dist"
@@ -48,7 +48,7 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "format": "prettier --cache --write .",
-    "release": "bumpp && unotp pnpm publish",
+    "release": "bumpp",
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
@@ -85,7 +85,7 @@
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/node": "^24.3.1",
-    "@typescript/native-preview": "7.0.0-dev.20250907.1",
+    "@typescript/native-preview": "7.0.0-dev.20250910.1",
     "@volar/typescript": "^2.4.23",
     "@vue/language-core": "^3.0.6",
     "bumpp": "^10.2.3",
@@ -93,10 +93,10 @@
     "eslint": "^9.35.0",
     "estree-walker": "^3.0.3",
     "prettier": "^3.6.2",
-    "rolldown": "^1.0.0-beta.35",
+    "rolldown": "^1.0.0-beta.36",
     "rollup-plugin-dts": "^6.2.3",
     "tinyglobby": "^0.2.15",
-    "tsdown": "^0.14.2",
+    "tsdown": "^0.15.0",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
     "vue": "^3.5.21",
