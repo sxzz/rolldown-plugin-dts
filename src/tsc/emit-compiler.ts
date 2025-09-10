@@ -3,6 +3,7 @@ import Debug from 'debug'
 import ts from 'typescript'
 import { globalContext } from './context.ts'
 import { createFsSystem } from './system.ts'
+import { createTsMacroProgramFactory } from './ts-macro.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import { createVueProgramFactory } from './vue.ts'
 import type { TscModule, TscOptions, TscResult } from './types.ts'
@@ -53,6 +54,7 @@ function createTsProgram({
   tsconfig,
   tsconfigRaw,
   vue,
+  tsMacro,
   cwd,
   context = globalContext,
 }: TscOptions): TscModule {
@@ -72,6 +74,7 @@ function createTsProgram({
     id,
     entries,
     vue,
+    tsMacro,
   })
 }
 
@@ -82,11 +85,12 @@ function createTsProgramFromParsedConfig({
   id,
   entries,
   vue,
+  tsMacro,
 }: {
   parsedConfig: ts.ParsedCommandLine
   fsSystem: ts.System
   baseDir: string
-} & Pick<TscOptions, 'entries' | 'vue' | 'id'>): TscModule {
+} & Pick<TscOptions, 'entries' | 'vue' | 'tsMacro' | 'id'>): TscModule {
   const compilerOptions: ts.CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
@@ -104,7 +108,11 @@ function createTsProgramFromParsedConfig({
 
   const host = ts.createCompilerHost(compilerOptions, true)
 
-  const createProgram = vue ? createVueProgramFactory(ts) : ts.createProgram
+  const createProgram = vue
+    ? createVueProgramFactory(ts)
+    : tsMacro
+      ? createTsMacroProgramFactory(ts)
+      : ts.createProgram
   const program = createProgram({
     rootNames,
     options: compilerOptions,

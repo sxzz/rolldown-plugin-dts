@@ -58,6 +58,7 @@ export function createGeneratePlugin({
   oxc,
   emitDtsOnly,
   vue,
+  tsMacro,
   parallel,
   eager,
   tsgo,
@@ -74,6 +75,7 @@ export function createGeneratePlugin({
   | 'oxc'
   | 'emitDtsOnly'
   | 'vue'
+  | 'tsMacro'
   | 'parallel'
   | 'eager'
   | 'tsgo'
@@ -269,6 +271,7 @@ export function createGeneratePlugin({
             id,
             sourcemap,
             vue,
+            tsMacro,
             context: tscContext,
           }
           let result: TscResult

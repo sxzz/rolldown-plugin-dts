@@ -128,6 +128,11 @@ export interface TscOptions {
   vue?: boolean
 
   /**
+   * If `true`, the plugin will generate `.d.ts` files using `@ts-macro/tsc`.
+   */
+  tsMacro?: boolean
+
+  /**
    * If `true`, the plugin will launch a separate process for `tsc` or `vue-tsc`.
    * This enables processing multiple projects in parallel.
    */
@@ -215,6 +220,7 @@ export function resolveOptions({
   build = false,
   incremental = false,
   vue = false,
+  tsMacro = false,
   parallel = false,
   eager = false,
   newContext = false,
@@ -269,6 +275,11 @@ export function resolveOptions({
         '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `vue` option. Please disable one of them.',
       )
     }
+    if (tsMacro) {
+      throw new Error(
+        '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `tsMacro` option. Please disable one of them.',
+      )
+    }
     if (oxc) {
       throw new Error(
         '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `oxc` option. Please disable one of them.',
@@ -278,6 +289,11 @@ export function resolveOptions({
   if (oxc && vue) {
     throw new Error(
       '[rolldown-plugin-dts] The `oxc` option is not compatible with the `vue` option. Please disable one of them.',
+    )
+  }
+  if (oxc && tsMacro) {
+    throw new Error(
+      '[rolldown-plugin-dts] The `oxc` option is not compatible with the `tsMacro` option. Please disable one of them.',
     )
   }
 
@@ -302,6 +318,7 @@ export function resolveOptions({
     build,
     incremental,
     vue,
+    tsMacro,
     parallel,
     eager,
     newContext,
