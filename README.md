@@ -216,7 +216,7 @@ Furthermore, the test suite is authorized by them and distributed under the MIT 
 
 ## License
 
-[MIT](./LICENSE) License © 2025 [三咲智子 Kevin Deng](https://github.com/sxzz)
+[MIT](./LICENSE) License © 2025-PRESENT [Kevin Deng](https://github.com/sxzz)
 
 <!-- Badges -->
 
