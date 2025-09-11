@@ -1,0 +1,12 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -5,6 +5,5 @@
+ declare function public_api_with_jsdoc(): void
+ declare function public_api_without_jsdoc(): void
+ /** JSDoc for public_type */
+ type public_type = number
+-export { public_api_with_jsdoc, public_api_without_jsdoc }
+-export { public_type }
++export { public_api_with_jsdoc, public_api_without_jsdoc, public_type }
