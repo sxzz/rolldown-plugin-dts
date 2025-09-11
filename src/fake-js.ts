@@ -192,9 +192,7 @@ export function createFakeJsPlugin({
       const runtime: t.ArrayExpression = t.arrayExpression(elements)
 
       if (decl !== stmt) {
-        decl.innerComments = stmt.innerComments
         decl.leadingComments = stmt.leadingComments
-        decl.trailingComments = stmt.trailingComments
       }
 
       const symbolId = registerSymbol({
@@ -825,10 +823,6 @@ function inheritNodeComments<T extends t.Node>(oldNode: t.Node, newNode: T): T {
   newNode.leadingComments = collectReferenceDirectives(
     newNode.leadingComments,
     true,
-  )
-
-  newNode.trailingComments = newNode.trailingComments?.filter(
-    (comment) => !comment.value.startsWith('# sourceMappingURL'),
   )
 
   return newNode
