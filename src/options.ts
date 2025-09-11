@@ -257,7 +257,7 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  oxc ??= !!(compilerOptions?.isolatedDeclarations && !vue && !tsgo)
+  oxc ??= !!(compilerOptions?.isolatedDeclarations && !vue && !tsgo && !tsMacro)
   if (oxc === true) {
     oxc = {}
   }

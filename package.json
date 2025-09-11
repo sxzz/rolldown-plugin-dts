@@ -52,7 +52,7 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "@ts-macro/tsc": "^0.3.5",
+    "@ts-macro/tsc": "^0.3.6",
     "@typescript/native-preview": ">=7.0.0-dev.20250601.1",
     "rolldown": "^1.0.0-beta.9",
     "typescript": "^5.0.0",

@@ -2,10 +2,9 @@ import path from 'node:path'
 import Debug from 'debug'
 import ts from 'typescript'
 import { globalContext } from './context.ts'
+import { createProgramFactory } from './program.ts'
 import { createFsSystem } from './system.ts'
-import { createTsMacroProgramFactory } from './ts-macro.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
-import { createVueProgramFactory } from './vue.ts'
 import type { TscModule, TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 
@@ -108,11 +107,7 @@ function createTsProgramFromParsedConfig({
 
   const host = ts.createCompilerHost(compilerOptions, true)
 
-  const createProgram = vue
-    ? createVueProgramFactory(ts)
-    : tsMacro
-      ? createTsMacroProgramFactory(ts)
-      : ts.createProgram
+  const createProgram = createProgramFactory(ts, { vue, tsMacro })
   const program = createProgram({
     rootNames,
     options: compilerOptions,

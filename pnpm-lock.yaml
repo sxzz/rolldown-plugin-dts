@@ -17,9 +17,6 @@ importers:
       '@babel/types':
         specifier: ^7.28.4
         version: 7.28.4
-      '@ts-macro/tsc':
-        specifier: ^0.3.5
-        version: 0.3.5(rollup@4.50.0)
       ast-kit:
         specifier: ^2.1.2
         version: 2.1.2
@@ -44,7 +41,13 @@ importers:
         version: 2.2.4
       '@sxzz/test-utils':
         specifier: ^0.5.10
-        version: 0.5.10(@ts-macro/language-plugin@0.3.5(rollup@4.50.0))(@volar/typescript@2.4.23)(esbuild@0.25.9)(rolldown@1.0.0-beta.37)(rollup@4.50.0)(typescript@5.9.2)(vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.3.1)(jiti@2.5.1)(lightningcss@1.29.3)(tsx@4.20.3)(yaml@2.8.1))
+        version: 0.5.10(@ts-macro/language-plugin@0.3.6(rollup@4.50.0))(@volar/typescript@2.4.23)(esbuild@0.25.9)(rolldown@1.0.0-beta.37)(rollup@4.50.0)(typescript@5.9.2)(vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.3.1)(jiti@2.5.1)(lightningcss@1.29.3)(tsx@4.20.3)(yaml@2.8.1))
+      '@ts-macro/language-plugin':
+        specifier: ^0.3.6
+        version: 0.3.6(rollup@4.50.0)
+      '@ts-macro/tsc':
+        specifier: ^0.3.6
+        version: 0.3.6(rollup@4.50.0)
       '@types/babel__generator':
         specifier: ^7.27.0
         version: 7.27.0
@@ -754,11 +757,11 @@ packages:
       typescript:
         optional: true
 
-  '@ts-macro/language-plugin@0.3.5':
-    resolution: {integrity: sha512-UY0/uss9RXnUO/C4R30H04AUsPRZGWw9yvhJ0l5fuQqoEu1who68FM6JZ95xXwbn35LAe18z80MVlV3iktrw1A==}
+  '@ts-macro/language-plugin@0.3.6':
+    resolution: {integrity: sha512-mI9KQ6OSpP+PmPV0sAlKp6Nd0s9G8i7VEm0rsQk2fiEC1fozAmYqO5P6/axj47kJKAPm1V3QsgqGrz36OpJP+g==}
 
-  '@ts-macro/tsc@0.3.5':
-    resolution: {integrity: sha512-pBpPkDePICP15+WNJH1qWBDhQdKqV9PXlEuTnRQRBajdSi+O2vfsyR11zaKMKVY3xjIKuJZGyD9v5JpJnA+wOQ==}
+  '@ts-macro/tsc@0.3.6':
+    resolution: {integrity: sha512-ev8qBPLhTc7wH7s+6igCuTCUuLwjzaYB7b7g6Zt+SsXne1tf+2elf6OfrYFzaMixL0qdcH85Mp7PxsfVnjEgrw==}
     hasBin: true
 
   '@tybys/wasm-util@0.10.0':
@@ -2378,8 +2381,8 @@ packages:
     peerDependencies:
       typescript: '>=4.0.0'
 
-  ts-macro@0.3.5:
-    resolution: {integrity: sha512-ZtoVHuqP0qb5IQ/NtNbWlriQUY52cd4HQADFN95YSkymLZVxBnAOXier2WOSfECEKYBAZiKF34VVjnkd6E3aHg==}
+  ts-macro@0.3.6:
+    resolution: {integrity: sha512-0buxBZweJjozSPA+77X7ntznNouLOtGDJA8nQJgoAQBduKAltF3YLABLbDLp5N7KsDA0ssldX+L/WwI1SloJmg==}
 
   tsdown@0.15.0:
     resolution: {integrity: sha512-xbz8tvdlB2wspocZWcJQhZNDLJC+sKV+sTIpiRgfUiQCUxLFGnUZUPc9KoKp3nfMeXQqTyMi6FM9/SasSj+csQ==}
@@ -3080,33 +3083,33 @@ snapshots:
     dependencies:
       '@prettier/plugin-oxc': 0.0.4
 
-  '@sxzz/test-utils@0.5.10(@ts-macro/language-plugin@0.3.5(rollup@4.50.0))(@volar/typescript@2.4.23)(esbuild@0.25.9)(rolldown@1.0.0-beta.37)(rollup@4.50.0)(typescript@5.9.2)(vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.3.1)(jiti@2.5.1)(lightningcss@1.29.3)(tsx@4.20.3)(yaml@2.8.1))':
+  '@sxzz/test-utils@0.5.10(@ts-macro/language-plugin@0.3.6(rollup@4.50.0))(@volar/typescript@2.4.23)(esbuild@0.25.9)(rolldown@1.0.0-beta.37)(rollup@4.50.0)(typescript@5.9.2)(vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.3.1)(jiti@2.5.1)(lightningcss@1.29.3)(tsx@4.20.3)(yaml@2.8.1))':
     dependencies:
       tinyglobby: 0.2.15
       unplugin-utils: 0.2.5
       vitest: 3.2.4(@types/debug@4.1.12)(@types/node@24.3.1)(jiti@2.5.1)(lightningcss@1.29.3)(tsx@4.20.3)(yaml@2.8.1)
     optionalDependencies:
-      '@ts-macro/language-plugin': 0.3.5(rollup@4.50.0)
+      '@ts-macro/language-plugin': 0.3.6(rollup@4.50.0)
       '@volar/typescript': 2.4.23
       esbuild: 0.25.9
       rolldown: 1.0.0-beta.37
       rollup: 4.50.0
       typescript: 5.9.2
 
-  '@ts-macro/language-plugin@0.3.5(rollup@4.50.0)':
+  '@ts-macro/language-plugin@0.3.6(rollup@4.50.0)':
     dependencies:
       '@volar/language-core': 2.4.23
       '@volar/typescript': 2.4.23
       jiti: 2.5.1
       rollup-utils: 0.0.5(rollup@4.50.0)
-      ts-macro: 0.3.5
+      ts-macro: 0.3.6
       vscode-uri: 3.1.0
     transitivePeerDependencies:
       - rollup
 
-  '@ts-macro/tsc@0.3.5(rollup@4.50.0)':
+  '@ts-macro/tsc@0.3.6(rollup@4.50.0)':
     dependencies:
-      '@ts-macro/language-plugin': 0.3.5(rollup@4.50.0)
+      '@ts-macro/language-plugin': 0.3.6(rollup@4.50.0)
       '@volar/typescript': 2.4.23
     transitivePeerDependencies:
       - rollup
@@ -4964,7 +4967,7 @@ snapshots:
       picomatch: 4.0.3
       typescript: 5.9.2
 
-  ts-macro@0.3.5:
+  ts-macro@0.3.6:
     dependencies:
       muggle-string: 0.4.1
 
