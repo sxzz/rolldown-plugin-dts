@@ -434,6 +434,19 @@ test('cjs exports', async () => {
   }
 })
 
+test('declare module', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/declare-module.ts'),
+    [
+      dts({
+        emitDtsOnly: true,
+      }),
+    ],
+    { platform: 'node' },
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
 test('should error when file import cannot be found', async () => {
   await expect(() =>
     rolldownBuild(path.resolve(dirname, 'fixtures/unresolved-import/ts.ts'), [

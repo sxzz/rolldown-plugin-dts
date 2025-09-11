@@ -278,7 +278,7 @@ export function createFakeJsPlugin({
         if (node.type === 'ExpressionStatement') return null
 
         const newNode = patchImportExport(node, typeOnlyIds, cjsDefault)
-        if (newNode) {
+        if (newNode || newNode === false) {
           return newNode
         }
 
@@ -544,7 +544,17 @@ function patchImportExport(
   node: t.Node,
   typeOnlyIds: string[],
   cjsDefault: boolean,
-): t.Statement | undefined {
+): t.Statement | false | undefined {
+  if (
+    node.type === 'ExportNamedDeclaration' &&
+    !node.declaration &&
+    !node.source &&
+    !node.specifiers.length &&
+    !node.attributes?.length
+  ) {
+    return false
+  }
+
   if (
     isTypeOf(node, [
       'ImportDeclaration',
@@ -552,7 +562,7 @@ function patchImportExport(
       'ExportNamedDeclaration',
     ])
   ) {
-    if (typeOnlyIds.length && node.type === 'ExportNamedDeclaration') {
+    if (node.type === 'ExportNamedDeclaration' && typeOnlyIds.length) {
       for (const spec of node.specifiers) {
         const name = resolveString(spec.exported)
         if (typeOnlyIds.includes(name)) {

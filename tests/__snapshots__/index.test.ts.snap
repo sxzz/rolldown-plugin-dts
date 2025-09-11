@@ -55,6 +55,15 @@ declare const _default: number;
 export = _default;"
 `;
 
+exports[`declare module 1`] = `
+"// declare-module.d.ts
+//#region tests/fixtures/declare-module.d.ts
+declare module "virtual" {
+  const _default: string;
+  export default _default;
+}"
+`;
+
 exports[`dts input > custom chunk name 1`] = `
 "// chunks/DqALGAwS-types.d.ts
 //#region tests/fixtures/dts-multi-input/types.d.ts
