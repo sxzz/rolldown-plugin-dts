@@ -2,16 +2,8 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -2,9 +2,13 @@
- /**
-  * JSDoc for public_api_with_jsdoc
-  */
+@@ -5,6 +5,5 @@
  declare function public_api_with_jsdoc(): void
-+/**
-+ * JSDoc for internal_api_with_jsdoc
-+ * 
-+ * This comment should NOT occur in dist/index.d.ts
-+ */
  declare function public_api_without_jsdoc(): void
  /** JSDoc for public_type */
  type public_type = number

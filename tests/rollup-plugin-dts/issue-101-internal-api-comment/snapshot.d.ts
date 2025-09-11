@@ -4,13 +4,6 @@
  * JSDoc for public_api_with_jsdoc
  */
 declare function public_api_with_jsdoc(): void;
-
-/**
- * JSDoc for internal_api_with_jsdoc
- * 
- * This comment should NOT occur in dist/index.d.ts
- */
-
 declare function public_api_without_jsdoc(): void;
 //#endregion
 //#region tests/rollup-plugin-dts/issue-101-internal-api-comment/index.d.ts
