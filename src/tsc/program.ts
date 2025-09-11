@@ -3,7 +3,6 @@ import Debug from 'debug'
 import type { TscOptions } from './types.ts'
 import type Ts from 'typescript'
 
-let createVueProgram: typeof Ts.createProgram
 const require = createRequire(import.meta.url)
 
 function loadVueLanguageTools() {
@@ -97,8 +96,6 @@ export function createProgramFactory(
   ts: typeof Ts,
   options: Pick<TscOptions, 'vue' | 'tsMacro'>,
 ): typeof Ts.createProgram {
-  if (createVueProgram) return createVueProgram
-
   const vueLanguageTools = options.vue ? loadVueLanguageTools() : undefined
   const tsMacroLanguageTools = options.tsMacro
     ? loadTsMacroLanguageTools()
@@ -108,20 +105,14 @@ export function createProgramFactory(
     tsMacroLanguageTools?.proxyCreateProgram
   if (!proxyCreateProgram) return ts.createProgram
 
-  return (createVueProgram = proxyCreateProgram(
-    ts,
-    ts.createProgram,
-    (ts, options) => {
-      const languagePlugins = []
-      if (vueLanguageTools) {
-        languagePlugins.push(vueLanguageTools.getLanguagePlugin(ts, options))
-      }
-      if (tsMacroLanguageTools) {
-        languagePlugins.push(
-          tsMacroLanguageTools.getLanguagePlugin(ts, options),
-        )
-      }
-      return { languagePlugins }
-    },
-  ))
+  return proxyCreateProgram(ts, ts.createProgram, (ts, options) => {
+    const languagePlugins = []
+    if (vueLanguageTools) {
+      languagePlugins.push(vueLanguageTools.getLanguagePlugin(ts, options))
+    }
+    if (tsMacroLanguageTools) {
+      languagePlugins.push(tsMacroLanguageTools.getLanguagePlugin(ts, options))
+    }
+    return { languagePlugins }
+  })
 }
