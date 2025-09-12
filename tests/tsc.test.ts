@@ -240,4 +240,29 @@ describe('tsc', () => {
     ])
     expect(snapshot).toMatchSnapshot()
   })
+
+  test('ts-macro w/ ts-compiler', async () => {
+    const root = path.resolve(dirname, 'fixtures/ts-macro')
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
+      dts({
+        emitDtsOnly: true,
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        tsMacro: true,
+      }),
+    ])
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test('vue-sfc w/ ts-macro w/ ts-compiler', async () => {
+    const root = path.resolve(dirname, 'fixtures/vue-sfc-with-ts-macro')
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
+      dts({
+        emitDtsOnly: true,
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        vue: true,
+        tsMacro: true,
+      }),
+    ])
+    expect(snapshot).toMatchSnapshot()
+  })
 })
