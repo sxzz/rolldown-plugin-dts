@@ -50,7 +50,7 @@ function loadVueLanguageTools() {
   }
 }
 
-function loadTsMacroLanguageTools() {
+function loadTsMacro() {
   const debug = Debug('rolldown-plugin-dts:ts-macro')
   debug('loading ts-macro language tools')
   try {
@@ -97,9 +97,7 @@ export function createProgramFactory(
   options: Pick<TscOptions, 'vue' | 'tsMacro'>,
 ): typeof Ts.createProgram {
   const vueLanguageTools = options.vue ? loadVueLanguageTools() : undefined
-  const tsMacroLanguageTools = options.tsMacro
-    ? loadTsMacroLanguageTools()
-    : undefined
+  const tsMacroLanguageTools = options.tsMacro ? loadTsMacro() : undefined
   const proxyCreateProgram =
     vueLanguageTools?.proxyCreateProgram ||
     tsMacroLanguageTools?.proxyCreateProgram
