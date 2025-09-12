@@ -80,7 +80,8 @@
     "birpc": "^2.5.0",
     "debug": "^4.4.1",
     "dts-resolver": "^2.1.2",
-    "get-tsconfig": "^4.10.1"
+    "get-tsconfig": "^4.10.1",
+    "magic-string": "^0.30.19"
   },
   "devDependencies": {
     "@sxzz/eslint-config": "^7.1.4",

@@ -6,6 +6,7 @@ import {
   type TsConfigJson,
   type TsConfigJsonResolved,
 } from 'get-tsconfig'
+import type { AddonFunction } from 'rolldown'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 //#region General Options
@@ -166,6 +167,15 @@ export interface TscOptions {
    * `false`.
    */
   emitJs?: boolean
+
+  /**
+   * Content to be added at the top of each generated `.d.ts` file.
+   */
+  banner?: string | Promise<string> | AddonFunction
+  /**
+   * Content to be added at the bottom of each generated `.d.ts` file.
+   */
+  footer?: string | Promise<string> | AddonFunction
 }
 
 export interface Options extends GeneralOptions, TscOptions {
@@ -193,11 +203,13 @@ export interface Options extends GeneralOptions, TscOptions {
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
+type MarkPartial<T, K extends keyof T> = Omit<Required<T>, K> &
+  Partial<Pick<T, K>>
 
 export type OptionsResolved = Overwrite<
-  Required<Omit<Options, 'compilerOptions'>>,
+  MarkPartial<Omit<Options, 'compilerOptions'>, 'banner' | 'footer'>,
   {
-    tsconfig: string | undefined
+    tsconfig?: string
     oxc: IsolatedDeclarationsOptions | false
     tsconfigRaw: TsConfigJson
   }
@@ -215,6 +227,8 @@ export function resolveOptions({
   sourcemap,
   resolve = false,
   cjsDefault = false,
+  banner,
+  footer,
 
   // tsc
   build = false,
@@ -313,6 +327,8 @@ export function resolveOptions({
     sourcemap,
     resolve,
     cjsDefault,
+    banner,
+    footer,
 
     // tsc
     build,

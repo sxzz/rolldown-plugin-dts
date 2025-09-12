@@ -1,5 +1,5 @@
 import Debug from 'debug'
-
+import { createBannerPlugin } from './banner.ts'
 import { createDtsInputPlugin } from './dts-input.ts'
 import { createFakeJsPlugin } from './fake-js.ts'
 import { createGeneratePlugin } from './generate.ts'
@@ -31,6 +31,9 @@ export function dts(options: Options = {}): Plugin[] {
     plugins.push(createGeneratePlugin(resolved))
   }
   plugins.push(createDtsResolvePlugin(resolved), createFakeJsPlugin(resolved))
+  if (options.banner || options.footer) {
+    plugins.push(createBannerPlugin(resolved))
+  }
   return plugins
 }
 

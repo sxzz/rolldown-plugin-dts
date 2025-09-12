@@ -1,5 +1,15 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`banner 1`] = `
+"// minimal.d.ts
+/* My Banner */
+//#region tests/fixtures/minimal.d.ts
+declare function foo(): void;
+//#endregion
+export { foo };
+/* My Footer minimal.d.ts */"
+`;
+
 exports[`basic 1`] = `
 "// basic.d.ts
 //#region tests/fixtures/basic.d.ts

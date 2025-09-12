@@ -456,3 +456,19 @@ test('should error when file import cannot be found', async () => {
     ]),
   ).rejects.toThrow("Could not resolve './missing-file'")
 })
+
+test('banner', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/minimal.ts'),
+    [
+      dts({
+        emitDtsOnly: true,
+        banner: '/* My Banner */',
+        footer: (chunk) => `/* My Footer ${chunk.fileName} */`,
+      }),
+    ],
+  )
+  expect(snapshot).toMatchSnapshot()
+  expect(snapshot).toContain('/* My Banner */\n')
+  expect(snapshot).toContain('\n/* My Footer minimal.d.ts */')
+})
