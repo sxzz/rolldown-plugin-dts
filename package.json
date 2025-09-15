@@ -1,7 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "version": "0.16.5",
-  "packageManager": "pnpm@10.15.1",
+  "packageManager": "pnpm@10.16.1",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "type": "module",
   "keywords": [
@@ -78,7 +78,7 @@
     "@babel/types": "^7.28.4",
     "ast-kit": "^2.1.2",
     "birpc": "^2.5.0",
-    "debug": "^4.4.1",
+    "debug": "^4.4.3",
     "dts-resolver": "^2.1.2",
     "get-tsconfig": "^4.10.1",
     "magic-string": "^0.30.19"
@@ -89,10 +89,10 @@
     "@sxzz/test-utils": "^0.5.10",
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
-    "@types/node": "^24.3.1",
-    "@typescript/native-preview": "7.0.0-dev.20250911.1",
+    "@types/node": "^24.4.0",
+    "@typescript/native-preview": "7.0.0-dev.20250914.1",
     "@volar/typescript": "^2.4.23",
-    "@vue/language-core": "^3.0.6",
+    "@vue/language-core": "^3.0.7",
     "bumpp": "^10.2.3",
     "diff": "^8.0.2",
     "eslint": "^9.35.0",
@@ -101,11 +101,11 @@
     "rolldown": "^1.0.0-beta.37",
     "rollup-plugin-dts": "^6.2.3",
     "tinyglobby": "^0.2.15",
-    "tsdown": "^0.15.0",
+    "tsdown": "^0.15.1",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
     "vue": "^3.5.21",
-    "vue-tsc": "^3.0.6"
+    "vue-tsc": "^3.0.7"
   },
   "engines": {
     "node": ">=20.18.0"
