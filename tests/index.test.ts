@@ -1,30 +1,27 @@
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
+const fixtures = path.resolve(import.meta.dirname, 'fixtures')
 
 test('basic', async () => {
-  const { snapshot } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/basic.ts'),
-    [dts()],
-  )
+  const { snapshot } = await rolldownBuild(path.resolve(fixtures, 'basic.ts'), [
+    dts(),
+  ])
   expect(snapshot).toMatchSnapshot()
 })
 
 test('tsx', async () => {
-  const { snapshot } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/tsx.tsx'),
-    [dts()],
-  )
+  const { snapshot } = await rolldownBuild(path.resolve(fixtures, 'tsx.tsx'), [
+    dts(),
+  ])
   expect(snapshot).toMatchSnapshot()
 })
 
 test('resolve dependencies', async () => {
   const { snapshot } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/resolve-dep.ts'),
+    path.resolve(fixtures, 'resolve-dep.ts'),
     [
       dts({
         resolve: ['get-tsconfig'],
@@ -39,7 +36,7 @@ test('resolve dependencies', async () => {
 
 test('resolve dts', async () => {
   const { snapshot } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/resolve-dts/index.ts'),
+    path.resolve(fixtures, 'resolve-dts/index.ts'),
     [dts()],
   )
   expect(snapshot).matchSnapshot()
@@ -47,7 +44,7 @@ test('resolve dts', async () => {
 
 // Test alias mapping based on rolldown input option
 test('input alias', async () => {
-  const root = path.resolve(dirname, 'fixtures/alias')
+  const root = path.resolve(fixtures, 'alias')
   const { snapshot, chunks } = await rolldownBuild(
     null!,
     [dts({ emitDtsOnly: false })],
@@ -74,7 +71,7 @@ test('input alias', async () => {
 
 test('isolated declaration error', async () => {
   const error = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/isolated-decl-error.ts'),
+    path.resolve(fixtures, 'isolated-decl-error.ts'),
     [
       dts({
         emitDtsOnly: true,
@@ -89,7 +86,7 @@ test('isolated declaration error', async () => {
 })
 
 test('paths', async () => {
-  const root = path.resolve(dirname, 'fixtures/paths')
+  const root = path.resolve(fixtures, 'paths')
   const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
     dts({
       oxc: true,
@@ -102,7 +99,7 @@ test('paths', async () => {
 
 test('tree-shaking', async () => {
   const { snapshot } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/tree-shaking/index.ts'),
+    path.resolve(fixtures, 'tree-shaking/index.ts'),
     [
       dts(),
       {
@@ -121,7 +118,7 @@ test('tree-shaking', async () => {
 describe('dts input', () => {
   test('input array', async () => {
     const { snapshot, chunks } = await rolldownBuild(
-      [path.resolve(dirname, 'fixtures/dts-input.d.ts')],
+      [path.resolve(fixtures, 'dts-input.d.ts')],
       [dts({ dtsInput: true })],
       {},
     )
@@ -135,7 +132,7 @@ describe('dts input', () => {
       [dts({ dtsInput: true })],
       {
         input: {
-          index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+          index: path.resolve(fixtures, 'dts-input.d.ts'),
         },
       },
     )
@@ -146,7 +143,7 @@ describe('dts input', () => {
   test('.d in chunk name', async () => {
     const { chunks } = await rolldownBuild(null!, [dts({ dtsInput: true })], {
       input: {
-        'index.d': path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+        'index.d': path.resolve(fixtures, 'dts-input.d.ts'),
       },
     })
     expect(chunks[0].fileName).toBe('index.d.ts')
@@ -155,7 +152,7 @@ describe('dts input', () => {
   test('full extension in chunk name', async () => {
     const { chunks } = await rolldownBuild(null!, [dts({ dtsInput: true })], {
       input: {
-        'index.d.mts': path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+        'index.d.mts': path.resolve(fixtures, 'dts-input.d.ts'),
       },
     })
     expect(chunks[0].fileName).toBe('index.d.mts')
@@ -167,7 +164,7 @@ describe('dts input', () => {
       [dts({ dtsInput: true })],
       {
         input: {
-          index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+          index: path.resolve(fixtures, 'dts-input.d.ts'),
         },
       },
       {
@@ -179,7 +176,7 @@ describe('dts input', () => {
 
   test('custom entryFileNames without .d', async () => {
     const { chunks } = await rolldownBuild(
-      [path.resolve(dirname, 'fixtures/dts-input.d.ts')],
+      [path.resolve(fixtures, 'dts-input.d.ts')],
       [dts({ dtsInput: true })],
       {},
       {
@@ -195,7 +192,7 @@ describe('dts input', () => {
       [dts({ dtsInput: true })],
       {
         input: {
-          index: path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+          index: path.resolve(fixtures, 'dts-input.d.ts'),
         },
       },
       {
@@ -211,7 +208,7 @@ describe('dts input', () => {
       [dts({ dtsInput: true })],
       {
         input: {
-          'index.d': path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+          'index.d': path.resolve(fixtures, 'dts-input.d.ts'),
         },
       },
       {
@@ -227,7 +224,7 @@ describe('dts input', () => {
       [dts({ dtsInput: true })],
       {
         input: {
-          'index.asdf': path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+          'index.asdf': path.resolve(fixtures, 'dts-input.d.ts'),
         },
       },
       {
@@ -240,8 +237,8 @@ describe('dts input', () => {
   test('default chunk name', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       [
-        path.resolve(dirname, 'fixtures/dts-multi-input/input1.d.ts'),
-        path.resolve(dirname, 'fixtures/dts-multi-input/input2.d.ts'),
+        path.resolve(fixtures, 'dts-multi-input/input1.d.ts'),
+        path.resolve(fixtures, 'dts-multi-input/input2.d.ts'),
       ],
       [dts({ dtsInput: true })],
       {},
@@ -263,8 +260,8 @@ describe('dts input', () => {
   test('custom chunk name', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       [
-        path.resolve(dirname, 'fixtures/dts-multi-input/input1.d.ts'),
-        path.resolve(dirname, 'fixtures/dts-multi-input/input2.d.ts'),
+        path.resolve(fixtures, 'dts-multi-input/input1.d.ts'),
+        path.resolve(fixtures, 'dts-multi-input/input2.d.ts'),
       ],
       [dts({ dtsInput: true })],
       {},
@@ -287,7 +284,7 @@ describe('dts input', () => {
 describe('entryFileNames', () => {
   test('.mjs -> .d.mts', async () => {
     const { chunks } = await rolldownBuild(
-      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [path.resolve(fixtures, 'basic.ts')],
       [dts()],
       {},
       {
@@ -301,7 +298,7 @@ describe('entryFileNames', () => {
 
   test('.cjs -> .d.cts', async () => {
     const { chunks } = await rolldownBuild(
-      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [path.resolve(fixtures, 'basic.ts')],
       [dts()],
       {},
       {
@@ -319,7 +316,7 @@ describe('entryFileNames', () => {
       [dts()],
       {
         input: {
-          custom: path.resolve(dirname, 'fixtures/basic.ts'),
+          custom: path.resolve(fixtures, 'basic.ts'),
         },
       },
       {
@@ -333,7 +330,7 @@ describe('entryFileNames', () => {
 
   test('preserves invalid extension', async () => {
     const { chunks } = await rolldownBuild(
-      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [path.resolve(fixtures, 'basic.ts')],
       [dts()],
       {},
       {
@@ -347,7 +344,7 @@ describe('entryFileNames', () => {
 
   test('same-name output (for JS & DTS)', async () => {
     const { chunks } = await rolldownBuild(
-      [path.resolve(dirname, 'fixtures/same-name/index.ts')],
+      [path.resolve(fixtures, 'same-name/index.ts')],
       [dts()],
       {},
       {
@@ -362,8 +359,8 @@ describe('entryFileNames', () => {
   test('default chunk name', async () => {
     const { chunks, snapshot } = await rolldownBuild(
       [
-        path.resolve(dirname, 'fixtures/alias/input1.ts'),
-        path.resolve(dirname, 'fixtures/alias/input2.ts'),
+        path.resolve(fixtures, 'alias/input1.ts'),
+        path.resolve(fixtures, 'alias/input2.ts'),
       ],
       [dts({ emitDtsOnly: true })],
       {},
@@ -385,8 +382,8 @@ describe('entryFileNames', () => {
   test('custom chunk name', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       [
-        path.resolve(dirname, 'fixtures/dts-multi-input/input1.d.ts'),
-        path.resolve(dirname, 'fixtures/dts-multi-input/input2.d.ts'),
+        path.resolve(fixtures, 'dts-multi-input/input1.d.ts'),
+        path.resolve(fixtures, 'dts-multi-input/input2.d.ts'),
       ],
       [dts({ emitDtsOnly: true })],
       {},
@@ -408,7 +405,7 @@ describe('entryFileNames', () => {
 
 test('type-only export', async () => {
   const { snapshot } = await rolldownBuild(
-    [path.resolve(dirname, 'fixtures/type-only-export/index.ts')],
+    [path.resolve(fixtures, 'type-only-export/index.ts')],
     [dts({ emitDtsOnly: true })],
   )
   expect(snapshot).toMatchSnapshot()
@@ -417,7 +414,7 @@ test('type-only export', async () => {
 test('cjs exports', async () => {
   {
     const { snapshot } = await rolldownBuild(
-      [path.resolve(dirname, 'fixtures/cjs-exports.ts')],
+      [path.resolve(fixtures, 'cjs-exports.ts')],
       [],
       {},
       { format: 'cjs', exports: 'auto' },
@@ -427,7 +424,7 @@ test('cjs exports', async () => {
 
   {
     const { snapshot } = await rolldownBuild(
-      [path.resolve(dirname, 'fixtures/cjs-exports.ts')],
+      [path.resolve(fixtures, 'cjs-exports.ts')],
       [dts({ emitDtsOnly: true, cjsDefault: true })],
     )
     expect(snapshot).toMatchSnapshot()
@@ -436,7 +433,7 @@ test('cjs exports', async () => {
 
 test('declare module', async () => {
   const { snapshot } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/declare-module.ts'),
+    path.resolve(fixtures, 'declare-module.ts'),
     [
       dts({
         emitDtsOnly: true,
@@ -449,7 +446,7 @@ test('declare module', async () => {
 
 test('should error when file import cannot be found', async () => {
   await expect(() =>
-    rolldownBuild(path.resolve(dirname, 'fixtures/unresolved-import/ts.ts'), [
+    rolldownBuild(path.resolve(fixtures, 'unresolved-import/ts.ts'), [
       dts({
         emitDtsOnly: true,
       }),
@@ -459,7 +456,7 @@ test('should error when file import cannot be found', async () => {
 
 test('banner', async () => {
   const { snapshot } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/minimal.ts'),
+    path.resolve(fixtures, 'minimal.ts'),
     [
       dts({
         emitDtsOnly: true,
@@ -471,4 +468,19 @@ test('banner', async () => {
   expect(snapshot).toMatchSnapshot()
   expect(snapshot).toContain('/* My Banner */\n')
   expect(snapshot).toContain('\n/* My Footer minimal.d.ts */')
+})
+
+test('static file', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(fixtures, 'static-file.ts'),
+    [dts()],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('static file as entry', async () => {
+  const { snapshot } = await rolldownBuild(path.resolve(fixtures, 'text.txt'), [
+    dts(),
+  ])
+  expect(snapshot).toMatchSnapshot()
 })

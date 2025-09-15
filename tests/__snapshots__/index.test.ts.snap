@@ -283,6 +283,39 @@ export { Foo };
 "
 `;
 
+exports[`static file 1`] = `
+"// static-file.d.ts
+import { text_default } from "./text-DbeeK4oR.js";
+
+//#region tests/fixtures/static-file.d.ts
+declare const foo: number;
+//#endregion
+export { foo, text_default as text };
+// static-file.js
+import { text_default } from "./text-DbeeK4oR.js";
+
+//#region tests/fixtures/static-file.ts
+const foo = 42;
+
+//#endregion
+export { foo, text_default as text };
+// text-DbeeK4oR.js
+//#region tests/fixtures/text.txt
+var text_default = "foo\\n";
+
+//#endregion
+export { text_default };"
+`;
+
+exports[`static file as entry 1`] = `
+"// text.js
+//#region tests/fixtures/text.txt
+var text_default = "foo\\n";
+
+//#endregion
+export { text_default as default };"
+`;
+
 exports[`tree-shaking 1`] = `
 "// index.d.ts
 //#region tests/fixtures/tree-shaking/mod.d.ts

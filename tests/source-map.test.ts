@@ -1,19 +1,18 @@
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { expectFilesSnapshot, rolldownBuild } from '@sxzz/test-utils'
 import { build } from 'rolldown'
 import { beforeAll, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
-const tempDir = path.join(dirname, 'temp')
+const fixtures = path.resolve(import.meta.dirname, 'fixtures')
+const tempDir = path.join(import.meta.dirname, 'temp')
 
 beforeAll(async () => {
   await rm(tempDir, { recursive: true, force: true })
 })
 
-const input = path.resolve(dirname, 'fixtures/source-map.ts')
+const input = path.resolve(fixtures, 'source-map.ts')
 
 test('oxc', async () => {
   const dir = path.join(tempDir, 'source-map-oxc')
