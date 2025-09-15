@@ -78,6 +78,13 @@ export interface GeneralOptions {
    * This is useful for compatibility with CommonJS.
    */
   cjsDefault?: boolean
+
+  /**
+   * Generate `.d.ts` files for static assets like `.svg` or `.txt` files.
+   * @default false
+   * @example [/\.txt$/]
+   */
+  staticFile?: boolean | RegExp[]
 }
 
 //#region tsc Options
@@ -207,7 +214,10 @@ type MarkPartial<T, K extends keyof T> = Omit<Required<T>, K> &
   Partial<Pick<T, K>>
 
 export type OptionsResolved = Overwrite<
-  MarkPartial<Omit<Options, 'compilerOptions'>, 'banner' | 'footer'>,
+  MarkPartial<
+    Omit<Options, 'compilerOptions'>,
+    'banner' | 'footer' | 'staticFile'
+  >,
   {
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions | false
@@ -229,6 +239,7 @@ export function resolveOptions({
   cjsDefault = false,
   banner,
   footer,
+  staticFile,
 
   // tsc
   build = false,
@@ -329,6 +340,7 @@ export function resolveOptions({
     cjsDefault,
     banner,
     footer,
+    staticFile,
 
     // tsc
     build,

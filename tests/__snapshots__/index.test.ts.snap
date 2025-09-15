@@ -308,7 +308,10 @@ export { text_default };"
 `;
 
 exports[`static file as entry 1`] = `
-"// text.js
+"// text.d.ts
+declare const content: string
+export { content as default }
+// text.js
 //#region tests/fixtures/text.txt
 var text_default = "foo\\n";
 

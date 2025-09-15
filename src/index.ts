@@ -5,6 +5,7 @@ import { createFakeJsPlugin } from './fake-js.ts'
 import { createGeneratePlugin } from './generate.ts'
 import { resolveOptions, type Options } from './options.ts'
 import { createDtsResolvePlugin } from './resolver.ts'
+import { createStaticFilePlugin } from './static-file.ts'
 import type { Plugin } from 'rolldown'
 
 export {
@@ -34,6 +35,9 @@ export function dts(options: Options = {}): Plugin[] {
   if (options.banner || options.footer) {
     plugins.push(createBannerPlugin(resolved))
   }
+  // if (resolved.staticFile) {
+  //   plugins.push(createStaticFilePlugin())
+  // }
   return plugins
 }
 

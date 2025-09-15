@@ -12,7 +12,7 @@ import {
   resolveTemplateFn,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
-import type { Plugin, RenderedChunk } from 'rolldown'
+import type { Plugin, PluginContext, RenderedChunk } from 'rolldown'
 
 const generate: typeof _generate.default =
   (_generate.default as any) || _generate
@@ -42,7 +42,8 @@ type NamespaceMap = Map<
 export function createFakeJsPlugin({
   sourcemap,
   cjsDefault,
-}: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault'>): Plugin {
+  staticFile,
+}: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'staticFile'>): Plugin {
   let symbolIdx = 0
   const identifierMap: Record<string, number> = Object.create(null)
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
@@ -252,7 +253,26 @@ export function createFakeJsPlugin({
     return result
   }
 
-  function renderChunk(code: string, chunk: RenderedChunk) {
+  function renderChunk(
+    this: PluginContext,
+    code: string,
+    chunk: RenderedChunk,
+  ) {
+    if (
+      chunk.isEntry &&
+      chunk.exports.length === 1 &&
+      chunk.exports[0] === 'default'
+    ) {
+      if (staticFile)
+        // chunk.facadeModuleId?.endsWith('.txt') &&
+        this.emitFile({
+          type: 'asset',
+          fileName: filename_js_to_dts(chunk.fileName),
+          source: `declare const content: string\nexport { content as default }`,
+        })
+      return
+    }
+
     if (!RE_DTS.test(chunk.fileName)) {
       return
     }
