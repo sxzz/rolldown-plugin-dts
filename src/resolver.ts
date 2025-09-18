@@ -18,7 +18,9 @@ export function createDtsResolvePlugin({
   resolve,
 }: Pick<OptionsResolved, 'tsconfig' | 'resolve'>): Plugin {
   const isSourceFile = (p: string) =>
-    RE_TS.test(p) || RE_JS.test(p) || RE_VUE.test(p)
+    RE_TS.test(p) ||
+    RE_VUE.test(p) ||
+    (RE_JS.test(p) && !RE_NODE_MODULES.test(p))
 
   const shouldBundleNodeModule = (id: string) => {
     if (typeof resolve === 'boolean') return resolve
