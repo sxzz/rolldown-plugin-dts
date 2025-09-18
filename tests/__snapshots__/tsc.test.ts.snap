@@ -1,5 +1,17 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`tsc > arktype 1`] = `
+"// arktype.d.ts
+import * as arktype_internal_methods_object_ts0 from "arktype/internal/methods/object.ts";
+
+//#region tests/fixtures/arktype.d.ts
+declare const test: arktype_internal_methods_object_ts0.ObjectType<{
+  test: string;
+}, {}>;
+//#endregion
+export { test };"
+`;
+
 exports[`tsc > compiler project sourcemap (build: false) 2`] = `
 "// index.d.ts
 //#region tests/fixtures/deep-source-map/src/index.d.ts

@@ -31,18 +31,23 @@ export function createDtsResolvePlugin({
     ResolverFactory,
   })
 
-  const resolveDtsPath = (
+  function resolveDtsPath(
     id: string,
     importer: string,
     rolldownResolution: ResolvedId | null,
-  ): string | null => {
+  ): string | null {
     let dtsPath = baseDtsResolver(id, importer)
     if (dtsPath) {
       dtsPath = path.normalize(dtsPath)
     }
 
     if (!dtsPath || !isSourceFile(dtsPath)) {
-      if (rolldownResolution && isSourceFile(rolldownResolution.id)) {
+      if (
+        rolldownResolution &&
+        isFilePath(rolldownResolution.id) &&
+        isSourceFile(rolldownResolution.id) &&
+        !rolldownResolution.external
+      ) {
         return rolldownResolution.id
       }
       return null
@@ -57,12 +62,12 @@ export function createDtsResolvePlugin({
     resolveId: {
       order: 'pre',
       async handler(id, importer, options) {
-        const external = { id, external: true, moduleSideEffects: false }
-
         // Guard: Only operate on imports inside .d.ts files
         if (!importer || !RE_DTS.test(importer)) {
           return
         }
+
+        const external = { id, external: true, moduleSideEffects: false }
 
         // Guard: Externalize non-code imports
         if (RE_CSS.test(id)) {
@@ -75,7 +80,7 @@ export function createDtsResolvePlugin({
 
         // If resolution failed, error or externalize
         if (!dtsResolution) {
-          const isFileImport = id.startsWith('.') || path.isAbsolute(id)
+          const isFileImport = isFilePath(id)
 
           // Auto-export unresolvable packages
           return isFileImport ? null : external
@@ -108,4 +113,8 @@ export function createDtsResolvePlugin({
       },
     },
   }
+}
+
+function isFilePath(id: string) {
+  return id.startsWith('.') || path.isAbsolute(id)
 }

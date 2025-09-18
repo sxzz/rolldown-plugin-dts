@@ -93,6 +93,7 @@
     "@typescript/native-preview": "7.0.0-dev.20250914.1",
     "@volar/typescript": "^2.4.23",
     "@vue/language-core": "^3.0.7",
+    "arktype": "^2.1.22",
     "bumpp": "^10.2.3",
     "diff": "^8.0.2",
     "eslint": "^9.35.0",

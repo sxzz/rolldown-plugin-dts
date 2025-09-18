@@ -265,4 +265,19 @@ describe('tsc', () => {
     ])
     expect(snapshot).toMatchSnapshot()
   })
+
+  test('arktype', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/arktype.ts'),
+      [
+        dts({
+          compilerOptions: {
+            isolatedDeclarations: false,
+          },
+          emitDtsOnly: true,
+        }),
+      ],
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
 })
