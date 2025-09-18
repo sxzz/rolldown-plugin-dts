@@ -8,6 +8,7 @@ declare const b: string;
 export { a, b };
 //# sourceMappingURL=source-map.d.ts.map
 ```
+
 ## source-map.d.ts.map
 
 ```map
