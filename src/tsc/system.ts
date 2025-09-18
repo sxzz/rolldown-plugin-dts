@@ -1,5 +1,5 @@
 import Debug from 'debug'
-import ts from 'typescript'
+import { ts, type Ts } from './require-tsc.ts'
 
 const debug = Debug('rolldown-plugin-dts:tsc-system')
 
@@ -7,7 +7,7 @@ const debug = Debug('rolldown-plugin-dts:tsc-system')
  * A system that writes files to both memory and disk. It will try read files
  * from memory firstly and fallback to disk if not found.
  */
-export function createFsSystem(files: Map<string, string>): ts.System {
+export function createFsSystem(files: Map<string, string>): Ts.System {
   return {
     ...ts.sys,
 
@@ -62,7 +62,7 @@ export function createFsSystem(files: Map<string, string>): ts.System {
 
 // A system that only writes files to memory. It will read files from both
 // memory and disk.
-export function createMemorySystem(files: Map<string, string>): ts.System {
+export function createMemorySystem(files: Map<string, string>): Ts.System {
   return {
     ...createFsSystem(files),
 

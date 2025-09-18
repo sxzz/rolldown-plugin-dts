@@ -1,7 +1,7 @@
 import path from 'node:path'
 import Debug from 'debug'
-import ts from 'typescript'
 import { globalContext } from './context.ts'
+import { ts, type Ts } from './require-tsc.ts'
 import { createFsSystem } from './system.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import { createProgramFactory } from './volar.ts'
@@ -10,7 +10,7 @@ import type { ExistingRawSourceMap } from 'rolldown'
 
 const debug = Debug('rolldown-plugin-dts:tsc-compiler')
 
-const defaultCompilerOptions: ts.CompilerOptions = {
+const defaultCompilerOptions: Ts.CompilerOptions = {
   declaration: true,
   noEmit: false,
   emitDeclarationOnly: true,
@@ -18,7 +18,7 @@ const defaultCompilerOptions: ts.CompilerOptions = {
   checkJs: false,
   declarationMap: false,
   skipLibCheck: true,
-  target: 99 satisfies ts.ScriptTarget.ESNext,
+  target: 99 satisfies Ts.ScriptTarget.ESNext,
   resolveJsonModule: true,
   moduleResolution: ts.ModuleResolutionKind.Bundler,
 }
@@ -86,11 +86,11 @@ function createTsProgramFromParsedConfig({
   vue,
   tsMacro,
 }: {
-  parsedConfig: ts.ParsedCommandLine
-  fsSystem: ts.System
+  parsedConfig: Ts.ParsedCommandLine
+  fsSystem: Ts.System
   baseDir: string
 } & Pick<TscOptions, 'entries' | 'vue' | 'tsMacro' | 'id'>): TscModule {
-  const compilerOptions: ts.CompilerOptions = {
+  const compilerOptions: Ts.CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
     $configRaw: parsedConfig.raw,

@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import Debug from 'debug'
+import type { Ts } from './require-tsc.ts'
 import type { TscOptions } from './types.ts'
-import type Ts from 'typescript'
 
 const require = createRequire(import.meta.url)
 

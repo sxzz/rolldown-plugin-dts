@@ -1,11 +1,11 @@
 import type { TscContext } from './context.ts'
+import type { Ts } from './require-tsc.ts'
 import type { TsConfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'
-import type ts from 'typescript'
 
 export interface TscModule {
-  program: ts.Program
-  file: ts.SourceFile
+  program: Ts.Program
+  file: Ts.SourceFile
 }
 
 export interface TscOptions {

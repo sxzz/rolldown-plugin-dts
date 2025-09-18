@@ -1,9 +1,9 @@
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import ts from 'typescript'
+import { ts, type Ts } from './require-tsc.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 
-export const formatHost: ts.FormatDiagnosticsHost = {
+export const formatHost: Ts.FormatDiagnosticsHost = {
   getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
   getNewLine: () => ts.sys.newLine,
   getCanonicalFileName: ts.sys.useCaseSensitiveFileNames
@@ -12,10 +12,10 @@ export const formatHost: ts.FormatDiagnosticsHost = {
 }
 
 // fix #77
-const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
+const stripPrivateFields: Ts.TransformerFactory<Ts.SourceFile | Ts.Bundle> = (
   ctx,
 ) => {
-  const visitor = (node: ts.Node) => {
+  const visitor = (node: Ts.Node) => {
     if (ts.isPropertySignature(node) && ts.isPrivateIdentifier(node.name)) {
       return ctx.factory.updatePropertySignature(
         node,
@@ -31,7 +31,7 @@ const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
     ts.visitNode(sourceFile, visitor, ts.isSourceFile) ?? sourceFile
 }
 
-export const customTransformers: ts.CustomTransformers = {
+export const customTransformers: Ts.CustomTransformers = {
   afterDeclarations: [stripPrivateFields],
 }
 
