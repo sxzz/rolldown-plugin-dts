@@ -1,7 +1,7 @@
 import Debug from 'debug'
+import ts from 'typescript'
 import { tscEmitBuild } from './emit-build.ts'
 import { tscEmitCompiler } from './emit-compiler.ts'
-import { ts } from './require-tsc.ts'
 import type { TscOptions, TscResult } from './types.ts'
 
 export type { TscModule, TscOptions, TscResult } from './types.ts'

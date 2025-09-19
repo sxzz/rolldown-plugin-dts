@@ -1,5 +1,6 @@
-import { createRequire } from 'node:module'
-import * as t from '@babel/types'
+import { generate } from '@babel/generator'
+import { parse } from '@babel/parser'
+import t from '@babel/types'
 import { isDeclarationType, isTypeOf, resolveString } from 'ast-kit'
 import { walk } from 'estree-walker'
 import {
@@ -12,12 +13,6 @@ import {
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
 import type { Plugin, RenderedChunk } from 'rolldown'
-
-const require = createRequire(import.meta.url)
-const { parse } = require('@babel/parser') as typeof import('@babel/parser')
-const generate = (
-  require('@babel/generator') as typeof import('@babel/generator')
-).default
 
 // input:
 // export declare function x(xx: X): void

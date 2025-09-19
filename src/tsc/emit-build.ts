@@ -1,11 +1,11 @@
 import Debug from 'debug'
+import ts from 'typescript'
 import {
   globalContext,
   type ParsedProject,
   type SourceFileToProjectMap,
   type TscContext,
 } from './context.ts'
-import { ts, type Ts } from './require-tsc.ts'
 import { createFsSystem, createMemorySystem } from './system.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import type { TscOptions, TscResult } from './types.ts'
@@ -126,7 +126,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
 
 function getOrBuildProjects(
   context: TscContext,
-  fsSystem: Ts.System,
+  fsSystem: ts.System,
   tsconfig: string,
   force: boolean,
   sourcemap: boolean,
@@ -146,7 +146,7 @@ function getOrBuildProjects(
  * Use TypeScript compiler to build all projects referenced
  */
 function buildProjects(
-  fsSystem: Ts.System,
+  fsSystem: ts.System,
   tsconfig: string,
   force: boolean,
   sourcemap: boolean,
@@ -199,7 +199,7 @@ function buildProjects(
  */
 function collectProjectGraph(
   rootTsconfigPath: string,
-  fsSystem: Ts.System,
+  fsSystem: ts.System,
   force: boolean,
   sourcemap: boolean,
 ): ParsedProject[] {
@@ -233,9 +233,9 @@ function collectProjectGraph(
 
 function parseTsconfig(
   tsconfigPath: string,
-  fsSystem: Ts.System,
-): Ts.ParsedCommandLine | undefined {
-  const diagnostics: Ts.Diagnostic[] = []
+  fsSystem: ts.System,
+): ts.ParsedCommandLine | undefined {
+  const diagnostics: ts.Diagnostic[] = []
 
   const parsedConfig = ts.getParsedCommandLineOfConfigFile(
     tsconfigPath,
@@ -263,13 +263,13 @@ function parseTsconfig(
 // tsconfig files in the first place. Therefore, we print some warnings if the
 // values are not set correctly.
 function patchCompilerOptions(
-  options: Ts.CompilerOptions,
+  options: ts.CompilerOptions,
   extraOptions: {
     tsconfigPath: string
     force: boolean
     sourcemap: boolean
   } | null,
-): Ts.CompilerOptions {
+): ts.CompilerOptions {
   const noEmit: boolean = options.noEmit ?? false
   const declaration: boolean =
     options.declaration ?? (options.composite ? true : false)
@@ -305,8 +305,8 @@ function patchCompilerOptions(
   return options
 }
 
-const createProgramWithPatchedCompilerOptions: Ts.CreateProgram<
-  Ts.EmitAndSemanticDiagnosticsBuilderProgram
+const createProgramWithPatchedCompilerOptions: ts.CreateProgram<
+  ts.EmitAndSemanticDiagnosticsBuilderProgram
 > = (rootNames, options, ...args) => {
   return ts.createEmitAndSemanticDiagnosticsBuilderProgram(
     rootNames,

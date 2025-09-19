@@ -1,12 +1,12 @@
 import Debug from 'debug'
-import type { Ts } from './require-tsc.ts'
+import type ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:tsc-context')
 
 // A parsed tsconfig file with its path.
 export interface ParsedProject {
   tsconfigPath: string
-  parsedConfig: Ts.ParsedCommandLine
+  parsedConfig: ts.ParsedCommandLine
 }
 
 // A map of a source file to the project it belongs to. This makes it faster to
@@ -14,7 +14,7 @@ export interface ParsedProject {
 export type SourceFileToProjectMap = Map<string, ParsedProject>
 
 export interface TscContext {
-  programs: Ts.Program[]
+  programs: ts.Program[]
   files: Map<string, string>
 
   // A map of a root tsconfig to all projects referenced from it.
@@ -22,7 +22,7 @@ export interface TscContext {
 }
 
 export function createContext(): TscContext {
-  const programs: Ts.Program[] = []
+  const programs: ts.Program[] = []
   const files = new Map<string, string>()
   const projects = new Map<string, SourceFileToProjectMap>()
   return { programs, files, projects }

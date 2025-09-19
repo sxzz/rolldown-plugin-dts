@@ -1,9 +1,7 @@
-import { createRequire } from 'node:module'
+/* eslint-disable @typescript-eslint/no-require-imports */
 import Debug from 'debug'
-import type { Ts } from './require-tsc.ts'
 import type { TscOptions } from './types.ts'
-
-const require = createRequire(import.meta.url)
+import type Ts from 'typescript'
 
 function loadVueLanguageTools() {
   const debug = Debug('rolldown-plugin-dts:vue')
