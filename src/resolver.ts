@@ -5,6 +5,7 @@ import {
   filename_to_dts,
   RE_CSS,
   RE_DTS,
+  RE_JS,
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
@@ -16,7 +17,8 @@ export function createDtsResolvePlugin({
   tsconfig,
   resolve,
 }: Pick<OptionsResolved, 'tsconfig' | 'resolve'>): Plugin {
-  const isSourceFile = (p: string) => RE_TS.test(p) || RE_VUE.test(p)
+  const isSourceFile = (p: string) =>
+    RE_TS.test(p) || RE_JS.test(p) || RE_VUE.test(p)
 
   const shouldBundleNodeModule = (id: string) => {
     if (typeof resolve === 'boolean') return resolve
