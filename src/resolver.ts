@@ -5,7 +5,6 @@ import {
   filename_to_dts,
   RE_CSS,
   RE_DTS,
-  RE_JS,
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
@@ -13,50 +12,19 @@ import {
 import type { OptionsResolved } from './options.ts'
 import type { Plugin, ResolvedId } from 'rolldown'
 
+function isSourceFile(id: string) {
+  return RE_TS.test(id) || RE_VUE.test(id)
+}
+
 export function createDtsResolvePlugin({
   tsconfig,
   resolve,
 }: Pick<OptionsResolved, 'tsconfig' | 'resolve'>): Plugin {
-  const isSourceFile = (p: string) =>
-    RE_TS.test(p) || RE_JS.test(p) || RE_VUE.test(p)
-
-  const shouldBundleNodeModule = (id: string) => {
-    if (typeof resolve === 'boolean') return resolve
-    return resolve.some((pattern) =>
-      typeof pattern === 'string' ? id === pattern : pattern.test(id),
-    )
-  }
-
   const baseDtsResolver = createResolver({
     tsconfig,
     resolveNodeModules: !!resolve,
     ResolverFactory,
   })
-
-  function resolveDtsPath(
-    id: string,
-    importer: string,
-    rolldownResolution: ResolvedId | null,
-  ): string | null {
-    let dtsPath = baseDtsResolver(id, importer)
-    if (dtsPath) {
-      dtsPath = path.normalize(dtsPath)
-    }
-
-    if (!dtsPath || !isSourceFile(dtsPath)) {
-      if (
-        rolldownResolution &&
-        isFilePath(rolldownResolution.id) &&
-        isSourceFile(rolldownResolution.id) &&
-        !rolldownResolution.external
-      ) {
-        return rolldownResolution.id
-      }
-      return null
-    }
-
-    return dtsPath
-  }
 
   return {
     name: 'rolldown-plugin-dts:resolver',
@@ -114,6 +82,38 @@ export function createDtsResolvePlugin({
         }
       },
     },
+  }
+
+  function shouldBundleNodeModule(id: string) {
+    if (typeof resolve === 'boolean') return resolve
+    return resolve.some((pattern) =>
+      typeof pattern === 'string' ? id === pattern : pattern.test(id),
+    )
+  }
+
+  function resolveDtsPath(
+    id: string,
+    importer: string,
+    rolldownResolution: ResolvedId | null,
+  ): string | null {
+    let dtsPath = baseDtsResolver(id, importer)
+    if (dtsPath) {
+      dtsPath = path.normalize(dtsPath)
+    }
+
+    if (!dtsPath || !isSourceFile(dtsPath)) {
+      if (
+        rolldownResolution &&
+        isFilePath(rolldownResolution.id) &&
+        isSourceFile(rolldownResolution.id) &&
+        !rolldownResolution.external
+      ) {
+        return rolldownResolution.id
+      }
+      return null
+    }
+
+    return dtsPath
   }
 }
 
