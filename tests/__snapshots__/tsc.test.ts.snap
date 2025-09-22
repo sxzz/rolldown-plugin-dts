@@ -152,26 +152,6 @@ var jsdoc_default = fn();
 export { jsdoc_default as default, fn };"
 `;
 
-exports[`tsc > jsdoc in js 1`] = `
-"// main.d.ts
-//#region tests/fixtures/jsdoc-js/bar.d.ts
-/**
- * @returns {string}
- */
-declare function bar(): string;
-//#endregion
-//#region tests/fixtures/jsdoc-js/main.d.ts
-/**
- * Does bar.
- *
- * @param {string} baz
- * @returns {void}
- */
-declare function foo(baz: string): void;
-//#endregion
-export { bar, foo };"
-`;
-
 exports[`tsc > multi declarations 1`] = `
 "// index.d.ts
 //#region tests/fixtures/multi-decls/mod.d.ts
