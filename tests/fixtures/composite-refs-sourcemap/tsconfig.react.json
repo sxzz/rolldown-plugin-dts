@@ -11,11 +11,9 @@
     "target": "ESNext",
     "moduleResolution": "Bundler",
     "skipLibCheck": true,
-    "isolatedDeclarations": false,
+    "isolatedDeclarations": false
   },
-  "include": [
-    "src/react"
-  ],
+  "include": ["src/react"],
   "references": [
     {
       "path": "./tsconfig.shared.json"

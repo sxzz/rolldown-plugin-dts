@@ -1,1 +1,2 @@
-tests/rollup-plugin-dts/**
+tests/rollup-plugin-dts
+tests/__snapshots__

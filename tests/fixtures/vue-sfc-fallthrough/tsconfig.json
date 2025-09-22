@@ -1,5 +1,5 @@
 {
-	"vueCompilerOptions": {
-		"fallthroughAttributes": true
-	}
+  "vueCompilerOptions": {
+    "fallthroughAttributes": true
+  }
 }

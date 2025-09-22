@@ -11,11 +11,9 @@
     "target": "ESNext",
     "moduleResolution": "Bundler",
     "skipLibCheck": true,
-    "isolatedDeclarations": false,
+    "isolatedDeclarations": false
   },
-  "include": [
-    "src/server"
-  ],
+  "include": ["src/server"],
   "references": [
     {
       "path": "./tsconfig.shared.json"

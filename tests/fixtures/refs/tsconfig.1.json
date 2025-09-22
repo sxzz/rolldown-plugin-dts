@@ -3,6 +3,6 @@
   "references": [
     {
       "path": "./tsconfig.2.json"
-    },
-  ],
+    }
+  ]
 }

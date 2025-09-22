@@ -5,7 +5,5 @@
     "types": [],
     "outDir": "${configDir}/temp/dir2"
   },
-  "include": [
-    "${configDir}/dir2/**/*.ts"
-  ]
+  "include": ["${configDir}/dir2/**/*.ts"]
 }
