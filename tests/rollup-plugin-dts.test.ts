@@ -71,13 +71,13 @@ await testFixtures(
     // not the same
     if (diff.split('\n').length !== 5) {
       const knownDiff = await readFile(knownDiffPath, 'utf8').catch(() => null)
-      if (knownDiff !== diff) {
+      if (knownDiff === diff) {
+        await unlink(diffPath).catch(() => {})
+      } else {
         await expect(diff).toMatchFileSnapshot(
           knownDiff ? knownDiffPath : diffPath,
         )
         await unlink(knownDiff ? diffPath : knownDiffPath).catch(() => {})
-      } else {
-        await unlink(diffPath).catch(() => {})
       }
     } else if (isUpdateEnabled) {
       await Promise.all([

@@ -26,6 +26,7 @@ export default defineConfig({
         // perf: TypeScript is large and takes time to detect ESM/CJS.
         if (id === 'typescript') return true
       },
+      builtinNodeModules: true,
     }),
   ],
 })

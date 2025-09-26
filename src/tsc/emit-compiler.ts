@@ -128,14 +128,14 @@ function createTsProgramFromParsedConfig({
       )
     }
 
-    if (!fsSystem.fileExists(id)) {
-      debug(`File ${id} does not exist on disk.`)
-      throw new Error(`Source file not found: ${id}`)
-    } else {
+    if (fsSystem.fileExists(id)) {
       debug(`File ${id} exists on disk.`)
       throw new Error(
         `Unable to load file ${id} from the program. This seems like a bug of rolldown-plugin-dts. Please report this issue to https://github.com/sxzz/rolldown-plugin-dts/issues`,
       )
+    } else {
+      debug(`File ${id} does not exist on disk.`)
+      throw new Error(`Source file not found: ${id}`)
     }
   }
 

@@ -8,12 +8,12 @@ export function createDtsInputPlugin(): Plugin {
     options(options) {
       return {
         treeshake:
-          options.treeshake !== false
-            ? {
+          options.treeshake === false
+            ? false
+            : {
                 ...(options.treeshake === true ? {} : options.treeshake),
                 moduleSideEffects: false,
-              }
-            : false,
+              },
         ...options,
       }
     },

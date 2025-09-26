@@ -126,7 +126,7 @@ describe('tsc', () => {
     const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
     const sources = sourcemap.sources || []
     const expectedSources = ['../../src/types.ts', '../../src/react/index.ts']
-    expect(sources.sort()).toEqual(expectedSources.sort())
+    expect(sources.toSorted()).toEqual(expectedSources.toSorted())
     expect(sourcemap.sourcesContent).toBeOneOf([undefined, []])
   })
 
@@ -191,7 +191,7 @@ describe('tsc', () => {
       cwd: tempDir,
       absolute: false,
     })
-    expect(tsBuildInfoFiles.sort()).toMatchInlineSnapshot(`
+    expect(tsBuildInfoFiles.toSorted()).toMatchInlineSnapshot(`
       [
         "dir1/tsconfig.1.tsbuildinfo",
         "dir2/tsconfig.2.tsbuildinfo",

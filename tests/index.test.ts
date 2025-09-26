@@ -61,7 +61,7 @@ test('input alias', async () => {
       },
     },
   )
-  const fileNames = chunks.map((chunk) => chunk.fileName).sort()
+  const fileNames = chunks.map((chunk) => chunk.fileName).toSorted()
 
   // The JS output and DTS output should have the same structure
   expect(fileNames).toContain('output1.d.ts')
@@ -250,7 +250,7 @@ describe('dts input', () => {
       },
     )
 
-    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toStrictEqual([
       'input1.d.mts',
       'input2.d.mts',
@@ -273,7 +273,7 @@ describe('dts input', () => {
       },
     )
 
-    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toStrictEqual([
       'chunks/DqALGAwS-types.d.ts',
       'input1.d.ts',
@@ -295,7 +295,7 @@ describe('entryFileNames', () => {
       },
     )
 
-    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toStrictEqual(['basic.d.mts', 'basic.mjs'])
   })
 
@@ -309,7 +309,7 @@ describe('entryFileNames', () => {
       },
     )
 
-    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toStrictEqual(['basic.cjs', 'basic.d.cts'])
   })
 
@@ -327,7 +327,7 @@ describe('entryFileNames', () => {
       },
     )
 
-    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toStrictEqual(['custom.d.mts', 'custom.mjs'])
   })
 
@@ -341,7 +341,7 @@ describe('entryFileNames', () => {
       },
     )
 
-    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toStrictEqual(['basic.d.invalid', 'basic.invalid'])
   })
 
@@ -372,7 +372,7 @@ describe('entryFileNames', () => {
       },
     )
 
-    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toStrictEqual([
       'input1.d.mts',
       'input2-CzdQ8V-e.d.ts',
@@ -395,7 +395,7 @@ describe('entryFileNames', () => {
       },
     )
 
-    const chunkNames = chunks.map((chunk) => chunk.fileName).sort()
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toStrictEqual([
       'chunks/DqALGAwS-types.d.ts',
       'input1.d.ts',

@@ -331,7 +331,7 @@ export function createGeneratePlugin({
 async function runTsgo(root: string, tsconfig?: string) {
   const tsgoPkg = import.meta.resolve('@typescript/native-preview/package.json')
   const { default: getExePath } = await import(
-    new URL('./lib/getExePath.js', tsgoPkg).href
+    new URL('lib/getExePath.js', tsgoPkg).href
   )
   const tsgo = getExePath()
   const tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))

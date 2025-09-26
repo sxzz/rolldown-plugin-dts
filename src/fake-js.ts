@@ -416,20 +416,36 @@ export function createFakeJsPlugin({
           if ('value' in node && isReferenceId(node.value)) {
             addDependency(node.value)
           }
-        } else if (node.type === 'TSTypeReference') {
-          addDependency(TSEntityNameToRuntime(node.typeName))
-        } else if (node.type === 'TSTypeQuery') {
-          if (seen.has(node.exprName)) return
-          if (node.exprName.type !== 'TSImportType') {
-            addDependency(TSEntityNameToRuntime(node.exprName))
+        } else
+          switch (node.type) {
+            case 'TSTypeReference': {
+              addDependency(TSEntityNameToRuntime(node.typeName))
+
+              break
+            }
+            case 'TSTypeQuery': {
+              if (seen.has(node.exprName)) return
+              if (node.exprName.type !== 'TSImportType') {
+                addDependency(TSEntityNameToRuntime(node.exprName))
+              }
+
+              break
+            }
+            case 'TSImportType': {
+              seen.add(node)
+              const source = node.argument
+              const imported = node.qualifier
+              const dep = importNamespace(
+                node,
+                imported,
+                source,
+                namespaceStmts,
+              )
+              addDependency(dep)
+
+              break
+            }
           }
-        } else if (node.type === 'TSImportType') {
-          seen.add(node)
-          const source = node.argument
-          const imported = node.qualifier
-          const dep = importNamespace(node, imported, source, namespaceStmts)
-          addDependency(dep)
-        }
       },
     })
     return Array.from(deps)
