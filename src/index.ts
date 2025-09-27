@@ -15,6 +15,7 @@ export {
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
+  RE_JSON,
 } from './filename.ts'
 
 const debug = Debug('rolldown-plugin-dts:options')
