@@ -1,3 +1,4 @@
+import path from 'node:path'
 import Debug from 'debug'
 import type ts from 'typescript'
 
@@ -29,6 +30,7 @@ export function createContext(): TscContext {
 }
 
 export function invalidateContextFile(context: TscContext, file: string): void {
+  file = path.resolve(file).replaceAll('\\', '/')
   debug(`invalidating context file: ${file}`)
   context.files.delete(file)
   context.programs = context.programs.filter((program) => {
