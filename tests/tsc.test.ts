@@ -205,6 +205,9 @@ describe('tsc', () => {
       dts({
         emitDtsOnly: true,
         vue: true,
+        compilerOptions: {
+          isolatedDeclarations: false,
+        },
       }),
     ])
     expect(snapshot).toMatchSnapshot()

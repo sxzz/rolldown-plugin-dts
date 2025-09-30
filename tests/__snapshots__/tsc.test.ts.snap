@@ -217,7 +217,8 @@ declare global {
     foo: string;
   }
 }
-declare const _default: vue0.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue0.ComponentOptionsMixin, vue0.ComponentOptionsMixin, {}, string, vue0.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue0.ComponentProvideOptions, false, {}, any>;
+declare const __VLS_export: vue0.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue0.ComponentOptionsMixin, vue0.ComponentOptionsMixin, {}, string, vue0.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue0.ComponentProvideOptions, false, {}, any>;
+declare const _default: typeof __VLS_export;
 //#endregion
 export { _default as App };"
 `;
@@ -227,7 +228,7 @@ exports[`tsc > vue-sfc w/ ts-compiler w/ vueCompilerOptions in tsconfig 1`] = `
 import * as vue0 from "vue";
 
 //#region tests/fixtures/vue-sfc-fallthrough/App.vue.d.ts
-declare const _default: vue0.DefineComponent<{
+declare const __VLS_export: vue0.DefineComponent<{
   foo: string;
   bar?: string;
   innerHTML?: string | undefined;
@@ -620,6 +621,7 @@ declare const _default: vue0.DefineComponent<{
   onVnodeBeforeUnmount?: ((vnode: vue0.VNode) => void) | ((vnode: vue0.VNode) => void)[];
   onVnodeUnmounted?: ((vnode: vue0.VNode) => void) | ((vnode: vue0.VNode) => void)[];
 }> & Readonly<{}>, {}, {}, {}, {}, string, vue0.ComponentProvideOptions, false, {}, any>;
+declare const _default: typeof __VLS_export;
 //#endregion
 export { _default as App };"
 `;
@@ -637,7 +639,8 @@ declare global {
     foo: string;
   }
 }
-declare const _default: vue0.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue0.ComponentOptionsMixin, vue0.ComponentOptionsMixin, {}, string, vue0.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue0.ComponentProvideOptions, false, {}, any>;
+declare const __VLS_export: vue0.DefineComponent<__VLS_Props, {}, {}, {}, {}, vue0.ComponentOptionsMixin, vue0.ComponentOptionsMixin, {}, string, vue0.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, vue0.ComponentProvideOptions, false, {}, any>;
+declare const _default: typeof __VLS_export;
 //#endregion
 //#region tests/fixtures/vue-sfc-with-ts-macro/main.d.ts
 declare function defineStyle(style: string): any;
