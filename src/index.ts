@@ -12,10 +12,10 @@ export {
   RE_DTS,
   RE_DTS_MAP,
   RE_JS,
+  RE_JSON,
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
-  RE_JSON,
 } from './filename.ts'
 
 const debug = Debug('rolldown-plugin-dts:options')

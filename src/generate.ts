@@ -10,10 +10,10 @@ import {
   RE_DTS,
   RE_DTS_MAP,
   RE_JS,
+  RE_JSON,
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
-  RE_JSON,
   replaceTemplateName,
   resolveTemplateFn,
 } from './filename.ts'
@@ -207,7 +207,7 @@ export function createGeneratePlugin({
         }
 
         if (emitDtsOnly) {
-          if (RE_JSON.test(id)) return '{ }'
+          if (RE_JSON.test(id)) return '{}'
           return 'export { }'
         }
       },

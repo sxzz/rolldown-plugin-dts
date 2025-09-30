@@ -5,10 +5,10 @@ import {
   filename_to_dts,
   RE_CSS,
   RE_DTS,
+  RE_JSON,
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
-  RE_JSON,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
 import type { Plugin, ResolvedId } from 'rolldown'
