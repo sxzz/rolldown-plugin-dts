@@ -5,6 +5,7 @@ import {
   filename_to_dts,
   RE_CSS,
   RE_DTS,
+  RE_JSON,
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
@@ -13,7 +14,7 @@ import type { OptionsResolved } from './options.ts'
 import type { Plugin, ResolvedId } from 'rolldown'
 
 function isSourceFile(id: string) {
-  return RE_TS.test(id) || RE_VUE.test(id)
+  return RE_TS.test(id) || RE_VUE.test(id) || RE_JSON.test(id)
 }
 
 export function createDtsResolvePlugin({

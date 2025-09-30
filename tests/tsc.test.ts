@@ -283,4 +283,19 @@ describe('tsc', () => {
     )
     expect(snapshot).toMatchSnapshot()
   })
+
+  test('import JSON', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/import-json/index.ts'),
+      [
+        dts({
+          compilerOptions: {
+            isolatedDeclarations: false,
+          },
+          emitDtsOnly: true,
+        }),
+      ],
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
 })

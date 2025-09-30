@@ -10,6 +10,7 @@ import {
   RE_DTS,
   RE_DTS_MAP,
   RE_JS,
+  RE_JSON,
   RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
@@ -181,7 +182,7 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_JS, RE_TS, RE_VUE],
+          include: [RE_JS, RE_TS, RE_VUE, RE_JSON],
           exclude: [RE_DTS, RE_NODE_MODULES],
         },
       },
@@ -206,6 +207,7 @@ export function createGeneratePlugin({
         }
 
         if (emitDtsOnly) {
+          if (RE_JSON.test(id)) return '{}'
           return 'export { }'
         }
       },

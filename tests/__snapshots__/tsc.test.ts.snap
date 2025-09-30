@@ -102,6 +102,21 @@ const input2 = "input2";
 export { input2 };"
 `;
 
+exports[`tsc > import JSON 1`] = `
+"// index.d.ts
+declare namespace foo_d_exports {
+  export { age, name };
+}
+declare let name: string;
+declare let age: number;
+declare namespace bar_d_exports {
+  export { _exports as default };
+}
+declare const _exports: string[];
+//#endregion
+export { age, _exports as bar, bar_d_exports as barNs, foo_d_exports as fooNs, name };"
+`;
+
 exports[`tsc > jsdoc 1`] = `
 "// jsdoc.d.ts
 import { Plugin } from "rolldown";
