@@ -425,9 +425,9 @@ export function createFakeJsPlugin({
             }
             case 'TSTypeQuery': {
               if (seen.has(node.exprName)) return
-              if (node.exprName.type !== 'TSImportType') {
-                addDependency(TSEntityNameToRuntime(node.exprName))
-              }
+              if (node.exprName.type === 'TSImportType') break
+
+              addDependency(TSEntityNameToRuntime(node.exprName))
 
               break
             }
@@ -451,7 +451,7 @@ export function createFakeJsPlugin({
     return Array.from(deps)
 
     function addDependency(node: Dep) {
-      if (node.type === 'Identifier' && node.name === 'this') return
+      if (isThisExpression(node)) return
       deps.add(node)
     }
   }
@@ -510,6 +510,13 @@ export function createFakeJsPlugin({
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
 function collectReferenceDirectives(comment: t.Comment[], negative = false) {
   return comment.filter((c) => REFERENCE_RE.test(c.value) !== negative)
+}
+
+function isThisExpression(node: t.Node): boolean {
+  return (
+    (node.type === 'Identifier' && node.name === 'this') ||
+    (node.type === 'MemberExpression' && isThisExpression(node.object))
+  )
 }
 
 function TSEntityNameToRuntime(
