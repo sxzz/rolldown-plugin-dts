@@ -28,6 +28,7 @@ type Dep = t.Expression & { replace?: (newNode: t.Node) => void }
 interface SymbolInfo {
   decl: t.Declaration
   bindings: t.Identifier[]
+  params: t.TSTypeParameter[]
   deps: Dep[]
 }
 
@@ -177,15 +178,27 @@ export function createFakeJsPlugin({
         // @ts-expect-error
         decl.id = binding
       }
+
+      const params: t.TSTypeParameter[] =
+        'typeParameters' in decl &&
+        decl.typeParameters?.type === 'TSTypeParameterDeclaration'
+          ? decl.typeParameters.params
+          : []
+
       const deps = collectDependencies(decl, namespaceStmts)
 
       const elements: t.Expression[] = [
-        t.numericLiteral(0),
-        ...deps.map((dep) => t.arrowFunctionExpression([], dep)),
-        ...(sideEffect
-          ? [t.callExpression(t.identifier('sideEffect'), [bindings[0]])]
-          : []),
+        t.numericLiteral(0 /* placeholder */),
+        t.arrowFunctionExpression(
+          params.map((param) => t.identifier(param.name)),
+          t.arrayExpression(deps),
+        ),
       ]
+      if (sideEffect) {
+        elements.push(
+          t.callExpression(t.identifier('sideEffect'), [bindings[0]]),
+        )
+      }
       const runtime: t.ArrayExpression = t.arrayExpression(elements)
 
       if (decl !== stmt) {
@@ -196,10 +209,11 @@ export function createFakeJsPlugin({
         decl,
         deps,
         bindings,
+        params,
       })
       elements[0] = t.numericLiteral(symbolId)
 
-      // var ${binding} = [${symbolId}, () => ${dep}, ..., sideEffect()]
+      // var ${binding} = [${symbolId}, (param, ...) => [dep, ...], sideEffect()]
       const runtimeAssignment: t.VariableDeclaration = {
         type: 'VariableDeclaration',
         kind: 'var',
@@ -284,7 +298,8 @@ export function createFakeJsPlugin({
           return null
         }
 
-        const [symbolIdNode, ...depsFns] = decl.init.elements as t.Expression[]
+        const [symbolIdNode, depsFn /*, ignore sideEffect */] = decl.init
+          .elements as [t.Expression, t.ArrowFunctionExpression]
         if (symbolIdNode?.type !== 'NumericLiteral') {
           return null
         }
@@ -300,18 +315,21 @@ export function createFakeJsPlugin({
           overwriteNode(original.bindings[i], transformedBinding)
         }
 
-        const transformedDeps = depsFns
-          .filter((node) => node?.type === 'ArrowFunctionExpression')
-          .map((node) => node.body)
+        const transformedParams = depsFn.params as t.Identifier[]
+        for (let i = 0; i < original.params.length; i++) {
+          const originalParam = original.params[i]
+          const transformedParam = transformedParams[i]
+          originalParam.name = transformedParam.name
+        }
 
-        if (original.deps.length) {
-          for (let i = 0; i < original.deps.length; i++) {
-            const originalDep = original.deps[i]
-            if (originalDep.replace) {
-              originalDep.replace(transformedDeps[i])
-            } else {
-              Object.assign(originalDep, transformedDeps[i])
-            }
+        const transformedDeps = (depsFn.body as t.ArrayExpression)
+          .elements as t.Expression[]
+        for (let i = 0; i < original.deps.length; i++) {
+          const originalDep = original.deps[i]
+          if (originalDep.replace) {
+            originalDep.replace(transformedDeps[i])
+          } else {
+            Object.assign(originalDep, transformedDeps[i])
           }
         }
 

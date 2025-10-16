@@ -2,27 +2,15 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,5 +1,19 @@
+@@ -1,5 +1,7 @@
  // index.d.ts
-+interface A {}
-+interface B {}
-+interface C {}
-+interface D {}
-+interface E {}
-+interface F {}
-+interface G {}
 +interface H {}
-+interface I {}
 +interface J {}
-+interface K {}
-+interface L {}
-+interface M {}
-+interface N {}
  declare class GenericKlass<A = any, B = A> {
    a: A
    b: B
  }
-@@ -8,14 +22,11 @@
+@@ -8,14 +10,11 @@
    d: D
  }
  declare function genericFunction<E = any, F = E>(e: E): F
