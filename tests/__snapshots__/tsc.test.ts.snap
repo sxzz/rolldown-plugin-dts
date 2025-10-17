@@ -2,10 +2,10 @@
 
 exports[`tsc > arktype 1`] = `
 "// arktype.d.ts
-import * as arktype_internal_methods_object_ts0 from "arktype/internal/methods/object.ts";
+import * as arktype_internal_variants_object_ts0 from "arktype/internal/variants/object.ts";
 
 //#region tests/fixtures/arktype.d.ts
-declare const test: arktype_internal_methods_object_ts0.ObjectType<{
+declare const test: arktype_internal_variants_object_ts0.ObjectType<{
   test: string;
 }, {}>;
 //#endregion
