@@ -472,3 +472,33 @@ test('banner', async () => {
   expect(snapshot).toContain('/* My Banner */\n')
   expect(snapshot).toContain('\n/* My Footer minimal.d.ts */')
 })
+
+test('manualChunks', async () => {
+  const { snapshot, chunks } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/manual-chunk/entry.ts'),
+    [dts({ emitDtsOnly: true })],
+    {},
+    {
+      manualChunks(id) {
+        if (id.includes('shared1')) return 'shared1-chunk.d'
+      },
+    },
+  )
+  expect(snapshot).toMatchSnapshot()
+  expect(chunks).toHaveLength(2)
+})
+
+test('advancedChunks', async () => {
+  const { snapshot, chunks } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/manual-chunk/entry.ts'),
+    [dts({ emitDtsOnly: true })],
+    {},
+    {
+      advancedChunks: {
+        groups: [{ test: /shared1/, name: 'shared1-chunk.d' }],
+      },
+    },
+  )
+  expect(snapshot).toMatchSnapshot()
+  expect(chunks).toHaveLength(2)
+})
