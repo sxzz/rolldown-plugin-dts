@@ -190,6 +190,23 @@ To use this option, ensure that `@typescript/native-preview` is installed as a d
 
 `tsconfigRaw` and `compilerOptions` options will be ignored when this option is enabled.
 
+## Advanced Chunks Support
+
+When using Rolldown's advanced chunking features such as `manualChunks` or `advancedChunks`, you should pay special attention to handling `.d.ts` files. The chunk names for `.d.ts` files must end with `.d`.
+
+```ts
+export default {
+  advancedChunks: {
+    groups: [
+      // handle .d.ts files
+      { test: /foo.*\.d\.[cm]?ts$/, name: 'shared.d' },
+      // handle source files
+      { test: /foo/, name: 'shared' },
+    ],
+  },
+}
+```
+
 ## Differences from `rollup-plugin-dts`
 
 ### Isolated Declarations
