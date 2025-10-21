@@ -665,7 +665,9 @@ function isHelperImport(node: t.Node) {
   )
 }
 
-// patch `.d.ts` suffix in import source to `.js`
+/**
+ * patch `.d.ts` suffix in import source to `.js`
+ */
 function patchImportExport(
   node: t.Node,
   typeOnlyIds: string[],
@@ -724,11 +726,10 @@ function patchImportExport(
 }
 
 function patchTsNamespace(nodes: t.Statement[]) {
-  const emptyObjectAssignments = new Map<string, t.VariableDeclaration>()
   const removed = new Set<t.Node>()
 
   for (const [i, node] of nodes.entries()) {
-    const result = handleExport(node) || handleLegacyExport(node)
+    const result = handleExport(node)
     if (!result) continue
 
     const [binding, exports] = result
@@ -780,45 +781,6 @@ function patchTsNamespace(nodes: t.Statement[]) {
     const source = node.declarations[0].id
     const exports = node.declarations[0].init.arguments[0]
     return [source, exports] as const
-  }
-
-  /**
-   * @deprecated remove me in future
-   */
-  function handleLegacyExport(
-    node: t.Statement,
-  ): false | [t.Identifier, t.ObjectExpression] {
-    if (
-      node.type === 'VariableDeclaration' &&
-      node.declarations.length === 1 &&
-      node.declarations[0].id.type === 'Identifier' &&
-      node.declarations[0].init?.type === 'ObjectExpression' &&
-      node.declarations[0].init.properties.length === 0
-    ) {
-      emptyObjectAssignments.set(node.declarations[0].id.name, node)
-      return false
-    }
-
-    if (
-      node.type !== 'ExpressionStatement' ||
-      node.expression.type !== 'CallExpression' ||
-      node.expression.callee.type !== 'Identifier' ||
-      !node.expression.callee.name.startsWith('__export')
-    )
-      return false
-
-    const [binding, exports] = node.expression.arguments
-    if (binding.type !== 'Identifier' || exports.type !== 'ObjectExpression')
-      return false
-    const bindingText = binding.name
-
-    if (emptyObjectAssignments.has(bindingText)) {
-      const emptyNode = emptyObjectAssignments.get(bindingText)!
-      emptyObjectAssignments.delete(bindingText)
-      removed.add(emptyNode)
-    }
-
-    return [binding, exports] as const
   }
 }
 
