@@ -284,6 +284,28 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
+  test('re-export from lib', async () => {
+    const cwd = path.resolve(dirname, 'fixtures/re-export-lib')
+    const { snapshot: onlyA } = await rolldownBuild(
+      ['a.ts'],
+      [dts({ emitDtsOnly: true })],
+      { cwd },
+    )
+    const { snapshot: onlyB } = await rolldownBuild(
+      ['b.ts'],
+      [dts({ emitDtsOnly: true })],
+      { cwd },
+    )
+    const { snapshot: both } = await rolldownBuild(
+      ['a.ts', 'b.ts'],
+      [dts({ emitDtsOnly: true })],
+      { cwd },
+    )
+    expect(onlyA).toMatchSnapshot('onlyA')
+    expect(onlyB).toMatchSnapshot('onlyB')
+    expect(both).toMatchSnapshot('both')
+  })
+
   test('import JSON', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/import-json/index.ts'),
