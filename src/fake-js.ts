@@ -614,7 +614,7 @@ function isRuntimeBindingArrayElements(
   return (
     t.isNumericLiteral(symbolId) &&
     t.isArrowFunctionExpression(deps) &&
-    (effect ? t.isCallExpression(effect) : true)
+    (!effect || t.isCallExpression(effect))
   )
 }
 
