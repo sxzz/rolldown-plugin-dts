@@ -120,7 +120,7 @@ export function createFakeJsPlugin({
     const namespaceStmts: NamespaceMap = new Map()
 
     for (const [i, stmt] of program.body.entries()) {
-      const setStmt = (node: t.Node) => (program.body[i] = node as any)
+      const setStmt = (stmt: t.Statement) => (program.body[i] = stmt)
       if (rewriteImportExport(stmt, setStmt, typeOnlyIds)) continue
 
       const sideEffect =
@@ -141,7 +141,7 @@ export function createFakeJsPlugin({
 
       const decl: t.Node = isDecl ? stmt.declaration! : stmt
       const setDecl = isDecl
-        ? (node: t.Node) => (stmt.declaration = node as any)
+        ? (decl: t.Declaration) => (stmt.declaration = decl)
         : setStmt
 
       if (decl.type !== 'TSDeclareFunction' && !isDeclarationType(decl)) {
@@ -187,20 +187,6 @@ export function createFakeJsPlugin({
 
       const deps = collectDependencies(decl, namespaceStmts)
 
-      const elements: t.Expression[] = [
-        t.numericLiteral(0 /* placeholder */),
-        t.arrowFunctionExpression(
-          params.map((param) => t.identifier(param.name)),
-          t.arrayExpression(deps),
-        ),
-      ]
-      if (sideEffect) {
-        elements.push(
-          t.callExpression(t.identifier('sideEffect'), [bindings[0]]),
-        )
-      }
-      const runtime: t.ArrayExpression = t.arrayExpression(elements)
-
       if (decl !== stmt) {
         decl.leadingComments = stmt.leadingComments
       }
@@ -211,17 +197,30 @@ export function createFakeJsPlugin({
         bindings,
         params,
       })
-      elements[0] = t.numericLiteral(symbolId)
+
+      const symbolIdNode = t.numericLiteral(symbolId)
+      const depsNode = t.arrowFunctionExpression(
+        params.map((param) => t.identifier(param.name)),
+        t.arrayExpression(deps),
+      )
+      const sideEffectNode =
+        sideEffect &&
+        t.callExpression(t.identifier('sideEffect'), [bindings[0]])
+      const runtimeArrayNode = runtimeBindingArrayExpression(
+        sideEffectNode
+          ? [symbolIdNode, depsNode, sideEffectNode]
+          : [symbolIdNode, depsNode],
+      )
 
       // var ${binding} = [${symbolId}, (param, ...) => [dep, ...], sideEffect()]
-      const runtimeAssignment: t.VariableDeclaration = {
+      const runtimeAssignment: RuntimeBindingVariableDeclration = {
         type: 'VariableDeclaration',
         kind: 'var',
         declarations: [
           {
             type: 'VariableDeclarator',
             id: { ...bindings[0], typeAnnotation: null },
-            init: runtime,
+            init: runtimeArrayNode,
           },
           ...bindings.slice(1).map(
             (binding): t.VariableDeclarator => ({
@@ -293,16 +292,12 @@ export function createFakeJsPlugin({
 
         if (node.type !== 'VariableDeclaration') return node
 
-        const [decl] = node.declarations
-        if (decl.init?.type !== 'ArrayExpression' || !decl.init.elements[0]) {
+        if (!isRuntimeBindingVariableDeclaration(node)) {
           return null
         }
 
-        const [symbolIdNode, depsFn /*, ignore sideEffect */] = decl.init
-          .elements as [t.Expression, t.ArrowFunctionExpression]
-        if (symbolIdNode?.type !== 'NumericLiteral') {
-          return null
-        }
+        const [symbolIdNode, depsFn /*, ignore sideEffect */] =
+          node.declarations[0].init.elements
 
         const symbolId = symbolIdNode.value
         const original = getSymbol(symbolId)
@@ -519,16 +514,111 @@ export function createFakeJsPlugin({
   }
 }
 
-// function debug(node: t.Node) {
-//   console.info('----')
-//   console.info(generate(node).code)
-//   console.info('----')
-// }
-
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
 function collectReferenceDirectives(comment: t.Comment[], negative = false) {
   return comment.filter((c) => REFERENCE_RE.test(c.value) !== negative)
 }
+
+//#region Runtime binding variable
+
+/**
+ * A variable declaration that declares a runtime binding variable. It represents a declaration like:
+ *
+ * ```js
+ * var binding = [symbolId, (param, ...) => [dep, ...], sideEffect()]
+ * ```
+ *
+ * For an more concrete example, the following TypeScript declaration:
+ *
+ * ```ts
+ * interface Bar extends Foo { bar: number }
+ * ```
+ *
+ * Will be transformed to the following JavaScript code:
+ *
+ * ```js
+ * const Bar = [123, () => [Foo]]
+ * ```
+ *
+ * Which will be represented by this type.
+ */
+type RuntimeBindingVariableDeclration = t.VariableDeclaration & {
+  declarations: [
+    t.VariableDeclarator & { init: RuntimeBindingArrayExpression },
+    ...t.VariableDeclarator[],
+  ]
+}
+
+/**
+ * Check if the given node is a {@link RuntimeBindingVariableDeclration}
+ */
+function isRuntimeBindingVariableDeclaration(
+  node: t.Node | null | undefined,
+): node is RuntimeBindingVariableDeclration {
+  return (
+    t.isVariableDeclaration(node) &&
+    node.declarations.length > 0 &&
+    t.isVariableDeclarator(node.declarations[0]) &&
+    isRuntimeBindingArrayExpression(node.declarations[0].init)
+  )
+}
+
+/**
+ * A array expression that contains {@link RuntimeBindingArrayElements}
+ *
+ * It can be used to represent the following JavaScript code:
+ *
+ * ```js
+ * [symbolId, (param, ...) => [dep, ...], sideEffect()]
+ * ```
+ */
+type RuntimeBindingArrayExpression = t.ArrayExpression & {
+  elements: RuntimeBindingArrayElements
+}
+
+/**
+ * Check if the given node is a {@link RuntimeBindingArrayExpression}
+ */
+function isRuntimeBindingArrayExpression(
+  node: t.Node | null | undefined,
+): node is RuntimeBindingArrayExpression {
+  return (
+    t.isArrayExpression(node) && isRuntimeBindingArrayElements(node.elements)
+  )
+}
+
+function runtimeBindingArrayExpression(
+  elements: RuntimeBindingArrayElements,
+): RuntimeBindingArrayExpression {
+  return t.arrayExpression(elements) as RuntimeBindingArrayExpression
+}
+
+/**
+ * An array that represents the elements in {@link RuntimeBindingArrayExpression}
+ */
+type RuntimeBindingArrayElements =
+  | [symbolId: t.NumericLiteral, deps: t.ArrowFunctionExpression]
+  | [
+      symbolId: t.NumericLiteral,
+      deps: t.ArrowFunctionExpression,
+      effect: t.CallExpression,
+    ]
+
+/**
+ * Check if the given array is a {@link RuntimeBindingArrayElements}
+ */
+function isRuntimeBindingArrayElements(
+  elements: Array<t.Node | null | undefined>,
+): elements is RuntimeBindingArrayElements {
+  const [symbolId, deps, effect] = elements
+  return (
+    t.isNumericLiteral(symbolId) &&
+    t.isArrowFunctionExpression(deps) &&
+    (effect ? t.isCallExpression(effect) : true)
+  )
+}
+
+// #endregion
 
 function isThisExpression(node: t.Node): boolean {
   return (
@@ -743,7 +833,7 @@ function patchTsNamespace(nodes: t.Statement[]) {
 // - export default x
 function rewriteImportExport(
   node: t.Node,
-  set: (node: t.Node) => void,
+  set: (node: t.Statement) => void,
   typeOnlyIds: string[],
 ): node is
   | t.ImportDeclaration
