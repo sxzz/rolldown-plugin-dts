@@ -179,30 +179,6 @@ declare const a$1 = 3,
 export { a, b, a$1 as c, b$1 as d };"
 `;
 
-exports[`tsc > re-export from lib > both 1`] = `
-"// a-hxONF9sg.d.ts
-import * as import_stub_lib from "stub-lib";
-//#endregion
-export { a_d_exports };
-// a.d.ts
-import "./a-hxONF9sg.js";
-export * from "stub-lib";
-// b.d.ts
-import { a_d_exports } from "./a-hxONF9sg.js";
-export { type LibType };"
-`;
-
-exports[`tsc > re-export from lib > onlyA 1`] = `
-"// a.d.ts
-export * from "stub-lib";"
-`;
-
-exports[`tsc > re-export from lib > onlyB 1`] = `
-"// b.d.ts
-import * as import_stub_lib from "stub-lib";
-export { type LibType };"
-`;
-
 exports[`tsc > references 1`] = `
 "// index.d.ts
 //#region tests/fixtures/refs/src/index.d.ts

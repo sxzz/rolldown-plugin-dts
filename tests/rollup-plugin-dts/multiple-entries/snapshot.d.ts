@@ -1,12 +1,12 @@
-// common-BCs1CRq6.d.ts
+// common-qE1sjDCn.d.ts
 //#region tests/rollup-plugin-dts/multiple-entries/common.d.ts
 interface A {}
 interface B {}
 //#endregion
-export { A, B };
+export { B as n, A as t };
 // main-a.d.ts
-import { A } from "./common-BCs1CRq6.js";
+import { t as A } from "./common-qE1sjDCn.js";
 export { A };
 // main-b.d.ts
-import { B } from "./common-BCs1CRq6.js";
+import { n as B } from "./common-qE1sjDCn.js";
 export { B };

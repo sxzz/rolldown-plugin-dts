@@ -251,11 +251,13 @@ describe('dts input', () => {
     )
 
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
-    expect(chunkNames).toStrictEqual([
-      'input1.d.mts',
-      'input2.d.mts',
-      'types-VwSK8P_f.d.ts',
-    ])
+    expect(chunkNames).toMatchInlineSnapshot(`
+      [
+        "input1.d.mts",
+        "input2.d.mts",
+        "types-B0jSiKC_.d.ts",
+      ]
+    `)
 
     expect(snapshot).toMatchSnapshot()
   })
@@ -274,11 +276,13 @@ describe('dts input', () => {
     )
 
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
-    expect(chunkNames).toStrictEqual([
-      'chunks/DqALGAwS-types.d.ts',
-      'input1.d.ts',
-      'input2.d.ts',
-    ])
+    expect(chunkNames).toMatchInlineSnapshot(`
+      [
+        "chunks/BCXvBysl-types.d.ts",
+        "input1.d.ts",
+        "input2.d.ts",
+      ]
+    `)
 
     expect(snapshot).toMatchSnapshot()
   })
@@ -373,11 +377,13 @@ describe('entryFileNames', () => {
     )
 
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
-    expect(chunkNames).toStrictEqual([
-      'input1.d.mts',
-      'input2-CzdQ8V-e.d.ts',
-      'input2.d.mts',
-    ])
+    expect(chunkNames).toMatchInlineSnapshot(`
+      [
+        "input1.d.mts",
+        "input2-459dIHr0.d.ts",
+        "input2.d.mts",
+      ]
+    `)
 
     expect(snapshot).toMatchSnapshot()
   })
@@ -396,11 +402,13 @@ describe('entryFileNames', () => {
     )
 
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
-    expect(chunkNames).toStrictEqual([
-      'chunks/DqALGAwS-types.d.ts',
-      'input1.d.ts',
-      'input2.d.ts',
-    ])
+    expect(chunkNames).toMatchInlineSnapshot(`
+      [
+        "chunks/BCXvBysl-types.d.ts",
+        "input1.d.ts",
+        "input2.d.ts",
+      ]
+    `)
 
     expect(snapshot).toMatchSnapshot()
   })
@@ -503,11 +511,24 @@ test('advancedChunks', async () => {
   expect(chunks).toHaveLength(2)
 })
 
-test('external namespace', async () => {
-  const root = path.resolve(dirname, 'fixtures/external-namespace')
-  const { snapshot } = await rolldownBuild(
-    [path.resolve(root, 'index.ts'), path.resolve(root, 'mod.ts')],
+test('re-export from lib', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/re-export-lib')
+  const { snapshot: onlyA } = await rolldownBuild(
+    ['a.ts'],
     [dts({ emitDtsOnly: true })],
+    { cwd },
   )
-  expect(snapshot).toMatchSnapshot()
+  const { snapshot: onlyB } = await rolldownBuild(
+    ['b.ts'],
+    [dts({ emitDtsOnly: true })],
+    { cwd },
+  )
+  const { snapshot: both } = await rolldownBuild(
+    ['a.ts', 'b.ts'],
+    [dts({ emitDtsOnly: true })],
+    { cwd },
+  )
+  expect(onlyA).toMatchSnapshot('onlyA')
+  expect(onlyB).toMatchSnapshot('onlyB')
+  expect(both).toMatchSnapshot('both')
 })
