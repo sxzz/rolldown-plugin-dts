@@ -502,3 +502,12 @@ test('advancedChunks', async () => {
   expect(snapshot).toMatchSnapshot()
   expect(chunks).toHaveLength(2)
 })
+
+test('external namespace', async () => {
+  const root = path.resolve(dirname, 'fixtures/external-namespace')
+  const { snapshot } = await rolldownBuild(
+    [path.resolve(root, 'index.ts'), path.resolve(root, 'mod.ts')],
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})

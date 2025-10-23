@@ -222,6 +222,20 @@ import { Input2, input2 } from "./input2-CzdQ8V-e.js";
 export { Input2, input2 };"
 `;
 
+exports[`external namespace 1`] = `
+"// index.d.ts
+import { t as mod_d_exports } from "./mod-3KblRJ7v.js";
+type A = mod_d_exports.A;
+export { A };
+// mod-3KblRJ7v.d.ts
+import * as import_lib from "lib";
+//#endregion
+export { import_lib as t };
+// mod.d.ts
+import "./mod-3KblRJ7v.js";
+export * from "lib";"
+`;
+
 exports[`input alias 1`] = `
 "// input2-CcmD5Ns-.d.ts
 //#region shared.d.ts

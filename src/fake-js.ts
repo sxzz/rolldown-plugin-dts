@@ -279,6 +279,7 @@ export function createFakeJsPlugin({
     const { program } = file
 
     program.body = patchTsNamespace(program.body)
+    program.body = patchReExport(program.body)
 
     program.body = program.body
       .map((node) => {
@@ -725,6 +726,9 @@ function patchImportExport(
   }
 }
 
+/**
+ * Handle `__export` call
+ */
 function patchTsNamespace(nodes: t.Statement[]) {
   const removed = new Set<t.Node>()
 
@@ -782,6 +786,90 @@ function patchTsNamespace(nodes: t.Statement[]) {
     const exports = node.declarations[0].init.arguments[0]
     return [source, exports] as const
   }
+}
+
+/**
+ * Handle `__reExport` call
+ */
+function patchReExport(nodes: t.Statement[]) {
+  const exportsNames = new Map<string, string>()
+
+  for (const [i, node] of nodes.entries()) {
+    if (
+      node.type === 'ImportDeclaration' &&
+      node.specifiers.length === 1 &&
+      node.specifiers[0].type === 'ImportSpecifier' &&
+      node.specifiers[0].local.type === 'Identifier' &&
+      node.specifiers[0].local.name.endsWith('_exports')
+    ) {
+      // record: import { t as a_exports } from "..."
+      exportsNames.set(
+        node.specifiers[0].local.name,
+        node.specifiers[0].local.name,
+      )
+    } else if (
+      node.type === 'ExpressionStatement' &&
+      node.expression.type === 'CallExpression' &&
+      node.expression.callee.type === 'Identifier' &&
+      node.expression.callee.name === '__reExport'
+    ) {
+      // record: __reExport(a_exports, import_lib)
+
+      const args = node.expression.arguments
+      exportsNames.set(
+        (args[0] as t.Identifier).name,
+        (args[1] as t.Identifier).name,
+      )
+    } else if (
+      node.type === 'VariableDeclaration' &&
+      node.declarations.length === 1 &&
+      node.declarations[0].init?.type === 'MemberExpression' &&
+      node.declarations[0].init.object.type === 'Identifier' &&
+      exportsNames.has(node.declarations[0].init.object.name)
+    ) {
+      // var B = a_exports.A
+      // to
+      // type B = [mapping].A
+      // TODO how to support value import? currently only type import is supported
+
+      nodes[i] = {
+        type: 'TSTypeAliasDeclaration',
+        id: {
+          type: 'Identifier',
+          name: (node.declarations[0].id as t.Identifier).name,
+        },
+        typeAnnotation: {
+          type: 'TSTypeReference',
+          typeName: {
+            type: 'TSQualifiedName',
+            left: {
+              type: 'Identifier',
+              name: exportsNames.get(node.declarations[0].init.object.name)!,
+            },
+            right: {
+              type: 'Identifier',
+              name: (node.declarations[0].init.property as t.Identifier).name,
+            },
+          },
+        },
+      }
+    } else if (
+      node.type === 'ExportNamedDeclaration' &&
+      node.specifiers.length === 1 &&
+      node.specifiers[0].type === 'ExportSpecifier' &&
+      node.specifiers[0].local.type === 'Identifier' &&
+      exportsNames.has(node.specifiers[0].local.name)
+    ) {
+      // export { a_exports as t }
+      // to
+      // export { [mapping] as t }
+      node.specifiers[0].local.name = exportsNames.get(
+        node.specifiers[0].local.name,
+      )!
+    }
+  }
+
+  return nodes
 }
 
 // fix:
