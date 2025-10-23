@@ -532,3 +532,13 @@ test('re-export from lib', async () => {
   expect(onlyB).toMatchSnapshot('onlyB')
   expect(both).toMatchSnapshot('both')
 })
+
+test('cyclic import', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/cyclic-import')
+  const { snapshot } = await rolldownBuild(
+    ['a.ts', 'b.ts'],
+    [dts({ emitDtsOnly: true })],
+    { cwd },
+  )
+  expect(snapshot).toMatchSnapshot()
+})
