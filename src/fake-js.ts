@@ -402,14 +402,11 @@ export function createFakeJsPlugin({
     const typeParams: t.TSTypeParameter[] = []
     ;(walk as any)(node, {
       leave(node: t.Node) {
-        if ('typeParameters' in node) {
-          const typeParameters = node.typeParameters
-          if (
-            typeParameters &&
-            typeParameters.type === 'TSTypeParameterDeclaration'
-          ) {
-            typeParams.push(...typeParameters.params)
-          }
+        if (
+          'typeParameters' in node &&
+          node.typeParameters?.type === 'TSTypeParameterDeclaration'
+        ) {
+          typeParams.push(...node.typeParameters.params)
         }
       },
     })
@@ -424,6 +421,7 @@ export function createFakeJsPlugin({
         paramMap.set(name, [typeParam])
       }
     }
+
     return Array.from(paramMap.entries()).map(([name, typeParams]) => ({
       name,
       typeParams,
