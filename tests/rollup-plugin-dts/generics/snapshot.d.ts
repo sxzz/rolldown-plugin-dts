@@ -15,20 +15,20 @@ interface M {}
 interface N {}
 interface O {}
 interface P {}
-declare type Gen<T$1> = T$1;
-interface I1<T$1 = A> {
-  a: T$1;
+declare type Gen<T> = T;
+interface I1<T = A> {
+  a: T;
   b: Gen<B>;
 }
-declare type Ty<T$1 = C> = {
-  c: T$1;
+declare type Ty<T = C> = {
+  c: T;
   d: Gen<D>;
 };
-declare class Cl<T$1 = E> {
-  e: T$1;
+declare class Cl<T = E> {
+  e: T;
   f: Gen<F>;
 }
-declare function fn<T$1 = G>(g: T$1, h: Gen<H>): void;
+declare function fn<T = G>(g: T, h: Gen<H>): void;
 declare type TyFn = <T = J>(j: T, k: Gen<K>) => L;
 declare type TyCtor = new <T = M>(m: T, n: Gen<N>) => O;
 interface I2 extends Gen<P> {}

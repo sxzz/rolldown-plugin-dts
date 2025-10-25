@@ -25,10 +25,19 @@ import type { Plugin, RenderedChunk } from 'rolldown'
 // export declare function x$1(xx: X$1): void
 
 type Dep = t.Expression & { replace?: (newNode: t.Node) => void }
+
+/**
+ * A collection of type parameters grouped by parameter name
+ */
+type GroupedTypeParams = Array<{
+  name: string
+  typeParams: t.TSTypeParameter[]
+}>
+
 interface SymbolInfo {
   decl: t.Declaration
   bindings: t.Identifier[]
-  params: t.TSTypeParameter[]
+  params: GroupedTypeParams
   deps: Dep[]
 }
 
@@ -179,11 +188,7 @@ export function createFakeJsPlugin({
         decl.id = binding
       }
 
-      const params: t.TSTypeParameter[] =
-        'typeParameters' in decl &&
-        decl.typeParameters?.type === 'TSTypeParameterDeclaration'
-          ? decl.typeParameters.params
-          : []
+      const params: GroupedTypeParams = collectParams(decl)
 
       const deps = collectDependencies(decl, namespaceStmts)
 
@@ -200,7 +205,7 @@ export function createFakeJsPlugin({
 
       const symbolIdNode = t.numericLiteral(symbolId)
       const depsNode = t.arrowFunctionExpression(
-        params.map((param) => t.identifier(param.name)),
+        params.map(({ name }) => t.identifier(name)),
         t.arrayExpression(deps),
       )
       const sideEffectNode =
@@ -312,10 +317,12 @@ export function createFakeJsPlugin({
         }
 
         const transformedParams = depsFn.params as t.Identifier[]
-        for (let i = 0; i < original.params.length; i++) {
-          const originalParam = original.params[i]
-          const transformedParam = transformedParams[i]
-          originalParam.name = transformedParam.name
+
+        for (const [i, transformedParam] of transformedParams.entries()) {
+          const transformedName = transformedParam.name
+          for (const originalTypeParam of original.params[i].typeParams) {
+            originalTypeParam.name = transformedName
+          }
         }
 
         const transformedDeps = (depsFn.body as t.ArrayExpression)
@@ -383,6 +390,42 @@ export function createFakeJsPlugin({
 
   function getSymbol(symbolId: number) {
     return symbolMap.get(symbolId)!
+  }
+
+  /**
+   * Collects all TSTypeParameter nodes from the given node and groups them by
+   * their name. One name can associate with one or more type parameters. These
+   * names will be used as the parameter name in the generated JavaScript
+   * dependency function.
+   */
+  function collectParams(node: t.Node): GroupedTypeParams {
+    const typeParams: t.TSTypeParameter[] = []
+    ;(walk as any)(node, {
+      leave(node: t.Node) {
+        if (
+          'typeParameters' in node &&
+          node.typeParameters?.type === 'TSTypeParameterDeclaration'
+        ) {
+          typeParams.push(...node.typeParameters.params)
+        }
+      },
+    })
+
+    const paramMap = new Map<string, t.TSTypeParameter[]>()
+    for (const typeParam of typeParams) {
+      const name = typeParam.name
+      const group = paramMap.get(name)
+      if (group) {
+        group.push(typeParam)
+      } else {
+        paramMap.set(name, [typeParam])
+      }
+    }
+
+    return Array.from(paramMap.entries()).map(([name, typeParams]) => ({
+      name,
+      typeParams,
+    }))
   }
 
   function collectDependencies(

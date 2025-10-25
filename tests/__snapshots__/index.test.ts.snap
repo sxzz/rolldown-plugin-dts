@@ -81,12 +81,12 @@ export = _default;"
 `;
 
 exports[`cyclic import 1`] = `
-"// a-xNP_tEJE.d.ts
+"// a-C1hvFFD1.d.ts
 //#region b.d.ts
 declare class SomeClass<T$1 extends SomeInterface<number>> {
   value: T$1;
   constructor(value: T$1);
-  doSomething<T extends SomeInterface<number>>(value: T$1): T$1;
+  doSomething<T$1 extends SomeInterface<number>>(value: T$1): T$1;
 }
 type SomeBoolean = boolean;
 //#endregion
@@ -98,10 +98,10 @@ type T = SomeBoolean;
 //#endregion
 export { SomeClass as i, T as n, SomeBoolean as r, SomeInterface as t };
 // a.d.ts
-import { n as T, t as SomeInterface } from "./a-xNP_tEJE.js";
+import { n as T, t as SomeInterface } from "./a-C1hvFFD1.js";
 export { SomeInterface, T };
 // b.d.ts
-import { i as SomeClass, r as SomeBoolean } from "./a-xNP_tEJE.js";
+import { i as SomeClass, r as SomeBoolean } from "./a-C1hvFFD1.js";
 export { SomeBoolean, SomeClass };"
 `;
 
