@@ -90,9 +90,9 @@
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/node": "^24.9.1",
-    "@typescript/native-preview": "7.0.0-dev.20251024.1",
+    "@typescript/native-preview": "7.0.0-dev.20251026.1",
     "@volar/typescript": "^2.4.23",
-    "@vue/language-core": "^3.1.1",
+    "@vue/language-core": "^3.1.2",
     "arktype": "^2.1.23",
     "bumpp": "^10.3.1",
     "diff": "^8.0.2",
@@ -103,11 +103,11 @@
     "rolldown-plugin-require-cjs": "^0.3.1",
     "rollup-plugin-dts": "^6.2.3",
     "tinyglobby": "^0.2.15",
-    "tsdown": "^0.15.9",
+    "tsdown": "^0.15.10",
     "typescript": "^5.9.3",
     "vitest": "^4.0.3",
     "vue": "^3.5.22",
-    "vue-tsc": "^3.1.1"
+    "vue-tsc": "^3.1.2"
   },
   "engines": {
     "node": ">=20.18.0"
