@@ -396,16 +396,24 @@ function collectJsonExportMap(code: string): Map<string, string> {
   const { program } = parse(code, {
     sourceType: 'module',
     plugins: [['typescript', { dts: true }]],
+    errorRecovery: true,
   })
 
   for (const decl of program.body) {
     if (decl.type === 'ExportNamedDeclaration') {
       // export declare let Hello: string;
-      if (decl.declaration && decl.declaration.type === 'VariableDeclaration') {
-        for (const vdecl of decl.declaration.declarations) {
-          if (vdecl.id.type === 'Identifier') {
-            exportMap.set(vdecl.id.name, vdecl.id.name)
+      if (decl.declaration) {
+        if (decl.declaration.type === 'VariableDeclaration') {
+          for (const vdecl of decl.declaration.declarations) {
+            if (vdecl.id.type === 'Identifier') {
+              exportMap.set(vdecl.id.name, vdecl.id.name)
+            }
           }
+        } else if (
+          decl.declaration.type === 'TSModuleDeclaration' &&
+          decl.declaration.id.type === 'Identifier'
+        ) {
+          exportMap.set(decl.declaration.id.name, decl.declaration.id.name)
         }
       } else if (decl.specifiers.length) {
         for (const spec of decl.specifiers) {

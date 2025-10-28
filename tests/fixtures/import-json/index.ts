@@ -9,3 +9,6 @@ export { foo, bar, fooNs, barNs }
 
 import * as invalidNs from './invalid.json'
 export { invalidNs }
+
+import nested from './nested.json'
+export { nested }

@@ -116,6 +116,7 @@ export function createFakeJsPlugin({
     const file = parse(code, {
       plugins: [['typescript', { dts: true }]],
       sourceType: 'module',
+      errorRecovery: true,
     })
     const { program, comments } = file
     const typeOnlyIds: string[] = []

@@ -132,7 +132,213 @@ declare let ___2: typeof _exports$1["__"];
 declare let __3: typeof _exports$1["\\""];
 declare let __4: typeof _exports$1["\\\\"];
 //#endregion
-export { age, _exports as bar, bar_d_exports as barNs, __json_default_export as foo, foo_d_exports as fooNs, invalid_d_exports as invalidNs, name };"
+//#region tests/fixtures/import-json/nested.d.ts
+declare let openapi: string;
+declare namespace info {
+  let title: string;
+  let version: string;
+  let description: string;
+  namespace license {
+    let name: string;
+    let url: string;
+  }
+}
+declare namespace components {
+  namespace schemas {
+    namespace HttpStatus {
+      export let type: string;
+      let description_1: string;
+      export { description_1 as description };
+      let _enum: number[];
+      export { _enum as enum };
+    }
+    namespace VovkErrorResponse {
+      let type_1: string;
+      export { type_1 as type };
+      let description_2: string;
+      export { description_2 as description };
+      export namespace properties {
+        namespace cause {
+          let description_3: string;
+          export { description_3 as description };
+        }
+        namespace statusCode {
+          let $ref: string;
+        }
+        namespace message {
+          let type_2: string;
+          export { type_2 as type };
+          let description_4: string;
+          export { description_4 as description };
+        }
+        namespace isError {
+          let type_3: string;
+          export { type_3 as type };
+          let _const: boolean;
+          export { _const as const };
+          let description_5: string;
+          export { description_5 as description };
+        }
+      }
+      export let required: string[];
+      export let additionalProperties: boolean;
+    }
+  }
+}
+declare let paths: {
+  "/api/users/{id}": {
+    post: {
+      summary: string;
+      description: string;
+      "x-codeSamples": {
+        label: string;
+        lang: string;
+        source: string;
+      }[];
+      parameters: ({
+        name: string;
+        in: string;
+        required: boolean;
+        schema: {
+          description: string;
+          type: string;
+          enum: string[];
+          examples?: undefined;
+          format?: undefined;
+          pattern?: undefined;
+        };
+      } | {
+        name: string;
+        in: string;
+        required: boolean;
+        schema: {
+          description: string;
+          examples: string[];
+          type: string;
+          format: string;
+          pattern: string;
+          enum?: undefined;
+        };
+      })[];
+      responses: {
+        "200": {
+          description: string;
+          content: {
+            "application/json": {
+              schema: {
+                $schema: string;
+                description: string;
+                type: string;
+                properties: {
+                  success: {
+                    description: string;
+                    type: string;
+                  };
+                };
+                required: string[];
+                additionalProperties: boolean;
+              };
+            };
+          };
+        };
+      };
+      requestBody: {
+        description: string;
+        required: boolean;
+        content: {
+          "application/json": {
+            schema: {
+              $schema: string;
+              description: string;
+              type: string;
+              properties: {
+                email: {
+                  description: string;
+                  examples: string[];
+                  type: string;
+                  format: string;
+                  pattern: string;
+                };
+                profile: {
+                  description: string;
+                  type: string;
+                  properties: {
+                    name: {
+                      description: string;
+                      examples: string[];
+                      type: string;
+                    };
+                    age: {
+                      description: string;
+                      examples: number[];
+                      type: string;
+                      minimum: number;
+                      maximum: number;
+                    };
+                  };
+                  required: string[];
+                  additionalProperties: boolean;
+                };
+              };
+              required: string[];
+              additionalProperties: boolean;
+            };
+          };
+        };
+      };
+    };
+  };
+  "/api/streams/tokens": {
+    get: {
+      summary: string;
+      description: string;
+      "x-codeSamples": {
+        label: string;
+        lang: string;
+        source: string;
+      }[];
+      responses: {
+        "200": {
+          description: string;
+          content: {
+            "application/jsonl": {
+              schema: {
+                $schema: string;
+                description: string;
+                type: string;
+                properties: {
+                  message: {
+                    description: string;
+                    type: string;
+                  };
+                };
+                required: string[];
+                additionalProperties: boolean;
+                examples: string[];
+              };
+            };
+          };
+        };
+      };
+    };
+  };
+  "/api/static/openapi.json": {
+    get: {
+      summary: string;
+      description: string;
+      "x-codeSamples": {
+        label: string;
+        lang: string;
+        source: string;
+      }[];
+    };
+  };
+};
+declare namespace __json_default_export$1 {
+  export { openapi, info, components, paths };
+}
+//#endregion
+export { age, _exports as bar, bar_d_exports as barNs, __json_default_export as foo, foo_d_exports as fooNs, invalid_d_exports as invalidNs, name, __json_default_export$1 as nested };"
 `;
 
 exports[`tsc > jsdoc 1`] = `
