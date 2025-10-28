@@ -296,6 +296,7 @@ describe('tsc', () => {
         }),
       ],
     )
+
     expect(snapshot).toMatchSnapshot()
   })
 })

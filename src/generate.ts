@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { parse } from '@babel/parser'
 import Debug from 'debug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
 import {
@@ -26,6 +27,7 @@ import {
 import type { OptionsResolved } from './options.ts'
 import type { TscOptions, TscResult } from './tsc/index.ts'
 import type { TscFunctions } from './tsc/worker.ts'
+import type { TSPropertySignature } from '@babel/types'
 import type { BirpcReturn } from 'birpc'
 import type { Plugin, SourceMapInput } from 'rolldown'
 
@@ -287,6 +289,36 @@ export function createGeneratePlugin({
           }
           dtsCode = result.code
           map = result.map
+
+          if (dtsCode && RE_JSON.test(id)) {
+            // if contains invalid json keys
+            if (dtsCode.includes('declare const _exports')) {
+              if (dtsCode.includes('declare const _exports: {')) {
+                // patch: add named export
+                const exports = collectJsonExports(dtsCode)
+                let i = 0
+                dtsCode += exports
+                  .map((e) => {
+                    const valid = `_${e.replaceAll(/[^\w$]/g, '_')}${i++}`
+                    const jsonKey = JSON.stringify(e)
+                    return `declare let ${valid}: typeof _exports[${jsonKey}]\nexport { ${valid} as ${jsonKey} }`
+                  })
+                  .join('\n')
+              }
+            } else {
+              // patch: add default export
+              const exportMap = collectJsonExportMap(dtsCode)
+              dtsCode += `
+declare namespace __json_default_export {
+  export { ${Array.from(exportMap.entries())
+    .map(([exported, local]) =>
+      exported === local ? exported : `${local} as ${exported}`,
+    )
+    .join(', ')} }
+}
+export { __json_default_export as default }`
+            }
+          }
         }
 
         return {
@@ -357,4 +389,64 @@ async function runTsgo(root: string, tsconfig?: string) {
   )
 
   return tsgoDist
+}
+
+function collectJsonExportMap(code: string): Map<string, string> {
+  const exportMap = new Map<string, string>()
+  const { program } = parse(code, {
+    sourceType: 'module',
+    plugins: [['typescript', { dts: true }]],
+  })
+
+  for (const decl of program.body) {
+    if (decl.type === 'ExportNamedDeclaration') {
+      // export declare let Hello: string;
+      if (decl.declaration && decl.declaration.type === 'VariableDeclaration') {
+        for (const vdecl of decl.declaration.declarations) {
+          if (vdecl.id.type === 'Identifier') {
+            exportMap.set(vdecl.id.name, vdecl.id.name)
+          }
+        }
+      } else if (decl.specifiers.length) {
+        for (const spec of decl.specifiers) {
+          if (
+            spec.type === 'ExportSpecifier' &&
+            spec.exported.type === 'Identifier'
+          ) {
+            // declare let _class: string
+            // export { _class as class }
+            exportMap.set(
+              spec.exported.name,
+              spec.local.type === 'Identifier'
+                ? spec.local.name
+                : spec.exported.name,
+            )
+          }
+        }
+      }
+    }
+  }
+
+  return exportMap
+}
+
+/** `declare const _exports` mode */
+function collectJsonExports(code: string) {
+  const exports: string[] = []
+  const { program } = parse(code, {
+    sourceType: 'module',
+    plugins: [['typescript', { dts: true }]],
+  })
+  const members = (program.body as any)[0].declarations[0].id.typeAnnotation
+    .typeAnnotation.members as TSPropertySignature[]
+
+  for (const member of members) {
+    if (member.key.type === 'Identifier') {
+      exports.push(member.key.name)
+    } else if (member.key.type === 'StringLiteral') {
+      exports.push(member.key.value)
+    }
+  }
+
+  return exports
 }

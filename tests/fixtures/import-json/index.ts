@@ -1,8 +1,11 @@
-// import foo from './foo.json' // TODO not supported yet
+import foo from './foo.json'
 import * as fooNs from './foo.json'
 
 import bar from './bar.json'
 import * as barNs from './bar.json'
 
 export { name, age } from './foo.json'
-export { bar, fooNs, barNs }
+export { foo, bar, fooNs, barNs }
+
+import * as invalidNs from './invalid.json'
+export { invalidNs }

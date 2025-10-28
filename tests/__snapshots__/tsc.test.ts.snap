@@ -105,16 +105,34 @@ export { input2 };"
 exports[`tsc > import JSON 1`] = `
 "// index.d.ts
 declare namespace foo_d_exports {
-  export { age, name };
+  export { age, __json_default_export as default, name };
 }
 declare let name: string;
 declare let age: number;
+declare namespace __json_default_export {
+  export { name, age };
+}
 declare namespace bar_d_exports {
   export { _exports as default };
 }
 declare const _exports: string[];
+declare namespace invalid_d_exports {
+  export { __3 as "\\"", _11 as "1", __4 as "\\\\", ___2 as __, _class0 as class, _exports$1 as default };
+}
+declare const _exports$1: {
+  class: string;
+  "1": number;
+  __: string;
+  "\\"": string;
+  "\\\\": string;
+};
+declare let _class0: typeof _exports$1["class"];
+declare let _11: typeof _exports$1["1"];
+declare let ___2: typeof _exports$1["__"];
+declare let __3: typeof _exports$1["\\""];
+declare let __4: typeof _exports$1["\\\\"];
 //#endregion
-export { age, _exports as bar, bar_d_exports as barNs, foo_d_exports as fooNs, name };"
+export { age, _exports as bar, bar_d_exports as barNs, __json_default_export as foo, foo_d_exports as fooNs, invalid_d_exports as invalidNs, name };"
 `;
 
 exports[`tsc > jsdoc 1`] = `

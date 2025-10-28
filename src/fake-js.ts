@@ -704,7 +704,7 @@ function isHelperImport(node: t.Node) {
       (spec) =>
         spec.type === 'ImportSpecifier' &&
         spec.imported.type === 'Identifier' &&
-        ['__export', '__reExport'].includes(spec.imported.name),
+        ['__export', '__reExport'].includes(spec.local.name),
     )
   )
 }
