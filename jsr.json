@@ -1,6 +1,6 @@
 {
   "name": "@sxzz/rolldown-plugin-dts",
-  "version": "0.17.2",
+  "version": "0.17.3",
   "exports": {
     ".": "./src/index.ts",
     "./filename": "./src/filename.ts",
