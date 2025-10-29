@@ -323,7 +323,6 @@ export { __json_default_export as default }`
 
         return {
           code: dtsCode || '',
-          moduleSideEffects: false,
           map,
         }
       },

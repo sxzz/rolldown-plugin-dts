@@ -27,7 +27,7 @@ export function dts(options: Options = {}): Plugin[] {
 
   const plugins: Plugin[] = []
   if (options.dtsInput) {
-    plugins.push(createDtsInputPlugin())
+    plugins.push(createDtsInputPlugin(resolved))
   } else {
     plugins.push(createGeneratePlugin(resolved))
   }

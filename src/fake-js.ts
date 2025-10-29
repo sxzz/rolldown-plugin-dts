@@ -12,7 +12,7 @@ import {
   resolveTemplateFn,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
-import type { Plugin, RenderedChunk } from 'rolldown'
+import type { Plugin, RenderedChunk, TransformResult } from 'rolldown'
 
 // input:
 // export declare function x(xx: X): void
@@ -49,7 +49,8 @@ type NamespaceMap = Map<
 export function createFakeJsPlugin({
   sourcemap,
   cjsDefault,
-}: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault'>): Plugin {
+  sideEffects,
+}: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin {
   let symbolIdx = 0
   const identifierMap: Record<string, number> = Object.create(null)
   const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
@@ -112,7 +113,7 @@ export function createFakeJsPlugin({
         },
   }
 
-  function transform(code: string, id: string) {
+  function transform(code: string, id: string): TransformResult {
     const file = parse(code, {
       plugins: [['typescript', { dts: true }]],
       sourceType: 'module',
@@ -250,6 +251,13 @@ export function createFakeJsPlugin({
         // replace declaration, keep `export`
         setDecl(runtimeAssignment)
       }
+    }
+
+    if (sideEffects) {
+      // module side effect marker
+      appendStmts.push(
+        t.expressionStatement(t.callExpression(t.identifier('sideEffect'), [])),
+      )
     }
 
     program.body = [

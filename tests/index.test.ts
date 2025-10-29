@@ -542,3 +542,18 @@ test('cyclic import', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test('side effects', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/side-effects/index.ts'),
+    [
+      dts({
+        emitDtsOnly: true,
+        sideEffects: true,
+      }),
+    ],
+    {},
+    { preserveModules: true },
+  )
+  expect(snapshot).toMatchSnapshot()
+})

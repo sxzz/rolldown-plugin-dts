@@ -20,12 +20,14 @@ function isSourceFile(id: string) {
 export function createDtsResolvePlugin({
   tsconfig,
   resolve,
-}: Pick<OptionsResolved, 'tsconfig' | 'resolve'>): Plugin {
+  sideEffects,
+}: Pick<OptionsResolved, 'tsconfig' | 'resolve' | 'sideEffects'>): Plugin {
   const baseDtsResolver = createResolver({
     tsconfig,
     resolveNodeModules: !!resolve,
     ResolverFactory,
   })
+  const moduleSideEffects = sideEffects ? true : null
 
   return {
     name: 'rolldown-plugin-dts:resolver',
@@ -38,7 +40,11 @@ export function createDtsResolvePlugin({
           return
         }
 
-        const external = { id, external: true, moduleSideEffects: false }
+        const external = {
+          id,
+          external: true,
+          moduleSideEffects: sideEffects,
+        }
 
         // Guard: Externalize non-code imports
         if (RE_CSS.test(id)) {
@@ -72,14 +78,20 @@ export function createDtsResolvePlugin({
         // The path is either a declaration file or a source file that needs redirection.
         if (RE_DTS.test(dtsResolution)) {
           // It's already a .d.ts file, we're done
-          return dtsResolution
+          return {
+            id: dtsResolution,
+            moduleSideEffects,
+          }
         }
 
         if (isSourceFile(dtsResolution)) {
           // It's a .ts/.vue source file, so we load it to ensure its .d.ts is generated,
           // then redirect the import to the future .d.ts path
           await this.load({ id: dtsResolution })
-          return filename_to_dts(dtsResolution)
+          return {
+            id: filename_to_dts(dtsResolution),
+            moduleSideEffects,
+          }
         }
       },
     },

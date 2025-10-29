@@ -1,22 +1,28 @@
 import { RE_DTS, replaceTemplateName, resolveTemplateFn } from './filename.ts'
+import type { OptionsResolved } from './options.ts'
 import type { Plugin } from 'rolldown'
 
-export function createDtsInputPlugin(): Plugin {
+export function createDtsInputPlugin({
+  sideEffects,
+}: Pick<OptionsResolved, 'sideEffects'>): Plugin {
   return {
     name: 'rolldown-plugin-dts:dts-input',
 
-    options(options) {
-      return {
-        treeshake:
-          options.treeshake === false
-            ? false
-            : {
-                ...(options.treeshake === true ? {} : options.treeshake),
-                moduleSideEffects: false,
-              },
-        ...options,
-      }
-    },
+    options:
+      sideEffects === false
+        ? (options) => {
+            return {
+              treeshake:
+                options.treeshake === false
+                  ? false
+                  : {
+                      ...(options.treeshake === true ? {} : options.treeshake),
+                      moduleSideEffects: false,
+                    },
+              ...options,
+            }
+          }
+        : undefined,
 
     outputOptions(options) {
       return {

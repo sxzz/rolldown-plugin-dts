@@ -364,6 +364,18 @@ export { Foo };
 "
 `;
 
+exports[`side effects 1`] = `
+"// index.d.ts
+import "./mod.js";
+
+//#region tests/fixtures/side-effects/index.d.ts
+// mod.d.ts
+//#region tests/fixtures/side-effects/mod.d.ts
+declare global {
+  let sideEffectExecuted: boolean;
+}"
+`;
+
 exports[`tree-shaking 1`] = `
 "// index.d.ts
 //#region tests/fixtures/tree-shaking/mod.d.ts

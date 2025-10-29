@@ -107,6 +107,15 @@ Content to be added at the top of each generated `.d.ts` file.
 
 Content to be added at the bottom of each generated `.d.ts` file.
 
+#### `sideEffects`
+
+Indicates whether the generated `.d.ts` files have side effects.
+
+- If set to `true`, Rolldown will treat the `.d.ts` files as having side effects during tree-shaking.
+- If set to `false`, Rolldown may consider the `.d.ts` files as side-effect-free, potentially removing them if they are not imported.
+
+**Default:** false
+
 ### `tsc` Options
 
 > [!NOTE]

@@ -78,6 +78,15 @@ export interface GeneralOptions {
    * This is useful for compatibility with CommonJS.
    */
   cjsDefault?: boolean
+
+  /**
+   * Indicates whether the generated `.d.ts` files have side effects.
+   * - If set to `true`, Rolldown will treat the `.d.ts` files as having side effects during tree-shaking.
+   * - If set to `false`, Rolldown may consider the `.d.ts` files as side-effect-free, potentially removing them if they are not imported.
+   *
+   * @default false
+   */
+  sideEffects?: boolean
 }
 
 //#region tsc Options
@@ -229,6 +238,7 @@ export function resolveOptions({
   cjsDefault = false,
   banner,
   footer,
+  sideEffects = false,
 
   // tsc
   build = false,
@@ -329,6 +339,7 @@ export function resolveOptions({
     cjsDefault,
     banner,
     footer,
+    sideEffects,
 
     // tsc
     build,
