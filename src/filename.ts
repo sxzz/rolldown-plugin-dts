@@ -7,6 +7,7 @@ export const RE_DTS_MAP: RegExp = /\.d\.([cm]?)ts\.map$/
 export const RE_NODE_MODULES: RegExp = /[\\/]node_modules[\\/]/
 export const RE_CSS: RegExp = /\.css$/
 export const RE_VUE: RegExp = /\.vue$/
+export const RE_EMBER: RegExp = /\.gts$/
 export const RE_JSON: RegExp = /\.json$/
 
 export function filename_js_to_dts(id: string): string {
@@ -15,6 +16,7 @@ export function filename_js_to_dts(id: string): string {
 export function filename_to_dts(id: string): string {
   return id
     .replace(RE_VUE, '.vue.ts')
+    .replace(RE_EMBER, '.gts')
     .replace(RE_TS, '.d.$1ts')
     .replace(RE_JS, '.d.$1ts')
     .replace(RE_JSON, '.d.ts')

@@ -10,6 +10,7 @@ import {
   filename_to_dts,
   RE_DTS,
   RE_DTS_MAP,
+  RE_EMBER,
   RE_JS,
   RE_JSON,
   RE_NODE_MODULES,
@@ -184,7 +185,7 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_JS, RE_TS, RE_VUE, RE_JSON],
+          include: [RE_JS, RE_TS, RE_VUE, RE_EMBER, RE_JSON],
           exclude: [RE_DTS, RE_NODE_MODULES],
         },
       },

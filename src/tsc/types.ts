@@ -18,6 +18,7 @@ export interface TscOptions {
   id: string
   sourcemap: boolean
   vue?: boolean
+  ember?: boolean
   tsMacro?: boolean
   context?: TscContext
 }

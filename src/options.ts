@@ -138,6 +138,11 @@ export interface TscOptions {
   vue?: boolean
 
   /**
+   * If `true`, the plugin will generate `.d.ts` files using `@glint/ember-tsc`.
+   */
+  ember?: boolean
+
+  /**
    * If `true`, the plugin will generate `.d.ts` files using `@ts-macro/tsc`.
    */
   tsMacro?: boolean
@@ -244,6 +249,7 @@ export function resolveOptions({
   build = false,
   incremental = false,
   vue = false,
+  ember = false,
   tsMacro = false,
   parallel = false,
   eager = false,
@@ -299,6 +305,11 @@ export function resolveOptions({
         '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `vue` option. Please disable one of them.',
       )
     }
+    if (ember) {
+      throw new Error(
+        '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `ember` option. Please disable one of them.',
+      )
+    }
     if (tsMacro) {
       throw new Error(
         '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `tsMacro` option. Please disable one of them.',
@@ -345,6 +356,7 @@ export function resolveOptions({
     build,
     incremental,
     vue,
+    ember,
     tsMacro,
     parallel,
     eager,

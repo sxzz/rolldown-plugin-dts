@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
+import { findConfig, type GlintConfig } from '@glint/ember-tsc'
 import Debug from 'debug'
 import type { TscOptions } from './types.ts'
 import type Ts from 'typescript'
@@ -48,6 +49,50 @@ function loadVueLanguageTools() {
   }
 }
 
+function loadEmberLanguageTools() {
+  const debug = Debug('rolldown-plugin-dts:ember')
+  debug('loading ember language tools')
+  try {
+    const emberTscPath = require.resolve('@glint/ember-tsc')
+    const { proxyCreateProgram } = require(
+      require.resolve('@volar/typescript', {
+        paths: [emberTscPath],
+      }),
+    ) as typeof import('@volar/typescript')
+    const ember = require(
+      require.resolve('@glint/ember-tsc', {
+        paths: [emberTscPath],
+      }),
+    ) as typeof import('@glint/ember-tsc')
+    const getLanguagePlugin = (
+      ts: typeof Ts,
+      options: Ts.CreateProgramOptions,
+    ) => {
+      const $rootDir = options.options.$rootDir as string
+      // const $configRaw = options.options.$configRaw as
+      //   | (Ts.TsConfigSourceFile & { vueCompilerOptions?: any })
+      //   | undefined
+
+      const glintConfig = findConfig($rootDir) as GlintConfig
+
+      console.log('GLINT CONFIG', glintConfig)
+
+      // ember.writeGlobalTypes(vueOptions, ts.sys.writeFile)
+      return ember.createEmberLanguagePlugin<string>(
+        // ts,
+        // options.options,
+        glintConfig,
+      )
+    }
+    return { proxyCreateProgram, getLanguagePlugin }
+  } catch (error) {
+    debug('ember language tools not found', error)
+    throw new Error(
+      'Failed to load ember language tools. Please manually install @glint/ember-tsc.',
+    )
+  }
+}
+
 function loadTsMacro() {
   const debug = Debug('rolldown-plugin-dts:ts-macro')
   debug('loading ts-macro language tools')
@@ -92,19 +137,28 @@ function loadTsMacro() {
 // credits: https://github.com/vuejs/language-tools/blob/25f40ead59d862b3bd7011f2dd2968f47dfcf629/packages/tsc/index.ts
 export function createProgramFactory(
   ts: typeof Ts,
-  options: Pick<TscOptions, 'vue' | 'tsMacro'>,
+  options: Pick<TscOptions, 'vue' | 'ember' | 'tsMacro'>,
 ): typeof Ts.createProgram {
   const vueLanguageTools = options.vue ? loadVueLanguageTools() : undefined
+  const emberLanguageTools = options.ember
+    ? loadEmberLanguageTools()
+    : undefined
   const tsMacroLanguageTools = options.tsMacro ? loadTsMacro() : undefined
   const proxyCreateProgram =
     vueLanguageTools?.proxyCreateProgram ||
+    emberLanguageTools?.proxyCreateProgram ||
     tsMacroLanguageTools?.proxyCreateProgram
   if (!proxyCreateProgram) return ts.createProgram
+
+  console.log('EMBER language tools', emberLanguageTools)
 
   return proxyCreateProgram(ts, ts.createProgram, (ts, options) => {
     const languagePlugins = []
     if (vueLanguageTools) {
       languagePlugins.push(vueLanguageTools.getLanguagePlugin(ts, options))
+    }
+    if (emberLanguageTools) {
+      languagePlugins.push(emberLanguageTools.getLanguagePlugin(ts, options))
     }
     if (tsMacroLanguageTools) {
       languagePlugins.push(tsMacroLanguageTools.getLanguagePlugin(ts, options))
