@@ -53,6 +53,7 @@ function createTsProgram({
   tsconfig,
   tsconfigRaw,
   vue,
+  ember,
   tsMacro,
   cwd,
   context = globalContext,
@@ -73,6 +74,7 @@ function createTsProgram({
     id,
     entries,
     vue,
+    ember,
     tsMacro,
   })
 }
@@ -84,12 +86,16 @@ function createTsProgramFromParsedConfig({
   id,
   entries,
   vue,
+  ember,
   tsMacro,
 }: {
   parsedConfig: ts.ParsedCommandLine
   fsSystem: ts.System
   baseDir: string
-} & Pick<TscOptions, 'entries' | 'vue' | 'tsMacro' | 'id'>): TscModule {
+} & Pick<
+  TscOptions,
+  'entries' | 'vue' | 'ember' | 'tsMacro' | 'id'
+>): TscModule {
   const compilerOptions: ts.CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
@@ -106,8 +112,7 @@ function createTsProgramFromParsedConfig({
   ]
 
   const host = ts.createCompilerHost(compilerOptions, true)
-
-  const createProgram = createProgramFactory(ts, { vue, tsMacro })
+  const createProgram = createProgramFactory(ts, { vue, ember, tsMacro })
   const program = createProgram({
     rootNames,
     options: compilerOptions,

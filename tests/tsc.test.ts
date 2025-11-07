@@ -1,10 +1,13 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { Addon } from '@embroider/addon-dev/rollup'
+import { babel } from '@rollup/plugin-babel'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { glob } from 'tinyglobby'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
+
 import { findSourceMapChunk } from './utils.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -223,6 +226,33 @@ describe('tsc', () => {
       }),
     ])
     expect(snapshot).toMatchSnapshot()
+  })
+
+  test('ember w/ ts-compiler', async () => {
+    const root = path.resolve(dirname, 'fixtures/ember')
+    const addon = new Addon({
+      srcDir: root,
+    })
+
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
+      babel({
+        root,
+        extensions: ['.js', '.gjs', '.ts', '.gts'],
+        babelHelpers: 'bundled',
+      }),
+      addon.gjs(),
+      dts({
+        emitDtsOnly: true,
+        ember: true,
+        compilerOptions: {
+          isolatedDeclarations: false,
+        },
+      }),
+    ])
+
+    console.log('SNAP', snapshot)
+
+    // expect(snapshot).toMatchSnapshot()
   })
 
   test('jsdoc', async () => {

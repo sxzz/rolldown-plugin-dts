@@ -11,6 +11,7 @@ export {
   RE_CSS,
   RE_DTS,
   RE_DTS_MAP,
+  RE_EMBER,
   RE_JS,
   RE_JSON,
   RE_NODE_MODULES,
