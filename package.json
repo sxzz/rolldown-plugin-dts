@@ -97,7 +97,6 @@
     "bumpp": "^10.3.1",
     "diff": "^8.0.2",
     "eslint": "^9.39.0",
-    "estree-walker": "^3.0.3",
     "prettier": "^3.6.2",
     "rolldown": "^1.0.0-beta.45",
     "rolldown-plugin-require-cjs": "^0.3.1",

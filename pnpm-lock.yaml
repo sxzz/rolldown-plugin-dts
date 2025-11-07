@@ -78,9 +78,6 @@ importers:
       eslint:
         specifier: ^9.39.0
         version: 9.39.0(jiti@2.6.1)
-      estree-walker:
-        specifier: ^3.0.3
-        version: 3.0.3
       prettier:
         specifier: ^3.6.2
         version: 3.6.2

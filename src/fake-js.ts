@@ -1,8 +1,13 @@
 import { generate } from '@babel/generator'
 import { parse } from '@babel/parser'
 import t from '@babel/types'
-import { isDeclarationType, isTypeOf, resolveString } from 'ast-kit'
-import { walk } from 'estree-walker'
+import {
+  isDeclarationType,
+  isIdentifierOf,
+  isTypeOf,
+  resolveString,
+  walkAST,
+} from 'ast-kit'
 import {
   filename_dts_to,
   filename_js_to_dts,
@@ -409,8 +414,8 @@ export function createFakeJsPlugin({
    */
   function collectParams(node: t.Node): GroupedTypeParams {
     const typeParams: t.TSTypeParameter[] = []
-    ;(walk as any)(node, {
-      leave(node: t.Node) {
+    walkAST(node, {
+      leave(node) {
         if (
           'typeParameters' in node &&
           node.typeParameters?.type === 'TSTypeParameterDeclaration'
@@ -444,8 +449,8 @@ export function createFakeJsPlugin({
     const deps = new Set<Dep>()
     const seen = new Set<t.Node>()
 
-    ;(walk as any)(node, {
-      leave(node: t.Node) {
+    walkAST(node, {
+      leave(node) {
         if (node.type === 'ExportNamedDeclaration') {
           for (const specifier of node.specifiers) {
             if (specifier.type === 'ExportSpecifier') {
@@ -675,7 +680,7 @@ function isRuntimeBindingArrayElements(
 
 function isThisExpression(node: t.Node): boolean {
   return (
-    (node.type === 'Identifier' && node.name === 'this') ||
+    isIdentifierOf(node, 'this') ||
     (node.type === 'MemberExpression' && isThisExpression(node.object))
   )
 }
@@ -700,9 +705,7 @@ function getIdFromTSEntityName(node: t.TSEntityName) {
 function isReferenceId(
   node?: t.Node | null,
 ): node is t.Identifier | t.MemberExpression {
-  return (
-    !!node && (node.type === 'Identifier' || node.type === 'MemberExpression')
-  )
+  return isTypeOf(node, ['Identifier', 'MemberExpression'])
 }
 
 function isHelperImport(node: t.Node) {
@@ -862,8 +865,7 @@ function patchReExport(nodes: t.Statement[]) {
     } else if (
       node.type === 'ExpressionStatement' &&
       node.expression.type === 'CallExpression' &&
-      node.expression.callee.type === 'Identifier' &&
-      node.expression.callee.name === '__reExport'
+      isIdentifierOf(node.expression.callee, '__reExport')
     ) {
       // record: __reExport(a_exports, import_lib)
 
