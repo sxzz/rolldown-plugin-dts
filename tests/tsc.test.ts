@@ -299,4 +299,19 @@ describe('tsc', () => {
 
     expect(snapshot).toMatchSnapshot()
   })
+
+  describe('resolve paths', () => {
+    test.each(['oxc', 'tsc'] as const)('resolver: %s', async (resolver) => {
+      const root = path.resolve(dirname, 'fixtures/paths')
+      const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+        dts({
+          oxc: true,
+          emitDtsOnly: true,
+          tsconfig: path.resolve(root, 'tsconfig.json'),
+          resolver,
+        }),
+      ])
+      expect(snapshot).toMatchSnapshot()
+    })
+  })
 })

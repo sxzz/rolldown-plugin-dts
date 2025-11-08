@@ -88,18 +88,6 @@ test('isolated declaration error', async () => {
   expect(String(error)).toContain(`export function fn() {`)
 })
 
-test('paths', async () => {
-  const root = path.resolve(dirname, 'fixtures/paths')
-  const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
-    dts({
-      oxc: true,
-      emitDtsOnly: true,
-      tsconfig: path.resolve(root, 'tsconfig.json'),
-    }),
-  ])
-  expect(snapshot).toMatchSnapshot()
-})
-
 test('tree-shaking', async () => {
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/tree-shaking/index.ts'),

@@ -320,14 +320,6 @@ declare const shared1 = "shared1";
 export { shared1 as t };"
 `;
 
-exports[`paths 1`] = `
-"// index.d.ts
-//#region tests/fixtures/paths/mod.d.ts
-declare const foo = 42;
-//#endregion
-export { foo };"
-`;
-
 exports[`re-export from lib > both 1`] = `
 "// a-CFAAu6yL.d.ts
 import * as import_stub_lib from "stub-lib";

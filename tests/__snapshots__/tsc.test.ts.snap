@@ -417,6 +417,22 @@ const a = 1;
 export { a };"
 `;
 
+exports[`tsc > resolve paths > resolver: oxc 1`] = `
+"// index.d.ts
+//#region tests/fixtures/paths/mod.d.ts
+declare const foo = 42;
+//#endregion
+export { foo };"
+`;
+
+exports[`tsc > resolve paths > resolver: tsc 1`] = `
+"// index.d.ts
+//#region tests/fixtures/paths/mod.d.ts
+declare const foo = 42;
+//#endregion
+export { foo };"
+`;
+
 exports[`tsc > ts-macro w/ ts-compiler 1`] = `
 "// main.d.ts
 //#region tests/fixtures/ts-macro/main.d.ts
