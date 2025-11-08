@@ -91,6 +91,15 @@ By default, dependencies are external, resulting in `import { Type } from 'some-
 - `false`: (Default) Keeps all dependencies external.
 - `(string | RegExp)[]`: Bundles only dependencies matching the provided strings or regular expressions (e.g. `['pkg-a', /^@scope\//]`).
 
+#### `resolver`
+
+Specifies a resolver to resolve type definitions, especially for `node_modules`.
+
+- `'oxc'`: Uses Oxc's module resolution, which is faster and more efficient.
+- `'tsc'`: Uses TypeScript's native module resolution, which may be more compatible with complex setups, but slower.
+
+Defaults to `'oxc'`.
+
 #### `cjsDefault`
 
 Determines how the default export is emitted.

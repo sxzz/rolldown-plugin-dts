@@ -18,10 +18,16 @@ function isSourceFile(id: string) {
 }
 
 export function createDtsResolvePlugin({
+  cwd,
   tsconfig,
+  tsconfigRaw,
   resolve,
+  resolver,
   sideEffects,
-}: Pick<OptionsResolved, 'tsconfig' | 'resolve' | 'sideEffects'>): Plugin {
+}: Pick<
+  OptionsResolved,
+  'cwd' | 'tsconfig' | 'tsconfigRaw' | 'resolve' | 'resolver' | 'sideEffects'
+>): Plugin {
   const baseDtsResolver = createResolver({
     tsconfig,
     resolveNodeModules: !!resolve,
@@ -53,7 +59,11 @@ export function createDtsResolvePlugin({
 
         // Get Rolldown's resolution first for fallback and policy checks
         const rolldownResolution = await this.resolve(id, importer, options)
-        const dtsResolution = resolveDtsPath(id, importer, rolldownResolution)
+        const dtsResolution = await resolveDtsPath(
+          id,
+          importer,
+          rolldownResolution,
+        )
 
         // If resolution failed, error or externalize
         if (!dtsResolution) {
@@ -104,12 +114,26 @@ export function createDtsResolvePlugin({
     )
   }
 
-  function resolveDtsPath(
+  async function resolveDtsPath(
     id: string,
     importer: string,
     rolldownResolution: ResolvedId | null,
-  ): string | null {
-    let dtsPath = baseDtsResolver(id, importer)
+  ): Promise<string | null> {
+    let dtsPath: string | undefined | null
+    if (resolver === 'tsc') {
+      const { tscResolve } = await import('./tsc/resolver.ts')
+      dtsPath = tscResolve(
+        id,
+        importer,
+        cwd,
+        tsconfig,
+        tsconfigRaw,
+        // TODO reference
+      )
+    } else {
+      dtsPath = baseDtsResolver(id, importer)
+    }
+
     if (dtsPath) {
       dtsPath = path.normalize(dtsPath)
     }

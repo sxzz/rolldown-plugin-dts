@@ -71,6 +71,16 @@ export interface GeneralOptions {
   resolve?: boolean | (string | RegExp)[]
 
   /**
+   * Specifies a resolver to resolve type definitions, especially for `node_modules`.
+   *
+   * - `'oxc'`: Uses Oxc's module resolution, which is faster and more efficient.
+   * - `'tsc'`: Uses TypeScript's native module resolution, which may be more compatible with complex setups, but slower.
+   *
+   * @default 'oxc'
+   */
+  resolver?: 'oxc' | 'tsc'
+
+  /**
    * Determines how the default export is emitted.
    *
    * If set to `true`, and you are only exporting a single item using `export default ...`,
@@ -235,6 +245,7 @@ export function resolveOptions({
   compilerOptions = {},
   sourcemap,
   resolve = false,
+  resolver = 'oxc',
   cjsDefault = false,
   banner,
   footer,
@@ -336,6 +347,7 @@ export function resolveOptions({
     tsconfigRaw,
     sourcemap,
     resolve,
+    resolver,
     cjsDefault,
     banner,
     footer,
