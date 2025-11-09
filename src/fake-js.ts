@@ -71,13 +71,15 @@ export function createFakeJsPlugin({
           '[rolldown-plugin-dts] Cannot bundle dts files with `cjs` format.',
         )
       }
-      const { chunkFileNames } = options
+      const { chunkFileNames, entryFileNames } = options
       return {
         ...options,
         sourcemap: options.sourcemap || sourcemap,
         chunkFileNames(chunk) {
           const nameTemplate = resolveTemplateFn(
-            chunkFileNames || '[name]-[hash].js',
+            chunk.isEntry
+              ? entryFileNames || '[name].js'
+              : chunkFileNames || '[name]-[hash].js',
             chunk,
           )
 
