@@ -1,7 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "version": "0.17.4",
-  "packageManager": "pnpm@10.20.0",
+  "packageManager": "pnpm@10.21.0",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "type": "module",
   "keywords": [
@@ -77,9 +77,9 @@
     "@babel/parser": "^7.28.5",
     "@babel/types": "^7.28.5",
     "ast-kit": "^2.2.0",
-    "birpc": "^2.7.0",
+    "birpc": "^2.8.0",
     "debug": "^4.4.3",
-    "dts-resolver": "^2.1.2",
+    "dts-resolver": "^2.1.3",
     "get-tsconfig": "^4.13.0",
     "magic-string": "^0.30.21"
   },
@@ -90,7 +90,7 @@
     "@types/babel__generator": "^7.27.0",
     "@types/debug": "^4.1.12",
     "@types/node": "^24.10.0",
-    "@typescript/native-preview": "7.0.0-dev.20251108.1",
+    "@typescript/native-preview": "7.0.0-dev.20251109.1",
     "@volar/typescript": "^2.4.23",
     "@vue/language-core": "^3.1.3",
     "arktype": "^2.1.25",
