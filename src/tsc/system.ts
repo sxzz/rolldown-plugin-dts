@@ -1,4 +1,4 @@
-import Debug from 'debug'
+import Debug from 'obug'
 import ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:tsc-system')

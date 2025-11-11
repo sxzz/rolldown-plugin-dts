@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-import Debug from 'debug'
+import Debug from 'obug'
 import type { TscOptions } from './types.ts'
 import type Ts from 'typescript'
 

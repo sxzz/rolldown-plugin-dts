@@ -1,5 +1,5 @@
 import path from 'node:path'
-import Debug from 'debug'
+import Debug from 'obug'
 import ts from 'typescript'
 import { globalContext } from './context.ts'
 import { createFsSystem } from './system.ts'

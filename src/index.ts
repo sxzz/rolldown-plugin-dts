@@ -1,4 +1,4 @@
-import Debug from 'debug'
+import Debug from 'obug'
 import { createBannerPlugin } from './banner.ts'
 import { createDtsInputPlugin } from './dts-input.ts'
 import { createFakeJsPlugin } from './fake-js.ts'

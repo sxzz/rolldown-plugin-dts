@@ -1,5 +1,5 @@
 import path from 'node:path'
-import Debug from 'debug'
+import Debug from 'obug'
 import type ts from 'typescript'
 
 const debug = Debug('rolldown-plugin-dts:tsc-context')
