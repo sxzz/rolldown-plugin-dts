@@ -1,4 +1,4 @@
-import Debug from 'obug'
+import { createDebug } from 'obug'
 import { createBannerPlugin } from './banner.ts'
 import { createDtsInputPlugin } from './dts-input.ts'
 import { createFakeJsPlugin } from './fake-js.ts'
@@ -18,7 +18,7 @@ export {
   RE_VUE,
 } from './filename.ts'
 
-const debug = Debug('rolldown-plugin-dts:options')
+const debug = createDebug('rolldown-plugin-dts:options')
 
 export function dts(options: Options = {}): Plugin[] {
   debug('resolving dts options')

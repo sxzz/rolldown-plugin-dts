@@ -1,5 +1,5 @@
 import path from 'node:path'
-import Debug from 'obug'
+import { createDebug } from 'obug'
 import ts from 'typescript'
 import { globalContext } from './context.ts'
 import { createFsSystem } from './system.ts'
@@ -8,7 +8,7 @@ import { createProgramFactory } from './volar.ts'
 import type { TscModule, TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 
-const debug = Debug('rolldown-plugin-dts:tsc-compiler')
+const debug = createDebug('rolldown-plugin-dts:tsc-compiler')
 
 const defaultCompilerOptions: ts.CompilerOptions = {
   declaration: true,

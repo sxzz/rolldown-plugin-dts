@@ -1,4 +1,4 @@
-import Debug from 'obug'
+import { createDebug } from 'obug'
 import ts from 'typescript'
 import {
   globalContext,
@@ -11,7 +11,7 @@ import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import type { TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 
-const debug = Debug('rolldown-plugin-dts:tsc-build')
+const debug = createDebug('rolldown-plugin-dts:tsc-build')
 
 // Emit file using `tsc --build` mode.
 export function tscEmitBuild(tscOptions: TscOptions): TscResult {

@@ -36,8 +36,8 @@ importers:
         specifier: ^0.30.21
         version: 0.30.21
       obug:
-        specifier: ^1.0.0
-        version: 1.0.0(ms@2.1.3)
+        specifier: ^2.0.0-beta.1
+        version: 2.0.0-beta.1(ms@2.1.3)
     devDependencies:
       '@sxzz/eslint-config':
         specifier: ^7.2.10
@@ -2187,8 +2187,8 @@ packages:
       ms:
         optional: true
 
-  obug@1.0.0:
-    resolution: {integrity: sha512-WKcS43Yl6YPJekid7KiRdT6CHMSmYWVfJiSFbTaGxWQlC+cEBPxHa9jR1uS2cMiQmXd8Hsa2ipAKErQ/GLhSpg==}
+  obug@2.0.0-beta.1:
+    resolution: {integrity: sha512-ZLlTxsqypxnn4zUJYW3ia+ZnZVHi8TqStonni2HRj3eGqFVJ3O0Xf5MSDVq5XKHq+qtYF+paqipzhndN6yIqcg==}
     peerDependencies:
       ms: ^2.0.0
     peerDependenciesMeta:
@@ -4861,7 +4861,7 @@ snapshots:
     optionalDependencies:
       ms: 2.1.3
 
-  obug@1.0.0(ms@2.1.3):
+  obug@2.0.0-beta.1(ms@2.1.3):
     optionalDependencies:
       ms: 2.1.3
 

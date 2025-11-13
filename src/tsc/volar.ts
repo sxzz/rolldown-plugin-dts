@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-import Debug from 'obug'
+import { createDebug } from 'obug'
 import type { TscOptions } from './types.ts'
 import type Ts from 'typescript'
 
 function loadVueLanguageTools() {
-  const debug = Debug('rolldown-plugin-dts:vue')
+  const debug = createDebug('rolldown-plugin-dts:vue')
   debug('loading vue language tools')
   try {
     const vueTscPath = require.resolve('vue-tsc')
@@ -49,7 +49,7 @@ function loadVueLanguageTools() {
 }
 
 function loadTsMacro() {
-  const debug = Debug('rolldown-plugin-dts:ts-macro')
+  const debug = createDebug('rolldown-plugin-dts:ts-macro')
   debug('loading ts-macro language tools')
   try {
     const tsMacroPath = require.resolve('@ts-macro/tsc')

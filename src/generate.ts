@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { parse } from '@babel/parser'
-import Debug from 'obug'
+import { createDebug } from 'obug'
 import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
 import {
   filename_to_dts,
@@ -31,7 +31,7 @@ import type { TSPropertySignature } from '@babel/types'
 import type { BirpcReturn } from 'birpc'
 import type { Plugin, SourceMapInput } from 'rolldown'
 
-const debug = Debug('rolldown-plugin-dts:generate')
+const debug = createDebug('rolldown-plugin-dts:generate')
 
 const WORKER_URL = import.meta.WORKER_URL || './tsc/worker.ts'
 

@@ -1,8 +1,8 @@
 import path from 'node:path'
-import Debug from 'obug'
+import { createDebug } from 'obug'
 import type ts from 'typescript'
 
-const debug = Debug('rolldown-plugin-dts:tsc-context')
+const debug = createDebug('rolldown-plugin-dts:tsc-context')
 
 // A parsed tsconfig file with its path.
 export interface ParsedProject {

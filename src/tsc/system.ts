@@ -1,7 +1,7 @@
-import Debug from 'obug'
+import { createDebug } from 'obug'
 import ts from 'typescript'
 
-const debug = Debug('rolldown-plugin-dts:tsc-system')
+const debug = createDebug('rolldown-plugin-dts:tsc-system')
 
 /**
  * A system that writes files to both memory and disk. It will try read files

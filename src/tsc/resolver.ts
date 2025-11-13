@@ -1,8 +1,8 @@
 import path from 'node:path'
-import Debug from 'obug'
+import { createDebug } from 'obug'
 import ts from 'typescript'
 
-const debug = Debug('rolldown-plugin-dts:tsc-resolver')
+const debug = createDebug('rolldown-plugin-dts:tsc-resolver')
 
 export function tscResolve(
   id: string,
