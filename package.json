@@ -89,7 +89,7 @@
     "@sxzz/test-utils": "^0.5.12",
     "@types/babel__generator": "^7.27.0",
     "@types/node": "^24.10.1",
-    "@typescript/native-preview": "7.0.0-dev.20251115.1",
+    "@typescript/native-preview": "7.0.0-dev.20251116.1",
     "@volar/typescript": "^2.4.23",
     "@vue/language-core": "^3.1.4",
     "arktype": "^2.1.26",
