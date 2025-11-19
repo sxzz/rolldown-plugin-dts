@@ -54,7 +54,7 @@
   "peerDependencies": {
     "@ts-macro/tsc": "^0.3.6",
     "@typescript/native-preview": ">=7.0.0-dev.20250601.1",
-    "rolldown": "^1.0.0-beta.44",
+    "rolldown": "^1.0.0-beta.51",
     "typescript": "^5.0.0",
     "vue-tsc": "~3.1.0"
   },
@@ -97,7 +97,7 @@
     "diff": "^8.0.2",
     "eslint": "^9.39.1",
     "prettier": "^3.6.2",
-    "rolldown": "^1.0.0-beta.50",
+    "rolldown": "^1.0.0-beta.51",
     "rolldown-plugin-require-cjs": "^0.3.1",
     "rollup-plugin-dts": "^6.2.3",
     "tinyglobby": "^0.2.15",

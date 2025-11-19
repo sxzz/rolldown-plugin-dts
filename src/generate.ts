@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { parse } from '@babel/parser'
 import { createDebug } from 'obug'
-import { isolatedDeclaration as oxcIsolatedDeclaration } from 'rolldown/experimental'
+import { isolatedDeclarationSync as oxcIsolatedDeclaration } from 'rolldown/experimental'
 import {
   filename_to_dts,
   RE_DTS,
