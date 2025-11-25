@@ -494,6 +494,8 @@ declare const __VLS_export: vue0.DefineComponent<{
   contextmenu?: string | undefined;
   dir?: string | undefined;
   draggable?: (boolean | "true" | "false") | undefined;
+  enterkeyhint?: "enter" | "done" | "go" | "next" | "previous" | "search" | "send" | undefined;
+  enterKeyHint?: vue0.HTMLAttributes["enterkeyhint"];
   hidden?: (boolean | "true" | "false") | "" | "hidden" | "until-found" | undefined;
   id?: string | undefined;
   inert?: (boolean | "true" | "false") | undefined;
@@ -527,6 +529,8 @@ declare const __VLS_export: vue0.DefineComponent<{
   unselectable?: "on" | "off" | undefined;
   inputmode?: "none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search" | undefined;
   is?: string | undefined;
+  exportparts?: string;
+  part?: string;
   'aria-activedescendant'?: string | undefined;
   'aria-atomic'?: (boolean | "true" | "false") | undefined;
   'aria-autocomplete'?: "none" | "inline" | "list" | "both" | undefined;
@@ -690,6 +694,8 @@ declare const __VLS_export: vue0.DefineComponent<{
   contextmenu?: string | undefined;
   dir?: string | undefined;
   draggable?: (boolean | "true" | "false") | undefined;
+  enterkeyhint?: "enter" | "done" | "go" | "next" | "previous" | "search" | "send" | undefined;
+  enterKeyHint?: vue0.HTMLAttributes["enterkeyhint"];
   hidden?: (boolean | "true" | "false") | "" | "hidden" | "until-found" | undefined;
   id?: string | undefined;
   inert?: (boolean | "true" | "false") | undefined;
@@ -723,6 +729,8 @@ declare const __VLS_export: vue0.DefineComponent<{
   unselectable?: "on" | "off" | undefined;
   inputmode?: "none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search" | undefined;
   is?: string | undefined;
+  exportparts?: string;
+  part?: string;
   'aria-activedescendant'?: string | undefined;
   'aria-atomic'?: (boolean | "true" | "false") | undefined;
   'aria-autocomplete'?: "none" | "inline" | "list" | "both" | undefined;
