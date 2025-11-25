@@ -14,7 +14,7 @@ export default defineConfig({
   platform: 'node',
   dts: false,
   define: {
-    'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.js'),
+    'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.mjs'),
   },
   exports: true,
   plugins: [
