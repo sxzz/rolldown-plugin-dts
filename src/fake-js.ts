@@ -833,16 +833,14 @@ function patchTsNamespace(nodes: t.Statement[]) {
       node.declarations[0].init?.type !== 'CallExpression' ||
       node.declarations[0].init.callee.type !== 'Identifier' ||
       node.declarations[0].init.callee.name !== '__export' ||
-      // eslint-disable-next-line baseline-js/use-baseline
       node.declarations[0].init.arguments.length !== 1 ||
-      // eslint-disable-next-line baseline-js/use-baseline
       node.declarations[0].init.arguments[0].type !== 'ObjectExpression'
     ) {
       return false
     }
 
     const source = node.declarations[0].id
-    // eslint-disable-next-line baseline-js/use-baseline
+
     const exports = node.declarations[0].init.arguments[0]
     return [source, exports] as const
   }
@@ -874,7 +872,6 @@ function patchReExport(nodes: t.Statement[]) {
     ) {
       // record: __reExport(a_exports, import_lib)
 
-      // eslint-disable-next-line baseline-js/use-baseline
       const args = node.expression.arguments
       exportsNames.set(
         (args[0] as t.Identifier).name,
