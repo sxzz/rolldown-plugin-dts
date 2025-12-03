@@ -321,15 +321,16 @@ export { shared1 as t };"
 `;
 
 exports[`re-export from lib > both 1`] = `
-"// a-Czrn6yUw.d.ts
+"// a.d.ts
+export * from "stub-lib";
+
+//#region rolldown:runtime
+
 import * as import_stub_lib from "stub-lib";
 //#endregion
 export { import_stub_lib as t };
-// a.d.ts
-import "./a-Czrn6yUw.js";
-export * from "stub-lib";
 // b.d.ts
-import { t as a_d_exports } from "./a-Czrn6yUw.js";
+import { t as a_d_exports } from "./a.js";
 type LibType = a_d_exports.LibType;
 export { type LibType };"
 `;
