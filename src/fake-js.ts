@@ -450,33 +450,33 @@ export function createFakeJsPlugin({
   ): Dep[] {
     const deps = new Set<Dep>()
     const seen = new Set<t.Node>()
-    const inferred: string[] = []
-    const skipFalseType = new Set<t.Node>()
+
+    const inferredStack: string[][] = []
+    let currentInferred = new Set<string>()
+    function isInferred(node: t.Node): boolean {
+      return node.type === 'Identifier' && currentInferred.has(node.name)
+    }
 
     walkAST(node, {
-      enter(node, parent) {
+      enter(node) {
         if (node.type === 'TSConditionalType') {
-          collectInferredNames(node.extendsType, inferred)
-          skipFalseType.add(node.falseType)
-        }
-        if (skipFalseType.has(node)) {
-          removeInferredNames(
-            (parent as t.TSConditionalType).extendsType,
-            inferred,
-          )
+          const inferred = collectInferredNames(node.extendsType)
+          inferredStack.push(inferred)
         }
       },
       leave(node, parent) {
-        if (skipFalseType.has(node)) {
-          collectInferredNames(
-            (parent as t.TSConditionalType).extendsType,
-            inferred,
-          )
-        }
+        // handle infer scope
         if (node.type === 'TSConditionalType') {
-          removeInferredNames(node.extendsType, inferred)
-          skipFalseType.delete(node.falseType)
+          inferredStack.pop()
+        } else if (parent?.type === 'TSConditionalType') {
+          const trueBranch = parent.trueType === node
+          currentInferred = new Set<string>(
+            (trueBranch ? inferredStack : inferredStack.slice(0, -1)).flat(),
+          )
+        } else {
+          currentInferred = new Set<string>()
         }
+
         if (node.type === 'ExportNamedDeclaration') {
           for (const specifier of node.specifiers) {
             if (specifier.type === 'ExportSpecifier') {
@@ -548,31 +548,9 @@ export function createFakeJsPlugin({
     return Array.from(deps)
 
     function addDependency(node: Dep) {
-      if (isThisExpression(node)) return
-      if (isInferred(node, inferred)) return
+      if (isThisExpression(node) || isInferred(node)) return
       deps.add(node)
     }
-  }
-
-  function collectInferredNames(node: t.Node, inferred: string[]) {
-    walkAST(node, {
-      enter(node) {
-        if (node.type === 'TSInferType' && node.typeParameter) {
-          inferred.push(node.typeParameter.name)
-        }
-      },
-    })
-  }
-
-  function removeInferredNames(node: t.Node, inferred: string[]) {
-    walkAST(node, {
-      enter(node) {
-        if (node.type === 'TSInferType' && node.typeParameter) {
-          const idx = inferred.lastIndexOf(node.typeParameter.name)
-          if (idx !== -1) inferred.splice(idx, 1)
-        }
-      },
-    })
   }
 
   function importNamespace(
@@ -618,6 +596,18 @@ export function createFakeJsPlugin({
     }
     return dep
   }
+}
+
+function collectInferredNames(node: t.Node) {
+  const inferred: string[] = []
+  walkAST(node, {
+    enter(node) {
+      if (node.type === 'TSInferType' && node.typeParameter) {
+        inferred.push(node.typeParameter.name)
+      }
+    },
+  })
+  return inferred
 }
 
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
@@ -731,10 +721,6 @@ function isThisExpression(node: t.Node): boolean {
     isIdentifierOf(node, 'this') ||
     (node.type === 'MemberExpression' && isThisExpression(node.object))
   )
-}
-
-function isInferred(node: t.Node, inferred: string[]): boolean {
-  return node.type === 'Identifier' && inferred.includes(node.name)
 }
 
 function TSEntityNameToRuntime(

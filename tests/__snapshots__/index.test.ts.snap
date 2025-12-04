@@ -249,16 +249,19 @@ export { Input2, input2 };"
 
 exports[`infer false branch 1`] = `
 "// index.d.ts
-//#region tests/fixtures/infer-false-branch/index.d.ts
-type U = string;
-type Test<T> = T extends Array<infer U> ? U : U;
+//#region tests/fixtures/infer-false-branch/mod.d.ts
+type U = "mod";
 //#endregion
-export { Test };"
+//#region tests/fixtures/infer-false-branch/index.d.ts
+type U$1 = "local";
+type Test<T> = T extends Array<infer U> ? (T extends Array<infer U2> ? U2 : U) : U$1;
+//#endregion
+export { Test, type U };"
 `;
 
 exports[`infer type parameter 1`] = `
-"// index.d.ts
-//#region tests/fixtures/infer-type-param/index.d.ts
+"// infer-type-param.d.ts
+//#region tests/fixtures/infer-type-param.d.ts
 type Mapped<T> = T extends Record<string, infer U> ? U : never;
 type Fn1<U = unknown> = () => Mapped<U>;
 type Fn2<V = unknown> = () => Mapped<V>;
