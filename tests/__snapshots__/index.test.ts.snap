@@ -247,6 +247,15 @@ import { n as input2, t as Input2 } from "./input2-eCNysyew.js";
 export { Input2, input2 };"
 `;
 
+exports[`infer false branch 1`] = `
+"// index.d.ts
+//#region tests/fixtures/infer-false-branch/index.d.ts
+type U = string;
+type Test<T> = T extends Array<infer U> ? U : U;
+//#endregion
+export { Test };"
+`;
+
 exports[`infer type parameter 1`] = `
 "// index.d.ts
 //#region tests/fixtures/infer-type-param/index.d.ts

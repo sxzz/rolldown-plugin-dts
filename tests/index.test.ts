@@ -556,3 +556,13 @@ test('infer type parameter', async () => {
   expect(snapshot).not.toContain('U$1')
   expect(snapshot).toMatchSnapshot()
 })
+
+test('infer false branch', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/infer-false-branch/index.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  // Ensure type U in falseType references outer type U
+  expect(snapshot).toContain('type U = string')
+  expect(snapshot).toMatchSnapshot()
+})

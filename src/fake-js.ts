@@ -450,15 +450,33 @@ export function createFakeJsPlugin({
   ): Dep[] {
     const deps = new Set<Dep>()
     const seen = new Set<t.Node>()
-    const inferred = new Set<string>()
+    const inferred: string[] = []
+    const skipFalseType = new Set<t.Node>()
 
     walkAST(node, {
-      enter(node) {
-        if (node.type === 'TSInferType' && node.typeParameter) {
-          inferred.add(node.typeParameter.name)
+      enter(node, parent) {
+        if (node.type === 'TSConditionalType') {
+          collectInferredNames(node.extendsType, inferred)
+          skipFalseType.add(node.falseType)
+        }
+        if (skipFalseType.has(node)) {
+          removeInferredNames(
+            (parent as t.TSConditionalType).extendsType,
+            inferred,
+          )
         }
       },
-      leave(node) {
+      leave(node, parent) {
+        if (skipFalseType.has(node)) {
+          collectInferredNames(
+            (parent as t.TSConditionalType).extendsType,
+            inferred,
+          )
+        }
+        if (node.type === 'TSConditionalType') {
+          removeInferredNames(node.extendsType, inferred)
+          skipFalseType.delete(node.falseType)
+        }
         if (node.type === 'ExportNamedDeclaration') {
           for (const specifier of node.specifiers) {
             if (specifier.type === 'ExportSpecifier') {
@@ -536,8 +554,25 @@ export function createFakeJsPlugin({
     }
   }
 
-  function isInferred(node: Dep, inferred: Set<string>) {
-    return node.type === 'Identifier' && inferred.has(node.name)
+  function collectInferredNames(node: t.Node, inferred: string[]) {
+    walkAST(node, {
+      enter(node) {
+        if (node.type === 'TSInferType' && node.typeParameter) {
+          inferred.push(node.typeParameter.name)
+        }
+      },
+    })
+  }
+
+  function removeInferredNames(node: t.Node, inferred: string[]) {
+    walkAST(node, {
+      enter(node) {
+        if (node.type === 'TSInferType' && node.typeParameter) {
+          const idx = inferred.lastIndexOf(node.typeParameter.name)
+          if (idx !== -1) inferred.splice(idx, 1)
+        }
+      },
+    })
   }
 
   function importNamespace(
@@ -696,6 +731,10 @@ function isThisExpression(node: t.Node): boolean {
     isIdentifierOf(node, 'this') ||
     (node.type === 'MemberExpression' && isThisExpression(node.object))
   )
+}
+
+function isInferred(node: t.Node, inferred: string[]): boolean {
+  return node.type === 'Identifier' && inferred.includes(node.name)
 }
 
 function TSEntityNameToRuntime(
