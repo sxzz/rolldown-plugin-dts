@@ -247,6 +247,16 @@ import { n as input2, t as Input2 } from "./input2-eCNysyew.js";
 export { Input2, input2 };"
 `;
 
+exports[`infer type parameter 1`] = `
+"// index.d.ts
+//#region tests/fixtures/infer-type-param/index.d.ts
+type Mapped<T> = T extends Record<string, infer U> ? U : never;
+type Fn1<U = unknown> = () => Mapped<U>;
+type Fn2<V = unknown> = () => Mapped<V>;
+//#endregion
+export { Fn1, Fn2 };"
+`;
+
 exports[`input alias 1`] = `
 "// input2-BJEZiIxE.d.ts
 //#region shared.d.ts

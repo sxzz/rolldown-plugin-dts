@@ -1,6 +1,6 @@
 {
-    "name": "@types/stub-lib",
-    "version": "1.0.0",
-    "main": "",
-    "types": "index.d.ts"
+  "name": "@types/stub-lib",
+  "version": "1.0.0",
+  "main": "",
+  "types": "index.d.ts"
 }

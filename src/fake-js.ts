@@ -450,8 +450,14 @@ export function createFakeJsPlugin({
   ): Dep[] {
     const deps = new Set<Dep>()
     const seen = new Set<t.Node>()
+    const inferred = new Set<string>()
 
     walkAST(node, {
+      enter(node) {
+        if (node.type === 'TSInferType' && node.typeParameter) {
+          inferred.add(node.typeParameter.name)
+        }
+      },
       leave(node) {
         if (node.type === 'ExportNamedDeclaration') {
           for (const specifier of node.specifiers) {
@@ -525,8 +531,13 @@ export function createFakeJsPlugin({
 
     function addDependency(node: Dep) {
       if (isThisExpression(node)) return
+      if (isInferred(node, inferred)) return
       deps.add(node)
     }
+  }
+
+  function isInferred(node: Dep, inferred: Set<string>) {
+    return node.type === 'Identifier' && inferred.has(node.name)
   }
 
   function importNamespace(
