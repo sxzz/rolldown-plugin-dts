@@ -545,3 +545,25 @@ test('side effects', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test('infer type parameter', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/infer-type-param.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+  // Ensure type parameter U is not renamed to U$1
+  expect(snapshot).toContain('Fn1<U = unknown>')
+  expect(snapshot).not.toContain('U$1')
+})
+
+test('infer false branch', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/infer-false-branch/index.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+  expect(snapshot).toContain(
+    'T extends Array<infer U> ? (T extends Array<infer U2> ? U2 : U) : ',
+  )
+})

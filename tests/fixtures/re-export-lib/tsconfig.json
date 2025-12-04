@@ -1,12 +1,7 @@
 {
-    "compilerOptions": {
-        "strict": true,
-        "typeRoots": [
-            "./typings"
-        ]
-    },
-    "include": [
-        "./a.ts",
-        "./b.ts"
-    ]
+  "compilerOptions": {
+    "strict": true,
+    "typeRoots": ["./typings"]
+  },
+  "include": ["./a.ts", "./b.ts"]
 }
