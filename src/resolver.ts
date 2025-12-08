@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { createResolver } from 'dts-resolver'
+import { createDebug } from 'obug'
 import { ResolverFactory } from 'rolldown/experimental'
 import {
   filename_to_dts,
@@ -12,6 +13,8 @@ import {
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
 import type { Plugin, ResolvedId } from 'rolldown'
+
+const debug = createDebug('rolldown-plugin-dts:resolver')
 
 function isSourceFile(id: string) {
   return RE_TS.test(id) || RE_VUE.test(id) || RE_JSON.test(id)
@@ -54,21 +57,35 @@ export function createDtsResolvePlugin({
 
         // Guard: Externalize non-code imports
         if (RE_CSS.test(id)) {
+          debug('Externalizing css import:', id)
           return external
         }
 
         // Get Rolldown's resolution first for fallback and policy checks
         const rolldownResolution = await this.resolve(id, importer, options)
+        debug(
+          'Rolldown resolution for dts import %O from %O: %O',
+          id,
+          importer,
+          rolldownResolution,
+        )
         const dtsResolution = await resolveDtsPath(
           id,
           importer,
           rolldownResolution,
         )
+        debug(
+          'Dts resolution for dts import %O from %O: %O',
+          id,
+          importer,
+          dtsResolution,
+        )
 
         // If resolution failed, error or externalize
         if (!dtsResolution) {
-          const isFileImport = isFilePath(id)
+          debug('Unresolvable dts import:', id, 'from', importer)
 
+          const isFileImport = isFilePath(id)
           // Auto-export unresolvable packages
           return isFileImport ? null : external
         }
@@ -82,11 +99,13 @@ export function createDtsResolvePlugin({
           // The importer is not in node_modules, or if it is, the module is marked as external by Rolldown
           (!RE_NODE_MODULES.test(importer) || rolldownResolution?.external)
         ) {
+          debug('Externalizing node_modules dts import:', id)
           return external
         }
 
         // The path is either a declaration file or a source file that needs redirection.
         if (RE_DTS.test(dtsResolution)) {
+          debug('Resolving dts import to declaration file:', id)
           // It's already a .d.ts file, we're done
           return {
             id: dtsResolution,
@@ -95,6 +114,7 @@ export function createDtsResolvePlugin({
         }
 
         if (isSourceFile(dtsResolution)) {
+          debug('Resolving dts import to source file:', id)
           // It's a .ts/.vue source file, so we load it to ensure its .d.ts is generated,
           // then redirect the import to the future .d.ts path
           await this.load({ id: dtsResolution })
@@ -133,6 +153,7 @@ export function createDtsResolvePlugin({
     } else {
       dtsPath = baseDtsResolver(id, importer)
     }
+    debug('Using %s for dts import: %O -> %O', resolver, id, dtsPath)
 
     if (dtsPath) {
       dtsPath = path.normalize(dtsPath)
