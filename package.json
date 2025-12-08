@@ -92,9 +92,9 @@
     "@sxzz/test-utils": "^0.5.13",
     "@types/babel__generator": "^7.27.0",
     "@types/node": "^24.10.1",
-    "@typescript/native-preview": "7.0.0-dev.20251204.1",
+    "@typescript/native-preview": "7.0.0-dev.20251207.1",
     "@volar/typescript": "^2.4.26",
-    "@vue/language-core": "^3.1.5",
+    "@vue/language-core": "^3.1.7",
     "arktype": "^2.1.28",
     "bumpp": "^10.3.2",
     "diff": "^8.0.2",
@@ -108,7 +108,7 @@
     "typescript": "^5.9.3",
     "vitest": "^4.0.15",
     "vue": "^3.5.25",
-    "vue-tsc": "^3.1.5"
+    "vue-tsc": "^3.1.7"
   },
   "prettier": "@sxzz/prettier-config"
 }
