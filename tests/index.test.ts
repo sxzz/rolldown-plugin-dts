@@ -567,3 +567,29 @@ test('infer false branch', async () => {
     'T extends Array<infer U> ? (T extends Array<infer U2> ? U2 : U) : ',
   )
 })
+
+test('respects outDir and declarationDir from tsconfig', async () => {
+  const root = path.resolve(dirname, 'fixtures/outdir-test')
+  const { chunks } = await rolldownBuild(
+    path.resolve(root, 'src/index.ts'),
+    [
+      dts({
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        emitDtsOnly: true,
+      }),
+    ],
+  )
+  
+  // The test fixture has declarationDir set to "./types"
+  // The plugin should respect this setting
+  const dtsFiles = chunks.filter((chunk) => chunk.fileName.endsWith('.d.ts'))
+  expect(dtsFiles.length).toBeGreaterThan(0)
+  
+  // Verify that the .d.ts files are placed in the "types/" directory
+  const hasDtsInTypesDir = dtsFiles.some((chunk) => 
+    chunk.fileName.startsWith('types/')
+  )
+  
+  expect(hasDtsInTypesDir).toBe(true)
+  expect(dtsFiles[0].fileName).toBe('types/index.d.ts')
+})

@@ -72,11 +72,12 @@ describe('tsc', () => {
       {},
       { dir: path.resolve(root, 'dist') },
     )
-    const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
+    // The tsconfig has outDir set, so the source map will be in that subdirectory
+    const sourcemap = findSourceMapChunk(chunks, 'dist/deep/nested/output/directory/1/2/3/4/5/6/7/8/9/10/index.d.ts.map')
     expect(sourcemap.sourceRoot).toBeFalsy()
     expect(sourcemap.sources).toMatchInlineSnapshot(`
       [
-        "../src/index.ts",
+        "../../../../../../../../../../../../../../../../src/index.ts",
       ]
     `)
     expect(snapshot).toMatchSnapshot()
@@ -96,11 +97,12 @@ describe('tsc', () => {
       {},
       { dir: path.resolve(root, 'dist') },
     )
-    const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
+    // The tsconfig has outDir set, so the source map will be in that subdirectory
+    const sourcemap = findSourceMapChunk(chunks, 'dist/deep/nested/output/directory/1/2/3/4/5/6/7/8/9/10/index.d.ts.map')
     expect(sourcemap.sourceRoot).toBeFalsy()
     expect(sourcemap.sources).toMatchInlineSnapshot(`
       [
-        "../src/index.d.ts",
+        "../../../../../../../../../../../../../../../../src/index.d.ts",
       ]
     `)
     expect(snapshot).toMatchSnapshot()
@@ -123,9 +125,11 @@ describe('tsc', () => {
       { dir: path.resolve(root, 'actual-output/react') },
     )
 
-    const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
+    // The tsconfig has outDir set to "build/react", so the source map will be in that subdirectory
+    const sourcemap = findSourceMapChunk(chunks, 'build/react/index.d.ts.map')
     const sources = sourcemap.sources || []
-    const expectedSources = ['../../src/types.ts', '../../src/react/index.ts']
+    // Since the .d.ts is now in build/react/, we need more ../ to reach src/
+    const expectedSources = ['../../../../src/types.ts', '../../../../src/react/index.ts']
     expect(sources.toSorted()).toEqual(expectedSources.toSorted())
     expect(sourcemap.sourcesContent).toBeOneOf([undefined, []])
   })

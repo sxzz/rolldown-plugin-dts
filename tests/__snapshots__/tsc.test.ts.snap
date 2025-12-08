@@ -13,14 +13,14 @@ export { test };"
 `;
 
 exports[`tsc > compiler project sourcemap (build: false) 2`] = `
-"// index.d.ts
+"// dist/deep/nested/output/directory/1/2/3/4/5/6/7/8/9/10/index.d.ts
 //#region tests/fixtures/deep-source-map/src/index.d.ts
 declare const a = 1;
 //#endregion
 export { a };
 //# sourceMappingURL=index.d.ts.map
-// index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"sourcesContent":[],"mappings":";cAAa,CAAA"}
+// dist/deep/nested/output/directory/1/2/3/4/5/6/7/8/9/10/index.d.ts.map
+{"version":3,"file":"index.d.ts","names":[],"sources":["../../../../../../../../../../../../../../../../src/index.ts"],"sourcesContent":[],"mappings":";cAAa,CAAA"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
@@ -33,14 +33,14 @@ export { a };
 `;
 
 exports[`tsc > compiler project sourcemap (build: true) 2`] = `
-"// index.d.ts
+"// dist/deep/nested/output/directory/1/2/3/4/5/6/7/8/9/10/index.d.ts
 //#region tests/fixtures/deep-source-map/src/index.d.ts
 declare const a = 1;
 //#endregion
 export { a };
 //# sourceMappingURL=index.d.ts.map
-// index.d.ts.map
-{"version":3,"file":"index.d.ts","names":["a"],"sources":["../src/index.d.ts"],"sourcesContent":["export declare const a = 1;\\n"],"mappings":";cAAqBA,CAAAA"}
+// dist/deep/nested/output/directory/1/2/3/4/5/6/7/8/9/10/index.d.ts.map
+{"version":3,"file":"index.d.ts","names":["a"],"sources":["../../../../../../../../../../../../../../../../src/index.d.ts"],"sourcesContent":["export declare const a = 1;\\n"],"mappings":";cAAqBA,CAAAA"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
