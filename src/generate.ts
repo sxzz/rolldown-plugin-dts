@@ -251,7 +251,7 @@ export function createGeneratePlugin({
             const [error] = result.errors
             return this.error({
               message: error.message,
-              frame: error.codeframe,
+              frame: error.codeframe || undefined,
             })
           }
           dtsCode = result.code
