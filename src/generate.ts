@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { parse } from '@babel/parser'
 import { createDebug } from 'obug'
-import { isolatedDeclarationSync as oxcIsolatedDeclaration } from 'rolldown/experimental'
+import { isolatedDeclarationSync } from 'rolldown/experimental'
 import {
   filename_to_dts,
   RE_DTS,
@@ -247,7 +247,7 @@ export function createGeneratePlugin({
             )
           }
         } else if (oxc && !RE_VUE.test(id)) {
-          const result = oxcIsolatedDeclaration(id, code, oxc)
+          const result = isolatedDeclarationSync(id, code, oxc)
           if (result.errors.length) {
             const [error] = result.errors
             return this.error({
