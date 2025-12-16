@@ -105,6 +105,7 @@ export function createGeneratePlugin({
   let tscModule: typeof import('./tsc/index.ts')
   let tscContext: TscContext | undefined
   let tsgoDist: string | undefined
+  const rootDir = tsconfig ? path.dirname(tsconfig) : cwd
 
   return {
     name: 'rolldown-plugin-dts:generate',
@@ -113,7 +114,7 @@ export function createGeneratePlugin({
       // isWatch = this.meta.watchMode
 
       if (tsgo) {
-        tsgoDist = await runTsgo(cwd, tsconfig)
+        tsgoDist = await runTsgo(rootDir, tsconfig)
       } else if (!oxc) {
         // tsc
         if (parallel) {
@@ -235,7 +236,7 @@ export function createGeneratePlugin({
             throw new Error('tsgo does not support Vue files.')
           const dtsPath = path.resolve(
             tsgoDist!,
-            path.relative(path.resolve(cwd), filename_to_dts(id)),
+            path.relative(path.resolve(rootDir), filename_to_dts(id)),
           )
           if (existsSync(dtsPath)) {
             dtsCode = await readFile(dtsPath, 'utf8')
@@ -361,7 +362,7 @@ export { __json_default_export as default }`
   }
 }
 
-async function runTsgo(root: string, tsconfig?: string) {
+async function runTsgo(rootDir: string, tsconfig?: string) {
   const tsgoPkg = import.meta.resolve('@typescript/native-preview/package.json')
   const { default: getExePath } = await import(
     new URL('lib/getExePath.js', tsgoPkg).href
@@ -369,6 +370,7 @@ async function runTsgo(root: string, tsconfig?: string) {
   const tsgo = getExePath()
   const tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
   debug('[tsgo] tsgoDist', tsgoDist)
+  debug('[tsgo] rootDir', rootDir)
 
   await spawnAsync(
     tsgo,
@@ -381,7 +383,7 @@ async function runTsgo(root: string, tsconfig?: string) {
       '--outDir',
       tsgoDist,
       '--rootDir',
-      root,
+      rootDir,
       '--noCheck',
     ],
     { stdio: 'inherit' },
