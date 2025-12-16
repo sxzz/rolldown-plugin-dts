@@ -65,7 +65,7 @@ function createTsProgram({
     baseDir,
   )
 
-  debug(`Creating program for root project: ${baseDir}`)
+  debug(`creating program for root project: ${baseDir}`)
   return createTsProgramFromParsedConfig({
     parsedConfig,
     fsSystem,
@@ -181,9 +181,17 @@ export function tscEmitCompiler(tscOptions: TscOptions): TscResult {
   // redirected output from a composite project build), the emit callback above
   // will never be invoked. In that case, fall back to the text of the source
   // file itself so that callers still receive a declaration string.
-  if (!dtsCode && file.isDeclarationFile) {
-    debug('nothing was emitted. fallback to sourceFile text.')
-    dtsCode = file.getFullText()
+  if (!dtsCode) {
+    debug('nothing was emitted.')
+
+    if (file.isDeclarationFile) {
+      debug('source file is a declaration file.')
+      dtsCode = file.getFullText()
+    } else {
+      console.warn(
+        '[rolldown-plugin-dts] Warning: Failed to emit declaration file. Please try to enable `eager` option (`dts.eager` for tsdown).',
+      )
+    }
   }
 
   return { code: dtsCode, map }
