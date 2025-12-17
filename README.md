@@ -108,14 +108,6 @@ If set to `true`, and you are only exporting a single item using `export default
 the output will use `export = ...` instead of the standard ES module syntax.
 This is useful for compatibility with CommonJS.
 
-#### `banner`
-
-Content to be added at the top of each generated `.d.ts` file.
-
-#### `footer`
-
-Content to be added at the bottom of each generated `.d.ts` file.
-
 #### `sideEffects`
 
 Indicates whether the generated `.d.ts` files have side effects.

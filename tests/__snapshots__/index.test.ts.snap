@@ -15,16 +15,6 @@ declare const shared1 = "shared1";
 export { shared1 as t };"
 `;
 
-exports[`banner 1`] = `
-"// minimal.d.ts
-/* My Banner */
-//#region tests/fixtures/minimal.d.ts
-declare function foo(): void;
-//#endregion
-export { foo };
-/* My Footer minimal.d.ts */"
-`;
-
 exports[`basic 1`] = `
 "// basic.d.ts
 //#region tests/fixtures/basic.d.ts
