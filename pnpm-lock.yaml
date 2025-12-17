@@ -32,9 +32,6 @@ importers:
       get-tsconfig:
         specifier: ^4.13.0
         version: 4.13.0
-      magic-string:
-        specifier: ^0.30.21
-        version: 0.30.21
       obug:
         specifier: ^2.1.1
         version: 2.1.1
