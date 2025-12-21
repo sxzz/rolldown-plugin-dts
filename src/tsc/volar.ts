@@ -27,11 +27,10 @@ function loadVueLanguageTools() {
         | (Ts.TsConfigSourceFile & { vueCompilerOptions?: any })
         | undefined
 
-      const resolver = new vue.CompilerOptionsResolver(ts.sys.fileExists)
+      const resolver = new vue.CompilerOptionsResolver(ts, ts.sys.readFile)
       resolver.addConfig($configRaw?.vueCompilerOptions ?? {}, $rootDir)
       const vueOptions = resolver.build()
 
-      vue.writeGlobalTypes(vueOptions, ts.sys.writeFile)
       return vue.createVueLanguagePlugin<string>(
         ts,
         options.options,
