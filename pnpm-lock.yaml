@@ -1967,15 +1967,15 @@ packages:
   resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
 
-  rolldown-plugin-dts@0.19.1:
-    resolution: {integrity: sha512-6z501zDTGq6ZrIEdk57qNUwq7kBRGzv3I3SAN2HMJ2KFYjHLnAuPYOmvfiwdxbRZMJ0iMdkV9rYdC3GjurT2cg==}
+  rolldown-plugin-dts@0.19.2:
+    resolution: {integrity: sha512-KbP0cnnjD1ubnyklqy6GCahvUsOrPFH4i+RTX6bNpyvh+jUsaxY01e9mLOU2NsGzQkJS/q4hbCbdcQoAmSWIYg==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       '@ts-macro/tsc': ^0.3.6
       '@typescript/native-preview': '>=7.0.0-dev.20250601.1'
       rolldown: ^1.0.0-beta.55
       typescript: ^5.0.0
-      vue-tsc: ~3.1.0
+      vue-tsc: ~3.2.0
     peerDependenciesMeta:
       '@ts-macro/tsc':
         optional: true
@@ -4322,7 +4322,7 @@ snapshots:
 
   resolve-pkg-maps@1.0.0: {}
 
-  rolldown-plugin-dts@0.19.1(@ts-macro/tsc@0.3.6(rollup@4.54.0))(@typescript/native-preview@7.0.0-dev.20251221.1)(rolldown@1.0.0-beta.55)(typescript@5.9.3)(vue-tsc@3.2.0(typescript@5.9.3)):
+  rolldown-plugin-dts@0.19.2(@ts-macro/tsc@0.3.6(rollup@4.54.0))(@typescript/native-preview@7.0.0-dev.20251221.1)(rolldown@1.0.0-beta.55)(typescript@5.9.3)(vue-tsc@3.2.0(typescript@5.9.3)):
     dependencies:
       '@babel/generator': 7.28.5
       '@babel/parser': 7.28.5
@@ -4501,7 +4501,7 @@ snapshots:
       obug: 2.1.1
       picomatch: 4.0.3
       rolldown: 1.0.0-beta.55
-      rolldown-plugin-dts: 0.19.1(@ts-macro/tsc@0.3.6(rollup@4.54.0))(@typescript/native-preview@7.0.0-dev.20251221.1)(rolldown@1.0.0-beta.55)(typescript@5.9.3)(vue-tsc@3.2.0(typescript@5.9.3))
+      rolldown-plugin-dts: 0.19.2(@ts-macro/tsc@0.3.6(rollup@4.54.0))(@typescript/native-preview@7.0.0-dev.20251221.1)(rolldown@1.0.0-beta.55)(typescript@5.9.3)(vue-tsc@3.2.0(typescript@5.9.3))
       semver: 7.7.3
       tinyexec: 1.0.2
       tinyglobby: 0.2.15
