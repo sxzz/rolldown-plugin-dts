@@ -2,6 +2,7 @@ import path from 'node:path'
 import { createResolver } from 'dts-resolver'
 import { createDebug } from 'obug'
 import { ResolverFactory } from 'rolldown/experimental'
+import { importerId, include } from 'rolldown/filter'
 import {
   filename_to_dts,
   RE_CSS,
@@ -43,11 +44,10 @@ export function createDtsResolvePlugin({
 
     resolveId: {
       order: 'pre',
+      // Guard: Only operate on imports inside .d.ts files
+      filter: [include(importerId(RE_DTS))],
       async handler(id, importer, options) {
-        // Guard: Only operate on imports inside .d.ts files
-        if (!importer || !RE_DTS.test(importer)) {
-          return
-        }
+        if (!importer) return
 
         const external = {
           id,
