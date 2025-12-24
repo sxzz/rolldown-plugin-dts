@@ -754,7 +754,7 @@ function isHelperImport(node: t.Node) {
       (spec) =>
         spec.type === 'ImportSpecifier' &&
         spec.imported.type === 'Identifier' &&
-        ['__export', '__reExport'].includes(spec.local.name),
+        ['__exportAll', '__reExport'].includes(spec.local.name),
     )
   )
 }
@@ -820,7 +820,7 @@ function patchImportExport(
 }
 
 /**
- * Handle `__export` call
+ * Handle `__exportAll` call
  */
 function patchTsNamespace(nodes: t.Statement[]) {
   const removed = new Set<t.Node>()
@@ -868,7 +868,7 @@ function patchTsNamespace(nodes: t.Statement[]) {
       node.declarations[0].id.type !== 'Identifier' ||
       node.declarations[0].init?.type !== 'CallExpression' ||
       node.declarations[0].init.callee.type !== 'Identifier' ||
-      node.declarations[0].init.callee.name !== '__export' ||
+      node.declarations[0].init.callee.name !== '__exportAll' ||
       node.declarations[0].init.arguments.length !== 1 ||
       node.declarations[0].init.arguments[0].type !== 'ObjectExpression'
     ) {
