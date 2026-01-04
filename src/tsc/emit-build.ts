@@ -1,5 +1,6 @@
 import { createDebug } from 'obug'
 import ts from 'typescript'
+import { RE_DTS, RE_DTS_MAP } from '../filename.ts'
 import {
   globalContext,
   type ParsedProject,
@@ -71,7 +72,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
   let map: ExistingRawSourceMap | undefined
 
   for (const outputFile of outputFiles) {
-    if (outputFile.endsWith('.d.ts')) {
+    if (RE_DTS.test(outputFile)) {
       if (!fsSystem.fileExists(outputFile)) {
         console.warn(`[rolldown-plugin-dts] Unable to read file ${outputFile}`)
         continue
@@ -80,7 +81,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
       continue
     }
 
-    if (outputFile.endsWith('.d.ts.map')) {
+    if (RE_DTS_MAP.test(outputFile)) {
       if (!fsSystem.fileExists(outputFile)) {
         continue
       }
