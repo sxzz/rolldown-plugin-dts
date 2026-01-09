@@ -334,10 +334,18 @@ export function createFakeJsPlugin({
 
         const transformedParams = depsFn.params as t.Identifier[]
 
+        // Build a map to restore original parameter names that renamed due to conflicts
+        // (e.g., when a type parameter `Props` conflicts with a type alias `Props`)
+        const paramRenameMap = new Map<string, string>()
         for (const [i, transformedParam] of transformedParams.entries()) {
           const transformedName = transformedParam.name
+          const originalName = original.params[i].name
+          if (transformedName !== originalName) {
+            paramRenameMap.set(transformedName, originalName)
+          }
+          // Always use the original name for type parameters
           for (const originalTypeParam of original.params[i].typeParams) {
-            originalTypeParam.name = transformedName
+            originalTypeParam.name = originalName
           }
         }
 
@@ -345,10 +353,21 @@ export function createFakeJsPlugin({
           .elements as t.Expression[]
         for (let i = 0; i < original.deps.length; i++) {
           const originalDep = original.deps[i]
+          let finalDep = transformedDeps[i]
+
+          // If the dependency is an Identifier that was renamed, restore it
+          if (
+            paramRenameMap.size > 0 &&
+            t.isIdentifier(finalDep) &&
+            paramRenameMap.has(finalDep.name)
+          ) {
+            finalDep = { ...finalDep, name: paramRenameMap.get(finalDep.name)! }
+          }
+
           if (originalDep.replace) {
-            originalDep.replace(transformedDeps[i])
+            originalDep.replace(finalDep)
           } else {
-            Object.assign(originalDep, transformedDeps[i])
+            Object.assign(originalDep, finalDep)
           }
         }
 
