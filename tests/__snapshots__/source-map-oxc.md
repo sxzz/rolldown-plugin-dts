@@ -12,5 +12,5 @@ export { a, b };
 ## source-map.d.ts.map
 
 ```map
-{"version":3,"file":"source-map.d.ts","names":["a: string","b: string"],"sources":["../../fixtures/source-map.ts"],"sourcesContent":[],"mappings":";cAAaA;AAAAA,cAEAC,CAFAD,EAAAA,MAAAA"}
+{"version":3,"file":"source-map.d.ts","names":[],"sources":["../../fixtures/source-map.ts"],"sourcesContent":[],"mappings":";cAAa;AAAA,cAEA,CAFA,EAAA,MAAA"}
 ```
