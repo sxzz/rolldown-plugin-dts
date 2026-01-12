@@ -6,17 +6,6 @@ import { resolveOptions, type Options } from './options.ts'
 import { createDtsResolvePlugin } from './resolver.ts'
 import type { Plugin } from 'rolldown'
 
-export {
-  RE_CSS,
-  RE_DTS,
-  RE_DTS_MAP,
-  RE_JS,
-  RE_JSON,
-  RE_NODE_MODULES,
-  RE_TS,
-  RE_VUE,
-} from './filename.ts'
-
 const debug = createDebug('rolldown-plugin-dts:options')
 
 export function dts(options: Options = {}): Plugin[] {

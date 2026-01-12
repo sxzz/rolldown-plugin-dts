@@ -17,6 +17,9 @@ export default defineConfig({
     'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.mjs'),
   },
   exports: true,
+  treeshake: {
+    moduleSideEffects: false,
+  },
   plugins: [
     dts({
       oxc: true,
