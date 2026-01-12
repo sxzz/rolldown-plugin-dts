@@ -1,7 +1,6 @@
-import { fork, spawn, type ChildProcess } from 'node:child_process'
+import { fork, type ChildProcess } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { readFile, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { parse } from '@babel/parser'
 import { createDebug } from 'obug'
@@ -24,6 +23,7 @@ import {
   invalidateContextFile,
   type TscContext,
 } from './tsc/context.ts'
+import { runTsgo } from './tsgo.ts'
 import type { OptionsResolved } from './options.ts'
 import type { TscOptions, TscResult } from './tsc/index.ts'
 import type { TscFunctions } from './tsc/worker.ts'
@@ -34,13 +34,6 @@ import type { Plugin, SourceMapInput } from 'rolldown'
 const debug = createDebug('rolldown-plugin-dts:generate')
 
 const WORKER_URL = import.meta.WORKER_URL || './tsc/worker.ts'
-
-const spawnAsync = (...args: Parameters<typeof spawn>) =>
-  new Promise<void>((resolve, reject) => {
-    const child = spawn(...args)
-    child.on('close', () => resolve())
-    child.on('error', (error) => reject(error))
-  })
 
 export interface TsModule {
   /** `.ts` source code */
@@ -114,7 +107,7 @@ export function createGeneratePlugin({
       // isWatch = this.meta.watchMode
 
       if (tsgo) {
-        tsgoDist = await runTsgo(rootDir, tsconfig)
+        tsgoDist = await runTsgo(rootDir, tsconfig, sourcemap)
       } else if (!oxc) {
         // tsc
         if (parallel) {
@@ -238,13 +231,22 @@ export function createGeneratePlugin({
             tsgoDist!,
             path.relative(path.resolve(rootDir), filename_to_dts(id)),
           )
-          if (existsSync(dtsPath)) {
-            dtsCode = await readFile(dtsPath, 'utf8')
-          } else {
+          if (!existsSync(dtsPath)) {
             debug('[tsgo]', dtsPath, 'is missing')
             throw new Error(
               `tsgo did not generate dts file for ${id}, please check your tsconfig.`,
             )
+          }
+
+          dtsCode = await readFile(dtsPath, 'utf8')
+
+          const mapPath = `${dtsPath}.map`
+          if (existsSync(mapPath)) {
+            const mapRaw = await readFile(mapPath, 'utf8')
+            map = {
+              ...JSON.parse(mapRaw),
+              sources: [id],
+            }
           }
         } else if (oxc && !RE_VUE.test(id)) {
           const result = isolatedDeclarationSync(id, code, oxc)
@@ -360,36 +362,6 @@ export { __json_default_export as default }`
       }
     },
   }
-}
-
-async function runTsgo(rootDir: string, tsconfig?: string) {
-  const tsgoPkg = import.meta.resolve('@typescript/native-preview/package.json')
-  const { default: getExePath } = await import(
-    new URL('lib/getExePath.js', tsgoPkg).href
-  )
-  const tsgo = getExePath()
-  const tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
-  debug('[tsgo] tsgoDist', tsgoDist)
-  debug('[tsgo] rootDir', rootDir)
-
-  await spawnAsync(
-    tsgo,
-    [
-      '--noEmit',
-      'false',
-      '--declaration',
-      '--emitDeclarationOnly',
-      ...(tsconfig ? ['-p', tsconfig] : []),
-      '--outDir',
-      tsgoDist,
-      '--rootDir',
-      rootDir,
-      '--noCheck',
-    ],
-    { stdio: 'inherit' },
-  )
-
-  return tsgoDist
 }
 
 function collectJsonExportMap(code: string): Map<string, string> {
