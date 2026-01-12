@@ -27,7 +27,6 @@ declare class BarType {}
 declare class BarValue {}
 //#endregion
 //#region tests/rollup-plugin-dts/type-only-import-export/index.d.ts
-
 interface O$1 {}
 declare class X {}
 interface Foo$1 {

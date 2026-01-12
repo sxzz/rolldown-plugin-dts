@@ -384,7 +384,6 @@ declare global {
 exports[`tree-shaking 1`] = `
 "// index.d.ts
 //#region tests/fixtures/tree-shaking/mod.d.ts
-
 type A = string;
 //#endregion
 export { type A };

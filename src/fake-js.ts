@@ -110,14 +110,20 @@ export function createFakeJsPlugin({
     },
     renderChunk,
 
-    generateBundle: sourcemap
-      ? undefined
-      : (options, bundle) => {
-          for (const chunk of Object.values(bundle)) {
-            if (!RE_DTS_MAP.test(chunk.fileName)) continue
-            delete bundle[chunk.fileName]
-          }
-        },
+    generateBundle(options, bundle) {
+      for (const chunk of Object.values(bundle)) {
+        if (!RE_DTS_MAP.test(chunk.fileName)) continue
+        if (sourcemap) {
+          if (chunk.type === 'chunk' || typeof chunk.source !== 'string')
+            continue
+          const map = JSON.parse(chunk.source)
+          map.sourcesContent = undefined
+          chunk.source = JSON.stringify(map)
+        } else {
+          delete bundle[chunk.fileName]
+        }
+      }
+    },
   }
 
   function transform(code: string, id: string): TransformResult {
@@ -323,6 +329,12 @@ export function createFakeJsPlugin({
 
         const symbolId = symbolIdNode.value
         const original = getSymbol(symbolId)
+
+        walkAST(original.decl, {
+          enter(node) {
+            delete node.loc
+          },
+        })
 
         for (const [i, decl] of node.declarations.entries()) {
           const transformedBinding = {

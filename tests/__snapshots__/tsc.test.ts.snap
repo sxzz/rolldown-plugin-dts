@@ -20,7 +20,7 @@ declare const a = 1;
 export { a };
 //# sourceMappingURL=index.d.ts.map
 // index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"sourcesContent":[],"mappings":";cAAa,CAAA"}
+{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":";cAAa,CAAA"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
@@ -40,7 +40,7 @@ declare const a = 1;
 export { a };
 //# sourceMappingURL=index.d.ts.map
 // index.d.ts.map
-{"version":3,"file":"index.d.ts","names":["a"],"sources":["../src/index.d.ts"],"sourcesContent":["export declare const a = 1;\\n"],"mappings":";cAAqBA,CAAAA"}
+{"version":3,"file":"index.d.ts","names":["a"],"sources":["../src/index.d.ts"],"mappings":";cAAqBA,CAAAA"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
@@ -346,7 +346,6 @@ exports[`tsc > jsdoc 1`] = `
 import { Plugin } from "rolldown";
 
 //#region tests/fixtures/jsdoc.d.ts
-
 /**
  * with imports
  */
@@ -360,8 +359,8 @@ declare function fn(): number;
  */
 interface Options {
   /**
-   * interface member
-   */
+       * interface member
+       */
   foo: string;
 }
 /**
