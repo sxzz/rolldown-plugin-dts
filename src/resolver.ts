@@ -69,6 +69,11 @@ export function createDtsResolvePlugin({
           importer,
           rolldownResolution,
         )
+        if (rolldownResolution?.external) {
+          debug('Rolldown marked dts import as external:', id)
+          return external
+        }
+
         const dtsResolution = await resolveDtsPath(
           id,
           importer,
@@ -97,7 +102,7 @@ export function createDtsResolvePlugin({
           // User doesn't want to bundle this module
           !shouldBundleNodeModule(id) &&
           // The importer is not in node_modules, or if it is, the module is marked as external by Rolldown
-          (!RE_NODE_MODULES.test(importer) || rolldownResolution?.external)
+          !RE_NODE_MODULES.test(importer)
         ) {
           debug('Externalizing node_modules dts import:', id)
           return external
