@@ -1,2 +1,3 @@
 tests/rollup-plugin-dts
 tests/__snapshots__
+dts.snapshot.json

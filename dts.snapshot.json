@@ -1,0 +1,89 @@
+{
+  "context-!~{00d}~.d.mts": {
+    "createContext": "declare function createContext(): TscContext",
+    "globalContext": "TscContext",
+    "invalidateContextFile": "declare function invalidateContextFile(_: TscContext, _: string): void",
+    "ParsedProject": "interface ParsedProject {\n tsconfigPath: string\n parsedConfig: ts.ParsedCommandLine\n}",
+    "SourceFileToProjectMap": "type SourceFileToProjectMap = Map<string, ParsedProject>",
+    "TscContext": "interface TscContext {\n programs: ts.Program[]\n files: Map<string, string>\n projects: Map<string, SourceFileToProjectMap>\n}"
+  },
+  "filename.d.mts": {
+    "filename_dts_to": "declare function filename_dts_to(_: string, _: 'js' | 'ts'): string",
+    "filename_js_to_dts": "declare function filename_js_to_dts(_: string): string",
+    "filename_to_dts": "declare function filename_to_dts(_: string): string",
+    "RE_CSS": "RegExp",
+    "RE_DTS": "RegExp",
+    "RE_DTS_MAP": "RegExp",
+    "RE_JS": "RegExp",
+    "RE_JSON": "RegExp",
+    "RE_NODE_MODULES": "RegExp",
+    "RE_TS": "RegExp",
+    "RE_VUE": "RegExp",
+    "replaceTemplateName": "declare function replaceTemplateName(_: string, _: string): string",
+    "resolveTemplateFn": "declare function resolveTemplateFn(_: string | ChunkFileNamesFunction, _: PreRenderedChunk): string",
+    "#exports": [
+      "RE_CSS",
+      "RE_DTS",
+      "RE_DTS_MAP",
+      "RE_JS",
+      "RE_JSON",
+      "RE_NODE_MODULES",
+      "RE_TS",
+      "RE_VUE",
+      "filename_dts_to",
+      "filename_js_to_dts",
+      "filename_to_dts",
+      "replaceTemplateName",
+      "resolveTemplateFn"
+    ]
+  },
+  "index-!~{00f}~.d.mts": {
+    "tscEmit": "declare function tscEmit(_: TscOptions): TscResult",
+    "TscModule": "interface TscModule {\n program: ts.Program\n file: ts.SourceFile\n}",
+    "TscOptions": "interface TscOptions {\n tsconfig?: string\n tsconfigRaw: TsConfigJson\n cwd: string\n build: boolean\n incremental: boolean\n entries?: string[]\n id: string\n sourcemap: boolean\n vue?: boolean\n tsMacro?: boolean\n context?: TscContext\n}",
+    "TscResult": "interface TscResult {\n code?: string\n map?: SourceMapInput\n error?: string\n}"
+  },
+  "index.d.mts": {
+    "createFakeJsPlugin": "declare function createFakeJsPlugin(_: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin",
+    "createGeneratePlugin": "declare function createGeneratePlugin(_: Pick<OptionsResolved, 'cwd' | 'tsconfig' | 'tsconfigRaw' | 'build' | 'incremental' | 'oxc' | 'emitDtsOnly' | 'vue' | 'tsMacro' | 'parallel' | 'eager' | 'tsgo' | 'newContext' | 'emitJs' | 'sourcemap'>): Plugin",
+    "dts": "declare function dts(_: Options): Plugin[]",
+    "GeneralOptions": "interface GeneralOptions {\n cwd?: string\n dtsInput?: boolean\n emitDtsOnly?: boolean\n tsconfig?: string | boolean\n tsconfigRaw?: Omit<TsConfigJson, 'compilerOptions'>\n compilerOptions?: TsConfigJson.CompilerOptions\n sourcemap?: boolean\n resolver?: 'oxc' | 'tsc'\n cjsDefault?: boolean\n sideEffects?: boolean\n}",
+    "Options": "interface Options extends GeneralOptions, TscOptions {\n oxc?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>\n tsgo?: boolean\n}",
+    "OptionsResolved": "type OptionsResolved = Overwrite<Required<Omit<Options, 'compilerOptions'>>, { tsconfig?: string; oxc: IsolatedDeclarationsOptions | false; tsconfigRaw: TsConfigJson }>",
+    "Overwrite": "type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U",
+    "resolveOptions": "declare function resolveOptions(_: Options): OptionsResolved",
+    "TscOptions": "interface TscOptions {\n build?: boolean\n incremental?: boolean\n vue?: boolean\n tsMacro?: boolean\n parallel?: boolean\n eager?: boolean\n newContext?: boolean\n emitJs?: boolean\n}",
+    "#exports": [
+      "Options",
+      "createFakeJsPlugin",
+      "createGeneratePlugin",
+      "dts",
+      "resolveOptions"
+    ]
+  },
+  "tsc-context.d.mts": {
+    "#exports": [
+      "ParsedProject",
+      "SourceFileToProjectMap",
+      "TscContext",
+      "createContext",
+      "globalContext",
+      "invalidateContextFile"
+    ]
+  },
+  "tsc-worker.d.mts": {
+    "functions": "{\n tscEmit: typeof tscEmit\n}",
+    "TscFunctions": "type TscFunctions = typeof functions",
+    "#exports": [
+      "TscFunctions"
+    ]
+  },
+  "tsc.d.mts": {
+    "#exports": [
+      "TscModule",
+      "TscOptions",
+      "TscResult",
+      "tscEmit"
+    ]
+  }
+}

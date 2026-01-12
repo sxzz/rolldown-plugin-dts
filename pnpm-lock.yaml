@@ -81,6 +81,9 @@ importers:
       rolldown:
         specifier: ^1.0.0-beta.57
         version: 1.0.0-beta.57
+      rolldown-plugin-dts-snapshot:
+        specifier: ^0.3.2
+        version: 0.3.2(rolldown@1.0.0-beta.57)
       rolldown-plugin-require-cjs:
         specifier: ^0.3.3
         version: 0.3.3(rolldown@1.0.0-beta.57)
@@ -138,6 +141,12 @@ packages:
   '@babel/types@7.28.5':
     resolution: {integrity: sha512-qQ5m48eI/MFLQ5PxQj4PFaprjyCTLI37ElWMmNs0K8Lk3dVeOdNpB3ks8jc7yM5CDmVC73eMVk/trk3fgmrUpA==}
     engines: {node: '>=6.9.0'}
+
+  '@dprint/formatter@0.4.1':
+    resolution: {integrity: sha512-IB/GXdlMOvi0UhQQ9mcY15Fxcrc2JPadmo6tqefCNV0bptFq7YBpggzpqYXldBXDa04CbKJ+rDwO2eNRPE2+/g==}
+
+  '@dprint/typescript@0.95.13':
+    resolution: {integrity: sha512-lzhaiENYcsLOo+qJHzwWbZ/Ne+67eDGLwhU52Z0AnW6gHeCN1EZ8DDe5gI/f/Fvk2Jd2wlnmoyrsrYnkg/SDgw==}
 
   '@emnapi/core@1.7.1':
     resolution: {integrity: sha512-o1uhUASyo921r2XtHYOHy7gdkGLge8ghBEQHMWmyJFoXlpU58kIrhhN3w26lpQb6dspetweapMn2CSNwQ8I4wg==}
@@ -1970,6 +1979,12 @@ packages:
   resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
 
+  rolldown-plugin-dts-snapshot@0.3.2:
+    resolution: {integrity: sha512-i7YB+4SZg2Tj9NsYGGwFdervgWQfBBGGn7PJqKlzWggG/q13YQ8Y57xg4OAPoBrjaj1H7kDzjK+ByBvj7j7ckg==}
+    engines: {node: '>=20.19.0'}
+    peerDependencies:
+      rolldown: ^1.0.0-beta.57
+
   rolldown-plugin-dts@0.20.0:
     resolution: {integrity: sha512-cLAY1kN2ilTYMfZcFlGWbXnu6Nb+8uwUBsi+Mjbh4uIx7IN8uMOmJ7RxrrRgPsO4H7eSz3E+JwGoL1gyugiyUA==}
     engines: {node: '>=20.19.0'}
@@ -2374,6 +2389,10 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
+
+  '@dprint/formatter@0.4.1': {}
+
+  '@dprint/typescript@0.95.13': {}
 
   '@emnapi/core@1.7.1':
     dependencies:
@@ -4323,6 +4342,14 @@ snapshots:
   resolve-from@4.0.0: {}
 
   resolve-pkg-maps@1.0.0: {}
+
+  rolldown-plugin-dts-snapshot@0.3.2(rolldown@1.0.0-beta.57):
+    dependencies:
+      '@dprint/formatter': 0.4.1
+      '@dprint/typescript': 0.95.13
+      magic-string: 0.30.21
+      rolldown: 1.0.0-beta.57
+      unplugin-utils: 0.3.1
 
   rolldown-plugin-dts@0.20.0(@ts-macro/tsc@0.3.6(rollup@4.54.0))(@typescript/native-preview@7.0.0-dev.20251228.1)(rolldown@1.0.0-beta.57)(typescript@5.9.3)(vue-tsc@3.2.1(typescript@5.9.3)):
     dependencies:
