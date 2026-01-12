@@ -71,27 +71,27 @@ export = _default;"
 `;
 
 exports[`cyclic import 1`] = `
-"// a-lvZBT-VD.d.ts
+"// a-CuQYZCd5.d.ts
 //#region b.d.ts
-declare class SomeClass<T$1 extends SomeInterface<number>> {
-  value: T$1;
-  constructor(value: T$1);
-  doSomething<T$1 extends SomeInterface<number>>(value: T$1): T$1;
+declare class SomeClass<T extends SomeInterface<number>> {
+  value: T;
+  constructor(value: T);
+  doSomething<T extends SomeInterface<number>>(value: T): T;
 }
 type SomeBoolean = boolean;
 //#endregion
 //#region a.d.ts
-interface SomeInterface<T$1> {
-  value: T$1;
+interface SomeInterface<T> {
+  value: T;
 }
 type T = SomeBoolean;
 //#endregion
 export { SomeClass as i, T as n, SomeBoolean as r, SomeInterface as t };
 // a.d.ts
-import { n as T, t as SomeInterface } from "./a-lvZBT-VD.js";
+import { n as T, t as SomeInterface } from "./a-CuQYZCd5.js";
 export { SomeInterface, T };
 // b.d.ts
-import { i as SomeClass, r as SomeBoolean } from "./a-lvZBT-VD.js";
+import { i as SomeClass, r as SomeBoolean } from "./a-CuQYZCd5.js";
 export { SomeBoolean, SomeClass };"
 `;
 
