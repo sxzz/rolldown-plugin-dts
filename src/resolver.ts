@@ -8,7 +8,6 @@ import {
   RE_CSS,
   RE_DTS,
   RE_JSON,
-  RE_NODE_MODULES,
   RE_TS,
   RE_VUE,
 } from './filename.ts'
@@ -25,16 +24,15 @@ export function createDtsResolvePlugin({
   cwd,
   tsconfig,
   tsconfigRaw,
-  resolve,
   resolver,
   sideEffects,
 }: Pick<
   OptionsResolved,
-  'cwd' | 'tsconfig' | 'tsconfigRaw' | 'resolve' | 'resolver' | 'sideEffects'
+  'cwd' | 'tsconfig' | 'tsconfigRaw' | 'resolver' | 'sideEffects'
 >): Plugin {
   const baseDtsResolver = createResolver({
     tsconfig,
-    resolveNodeModules: !!resolve,
+    resolveNodeModules: true,
     ResolverFactory,
   })
   const moduleSideEffects = sideEffects ? true : null
@@ -95,19 +93,6 @@ export function createDtsResolvePlugin({
           return isFileImport ? null : external
         }
 
-        // Externalize non-bundled node_modules dependencies
-        if (
-          // request resolved to inside node_modules
-          RE_NODE_MODULES.test(dtsResolution) &&
-          // User doesn't want to bundle this module
-          !shouldBundleNodeModule(id) &&
-          // The importer is not in node_modules, or if it is, the module is marked as external by Rolldown
-          !RE_NODE_MODULES.test(importer)
-        ) {
-          debug('Externalizing node_modules dts import:', id)
-          return external
-        }
-
         // The path is either a declaration file or a source file that needs redirection.
         if (RE_DTS.test(dtsResolution)) {
           debug('Resolving dts import to declaration file:', id)
@@ -130,13 +115,6 @@ export function createDtsResolvePlugin({
         }
       },
     },
-  }
-
-  function shouldBundleNodeModule(id: string) {
-    if (typeof resolve === 'boolean') return resolve
-    return resolve.some((pattern) =>
-      typeof pattern === 'string' ? id === pattern : pattern.test(id),
-    )
   }
 
   async function resolveDtsPath(

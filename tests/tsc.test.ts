@@ -215,13 +215,17 @@ describe('tsc', () => {
 
   test('vue-sfc w/ ts-compiler w/ vueCompilerOptions in tsconfig', async () => {
     const root = path.resolve(dirname, 'fixtures/vue-sfc-fallthrough')
-    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
-      dts({
-        tsconfig: path.resolve(root, 'tsconfig.json'),
-        emitDtsOnly: true,
-        vue: true,
-      }),
-    ])
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'main.ts'),
+      [
+        dts({
+          tsconfig: path.resolve(root, 'tsconfig.json'),
+          emitDtsOnly: true,
+          vue: true,
+        }),
+      ],
+      { external: ['vue'] },
+    )
     expect(snapshot).toMatchSnapshot()
   })
 
@@ -229,6 +233,7 @@ describe('tsc', () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/jsdoc.ts'),
       [dts({ oxc: false })],
+      { external: ['rolldown'] },
     )
     expect(snapshot).toMatchSnapshot()
   })
@@ -258,14 +263,18 @@ describe('tsc', () => {
 
   test('vue-sfc w/ ts-macro w/ ts-compiler', async () => {
     const root = path.resolve(dirname, 'fixtures/vue-sfc-with-ts-macro')
-    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
-      dts({
-        emitDtsOnly: true,
-        tsconfig: path.resolve(root, 'tsconfig.json'),
-        vue: true,
-        tsMacro: true,
-      }),
-    ])
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'main.ts'),
+      [
+        dts({
+          emitDtsOnly: true,
+          tsconfig: path.resolve(root, 'tsconfig.json'),
+          vue: true,
+          tsMacro: true,
+        }),
+      ],
+      { external: ['vue'] },
+    )
     expect(snapshot).toMatchSnapshot()
   })
 
@@ -280,6 +289,7 @@ describe('tsc', () => {
           emitDtsOnly: true,
         }),
       ],
+      { external: [/^arktype/] },
     )
     expect(snapshot).toMatchSnapshot()
   })

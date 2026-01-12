@@ -81,16 +81,6 @@ See: [TypeScript compilerOptions documentation](https://www.typescriptlang.org/t
 
 If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
 
-#### `resolve`
-
-Controls whether type definitions from `node_modules` are bundled into your final `.d.ts` file or kept as external `import` statements.
-
-By default, dependencies are external, resulting in `import { Type } from 'some-package'`. When bundled, this `import` is removed, and the type definitions from `some-package` are copied directly into your file.
-
-- `true`: Bundles all dependencies.
-- `false`: (Default) Keeps all dependencies external.
-- `(string | RegExp)[]`: Bundles only dependencies matching the provided strings or regular expressions (e.g. `['pkg-a', /^@scope\//]`).
-
 #### `resolver`
 
 Specifies a resolver to resolve type definitions, especially for `node_modules`.
