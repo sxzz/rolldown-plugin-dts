@@ -7,6 +7,5 @@ Index: diff.patch
 -type Config1<Client> = Client
 +type Config1<Client$1> = Client$1
  type Client = any
--type Config2<Client> = Client
-+type Config2<Client$1> = Client$1
+ type Config2<Client> = Client
  export { Client, Config1, Config2 }

@@ -4,6 +4,6 @@ type Config1<Client$1> = Client$1;
 //#endregion
 //#region tests/rollup-plugin-dts/generic-shadowing/index.d.ts
 type Client = any;
-type Config2<Client$1> = Client$1;
+type Config2<Client> = Client;
 //#endregion
 export { Client, Config1, Config2 };

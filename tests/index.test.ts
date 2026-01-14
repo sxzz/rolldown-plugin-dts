@@ -430,13 +430,13 @@ test('manualChunks', async () => {
   expect(chunks).toHaveLength(2)
 })
 
-test('advancedChunks', async () => {
+test('codeSplitting', async () => {
   const { snapshot, chunks } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/manual-chunk/entry.ts'),
     [dts({ emitDtsOnly: true })],
     {},
     {
-      advancedChunks: {
+      codeSplitting: {
         groups: [{ test: /shared1/, name: 'shared1-chunk.d' }],
       },
     },

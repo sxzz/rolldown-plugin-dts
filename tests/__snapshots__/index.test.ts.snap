@@ -1,20 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`advancedChunks 1`] = `
-"// entry.d.ts
-import { t as shared1 } from "./shared1-chunk-DsfELruD.js";
-
-//#region tests/fixtures/manual-chunk/shared2.d.ts
-declare const shared2 = "shared2";
-//#endregion
-export { shared1, shared2 };
-// shared1-chunk-DsfELruD.d.ts
-//#region tests/fixtures/manual-chunk/shared1.d.ts
-declare const shared1 = "shared1";
-//#endregion
-export { shared1 as t };"
-`;
-
 exports[`basic 1`] = `
 "// basic.d.ts
 //#region tests/fixtures/basic.d.ts
@@ -38,11 +23,11 @@ export { Cls, Enum, fn, foo };
 //#region tests/fixtures/basic.ts
 const foo = 42;
 function fn(arg0, opt) {}
-let Enum = /* @__PURE__ */ function(Enum$1) {
-	Enum$1[Enum$1["A"] = 0] = "A";
-	Enum$1[Enum$1["B"] = 1] = "B";
-	Enum$1[Enum$1["C"] = 2] = "C";
-	return Enum$1;
+let Enum = /* @__PURE__ */ function(Enum) {
+	Enum[Enum["A"] = 0] = "A";
+	Enum[Enum["B"] = 1] = "B";
+	Enum[Enum["C"] = 2] = "C";
+	return Enum;
 }({});
 var Cls = class {
 	foo;
@@ -70,8 +55,23 @@ declare const _default: number;
 export = _default;"
 `;
 
+exports[`codeSplitting 1`] = `
+"// entry.d.ts
+import { t as shared1 } from "./shared1-chunk-DsfELruD.js";
+
+//#region tests/fixtures/manual-chunk/shared2.d.ts
+declare const shared2 = "shared2";
+//#endregion
+export { shared1, shared2 };
+// shared1-chunk-DsfELruD.d.ts
+//#region tests/fixtures/manual-chunk/shared1.d.ts
+declare const shared1 = "shared1";
+//#endregion
+export { shared1 as t };"
+`;
+
 exports[`cyclic import 1`] = `
-"// a-lvZBT-VD.d.ts
+"// a-BcudblMC.d.ts
 //#region b.d.ts
 declare class SomeClass<T$1 extends SomeInterface<number>> {
   value: T$1;
@@ -81,17 +81,17 @@ declare class SomeClass<T$1 extends SomeInterface<number>> {
 type SomeBoolean = boolean;
 //#endregion
 //#region a.d.ts
-interface SomeInterface<T$1> {
-  value: T$1;
+interface SomeInterface<T> {
+  value: T;
 }
 type T = SomeBoolean;
 //#endregion
 export { SomeClass as i, T as n, SomeBoolean as r, SomeInterface as t };
 // a.d.ts
-import { n as T, t as SomeInterface } from "./a-lvZBT-VD.js";
+import { n as T, t as SomeInterface } from "./a-BcudblMC.js";
 export { SomeInterface, T };
 // b.d.ts
-import { i as SomeClass, r as SomeBoolean } from "./a-lvZBT-VD.js";
+import { i as SomeClass, r as SomeBoolean } from "./a-BcudblMC.js";
 export { SomeBoolean, SomeClass };"
 `;
 
