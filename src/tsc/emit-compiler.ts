@@ -63,6 +63,18 @@ function createTsProgram({
     tsconfigRaw,
     fsSystem,
     baseDir,
+    undefined,
+    undefined,
+    undefined,
+    vue
+      ? [
+          {
+            extension: 'vue',
+            isMixedContent: true,
+            scriptKind: ts.ScriptKind.Deferred,
+          },
+        ]
+      : undefined,
   )
 
   debug(`creating program for root project: ${baseDir}`)

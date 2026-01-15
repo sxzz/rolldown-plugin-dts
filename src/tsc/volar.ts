@@ -3,12 +3,13 @@ import { createDebug } from 'obug'
 import type { TscOptions } from './types.ts'
 import type Ts from 'typescript'
 
-function loadVueLanguageTools() {
-  const debug = createDebug('rolldown-plugin-dts:vue')
+const debug = createDebug('rolldown-plugin-dts:volar')
+
+export function loadVueLanguageTools() {
   debug('loading vue language tools')
   try {
     const vueTscPath = require.resolve('vue-tsc')
-    const { proxyCreateProgram } = require(
+    const volarTs = require(
       require.resolve('@volar/typescript', {
         paths: [vueTscPath],
       }),
@@ -18,27 +19,7 @@ function loadVueLanguageTools() {
         paths: [vueTscPath],
       }),
     ) as typeof import('@vue/language-core')
-    const getLanguagePlugin = (
-      ts: typeof Ts,
-      options: Ts.CreateProgramOptions,
-    ) => {
-      const $rootDir = options.options.$rootDir as string
-      const $configRaw = options.options.$configRaw as
-        | (Ts.TsConfigSourceFile & { vueCompilerOptions?: any })
-        | undefined
-
-      const resolver = new vue.CompilerOptionsResolver(ts, ts.sys.readFile)
-      resolver.addConfig($configRaw?.vueCompilerOptions ?? {}, $rootDir)
-      const vueOptions = resolver.build()
-
-      return vue.createVueLanguagePlugin<string>(
-        ts,
-        options.options,
-        vueOptions,
-        (id) => id,
-      )
-    }
-    return { proxyCreateProgram, getLanguagePlugin }
+    return { volarTs, vue }
   } catch (error) {
     debug('vue language tools not found', error)
     throw new Error(
@@ -47,7 +28,36 @@ function loadVueLanguageTools() {
   }
 }
 
-function loadTsMacro() {
+function initVueLanguageTools() {
+  const {
+    vue,
+    volarTs: { proxyCreateProgram },
+  } = loadVueLanguageTools()
+
+  const getLanguagePlugin = (
+    ts: typeof Ts,
+    options: Ts.CreateProgramOptions,
+  ) => {
+    const $rootDir = options.options.$rootDir as string
+    const $configRaw = options.options.$configRaw as
+      | (Ts.TsConfigSourceFile & { vueCompilerOptions?: any })
+      | undefined
+
+    const resolver = new vue.CompilerOptionsResolver(ts, ts.sys.readFile)
+    resolver.addConfig($configRaw?.vueCompilerOptions ?? {}, $rootDir)
+    const vueOptions = resolver.build()
+
+    return vue.createVueLanguagePlugin<string>(
+      ts,
+      options.options,
+      vueOptions,
+      (id) => id,
+    )
+  }
+  return { proxyCreateProgram, getLanguagePlugin }
+}
+
+function initTsMacro() {
   const debug = createDebug('rolldown-plugin-dts:ts-macro')
   debug('loading ts-macro language tools')
   try {
@@ -93,8 +103,8 @@ export function createProgramFactory(
   ts: typeof Ts,
   options: Pick<TscOptions, 'vue' | 'tsMacro'>,
 ): typeof Ts.createProgram {
-  const vueLanguageTools = options.vue ? loadVueLanguageTools() : undefined
-  const tsMacroLanguageTools = options.tsMacro ? loadTsMacro() : undefined
+  const vueLanguageTools = options.vue ? initVueLanguageTools() : undefined
+  const tsMacroLanguageTools = options.tsMacro ? initTsMacro() : undefined
   const proxyCreateProgram =
     vueLanguageTools?.proxyCreateProgram ||
     tsMacroLanguageTools?.proxyCreateProgram

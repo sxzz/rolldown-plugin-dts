@@ -21,6 +21,7 @@ export default defineConfig({
   treeshake: {
     moduleSideEffects: false,
   },
+  external: ['@vue/language-core'],
   plugins: [
     dts({
       oxc: true,
