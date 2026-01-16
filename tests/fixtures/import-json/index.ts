@@ -12,3 +12,6 @@ export { invalidNs }
 
 import nested from './nested.json'
 export { nested }
+
+import arrayOfObjects from './array-of-object.json'
+export { arrayOfObjects }
