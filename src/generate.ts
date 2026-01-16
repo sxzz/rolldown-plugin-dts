@@ -296,7 +296,10 @@ export function createGeneratePlugin({
           if (dtsCode && RE_JSON.test(id)) {
             // if contains invalid json keys
             if (dtsCode.includes('declare const _exports')) {
-              if (dtsCode.includes('declare const _exports: {')) {
+              if (
+                dtsCode.includes('declare const _exports: {') &&
+                !dtsCode.includes('\n}[];')
+              ) {
                 // patch: add named export
                 const exports = collectJsonExports(dtsCode)
                 let i = 0
