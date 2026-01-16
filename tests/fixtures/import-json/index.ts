@@ -4,8 +4,11 @@ import * as fooNs from './foo.json'
 import bar from './bar.json'
 import * as barNs from './bar.json'
 
+import baz from './baz.json'
+import * as bazNs from './baz.json'
+
 export { name, age } from './foo.json'
-export { foo, bar, fooNs, barNs }
+export { foo, bar, baz, fooNs, barNs, bazNs }
 
 import * as invalidNs from './invalid.json'
 export { invalidNs }
