@@ -81,6 +81,7 @@ test('disable dts source map only', async () => {
     [
       "index.d.ts",
       "index.js",
+      "chunk-CzXV76rE.js",
       "index.js.map",
     ]
   `)

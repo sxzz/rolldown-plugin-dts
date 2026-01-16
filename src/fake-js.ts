@@ -44,6 +44,7 @@ interface SymbolInfo {
   bindings: t.Identifier[]
   params: GroupedTypeParams
   deps: Dep[]
+  children: t.Node[]
 }
 
 type NamespaceMap = Map<
@@ -204,8 +205,11 @@ export function createFakeJsPlugin({
       }
 
       const params: GroupedTypeParams = collectParams(decl)
-
-      const deps = collectDependencies(decl, namespaceStmts)
+      const children = new Set<t.Node>()
+      const deps = collectDependencies(decl, namespaceStmts, children)
+      const childrenArray = Array.from(children).filter((child) =>
+        bindings.every((b) => child !== b),
+      )
 
       if (decl !== stmt) {
         decl.leadingComments = stmt.leadingComments
@@ -216,6 +220,7 @@ export function createFakeJsPlugin({
         deps,
         bindings,
         params,
+        children: childrenArray,
       })
 
       const symbolIdNode = t.numericLiteral(symbolId)
@@ -223,16 +228,33 @@ export function createFakeJsPlugin({
         params.map(({ name }) => t.identifier(name)),
         t.arrayExpression(deps),
       )
+      const interfaceKeysNode = t.arrayExpression(
+        childrenArray.map((node) => ({
+          type: 'StringLiteral',
+          value: '',
+          start: node.start,
+          end: node.end,
+          loc: node.loc,
+        })),
+      )
       const sideEffectNode =
         sideEffect &&
         t.callExpression(t.identifier('sideEffect'), [bindings[0]])
-      const runtimeArrayNode = runtimeBindingArrayExpression(
-        sideEffectNode
-          ? [symbolIdNode, depsNode, sideEffectNode]
-          : [symbolIdNode, depsNode],
-      )
+      const runtimeArrayNode = runtimeBindingArrayExpression([
+        symbolIdNode,
+        depsNode,
+        interfaceKeysNode,
+        ...(sideEffectNode ? ([sideEffectNode] as const) : ([] as const)),
+      ])
 
-      // var ${binding} = [${symbolId}, (param, ...) => [dep, ...], sideEffect()]
+      /*
+      var ${binding} = [
+        ${symbolId},
+        (param, ...) => [dep, ...],
+        ["interface keys"],
+        sideEffect()
+      ]
+      */
       const runtimeAssignment: RuntimeBindingVariableDeclration = {
         type: 'VariableDeclaration',
         kind: 'var',
@@ -286,6 +308,7 @@ export function createFakeJsPlugin({
       sourceMaps: sourcemap,
       sourceFileName: id,
     })
+
     return result
   }
 
@@ -324,7 +347,7 @@ export function createFakeJsPlugin({
           return null
         }
 
-        const [symbolIdNode, depsFn /*, ignore sideEffect */] =
+        const [symbolIdNode, depsFn, children /*, ignore sideEffect */] =
           node.declarations[0].init.elements
 
         const symbolId = symbolIdNode.value
@@ -344,8 +367,17 @@ export function createFakeJsPlugin({
           overwriteNode(original.bindings[i], transformedBinding)
         }
 
-        const transformedParams = depsFn.params as t.Identifier[]
+        for (const [i, child] of (
+          children.elements as t.StringLiteral[]
+        ).entries()) {
+          Object.assign(original.children[i], {
+            loc: child.loc,
+            start: child.start,
+            end: child.end,
+          })
+        }
 
+        const transformedParams = depsFn.params as t.Identifier[]
         for (const [i, transformedParam] of transformedParams.entries()) {
           const transformedName = transformedParam.name
           for (const originalTypeParam of original.params[i].typeParams) {
@@ -459,6 +491,7 @@ export function createFakeJsPlugin({
   function collectDependencies(
     node: t.Node,
     namespaceStmts: NamespaceMap,
+    children: Set<t.Node>,
   ): Dep[] {
     const deps = new Set<Dep>()
     const seen = new Set<t.Node>()
@@ -551,10 +584,13 @@ export function createFakeJsPlugin({
                 namespaceStmts,
               )
               addDependency(dep)
-
               break
             }
           }
+
+        if (parent && !deps.has(node as any) && isChildSymbol(node, parent)) {
+          children.add(node)
+        }
       },
     })
     return Array.from(deps)
@@ -608,6 +644,17 @@ export function createFakeJsPlugin({
     }
     return dep
   }
+}
+
+function isChildSymbol(node: t.Node, parent: t.Node) {
+  if (node.type === 'Identifier') return true
+  if (
+    isTypeOf(parent, ['TSPropertySignature', 'TSMethodSignature']) &&
+    parent.key === node
+  )
+    return true
+
+  return false
 }
 
 function collectInferredNames(node: t.Node) {
@@ -701,16 +748,18 @@ function runtimeBindingArrayExpression(
   return t.arrayExpression(elements) as RuntimeBindingArrayExpression
 }
 
+type RuntimeBindingArrayElementsBase = [
+  symbolId: t.NumericLiteral,
+  deps: t.ArrowFunctionExpression,
+  children: t.ArrayExpression,
+]
+
 /**
  * An array that represents the elements in {@link RuntimeBindingArrayExpression}
  */
 type RuntimeBindingArrayElements =
-  | [symbolId: t.NumericLiteral, deps: t.ArrowFunctionExpression]
-  | [
-      symbolId: t.NumericLiteral,
-      deps: t.ArrowFunctionExpression,
-      effect: t.CallExpression,
-    ]
+  | RuntimeBindingArrayElementsBase
+  | [...RuntimeBindingArrayElementsBase, effect: t.CallExpression]
 
 /**
  * Check if the given array is a {@link RuntimeBindingArrayElements}
@@ -718,10 +767,11 @@ type RuntimeBindingArrayElements =
 function isRuntimeBindingArrayElements(
   elements: Array<t.Node | null | undefined>,
 ): elements is RuntimeBindingArrayElements {
-  const [symbolId, deps, effect] = elements
+  const [symbolId, deps, children, effect] = elements
   return (
     t.isNumericLiteral(symbolId) &&
     t.isArrowFunctionExpression(deps) &&
+    t.isArrayExpression(children) &&
     (!effect || t.isCallExpression(effect))
   )
 }
