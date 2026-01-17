@@ -34,22 +34,25 @@ type Dep = t.Expression & { replace?: (newNode: t.Node) => void }
 /**
  * A collection of type parameters grouped by parameter name
  */
-type GroupedTypeParams = Array<{
+type TypeParams = Array<{
   name: string
   typeParams: t.TSTypeParameter[]
 }>
 
-interface SymbolInfo {
+interface DeclarationInfo {
   decl: t.Declaration
   bindings: t.Identifier[]
-  params: GroupedTypeParams
+  params: TypeParams
   deps: Dep[]
   children: t.Node[]
 }
 
 type NamespaceMap = Map<
   string,
-  { stmt: t.Statement; local: t.Identifier | t.TSQualifiedName }
+  {
+    stmt: t.Statement
+    local: t.Identifier | t.TSQualifiedName
+  }
 >
 
 export function createFakeJsPlugin({
@@ -57,11 +60,11 @@ export function createFakeJsPlugin({
   cjsDefault,
   sideEffects,
 }: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin {
-  let symbolIdx = 0
+  let declarationIdx = 0
   const identifierMap: Record<string, number> = Object.create(null)
-  const symbolMap = new Map<number /* symbol id */, SymbolInfo>()
+  const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
-  const typeOnlyMap = new Map<string, string[]>()
+  const typeOnlyMap = new Map<string /* filename */, string[]>()
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
@@ -72,6 +75,7 @@ export function createFakeJsPlugin({
           '[rolldown-plugin-dts] Cannot bundle dts files with `cjs` format.',
         )
       }
+
       const { chunkFileNames, entryFileNames } = options
       return {
         ...options,
@@ -114,6 +118,7 @@ export function createFakeJsPlugin({
     generateBundle(options, bundle) {
       for (const chunk of Object.values(bundle)) {
         if (!RE_DTS_MAP.test(chunk.fileName)) continue
+
         if (sourcemap) {
           if (chunk.type === 'chunk' || typeof chunk.source !== 'string')
             continue
@@ -157,15 +162,16 @@ export function createFakeJsPlugin({
       ) {
         continue
       }
-      const isDefaultExport = stmt.type === 'ExportDefaultDeclaration'
-      const isDecl =
-        isTypeOf(stmt, [
-          'ExportNamedDeclaration',
-          'ExportDefaultDeclaration',
-        ]) && stmt.declaration
 
-      const decl: t.Node = isDecl ? stmt.declaration! : stmt
-      const setDecl = isDecl
+      const isDefaultExport = stmt.type === 'ExportDefaultDeclaration'
+      const isExportDecl =
+        isTypeOf(stmt, [
+          'ExportNamedDeclaration', // export let x
+          'ExportDefaultDeclaration', // export default function x() {}
+        ]) && !!stmt.declaration
+
+      const decl: t.Node = isExportDecl ? stmt.declaration! : stmt
+      const setDecl = isExportDecl
         ? (decl: t.Declaration) => (stmt.declaration = decl)
         : setStmt
 
@@ -204,10 +210,11 @@ export function createFakeJsPlugin({
         decl.id = binding
       }
 
-      const params: GroupedTypeParams = collectParams(decl)
-      const children = new Set<t.Node>()
-      const deps = collectDependencies(decl, namespaceStmts, children)
-      const childrenArray = Array.from(children).filter((child) =>
+      const params: TypeParams = collectParams(decl)
+
+      const childrenSet = new Set<t.Node>()
+      const deps = collectDependencies(decl, namespaceStmts, childrenSet)
+      const children = Array.from(childrenSet).filter((child) =>
         bindings.every((b) => child !== b),
       )
 
@@ -215,21 +222,21 @@ export function createFakeJsPlugin({
         decl.leadingComments = stmt.leadingComments
       }
 
-      const symbolId = registerSymbol({
+      const declarationId = registerDeclaration({
         decl,
         deps,
         bindings,
         params,
-        children: childrenArray,
+        children,
       })
 
-      const symbolIdNode = t.numericLiteral(symbolId)
+      const declarationIdNode = t.numericLiteral(declarationId)
       const depsNode = t.arrowFunctionExpression(
         params.map(({ name }) => t.identifier(name)),
         t.arrayExpression(deps),
       )
-      const interfaceKeysNode = t.arrayExpression(
-        childrenArray.map((node) => ({
+      const childrenNode = t.arrayExpression(
+        children.map((node) => ({
           type: 'StringLiteral',
           value: '',
           start: node.start,
@@ -241,17 +248,17 @@ export function createFakeJsPlugin({
         sideEffect &&
         t.callExpression(t.identifier('sideEffect'), [bindings[0]])
       const runtimeArrayNode = runtimeBindingArrayExpression([
-        symbolIdNode,
+        declarationIdNode,
         depsNode,
-        interfaceKeysNode,
+        childrenNode,
         ...(sideEffectNode ? ([sideEffectNode] as const) : ([] as const)),
       ])
 
       /*
       var ${binding} = [
-        ${symbolId},
+        ${declarationId},
         (param, ...) => [dep, ...],
-        ["interface keys"],
+        ["children symbol name"],
         sideEffect()
       ]
       */
@@ -347,13 +354,13 @@ export function createFakeJsPlugin({
           return null
         }
 
-        const [symbolIdNode, depsFn, children /*, ignore sideEffect */] =
+        const [declarationIdNode, depsFn, children /*, ignore sideEffect */] =
           node.declarations[0].init.elements
 
-        const symbolId = symbolIdNode.value
-        const original = getSymbol(symbolId)
+        const declarationId = declarationIdNode.value
+        const declaration = getDeclaration(declarationId)
 
-        walkAST(original.decl, {
+        walkAST(declaration.decl, {
           enter(node) {
             delete node.loc
           },
@@ -362,33 +369,30 @@ export function createFakeJsPlugin({
         for (const [i, decl] of node.declarations.entries()) {
           const transformedBinding = {
             ...decl.id,
-            typeAnnotation: original.bindings[i].typeAnnotation,
+            typeAnnotation: declaration.bindings[i].typeAnnotation,
           }
-          overwriteNode(original.bindings[i], transformedBinding)
+          overwriteNode(declaration.bindings[i], transformedBinding)
         }
 
         for (const [i, child] of (
           children.elements as t.StringLiteral[]
         ).entries()) {
-          Object.assign(original.children[i], {
+          Object.assign(declaration.children[i], {
             loc: child.loc,
-            start: child.start,
-            end: child.end,
           })
         }
 
         const transformedParams = depsFn.params as t.Identifier[]
         for (const [i, transformedParam] of transformedParams.entries()) {
           const transformedName = transformedParam.name
-          for (const originalTypeParam of original.params[i].typeParams) {
+          for (const originalTypeParam of declaration.params[i].typeParams) {
             originalTypeParam.name = transformedName
           }
         }
 
         const transformedDeps = (depsFn.body as t.ArrayExpression)
           .elements as t.Expression[]
-        for (let i = 0; i < original.deps.length; i++) {
-          const originalDep = original.deps[i]
+        for (const [i, originalDep] of declaration.deps.entries()) {
           if (originalDep.replace) {
             originalDep.replace(transformedDeps[i])
           } else {
@@ -396,7 +400,7 @@ export function createFakeJsPlugin({
           }
         }
 
-        return inheritNodeComments(node, original.decl)
+        return inheritNodeComments(node, declaration.decl)
       })
       .filter((node) => !!node)
 
@@ -442,14 +446,14 @@ export function createFakeJsPlugin({
     return (identifierMap[name] = 0)
   }
 
-  function registerSymbol(info: SymbolInfo) {
-    const symbolId = symbolIdx++
-    symbolMap.set(symbolId, info)
-    return symbolId
+  function registerDeclaration(info: DeclarationInfo) {
+    const declarationId = declarationIdx++
+    declarationMap.set(declarationId, info)
+    return declarationId
   }
 
-  function getSymbol(symbolId: number) {
-    return symbolMap.get(symbolId)!
+  function getDeclaration(declarationId: number) {
+    return declarationMap.get(declarationId)!
   }
 
   /**
@@ -458,7 +462,7 @@ export function createFakeJsPlugin({
    * names will be used as the parameter name in the generated JavaScript
    * dependency function.
    */
-  function collectParams(node: t.Node): GroupedTypeParams {
+  function collectParams(node: t.Node): TypeParams {
     const typeParams: t.TSTypeParameter[] = []
     walkAST(node, {
       leave(node) {
@@ -680,7 +684,7 @@ function collectReferenceDirectives(comment: t.Comment[], negative = false) {
  * A variable declaration that declares a runtime binding variable. It represents a declaration like:
  *
  * ```js
- * var binding = [symbolId, (param, ...) => [dep, ...], sideEffect()]
+ * var binding = [declarationId, (param, ...) => [dep, ...], sideEffect()]
  * ```
  *
  * For an more concrete example, the following TypeScript declaration:
@@ -724,7 +728,7 @@ function isRuntimeBindingVariableDeclaration(
  * It can be used to represent the following JavaScript code:
  *
  * ```js
- * [symbolId, (param, ...) => [dep, ...], sideEffect()]
+ * [declarationId, (param, ...) => [dep, ...], sideEffect()]
  * ```
  */
 type RuntimeBindingArrayExpression = t.ArrayExpression & {
@@ -749,7 +753,7 @@ function runtimeBindingArrayExpression(
 }
 
 type RuntimeBindingArrayElementsBase = [
-  symbolId: t.NumericLiteral,
+  declarationId: t.NumericLiteral,
   deps: t.ArrowFunctionExpression,
   children: t.ArrayExpression,
 ]
@@ -767,9 +771,9 @@ type RuntimeBindingArrayElements =
 function isRuntimeBindingArrayElements(
   elements: Array<t.Node | null | undefined>,
 ): elements is RuntimeBindingArrayElements {
-  const [symbolId, deps, children, effect] = elements
+  const [declarationId, deps, children, effect] = elements
   return (
-    t.isNumericLiteral(symbolId) &&
+    t.isNumericLiteral(declarationId) &&
     t.isArrowFunctionExpression(deps) &&
     t.isArrayExpression(children) &&
     (!effect || t.isCallExpression(effect))
