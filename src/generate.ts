@@ -92,7 +92,6 @@ export function createGeneratePlugin({
    */
   const inputAliasMap = new Map<string, string>()
 
-  // let isWatch = false
   let childProcess: ChildProcess | undefined
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscModule: typeof import('./tsc/index.ts')
@@ -104,8 +103,6 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      // isWatch = this.meta.watchMode
-
       if (tsgo) {
         tsgoDist = await runTsgo(rootDir, tsconfig, sourcemap)
       } else if (!oxc) {
