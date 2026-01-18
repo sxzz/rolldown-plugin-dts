@@ -13,12 +13,20 @@ const spawnAsync = (...args: Parameters<typeof spawn>) =>
     child.on('error', (error) => reject(error))
   })
 
+export async function getTsgoPathFromNodeModules(): Promise<string> {
+  const tsgoPkg = import.meta.resolve('@typescript/native-preview/package.json')
+  const { default: getExePath } = await import(
+    new URL('lib/getExePath.js', tsgoPkg).href
+  )
+  return getExePath()
+}
+
 export async function runTsgo(
   rootDir: string,
   tsconfig?: string,
   sourcemap?: boolean,
   tsgoPath?: string,
-) {
+): Promise<string> {
   debug('[tsgo] rootDir', rootDir)
 
   let tsgo: string
@@ -26,13 +34,10 @@ export async function runTsgo(
     tsgo = tsgoPath
     debug('[tsgo] using custom path', tsgo)
   } else {
-    const tsgoPkg = import.meta
-      .resolve('@typescript/native-preview/package.json')
-    const { default: getExePath } = await import(
-      new URL('lib/getExePath.js', tsgoPkg).href
-    )
-    tsgo = getExePath()
+    tsgo = await getTsgoPathFromNodeModules()
+    debug('[tsgo] using tsgo from node_modules', tsgo)
   }
+
   const tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
   debug('[tsgo] tsgoDist', tsgoDist)
 

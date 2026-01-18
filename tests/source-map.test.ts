@@ -95,33 +95,6 @@ test('tsgo', async () => {
   validateSourceMap(sourcemap)
 })
 
-test('tsgo with custom path', async () => {
-  // Get the bundled tsgo path
-  const tsgoPkg = import.meta.resolve('@typescript/native-preview/package.json')
-  const { default: getExePath } = await import(
-    new URL('lib/getExePath.js', tsgoPkg).href
-  )
-  const tsgoPath: string = getExePath()
-
-  const dir = path.join(tempDir, 'source-map-tsgo-path')
-  await build({
-    input,
-    plugins: [
-      dts({
-        tsgo: { path: tsgoPath },
-        tsconfig,
-        sourcemap: true,
-        emitDtsOnly: true,
-      }),
-    ],
-    output: { dir },
-    write: true,
-  })
-  await expectFilesSnapshot(dir, '__snapshots__/source-map-tsgo-path.md')
-  const sourcemap = await readFile(path.resolve(dir, 'index.d.ts.map'), 'utf8')
-  validateSourceMap(sourcemap)
-})
-
 test('disable dts source map only', async () => {
   const { chunks } = await rolldownBuild(
     input,

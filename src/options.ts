@@ -192,12 +192,15 @@ export interface Options extends GeneralOptions, TscOptions {
   /**
    * **[Experimental]** Enables DTS generation using `tsgo`.
    *
+   * To use this option, make sure `@typescript/native-preview` is installed as a dependency,
+   * or provide a custom path to the `tsgo` binary using the `path` option.
+   *
    * **Note:** This option is not yet recommended for production environments.
    * `tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
    *
-   * @example
+   *
    * ```ts
-   * // Use bundled tsgo from @typescript/native-preview
+   * // Use tsgo from `@typescript/native-preview` dependency
    * tsgo: true
    *
    * // Use custom tsgo path (e.g., managed by Nix)
@@ -212,9 +215,6 @@ export interface TsgoOptions {
 
   /**
    * Custom path to the `tsgo` binary.
-   *
-   * Use this when managing `tsgo` externally
-   * instead of the bundled `@typescript/native-preview` package.
    */
   path?: string
 }
@@ -259,7 +259,6 @@ export function resolveOptions({
   tsgo = false,
 }: Options): OptionsResolved {
   // Resolve tsgo option
-
   if (tsgo === true) {
     tsgo = {}
   }
