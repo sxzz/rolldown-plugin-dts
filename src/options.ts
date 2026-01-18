@@ -192,21 +192,42 @@ export interface Options extends GeneralOptions, TscOptions {
   /**
    * **[Experimental]** Enables DTS generation using `tsgo`.
    *
-   * To use this option, make sure `@typescript/native-preview` is installed as a dependency.
+   * To use this option, make sure `@typescript/native-preview` is installed as a dependency,
+   * or provide a custom path to the `tsgo` binary using the `path` option.
    *
    * **Note:** This option is not yet recommended for production environments.
    * `tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
+   *
+   *
+   * ```ts
+   * // Use tsgo from `@typescript/native-preview` dependency
+   * tsgo: true
+   *
+   * // Use custom tsgo path (e.g., managed by Nix)
+   * tsgo: { path: '/path/to/tsgo' }
+   * ```
    */
-  tsgo?: boolean
+  tsgo?: boolean | TsgoOptions
+}
+
+export interface TsgoOptions {
+  enabled?: boolean
+
+  /**
+   * Custom path to the `tsgo` binary.
+   */
+  path?: string
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
+
 export type OptionsResolved = Overwrite<
   Required<Omit<Options, 'compilerOptions'>>,
   {
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions | false
     tsconfigRaw: TsConfigJson
+    tsgo: Omit<TsgoOptions, 'enabled'> | false
   }
 >
 
@@ -237,6 +258,13 @@ export function resolveOptions({
   oxc,
   tsgo = false,
 }: Options): OptionsResolved {
+  // Resolve tsgo option
+  if (tsgo === true) {
+    tsgo = {}
+  } else if (typeof tsgo === 'object' && tsgo.enabled === false) {
+    tsgo = false
+  }
+
   let resolvedTsconfig: TsConfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}

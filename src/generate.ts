@@ -104,7 +104,7 @@ export function createGeneratePlugin({
 
     async buildStart(options) {
       if (tsgo) {
-        tsgoDist = await runTsgo(rootDir, tsconfig, sourcemap)
+        tsgoDist = await runTsgo(rootDir, tsconfig, sourcemap, tsgo.path)
       } else if (!oxc) {
         // tsc
         if (parallel) {

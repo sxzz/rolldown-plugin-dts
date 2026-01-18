@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
+import { getTsgoPathFromNodeModules } from '../src/tsgo.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -512,4 +513,18 @@ test('infer false branch', async () => {
   expect(snapshot).toContain(
     'T extends Array<infer U> ? (T extends Array<infer U2> ? U2 : U) : ',
   )
+})
+
+test('tsgo with custom path', async () => {
+  const tsgoPath = await getTsgoPathFromNodeModules()
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/basic.ts'),
+    [
+      dts({
+        tsgo: { path: tsgoPath },
+        tsconfig: path.resolve(dirname, 'fixtures/basic.tsconfig.json'),
+      }),
+    ],
+  )
+  expect(snapshot).toMatchSnapshot()
 })
