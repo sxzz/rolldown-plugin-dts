@@ -84,6 +84,7 @@
     "obug": "^2.1.1"
   },
   "devDependencies": {
+    "@jridgewell/source-map": "^0.3.11",
     "@sxzz/eslint-config": "^7.4.5",
     "@sxzz/prettier-config": "^2.2.6",
     "@sxzz/test-utils": "^0.5.15",

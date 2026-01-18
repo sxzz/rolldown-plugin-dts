@@ -1,5 +1,6 @@
-import { rm } from 'node:fs/promises'
+import { readFile, rm } from 'node:fs/promises'
 import path from 'node:path'
+import { SourceMapConsumer } from '@jridgewell/source-map'
 import { expectFilesSnapshot, rolldownBuild } from '@sxzz/test-utils'
 import { build } from 'rolldown'
 import { beforeAll, expect, test } from 'vitest'
@@ -15,6 +16,24 @@ const tsconfig = path.resolve(
 beforeAll(async () => {
   await rm(tempDir, { recursive: true, force: true })
 })
+
+function validateSourceMap(sourcemap: string) {
+  const map = JSON.parse(sourcemap)
+  const consumer = new SourceMapConsumer(map)
+  expect(consumer.version).toBe(3)
+  expect(consumer.names).toEqual([])
+  expect(consumer.file).toBe('index.d.ts')
+  expect(consumer.sourcesContent).toBeUndefined()
+  expect(consumer.sources).toEqual([
+    '../../fixtures/source-map/mod.ts',
+    '../../fixtures/source-map/index.ts',
+  ])
+  const mappings: any[] = []
+  consumer.eachMapping((mapping) => {
+    mappings.push(mapping)
+  })
+  expect(mappings.length).toBeGreaterThan(0)
+}
 
 test('oxc', async () => {
   const dir = path.join(tempDir, 'source-map-oxc')
@@ -32,6 +51,8 @@ test('oxc', async () => {
     write: true,
   })
   await expectFilesSnapshot(dir, '__snapshots__/source-map-oxc.md')
+  const sourcemap = await readFile(path.resolve(dir, 'index.d.ts.map'), 'utf8')
+  validateSourceMap(sourcemap)
 })
 
 test('tsc', async () => {
@@ -50,6 +71,8 @@ test('tsc', async () => {
     write: true,
   })
   await expectFilesSnapshot(dir, '__snapshots__/source-map-tsc.md')
+  const sourcemap = await readFile(path.resolve(dir, 'index.d.ts.map'), 'utf8')
+  validateSourceMap(sourcemap)
 })
 
 test('tsgo', async () => {
@@ -68,6 +91,8 @@ test('tsgo', async () => {
     write: true,
   })
   await expectFilesSnapshot(dir, '__snapshots__/source-map-tsgo.md')
+  const sourcemap = await readFile(path.resolve(dir, 'index.d.ts.map'), 'utf8')
+  validateSourceMap(sourcemap)
 })
 
 test('disable dts source map only', async () => {
