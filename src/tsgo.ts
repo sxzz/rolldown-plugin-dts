@@ -17,14 +17,23 @@ export async function runTsgo(
   rootDir: string,
   tsconfig?: string,
   sourcemap?: boolean,
+  tsgoPath?: string,
 ) {
   debug('[tsgo] rootDir', rootDir)
 
-  const tsgoPkg = import.meta.resolve('@typescript/native-preview/package.json')
-  const { default: getExePath } = await import(
-    new URL('lib/getExePath.js', tsgoPkg).href
-  )
-  const tsgo = getExePath()
+  let tsgo: string
+  if (tsgoPath) {
+    tsgo = tsgoPath
+    debug('[tsgo] using custom path', tsgo)
+  } else {
+    const tsgoPkg = import.meta.resolve(
+      '@typescript/native-preview/package.json',
+    )
+    const { default: getExePath } = await import(
+      new URL('lib/getExePath.js', tsgoPkg).href
+    )
+    tsgo = getExePath()
+  }
   const tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
   debug('[tsgo] tsgoDist', tsgoDist)
 

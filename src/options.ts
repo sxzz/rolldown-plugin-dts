@@ -192,21 +192,35 @@ export interface Options extends GeneralOptions, TscOptions {
   /**
    * **[Experimental]** Enables DTS generation using `tsgo`.
    *
-   * To use this option, make sure `@typescript/native-preview` is installed as a dependency.
-   *
    * **Note:** This option is not yet recommended for production environments.
    * `tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
+   *
+   * @example
+   * ```ts
+   * // Use bundled tsgo from @typescript/native-preview
+   * tsgo: true
+   *
+   * // Use custom tsgo path (e.g., managed by Nix)
+   * tsgo: { path: '/path/to/tsgo' }
+   * ```
    */
-  tsgo?: boolean
+  tsgo?: boolean | { path: string }
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
+
+export interface TsgoOptionsResolved {
+  enabled: boolean
+  path?: string
+}
+
 export type OptionsResolved = Overwrite<
   Required<Omit<Options, 'compilerOptions'>>,
   {
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions | false
     tsconfigRaw: TsConfigJson
+    tsgo: TsgoOptionsResolved
   }
 >
 
@@ -235,8 +249,16 @@ export function resolveOptions({
   emitJs,
 
   oxc,
-  tsgo = false,
+  tsgo,
 }: Options): OptionsResolved {
+  // Resolve tsgo option
+  const tsgoResolved: TsgoOptionsResolved =
+    tsgo === true
+      ? { enabled: true }
+      : tsgo && typeof tsgo === 'object'
+        ? { enabled: true, path: tsgo.path }
+        : { enabled: false }
+
   let resolvedTsconfig: TsConfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
@@ -265,7 +287,12 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  oxc ??= !!(compilerOptions?.isolatedDeclarations && !vue && !tsgo && !tsMacro)
+  oxc ??= !!(
+    compilerOptions?.isolatedDeclarations &&
+    !vue &&
+    !tsgoResolved.enabled &&
+    !tsMacro
+  )
   if (oxc === true) {
     oxc = {}
   }
@@ -277,7 +304,7 @@ export function resolveOptions({
 
   emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
 
-  if (tsgo) {
+  if (tsgoResolved.enabled) {
     if (vue) {
       throw new Error(
         '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `vue` option. Please disable one of them.',
@@ -305,7 +332,7 @@ export function resolveOptions({
     )
   }
 
-  if (tsgo && !warnedTsgo) {
+  if (tsgoResolved.enabled && !warnedTsgo) {
     console.warn(
       'The `tsgo` option is experimental and may change in the future.',
     )
@@ -334,6 +361,6 @@ export function resolveOptions({
     emitJs,
 
     oxc,
-    tsgo,
+    tsgo: tsgoResolved,
   }
 }
