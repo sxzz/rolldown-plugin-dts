@@ -1,0 +1,20 @@
+[package]
+name = "rolldown-plugin-dts"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = "3.8.2"
+napi-derive = "3.5.1"
+oxc = { version = "0.108.0", features = ["codegen", "ast_visit"] }
+oxc_sourcemap = { version = "6.0.1", features = ["napi"] }
+
+[build-dependencies]
+napi-build = "2"
+
+[profile.release]
+lto = true
+strip = "symbols"

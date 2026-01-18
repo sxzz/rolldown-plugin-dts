@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module'
 import { generate } from '@babel/generator'
 import { parse } from '@babel/parser'
 import * as t from '@babel/types'
@@ -23,6 +24,9 @@ import type {
   TransformPluginContext,
   TransformResult,
 } from 'rolldown'
+
+const require = createRequire(import.meta.url)
+const native: typeof import('../crate/index.d.ts') = require('../crate/index.node')
 
 // input:
 // export declare function x(xx: X): void
@@ -70,6 +74,12 @@ export function createFakeJsPlugin({
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
   const typeOnlyMap = new Map<string /* filename */, string[]>()
+
+  const nativePlugin = new native.FakeJsPlugin(
+    sourcemap,
+    cjsDefault,
+    sideEffects,
+  )
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
@@ -142,214 +152,221 @@ export function createFakeJsPlugin({
     code: string,
     id: string,
   ): TransformResult {
-    const file = parse(code, {
-      plugins: [['typescript', { dts: true }]],
-      sourceType: 'module',
-      errorRecovery: true,
-      createParenthesizedExpressions: true,
-    })
-    const { program, comments } = file
-    const typeOnlyIds: string[] = []
-
-    if (comments) {
-      const directives = collectReferenceDirectives(comments)
-      commentsMap.set(id, directives)
-    }
-
-    const appendStmts: t.Statement[] = []
-    const namespaceStmts: NamespaceMap = new Map()
-
-    for (const [i, stmt] of program.body.entries()) {
-      const setStmt = (stmt: t.Statement) => (program.body[i] = stmt)
-      if (rewriteImportExport(stmt, setStmt, typeOnlyIds)) continue
-
-      const sideEffect =
-        stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
-
-      if (
-        sideEffect &&
-        stmt.id.type === 'StringLiteral' &&
-        stmt.id.value[0] === '.'
-      ) {
-        this.warn(
-          `\`declare module ${JSON.stringify(stmt.id.value)}\` will be kept as-is in the output. Relative module declaration may cause unexpected issues. Found in ${id}.`,
-        )
-      }
-
-      if (
-        sideEffect &&
-        id.endsWith('.vue.d.ts') &&
-        code.slice(stmt.start!, stmt.end!).includes('__VLS_')
-      ) {
-        continue
-      }
-
-      const isDefaultExport = stmt.type === 'ExportDefaultDeclaration'
-      const isExportDecl =
-        isTypeOf(stmt, [
-          'ExportNamedDeclaration', // export let x
-          'ExportDefaultDeclaration', // export default function x() {}
-        ]) && !!stmt.declaration
-
-      const decl: t.Node = isExportDecl ? stmt.declaration! : stmt
-      const setDecl = isExportDecl
-        ? (decl: t.Declaration) => (stmt.declaration = decl)
-        : setStmt
-
-      if (decl.type !== 'TSDeclareFunction' && !isDeclarationType(decl)) {
-        continue
-      }
-
-      if (
-        isTypeOf(decl, [
-          'TSEnumDeclaration',
-          'ClassDeclaration',
-          'FunctionDeclaration',
-          'TSDeclareFunction',
-          'TSModuleDeclaration',
-          'VariableDeclaration',
-        ])
-      ) {
-        decl.declare = true
-      }
-
-      const bindings: t.Identifier[] = []
-      if (decl.type === 'VariableDeclaration') {
-        bindings.push(
-          ...decl.declarations.map((decl) => decl.id as t.Identifier),
-        )
-      } else if ('id' in decl && decl.id) {
-        let binding = decl.id
-        if (binding.type === 'TSQualifiedName') {
-          binding = getIdFromTSEntityName(binding)
-        }
-
-        binding = sideEffect
-          ? t.identifier(`_${getIdentifierIndex('')}`)
-          : binding
-
-        if (binding.type !== 'Identifier') {
-          throw new Error(`Unexpected ${binding.type} declaration id`)
-        }
-
-        bindings.push(binding)
-      } else {
-        const binding = t.identifier('export_default')
-        bindings.push(binding)
-        // @ts-expect-error
-        decl.id = binding
-      }
-
-      const params: TypeParams = collectParams(decl)
-
-      const childrenSet = new Set<t.Node>()
-      const deps = collectDependencies(decl, namespaceStmts, childrenSet)
-      const children = Array.from(childrenSet).filter((child) =>
-        bindings.every((b) => child !== b),
-      )
-
-      if (decl !== stmt) {
-        decl.leadingComments = stmt.leadingComments
-      }
-
-      const declarationId = registerDeclaration({
-        decl,
-        deps,
-        bindings,
-        params,
-        children,
-      })
-
-      const declarationIdNode = t.numericLiteral(declarationId)
-      const depsNode = t.arrowFunctionExpression(
-        params.map(({ name }) => t.identifier(name)),
-        t.arrayExpression(deps),
-      )
-      const childrenNode = t.arrayExpression(
-        children.map((node) => ({
-          type: 'StringLiteral',
-          value: '',
-          start: node.start,
-          end: node.end,
-          loc: node.loc,
-        })),
-      )
-      const sideEffectNode =
-        sideEffect &&
-        t.callExpression(t.identifier('sideEffect'), [bindings[0]])
-      const runtimeArrayNode = runtimeBindingArrayExpression([
-        declarationIdNode,
-        depsNode,
-        childrenNode,
-        ...(sideEffectNode ? ([sideEffectNode] as const) : ([] as const)),
-      ])
-
-      /*
-      var ${binding} = [
-        ${declarationId},
-        (param, ...) => [dep, ...],
-        ["children symbol name"],
-        sideEffect()
-      ]
-      */
-      const runtimeAssignment: RuntimeBindingVariableDeclration = {
-        type: 'VariableDeclaration',
-        kind: 'var',
-        declarations: [
-          {
-            type: 'VariableDeclarator',
-            id: { ...bindings[0], typeAnnotation: null },
-            init: runtimeArrayNode,
-          },
-          ...bindings.slice(1).map(
-            (binding): t.VariableDeclarator => ({
-              type: 'VariableDeclarator',
-              id: { ...binding, typeAnnotation: null },
-            }),
-          ),
-        ],
-      }
-
-      if (isDefaultExport) {
-        // export { ${binding} as default }
-        appendStmts.push(
-          t.exportNamedDeclaration(null, [
-            t.exportSpecifier(bindings[0], t.identifier('default')),
-          ]),
-        )
-        // replace the whole statement
-        setStmt(runtimeAssignment)
-      } else {
-        // replace declaration, keep `export`
-        setDecl(runtimeAssignment)
-      }
-    }
-
-    if (sideEffects) {
-      // module side effect marker
-      appendStmts.push(
-        t.expressionStatement(t.callExpression(t.identifier('sideEffect'), [])),
-      )
-    }
-
-    program.body = [
-      ...Array.from(namespaceStmts.values()).map(({ stmt }) => stmt),
-      ...program.body,
-      ...appendStmts,
-    ]
-
-    typeOnlyMap.set(id, typeOnlyIds)
-
-    const result = generate(file, {
-      comments: false,
-      sourceMaps: sourcemap,
-      sourceFileName: id,
-    })
-
+    // Use native Rust implementation
+    const result = nativePlugin.transform(code, id)
     return {
       code: result.code,
       map: result.map as any,
     }
+
+    // const file = parse(code, {
+    //   plugins: [['typescript', { dts: true }]],
+    //   sourceType: 'module',
+    //   errorRecovery: true,
+    //   createParenthesizedExpressions: true,
+    // })
+    // const { program, comments } = file
+    // const typeOnlyIds: string[] = []
+
+    // if (comments) {
+    //   const directives = collectReferenceDirectives(comments)
+    //   commentsMap.set(id, directives)
+    // }
+
+    // const appendStmts: t.Statement[] = []
+    // const namespaceStmts: NamespaceMap = new Map()
+
+    // for (const [i, stmt] of program.body.entries()) {
+    //   const setStmt = (stmt: t.Statement) => (program.body[i] = stmt)
+    //   if (rewriteImportExport(stmt, setStmt, typeOnlyIds)) continue
+
+    //   const sideEffect =
+    //     stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
+
+    //   if (
+    //     sideEffect &&
+    //     stmt.id.type === 'StringLiteral' &&
+    //     stmt.id.value[0] === '.'
+    //   ) {
+    //     this.warn(
+    //       `\`declare module ${JSON.stringify(stmt.id.value)}\` will be kept as-is in the output. Relative module declaration may cause unexpected issues. Found in ${id}.`,
+    //     )
+    //   }
+
+    //   if (
+    //     sideEffect &&
+    //     id.endsWith('.vue.d.ts') &&
+    //     code.slice(stmt.start!, stmt.end!).includes('__VLS_')
+    //   ) {
+    //     continue
+    //   }
+
+    //   const isDefaultExport = stmt.type === 'ExportDefaultDeclaration'
+    //   const isExportDecl =
+    //     isTypeOf(stmt, [
+    //       'ExportNamedDeclaration', // export let x
+    //       'ExportDefaultDeclaration', // export default function x() {}
+    //     ]) && !!stmt.declaration
+
+    //   const decl: t.Node = isExportDecl ? stmt.declaration! : stmt
+    //   const setDecl = isExportDecl
+    //     ? (decl: t.Declaration) => (stmt.declaration = decl)
+    //     : setStmt
+
+    //   if (decl.type !== 'TSDeclareFunction' && !isDeclarationType(decl)) {
+    //     continue
+    //   }
+
+    //   if (
+    //     isTypeOf(decl, [
+    //       'TSEnumDeclaration',
+    //       'ClassDeclaration',
+    //       'FunctionDeclaration',
+    //       'TSDeclareFunction',
+    //       'TSModuleDeclaration',
+    //       'VariableDeclaration',
+    //     ])
+    //   ) {
+    //     decl.declare = true
+    //   }
+
+    //   const bindings: t.Identifier[] = []
+    //   if (decl.type === 'VariableDeclaration') {
+    //     bindings.push(
+    //       ...decl.declarations.map((decl) => decl.id as t.Identifier),
+    //     )
+    //   } else if ('id' in decl && decl.id) {
+    //     let binding = decl.id
+    //     if (binding.type === 'TSQualifiedName') {
+    //       binding = getIdFromTSEntityName(binding)
+    //     }
+
+    //     binding = sideEffect
+    //       ? t.identifier(`_${getIdentifierIndex('')}`)
+    //       : binding
+
+    //     if (binding.type !== 'Identifier') {
+    //       throw new Error(`Unexpected ${binding.type} declaration id`)
+    //     }
+
+    //     bindings.push(binding)
+    //   } else {
+    //     const binding = t.identifier('export_default')
+    //     bindings.push(binding)
+    //     // @ts-expect-error
+    //     decl.id = binding
+    //   }
+
+    //   const params: TypeParams = collectParams(decl)
+
+    //   const childrenSet = new Set<t.Node>()
+    //   const deps = collectDependencies(decl, namespaceStmts, childrenSet)
+    //   const children = Array.from(childrenSet).filter((child) =>
+    //     bindings.every((b) => child !== b),
+    //   )
+
+    //   if (decl !== stmt) {
+    //     decl.leadingComments = stmt.leadingComments
+    //   }
+
+    //   const declarationId = registerDeclaration({
+    //     decl,
+    //     deps,
+    //     bindings,
+    //     params,
+    //     children,
+    //   })
+
+    //   const declarationIdNode = t.numericLiteral(declarationId)
+    //   const depsNode = t.arrowFunctionExpression(
+    //     params.map(({ name }) => t.identifier(name)),
+    //     t.arrayExpression(deps),
+    //   )
+    //   const childrenNode = t.arrayExpression(
+    //     children.map((node) => ({
+    //       type: 'StringLiteral',
+    //       value: '',
+    //       start: node.start,
+    //       end: node.end,
+    //       loc: node.loc,
+    //     })),
+    //   )
+    //   const sideEffectNode =
+    //     sideEffect &&
+    //     t.callExpression(t.identifier('sideEffect'), [bindings[0]])
+    //   const runtimeArrayNode = runtimeBindingArrayExpression([
+    //     declarationIdNode,
+    //     depsNode,
+    //     childrenNode,
+    //     ...(sideEffectNode ? ([sideEffectNode] as const) : ([] as const)),
+    //   ])
+
+    //   /*
+    //   var ${binding} = [
+    //     ${declarationId},
+    //     (param, ...) => [dep, ...],
+    //     ["children symbol name"],
+    //     sideEffect()
+    //   ]
+    //   */
+    //   const runtimeAssignment: RuntimeBindingVariableDeclration = {
+    //     type: 'VariableDeclaration',
+    //     kind: 'var',
+    //     declarations: [
+    //       {
+    //         type: 'VariableDeclarator',
+    //         id: { ...bindings[0], typeAnnotation: null },
+    //         init: runtimeArrayNode,
+    //       },
+    //       ...bindings.slice(1).map(
+    //         (binding): t.VariableDeclarator => ({
+    //           type: 'VariableDeclarator',
+    //           id: { ...binding, typeAnnotation: null },
+    //         }),
+    //       ),
+    //     ],
+    //   }
+
+    //   if (isDefaultExport) {
+    //     // export { ${binding} as default }
+    //     appendStmts.push(
+    //       t.exportNamedDeclaration(null, [
+    //         t.exportSpecifier(bindings[0], t.identifier('default')),
+    //       ]),
+    //     )
+    //     // replace the whole statement
+    //     setStmt(runtimeAssignment)
+    //   } else {
+    //     // replace declaration, keep `export`
+    //     setDecl(runtimeAssignment)
+    //   }
+    // }
+
+    // if (sideEffects) {
+    //   // module side effect marker
+    //   appendStmts.push(
+    //     t.expressionStatement(t.callExpression(t.identifier('sideEffect'), [])),
+    //   )
+    // }
+
+    // program.body = [
+    //   ...Array.from(namespaceStmts.values()).map(({ stmt }) => stmt),
+    //   ...program.body,
+    //   ...appendStmts,
+    // ]
+
+    // typeOnlyMap.set(id, typeOnlyIds)
+
+    // const result = generate(file, {
+    //   comments: false,
+    //   sourceMaps: sourcemap,
+    //   sourceFileName: id,
+    // })
+
+    // return {
+    //   code: result.code,
+    //   map: result.map as any,
+    // }
   }
 
   function renderChunk(code: string, chunk: RenderedChunk) {
@@ -357,137 +374,148 @@ export function createFakeJsPlugin({
       return
     }
 
-    const typeOnlyIds: string[] = []
-    for (const module of chunk.moduleIds) {
-      const ids = typeOnlyMap.get(module)
-      if (ids) typeOnlyIds.push(...ids)
-    }
-
-    const file = parse(code, {
-      sourceType: 'module',
-    })
-    const { program } = file
-
-    program.body = patchTsNamespace(program.body)
-    program.body = patchReExport(program.body)
-
-    program.body = program.body
-      .map((node) => {
-        if (isHelperImport(node)) return null
-        if (node.type === 'ExpressionStatement') return null
-
-        const newNode = patchImportExport(node, typeOnlyIds, cjsDefault)
-        if (newNode || newNode === false) {
-          return newNode
-        }
-
-        if (node.type !== 'VariableDeclaration') return node
-
-        if (!isRuntimeBindingVariableDeclaration(node)) {
-          return null
-        }
-
-        const [declarationIdNode, depsFn, children /*, ignore sideEffect */] =
-          node.declarations[0].init.elements
-
-        const declarationId = declarationIdNode.value
-        const declaration = getDeclaration(declarationId)
-
-        walkAST<t.Node | t.Comment>(declaration.decl, {
-          enter(node) {
-            if (node.type === 'CommentBlock') {
-              return
-            }
-            delete node.loc
-          },
-        })
-
-        for (const [i, decl] of node.declarations.entries()) {
-          const transformedBinding = {
-            ...decl.id,
-            typeAnnotation: declaration.bindings[i].typeAnnotation,
-          }
-          overwriteNode(declaration.bindings[i], transformedBinding)
-        }
-
-        for (const [i, child] of (
-          children.elements as t.StringLiteral[]
-        ).entries()) {
-          Object.assign(declaration.children[i], {
-            loc: child.loc,
-          })
-        }
-
-        const transformedParams = depsFn.params as t.Identifier[]
-        for (const [i, transformedParam] of transformedParams.entries()) {
-          const transformedName = transformedParam.name
-          for (const originalTypeParam of declaration.params[i].typeParams) {
-            originalTypeParam.name = transformedName
-          }
-        }
-
-        const transformedDeps = (depsFn.body as t.ArrayExpression)
-          .elements as t.Expression[]
-        for (const [i, originalDep] of declaration.deps.entries()) {
-          let transformedDep = transformedDeps[i]
-          if (
-            transformedDep.type === 'UnaryExpression' &&
-            transformedDep.operator === 'void'
-          ) {
-            transformedDep = {
-              ...t.identifier('undefined'),
-              loc: transformedDep.loc,
-              start: transformedDep.start,
-              end: transformedDep.end,
-            }
-          }
-
-          if (originalDep.replace) {
-            originalDep.replace(transformedDep)
-          } else {
-            Object.assign(originalDep, transformedDep)
-          }
-        }
-
-        return inheritNodeComments(node, declaration.decl)
-      })
-      .filter((node) => !!node)
-
-    if (program.body.length === 0) {
-      return 'export { };'
-    }
-
-    // recover comments
-    const comments = new Set<t.Comment>()
-    const commentsValue = new Set<string>() // deduplicate
-
-    for (const id of chunk.moduleIds) {
-      const preserveComments = commentsMap.get(id)
-      if (preserveComments) {
-        preserveComments.forEach((c) => {
-          const id = c.type + c.value
-          if (commentsValue.has(id)) return
-
-          commentsValue.add(id)
-          comments.add(c)
-        })
-        commentsMap.delete(id)
-      }
-    }
-    if (comments.size) {
-      program.body[0].leadingComments ||= []
-      program.body[0].leadingComments.unshift(...comments)
-    }
-
-    const result = generate(file, {
-      sourceMaps: sourcemap,
-      sourceFileName: chunk.fileName,
-    })
-
+    // Use native Rust implementation
+    const result = nativePlugin.renderChunk(
+      code,
+      chunk.fileName,
+      chunk.moduleIds,
+    )
     return {
       code: result.code,
       map: result.map as any,
     }
+
+    // const typeOnlyIds: string[] = []
+    // for (const module of chunk.moduleIds) {
+    //   const ids = typeOnlyMap.get(module)
+    //   if (ids) typeOnlyIds.push(...ids)
+    // }
+
+    // const file = parse(code, {
+    //   sourceType: 'module',
+    // })
+    // const { program } = file
+
+    // program.body = patchTsNamespace(program.body)
+    // program.body = patchReExport(program.body)
+
+    // program.body = program.body
+    //   .map((node) => {
+    //     if (isHelperImport(node)) return null
+    //     if (node.type === 'ExpressionStatement') return null
+
+    //     const newNode = patchImportExport(node, typeOnlyIds, cjsDefault)
+    //     if (newNode || newNode === false) {
+    //       return newNode
+    //     }
+
+    //     if (node.type !== 'VariableDeclaration') return node
+
+    //     if (!isRuntimeBindingVariableDeclaration(node)) {
+    //       return null
+    //     }
+
+    //     const [declarationIdNode, depsFn, children /*, ignore sideEffect */] =
+    //       node.declarations[0].init.elements
+
+    //     const declarationId = declarationIdNode.value
+    //     const declaration = getDeclaration(declarationId)
+
+    //     walkAST<t.Node | t.Comment>(declaration.decl, {
+    //       enter(node) {
+    //         if (node.type === 'CommentBlock') {
+    //           return
+    //         }
+    //         delete node.loc
+    //       },
+    //     })
+
+    //     for (const [i, decl] of node.declarations.entries()) {
+    //       const transformedBinding = {
+    //         ...decl.id,
+    //         typeAnnotation: declaration.bindings[i].typeAnnotation,
+    //       }
+    //       overwriteNode(declaration.bindings[i], transformedBinding)
+    //     }
+
+    //     for (const [i, child] of (
+    //       children.elements as t.StringLiteral[]
+    //     ).entries()) {
+    //       Object.assign(declaration.children[i], {
+    //         loc: child.loc,
+    //       })
+    //     }
+
+    //     const transformedParams = depsFn.params as t.Identifier[]
+    //     for (const [i, transformedParam] of transformedParams.entries()) {
+    //       const transformedName = transformedParam.name
+    //       for (const originalTypeParam of declaration.params[i].typeParams) {
+    //         originalTypeParam.name = transformedName
+    //       }
+    //     }
+
+    //     const transformedDeps = (depsFn.body as t.ArrayExpression)
+    //       .elements as t.Expression[]
+    //     for (const [i, originalDep] of declaration.deps.entries()) {
+    //       let transformedDep = transformedDeps[i]
+    //       if (
+    //         transformedDep.type === 'UnaryExpression' &&
+    //         transformedDep.operator === 'void'
+    //       ) {
+    //         transformedDep = {
+    //           ...t.identifier('undefined'),
+    //           loc: transformedDep.loc,
+    //           start: transformedDep.start,
+    //           end: transformedDep.end,
+    //         }
+    //       }
+
+    //       if (originalDep.replace) {
+    //         originalDep.replace(transformedDep)
+    //       } else {
+    //         Object.assign(originalDep, transformedDep)
+    //       }
+    //     }
+
+    //     return inheritNodeComments(node, declaration.decl)
+    //   })
+    //   .filter((node) => !!node)
+
+    // if (program.body.length === 0) {
+    //   return 'export { };'
+    // }
+
+    // // recover comments
+    // const comments = new Set<t.Comment>()
+    // const commentsValue = new Set<string>() // deduplicate
+
+    // for (const id of chunk.moduleIds) {
+    //   const preserveComments = commentsMap.get(id)
+    //   if (preserveComments) {
+    //     preserveComments.forEach((c) => {
+    //       const id = c.type + c.value
+    //       if (commentsValue.has(id)) return
+
+    //       commentsValue.add(id)
+    //       comments.add(c)
+    //     })
+    //     commentsMap.delete(id)
+    //   }
+    // }
+    // if (comments.size) {
+    //   program.body[0].leadingComments ||= []
+    //   program.body[0].leadingComments.unshift(...comments)
+    // }
+
+    // const result = generate(file, {
+    //   sourceMaps: sourcemap,
+    //   sourceFileName: chunk.fileName,
+    // })
+
+    // return {
+    //   code: result.code,
+    //   map: result.map as any,
+    // }
   }
 
   function getIdentifierIndex(name: string) {
