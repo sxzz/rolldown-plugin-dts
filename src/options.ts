@@ -208,21 +208,18 @@ export interface Options extends GeneralOptions, TscOptions {
 }
 
 export interface TsgoOptions {
+  enabled?: boolean
+
   /**
    * Custom path to the `tsgo` binary.
    *
    * Use this when managing `tsgo` externally
    * instead of the bundled `@typescript/native-preview` package.
    */
-  path: string
+  path?: string
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
-
-export interface TsgoOptionsResolved {
-  enabled: boolean
-  path?: string
-}
 
 export type OptionsResolved = Overwrite<
   Required<Omit<Options, 'compilerOptions'>>,
@@ -230,7 +227,7 @@ export type OptionsResolved = Overwrite<
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions | false
     tsconfigRaw: TsConfigJson
-    tsgo: TsgoOptionsResolved
+    tsgo: Omit<TsgoOptions, 'enabled'> | false
   }
 >
 
@@ -259,15 +256,13 @@ export function resolveOptions({
   emitJs,
 
   oxc,
-  tsgo,
+  tsgo = false,
 }: Options): OptionsResolved {
   // Resolve tsgo option
-  const tsgoResolved: TsgoOptionsResolved =
-    tsgo === true
-      ? { enabled: true }
-      : tsgo && typeof tsgo === 'object'
-        ? { enabled: true, path: tsgo.path }
-        : { enabled: false }
+
+  if (tsgo === true) {
+    tsgo = {}
+  }
 
   let resolvedTsconfig: TsConfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
@@ -297,12 +292,7 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  oxc ??= !!(
-    compilerOptions?.isolatedDeclarations &&
-    !vue &&
-    !tsgoResolved.enabled &&
-    !tsMacro
-  )
+  oxc ??= !!(compilerOptions?.isolatedDeclarations && !vue && !tsgo && !tsMacro)
   if (oxc === true) {
     oxc = {}
   }
@@ -314,7 +304,7 @@ export function resolveOptions({
 
   emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
 
-  if (tsgoResolved.enabled) {
+  if (tsgo) {
     if (vue) {
       throw new Error(
         '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `vue` option. Please disable one of them.',
@@ -342,7 +332,7 @@ export function resolveOptions({
     )
   }
 
-  if (tsgoResolved.enabled && !warnedTsgo) {
+  if (tsgo && !warnedTsgo) {
     console.warn(
       'The `tsgo` option is experimental and may change in the future.',
     )
@@ -371,6 +361,6 @@ export function resolveOptions({
     emitJs,
 
     oxc,
-    tsgo: tsgoResolved,
+    tsgo,
   }
 }

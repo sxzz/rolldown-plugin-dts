@@ -103,7 +103,7 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      if (tsgo.enabled) {
+      if (tsgo) {
         tsgoDist = await runTsgo(rootDir, tsconfig, sourcemap, tsgo.path)
       } else if (!oxc) {
         // tsc
@@ -221,7 +221,7 @@ export function createGeneratePlugin({
         let map: SourceMapInput | undefined
         debug('generate dts %s from %s', dtsId, id)
 
-        if (tsgo.enabled) {
+        if (tsgo) {
           if (RE_VUE.test(id))
             throw new Error('tsgo does not support Vue files.')
           const dtsPath = path.resolve(
