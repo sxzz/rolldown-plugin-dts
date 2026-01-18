@@ -204,7 +204,17 @@ export interface Options extends GeneralOptions, TscOptions {
    * tsgo: { path: '/path/to/tsgo' }
    * ```
    */
-  tsgo?: boolean | { path: string }
+  tsgo?: boolean | TsgoOptions
+}
+
+export interface TsgoOptions {
+  /**
+   * Custom path to the `tsgo` binary.
+   *
+   * Use this when managing `tsgo` externally
+   * instead of the bundled `@typescript/native-preview` package.
+   */
+  path: string
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
