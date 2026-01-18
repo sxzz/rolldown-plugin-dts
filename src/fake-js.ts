@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module'
 import { generate } from '@babel/generator'
 import { parse } from '@babel/parser'
 import t from '@babel/types'
@@ -18,6 +19,9 @@ import {
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
 import type { Plugin, RenderedChunk, TransformResult } from 'rolldown'
+
+const require = createRequire(import.meta.url)
+const native: typeof import('../crate/index.d.ts') = require('../crate/index.node')
 
 // input:
 // export declare function x(xx: X): void
@@ -65,6 +69,12 @@ export function createFakeJsPlugin({
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
   const typeOnlyMap = new Map<string /* filename */, string[]>()
+
+  const nativePlugin = new native.FakeJsPlugin(
+    sourcemap,
+    cjsDefault,
+    sideEffects,
+  )
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
@@ -133,6 +143,13 @@ export function createFakeJsPlugin({
   }
 
   function transform(code: string, id: string): TransformResult {
+    // Use native Rust implementation
+    const result = nativePlugin.transform(code, id)
+    return {
+      code: result.code,
+      map: result.map as any,
+    }
+
     const file = parse(code, {
       plugins: [['typescript', { dts: true }]],
       sourceType: 'module',
@@ -322,6 +339,17 @@ export function createFakeJsPlugin({
   function renderChunk(code: string, chunk: RenderedChunk) {
     if (!RE_DTS.test(chunk.fileName)) {
       return
+    }
+
+    // Use native Rust implementation
+    const result = nativePlugin.renderChunk(
+      code,
+      chunk.fileName,
+      chunk.moduleIds,
+    )
+    return {
+      code: result.code,
+      map: result.map as any,
     }
 
     const typeOnlyIds: string[] = []

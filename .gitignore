@@ -7,3 +7,5 @@ dist
 *.tgz
 
 temp
+
+crate/target
