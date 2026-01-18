@@ -26,9 +26,8 @@ export async function runTsgo(
     tsgo = tsgoPath
     debug('[tsgo] using custom path', tsgo)
   } else {
-    const tsgoPkg = import.meta.resolve(
-      '@typescript/native-preview/package.json',
-    )
+    const tsgoPkg = import.meta
+      .resolve('@typescript/native-preview/package.json')
     const { default: getExePath } = await import(
       new URL('lib/getExePath.js', tsgoPkg).href
     )
