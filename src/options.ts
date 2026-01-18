@@ -261,6 +261,8 @@ export function resolveOptions({
   // Resolve tsgo option
   if (tsgo === true) {
     tsgo = {}
+  } else if (typeof tsgo === 'object' && tsgo.enabled === false) {
+    tsgo = false
   }
 
   let resolvedTsconfig: TsConfigJsonResolved | undefined
