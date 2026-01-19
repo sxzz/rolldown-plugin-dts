@@ -574,7 +574,6 @@ export function createFakeJsPlugin({
           switch (node.type) {
             case 'TSTypeReference': {
               addDependency(TSEntityNameToRuntime(node.typeName))
-
               break
             }
             case 'TSTypeQuery': {
