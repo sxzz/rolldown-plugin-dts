@@ -98,6 +98,7 @@ function cleanupCode(text: string) {
     .replaceAll('//#endregion', '')
     .replaceAll(/from "(.*)"/g, "from '$1'")
     .replaceAll('export type', 'export') // FIXME
+    .replaceAll(/,$/gm, '')
     .split('\n')
     .filter((line) => line.trim() !== '')
     .join('\n')
