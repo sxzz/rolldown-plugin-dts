@@ -88,7 +88,6 @@
     "@sxzz/eslint-config": "^7.4.5",
     "@sxzz/prettier-config": "^2.2.6",
     "@sxzz/test-utils": "^0.5.15",
-    "@types/babel__generator": "^7.27.0",
     "@types/node": "^25.0.9",
     "@typescript/native-preview": "7.0.0-dev.20260118.1",
     "@volar/typescript": "^2.4.27",
