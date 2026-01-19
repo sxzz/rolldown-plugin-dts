@@ -74,9 +74,9 @@
     }
   },
   "dependencies": {
-    "@babel/generator": "next",
-    "@babel/parser": "next",
-    "@babel/types": "next",
+    "@babel/generator": "8.0.0-beta.4",
+    "@babel/parser": "8.0.0-beta.4",
+    "@babel/types": "8.0.0-beta.4",
     "ast-kit": "^2.2.0",
     "birpc": "^4.0.0",
     "dts-resolver": "^2.1.3",

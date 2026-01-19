@@ -12,13 +12,13 @@ importers:
   .:
     dependencies:
       '@babel/generator':
-        specifier: next
+        specifier: 8.0.0-beta.4
         version: 8.0.0-beta.4
       '@babel/parser':
-        specifier: next
+        specifier: 8.0.0-beta.4
         version: 8.0.0-beta.4
       '@babel/types':
-        specifier: next
+        specifier: 8.0.0-beta.4
         version: 8.0.0-beta.4
       '@ts-macro/tsc':
         specifier: ^0.3.6
