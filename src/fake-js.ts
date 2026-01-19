@@ -1,6 +1,6 @@
 import { generate } from '@babel/generator'
 import { parse } from '@babel/parser'
-import t from '@babel/types'
+import * as t from '@babel/types'
 import {
   isDeclarationType,
   isIdentifierOf,
@@ -36,7 +36,7 @@ type Dep = t.Expression & { replace?: (newNode: t.Node) => void }
  */
 type TypeParams = Array<{
   name: string
-  typeParams: t.TSTypeParameter[]
+  typeParams: t.Identifier[]
 }>
 
 interface DeclarationInfo {
@@ -316,7 +316,10 @@ export function createFakeJsPlugin({
       sourceFileName: id,
     })
 
-    return result
+    return {
+      code: result.code,
+      map: result.map as any,
+    }
   }
 
   function renderChunk(code: string, chunk: RenderedChunk) {
@@ -436,7 +439,10 @@ export function createFakeJsPlugin({
       sourceFileName: chunk.fileName,
     })
 
-    return result
+    return {
+      code: result.code,
+      map: result.map as any,
+    }
   }
 
   function getIdentifierIndex(name: string) {
@@ -463,19 +469,21 @@ export function createFakeJsPlugin({
    * dependency function.
    */
   function collectParams(node: t.Node): TypeParams {
-    const typeParams: t.TSTypeParameter[] = []
+    const typeParams: t.Identifier[] = []
     walkAST(node, {
       leave(node) {
         if (
           'typeParameters' in node &&
           node.typeParameters?.type === 'TSTypeParameterDeclaration'
         ) {
-          typeParams.push(...node.typeParameters.params)
+          typeParams.push(
+            ...node.typeParameters.params.map((param) => param.name),
+          )
         }
       },
     })
 
-    const paramMap = new Map<string, t.TSTypeParameter[]>()
+    const paramMap = new Map<string, t.Identifier[]>()
     for (const typeParam of typeParams) {
       const name = typeParam.name
       const group = paramMap.get(name)
@@ -534,17 +542,17 @@ export function createFakeJsPlugin({
           }
         } else if (node.type === 'TSInterfaceDeclaration' && node.extends) {
           for (const heritage of node.extends || []) {
-            addDependency(TSEntityNameToRuntime(heritage.expression))
+            addDependency(heritage.expression)
           }
         } else if (node.type === 'ClassDeclaration') {
           if (node.superClass) addDependency(node.superClass)
           if (node.implements) {
             for (const implement of node.implements) {
-              addDependency(
-                TSEntityNameToRuntime(
-                  (implement as t.TSExpressionWithTypeArguments).expression,
-                ),
-              )
+              if (implement.type === 'ClassImplements') {
+                addDependency(implement.id)
+              } else {
+                addDependency(implement.expression)
+              }
             }
           }
         } else if (
@@ -579,11 +587,10 @@ export function createFakeJsPlugin({
             }
             case 'TSImportType': {
               seen.add(node)
-              const source = node.argument
-              const imported = node.qualifier
+              const { source, qualifier } = node
               const dep = importNamespace(
                 node,
-                imported,
+                qualifier,
                 source,
                 namespaceStmts,
               )
@@ -628,13 +635,19 @@ export function createFakeJsPlugin({
 
     if (imported) {
       const importedLeft = getIdFromTSEntityName(imported)
+      if (
+        imported.type === 'ThisExpression' ||
+        importedLeft.type === 'ThisExpression'
+      ) {
+        throw new Error('Cannot import `this` from module.')
+      }
       overwriteNode(importedLeft, t.tsQualifiedName(local, { ...importedLeft }))
       local = imported
     }
 
     let replacement: t.Node = node
-    if (node.typeParameters) {
-      overwriteNode(node, t.tsTypeReference(local, node.typeParameters))
+    if (node.typeArguments) {
+      overwriteNode(node, t.tsTypeReference(local, node.typeArguments))
       replacement = local
     } else {
       overwriteNode(node, local)
@@ -666,7 +679,7 @@ function collectInferredNames(node: t.Node) {
   walkAST(node, {
     enter(node) {
       if (node.type === 'TSInferType' && node.typeParameter) {
-        inferred.push(node.typeParameter.name)
+        inferred.push(node.typeParameter.name.name)
       }
     },
   })
@@ -785,22 +798,24 @@ function isRuntimeBindingArrayElements(
 function isThisExpression(node: t.Node): boolean {
   return (
     isIdentifierOf(node, 'this') ||
+    node.type === 'ThisExpression' ||
     (node.type === 'MemberExpression' && isThisExpression(node.object))
   )
 }
 
 function TSEntityNameToRuntime(
   node: t.TSEntityName,
-): t.MemberExpression | t.Identifier {
-  if (node.type === 'Identifier') {
+): t.MemberExpression | t.Identifier | t.ThisExpression {
+  if (node.type === 'Identifier' || node.type === 'ThisExpression') {
     return node
   }
+
   const left = TSEntityNameToRuntime(node.left)
   return Object.assign(node, t.memberExpression(left, node.right))
 }
 
 function getIdFromTSEntityName(node: t.TSEntityName) {
-  if (node.type === 'Identifier') {
+  if (node.type === 'Identifier' || node.type === 'ThisExpression') {
     return node
   }
   return getIdFromTSEntityName(node.left)

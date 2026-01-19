@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,8 +1,8 @@
+ // index.d.ts
+ declare enum Alphabet {
+   a = "a",
+-  b = "b",
++  b = "b"
+ }
+ declare class Test {
+   readonly letter = Alphabet.a
+ }

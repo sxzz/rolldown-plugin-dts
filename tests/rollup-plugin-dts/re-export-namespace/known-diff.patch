@@ -2,7 +2,7 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,5 +1,8 @@
+@@ -1,32 +1,18 @@
  // index.d.ts
 +declare namespace namespace_d_exports {
 +  export { A, B, C, D, E, F, GenericC, GenericF, GenericI, GenericT }
@@ -11,7 +11,12 @@ Index: diff.patch
  declare function B(): void
  declare class C {}
  declare enum D {
-@@ -11,22 +14,5 @@
+   A = 0,
+-  B = 1,
++  B = 1
+ }
+ declare const E: string
+ declare type F = string
  declare class GenericC<T1, T2> {}
  declare function GenericF<T1, T2>(): void
  interface GenericI<T1, T2> {}
