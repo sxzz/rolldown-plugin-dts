@@ -11,7 +11,7 @@ declare function fn(arg0: SomeType<FooType>, opt: Interface): void;
 declare enum Enum {
   A = 0,
   B = 1,
-  C = 2,
+  C = 2
 }
 declare class Cls {
   foo: string;
@@ -244,7 +244,7 @@ type U = "mod";
 //#endregion
 //#region tests/fixtures/infer-false-branch/index.d.ts
 type U$1 = "local";
-type Test<T> = T extends Array<infer U> ? (T extends Array<infer U2> ? U2 : U) : U$1;
+type Test<T> = T extends Array<infer U> ? T extends Array<infer U2> ? U2 : U : U$1;
 //#endregion
 export { Test, type U };"
 `;
@@ -402,7 +402,7 @@ declare function fn(arg0: SomeType<FooType>, opt: Interface): void;
 declare enum Enum {
   A = 0,
   B = 1,
-  C = 2,
+  C = 2
 }
 declare class Cls {
   foo: string;

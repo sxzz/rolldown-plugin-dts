@@ -17,11 +17,11 @@ export default defineConfig({
   define: {
     'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.mjs'),
   },
-  exports: true,
+  inlineOnly: [],
   treeshake: {
     moduleSideEffects: false,
   },
-  external: ['@vue/language-core'],
+  exports: true,
   plugins: [
     dts({
       oxc: true,

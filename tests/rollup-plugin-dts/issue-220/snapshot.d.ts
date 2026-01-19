@@ -2,7 +2,7 @@
 //#region tests/rollup-plugin-dts/issue-220/index.d.ts
 declare enum Alphabet {
   a = "a",
-  b = "b",
+  b = "b"
 }
 declare class Test {
   readonly letter = Alphabet.a;

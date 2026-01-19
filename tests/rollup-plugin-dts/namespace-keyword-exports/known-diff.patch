@@ -7,7 +7,7 @@ Index: diff.patch
 -declare const _in = "foo"
 -declare namespace foo_d {
 -  export {
--    _in as in,
+-    _in as in
 +declare namespace foo_d_exports {
 +  export { _in as in }
  }

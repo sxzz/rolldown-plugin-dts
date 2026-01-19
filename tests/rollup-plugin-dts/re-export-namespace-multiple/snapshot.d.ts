@@ -7,7 +7,7 @@ declare function B(): void;
 declare class C {}
 declare enum D {
   A = 0,
-  B = 1,
+  B = 1
 }
 declare const E: string;
 declare type F = string;

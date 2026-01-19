@@ -12,7 +12,7 @@ declare function fn(arg0: SomeType<FooType>, opt: Interface): void;
 declare enum Enum {
   A = 0,
   B = 1,
-  C = 2,
+  C = 2
 }
 declare class Cls {
   foo: string;
