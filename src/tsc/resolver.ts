@@ -21,7 +21,10 @@ export function tscResolve(
   const resolved = ts.bundlerModuleNameResolver(
     id,
     importer,
-    parsedConfig.options,
+    {
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+      ...parsedConfig.options,
+    },
     ts.sys,
     undefined,
     reference,
