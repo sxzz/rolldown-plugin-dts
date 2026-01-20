@@ -364,8 +364,11 @@ export function createFakeJsPlugin({
         const declarationId = declarationIdNode.value
         const declaration = getDeclaration(declarationId)
 
-        walkAST(declaration.decl, {
+        walkAST<t.Node | t.Comment>(declaration.decl, {
           enter(node) {
+            if (node.type === 'CommentBlock') {
+              return
+            }
             delete node.loc
           },
         })
@@ -435,7 +438,6 @@ export function createFakeJsPlugin({
     }
 
     const result = generate(file, {
-      comments: true,
       sourceMaps: sourcemap,
       sourceFileName: chunk.fileName,
     })

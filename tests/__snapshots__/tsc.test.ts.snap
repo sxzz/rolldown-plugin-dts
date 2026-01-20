@@ -364,8 +364,8 @@ declare function fn(): number;
  */
 interface Options {
   /**
-       * interface member
-       */
+   * interface member
+   */
   foo: string;
 }
 /**

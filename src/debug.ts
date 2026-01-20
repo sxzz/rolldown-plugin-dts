@@ -3,7 +3,7 @@
 
 import { Buffer } from 'node:buffer'
 
-export function printCodeWithSourceMap(code: string, result: any) {
+export function printCodeWithSourceMap(code: string, result: any): void {
   const codeWithMap = `\n\n${
     result.code
   }\n//# sourceMappingURL=data:application/json;base64,${Buffer.from(
