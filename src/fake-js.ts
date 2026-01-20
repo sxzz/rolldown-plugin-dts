@@ -137,6 +137,7 @@ export function createFakeJsPlugin({
       plugins: [['typescript', { dts: true }]],
       sourceType: 'module',
       errorRecovery: true,
+      createParenthesizedExpressions: true,
     })
     const { program, comments } = file
     const typeOnlyIds: string[] = []

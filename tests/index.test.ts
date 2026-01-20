@@ -511,7 +511,7 @@ test('infer false branch', async () => {
   )
   expect(snapshot).toMatchSnapshot()
   expect(snapshot).toContain(
-    'T extends Array<infer U> ? T extends Array<infer U2> ? U2 : U : ',
+    'T extends Array<infer U> ? (T extends Array<infer U2> ? U2 : U) : ',
   )
 })
 

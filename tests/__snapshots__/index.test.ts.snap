@@ -244,7 +244,7 @@ type U = "mod";
 //#endregion
 //#region tests/fixtures/infer-false-branch/index.d.ts
 type U$1 = "local";
-type Test<T> = T extends Array<infer U> ? T extends Array<infer U2> ? U2 : U : U$1;
+type Test<T> = T extends Array<infer U> ? (T extends Array<infer U2> ? U2 : U) : U$1;
 //#endregion
 export { Test, type U };"
 `;
