@@ -549,10 +549,9 @@ export function createFakeJsPlugin({
           if (node.implements) {
             for (const implement of node.implements) {
               if (implement.type === 'ClassImplements') {
-                addDependency(implement.id)
-              } else {
-                addDependency(implement.expression)
+                throw new Error('Unexpected Flow syntax')
               }
+              addDependency(implement.expression)
             }
           }
         } else if (
@@ -727,9 +726,9 @@ function isRuntimeBindingVariableDeclaration(
   node: t.Node | null | undefined,
 ): node is RuntimeBindingVariableDeclration {
   return (
-    t.isVariableDeclaration(node) &&
+    node?.type === 'VariableDeclaration' &&
     node.declarations.length > 0 &&
-    t.isVariableDeclarator(node.declarations[0]) &&
+    node.declarations[0].type === 'VariableDeclarator' &&
     isRuntimeBindingArrayExpression(node.declarations[0].init)
   )
 }
@@ -754,7 +753,23 @@ function isRuntimeBindingArrayExpression(
   node: t.Node | null | undefined,
 ): node is RuntimeBindingArrayExpression {
   return (
-    t.isArrayExpression(node) && isRuntimeBindingArrayElements(node.elements)
+    node?.type === 'ArrayExpression' &&
+    isRuntimeBindingArrayElements(node.elements)
+  )
+}
+
+/**
+ * Check if the given array is a {@link RuntimeBindingArrayElements}
+ */
+function isRuntimeBindingArrayElements(
+  elements: Array<t.Node | null | undefined>,
+): elements is RuntimeBindingArrayElements {
+  const [declarationId, deps, children, effect] = elements
+  return (
+    declarationId?.type === 'NumericLiteral' &&
+    deps?.type === 'ArrowFunctionExpression' &&
+    children?.type === 'ArrayExpression' &&
+    (!effect || effect.type === 'CallExpression')
   )
 }
 
@@ -776,21 +791,6 @@ type RuntimeBindingArrayElementsBase = [
 type RuntimeBindingArrayElements =
   | RuntimeBindingArrayElementsBase
   | [...RuntimeBindingArrayElementsBase, effect: t.CallExpression]
-
-/**
- * Check if the given array is a {@link RuntimeBindingArrayElements}
- */
-function isRuntimeBindingArrayElements(
-  elements: Array<t.Node | null | undefined>,
-): elements is RuntimeBindingArrayElements {
-  const [declarationId, deps, children, effect] = elements
-  return (
-    t.isNumericLiteral(declarationId) &&
-    t.isArrowFunctionExpression(deps) &&
-    t.isArrayExpression(children) &&
-    (!effect || t.isCallExpression(effect))
-  )
-}
 
 // #endregion
 
