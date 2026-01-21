@@ -200,9 +200,18 @@ export function createFakeJsPlugin({
         )
       } else if ('id' in decl && decl.id) {
         let binding = decl.id
+        if (binding.type === 'TSQualifiedName') {
+          binding = getIdFromTSEntityName(binding)
+        }
+
         binding = sideEffect
           ? t.identifier(`_${getIdentifierIndex('')}`)
-          : (binding as t.Identifier)
+          : binding
+
+        if (binding.type !== 'Identifier') {
+          throw new Error(`Unexpected ${binding.type} declaration id`)
+        }
+
         bindings.push(binding)
       } else {
         const binding = t.identifier('export_default')

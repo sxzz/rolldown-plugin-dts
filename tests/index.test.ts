@@ -528,3 +528,11 @@ test('tsgo with custom path', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test('sub namespace', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/sub-namespace.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})

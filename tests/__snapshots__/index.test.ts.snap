@@ -381,6 +381,16 @@ declare global {
 }"
 `;
 
+exports[`sub namespace 1`] = `
+"// sub-namespace.d.ts
+//#region tests/fixtures/sub-namespace.d.ts
+declare namespace Foo.Bar {
+  export {};
+}
+//#endregion
+export { Foo };"
+`;
+
 exports[`tree-shaking 1`] = `
 "// index.d.ts
 //#region tests/fixtures/tree-shaking/mod.d.ts
