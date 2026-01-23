@@ -40,7 +40,9 @@ await testFixtures(
       ).then(({ snapshot }) => snapshot),
       rollupBuild(entries, [rollupDts()], undefined, {
         entryFileNames: '[name].ts',
-      }).then(({ snapshot }) => snapshot),
+      })
+        .then(({ snapshot }) => snapshot)
+        .catch(() => 'rollup-plugin-dts has errors'),
     ]).catch((_error) => ((error = _error), []))
 
     if (id.includes('error')) {

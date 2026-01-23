@@ -57,13 +57,13 @@ export = _default;"
 
 exports[`codeSplitting 1`] = `
 "// entry.d.ts
-import { t as shared1 } from "./shared1-chunk-DsfELruD.js";
+import { t as shared1 } from "./shared1-chunk-DInpuBpE.js";
 
 //#region tests/fixtures/manual-chunk/shared2.d.ts
 declare const shared2 = "shared2";
 //#endregion
 export { shared1, shared2 };
-// shared1-chunk-DsfELruD.d.ts
+// shared1-chunk-DInpuBpE.d.ts
 //#region tests/fixtures/manual-chunk/shared1.d.ts
 declare const shared1 = "shared1";
 //#endregion
@@ -71,12 +71,12 @@ export { shared1 as t };"
 `;
 
 exports[`cyclic import 1`] = `
-"// a-BcudblMC.d.ts
+"// a-B8uCZscZ.d.ts
 //#region b.d.ts
-declare class SomeClass<T$1 extends SomeInterface<number>> {
-  value: T$1;
-  constructor(value: T$1);
-  doSomething<T$1 extends SomeInterface<number>>(value: T$1): T$1;
+declare class SomeClass<T extends SomeInterface<number>> {
+  value: T;
+  constructor(value: T);
+  doSomething<T extends SomeInterface<number>>(value: T): T;
 }
 type SomeBoolean = boolean;
 //#endregion
@@ -88,10 +88,10 @@ type T = SomeBoolean;
 //#endregion
 export { SomeClass as i, T as n, SomeBoolean as r, SomeInterface as t };
 // a.d.ts
-import { n as T, t as SomeInterface } from "./a-BcudblMC.js";
+import { n as T, t as SomeInterface } from "./a-B8uCZscZ.js";
 export { SomeInterface, T };
 // b.d.ts
-import { i as SomeClass, r as SomeBoolean } from "./a-BcudblMC.js";
+import { i as SomeClass, r as SomeBoolean } from "./a-B8uCZscZ.js";
 export { SomeBoolean, SomeClass };"
 `;
 
@@ -209,7 +209,7 @@ export { UserWithAge };"
 
 exports[`entryFileNames > default chunk name 2`] = `
 "// input1.d.mts
-import { t as Input2 } from "./input2-eCNysyew.js";
+import { t as Input2 } from "./input2-459dIHr0.js";
 
 //#region tests/fixtures/alias/input1.d.ts
 interface Input1 extends Input2 {
@@ -218,7 +218,7 @@ interface Input1 extends Input2 {
 declare const input1: Input1;
 //#endregion
 export { Input1, input1 };
-// input2-eCNysyew.d.ts
+// input2-459dIHr0.d.ts
 //#region tests/fixtures/alias/shared.d.ts
 interface Shared {
   shared: string;
@@ -233,7 +233,7 @@ declare const input2: Input2;
 //#endregion
 export { input2 as n, Input2 as t };
 // input2.d.mts
-import { n as input2, t as Input2 } from "./input2-eCNysyew.js";
+import { n as input2, t as Input2 } from "./input2-459dIHr0.js";
 export { Input2, input2 };"
 `;
 
@@ -260,7 +260,7 @@ export { Fn1, Fn2 };"
 `;
 
 exports[`input alias 1`] = `
-"// input2-BJEZiIxE.d.ts
+"// input2-BRYOrfUi.d.ts
 //#region shared.d.ts
 interface Shared {
   shared: string;
@@ -274,7 +274,7 @@ interface Input2 extends Shared {
 declare const input2: Input2;
 //#endregion
 export { input2 as n, Input2 as t };
-// input2-MGG24_1C.js
+// input2-Cn0-MVuN.js
 //#region shared.ts
 const shared = { shared: "shared" };
 
@@ -288,7 +288,7 @@ const input2 = {
 //#endregion
 export { input2 as t };
 // output1.d.ts
-import { t as Input2 } from "./input2-BJEZiIxE.js";
+import { t as Input2 } from "./input2-BRYOrfUi.js";
 
 //#region input1.d.ts
 interface Input1 extends Input2 {
@@ -298,7 +298,7 @@ declare const input1: Input1;
 //#endregion
 export { Input1, input1 };
 // output1.js
-import { t as input2 } from "./input2-MGG24_1C.js";
+import { t as input2 } from "./input2-Cn0-MVuN.js";
 
 //#region input1.ts
 const input1 = {
@@ -309,23 +309,23 @@ const input1 = {
 //#endregion
 export { input1 };
 // output2/index.d.ts
-import { n as input2, t as Input2 } from "../input2-BJEZiIxE.js";
+import { n as input2, t as Input2 } from "../input2-BRYOrfUi.js";
 export { Input2, input2 };
 // output2/index.js
-import { t as input2 } from "../input2-MGG24_1C.js";
+import { t as input2 } from "../input2-Cn0-MVuN.js";
 
 export { input2 };"
 `;
 
 exports[`manualChunks 1`] = `
 "// entry.d.ts
-import { t as shared1 } from "./shared1-chunk-DsfELruD.js";
+import { t as shared1 } from "./shared1-chunk-DInpuBpE.js";
 
 //#region tests/fixtures/manual-chunk/shared2.d.ts
 declare const shared2 = "shared2";
 //#endregion
 export { shared1, shared2 };
-// shared1-chunk-DsfELruD.d.ts
+// shared1-chunk-DInpuBpE.d.ts
 //#region tests/fixtures/manual-chunk/shared1.d.ts
 declare const shared1 = "shared1";
 //#endregion
