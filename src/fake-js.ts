@@ -17,7 +17,12 @@ import {
   resolveTemplateFn,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
-import type { Plugin, RenderedChunk, TransformResult } from 'rolldown'
+import type {
+  Plugin,
+  RenderedChunk,
+  TransformPluginContext,
+  TransformResult,
+} from 'rolldown'
 
 // input:
 // export declare function x(xx: X): void
@@ -132,7 +137,11 @@ export function createFakeJsPlugin({
     },
   }
 
-  function transform(code: string, id: string): TransformResult {
+  function transform(
+    this: TransformPluginContext,
+    code: string,
+    id: string,
+  ): TransformResult {
     const file = parse(code, {
       plugins: [['typescript', { dts: true }]],
       sourceType: 'module',
@@ -156,6 +165,17 @@ export function createFakeJsPlugin({
 
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
+
+      if (
+        sideEffect &&
+        stmt.id.type === 'StringLiteral' &&
+        stmt.id.value[0] === '.'
+      ) {
+        this.warn(
+          `\`declare module '${stmt.id.value}'\` is not supported for type declaration bundling. Found in ${id}.`,
+        )
+      }
+
       if (
         sideEffect &&
         id.endsWith('.vue.d.ts') &&
