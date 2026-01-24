@@ -429,10 +429,23 @@ export function createFakeJsPlugin({
         const transformedDeps = (depsFn.body as t.ArrayExpression)
           .elements as t.Expression[]
         for (const [i, originalDep] of declaration.deps.entries()) {
+          let transformedDep = transformedDeps[i]
+          if (
+            transformedDep.type === 'UnaryExpression' &&
+            transformedDep.operator === 'void'
+          ) {
+            transformedDep = {
+              ...t.identifier('undefined'),
+              loc: transformedDep.loc,
+              start: transformedDep.start,
+              end: transformedDep.end,
+            }
+          }
+
           if (originalDep.replace) {
-            originalDep.replace(transformedDeps[i])
+            originalDep.replace(transformedDep)
           } else {
-            Object.assign(originalDep, transformedDeps[i])
+            Object.assign(originalDep, transformedDep)
           }
         }
 
