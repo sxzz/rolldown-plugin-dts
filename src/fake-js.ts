@@ -172,7 +172,7 @@ export function createFakeJsPlugin({
         stmt.id.value[0] === '.'
       ) {
         this.warn(
-          `\`declare module '${stmt.id.value}'\` is not supported for type declaration bundling. Found in ${id}.`,
+          `\`declare module ${JSON.stringify(stmt.id.value)}\` will be kept as-is in the output. Relative module declaration may cause unexpected issues. Found in ${id}.`,
         )
       }
 
