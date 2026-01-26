@@ -17,7 +17,7 @@ export function filename_to_dts(id: string): string {
     .replace(RE_VUE, '.vue.ts')
     .replace(RE_TS, '.d.$1ts')
     .replace(RE_JS, '.d.$1ts')
-    .replace(RE_JSON, '.d.ts')
+    .replace(RE_JSON, '.json.d.ts')
 }
 export function filename_dts_to(id: string, ext: 'js' | 'ts'): string {
   return id.replace(RE_DTS, `.$1${ext}`)

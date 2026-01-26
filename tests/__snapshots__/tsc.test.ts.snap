@@ -104,7 +104,7 @@ export { input2 };"
 
 exports[`tsc > import JSON 1`] = `
 "// index.d.ts
-declare namespace foo_d_exports {
+declare namespace foo_json_d_exports {
   export { age, __json_default_export as default, name };
 }
 declare let name: string;
@@ -112,11 +112,11 @@ declare let age: number;
 declare namespace __json_default_export {
   export { name, age };
 }
-declare namespace bar_d_exports {
+declare namespace bar_json_d_exports {
   export { _exports$1 as default };
 }
 declare const _exports$1: string[];
-declare namespace invalid_d_exports {
+declare namespace invalid_json_d_exports {
   export { __3 as "\\"", _11 as "1", __4 as "\\\\", ___2 as __, _class0 as class, _exports$2 as default };
 }
 declare const _exports$2: {
@@ -132,7 +132,7 @@ declare let ___2: typeof _exports$2["__"];
 declare let __3: typeof _exports$2["\\""];
 declare let __4: typeof _exports$2["\\\\"];
 //#endregion
-//#region tests/fixtures/import-json/nested.d.ts
+//#region tests/fixtures/import-json/nested.json.d.ts
 declare let openapi: string;
 declare namespace info {
   let title: string;
@@ -338,12 +338,12 @@ declare namespace __json_default_export$1 {
   export { openapi, info, components, paths };
 }
 //#endregion
-//#region tests/fixtures/import-json/array-of-object.d.ts
+//#region tests/fixtures/import-json/array-of-object.json.d.ts
 declare const _exports: {
   key: string;
 }[];
 //#endregion
-export { age, _exports as arrayOfObjects, _exports$1 as bar, bar_d_exports as barNs, __json_default_export as foo, foo_d_exports as fooNs, invalid_d_exports as invalidNs, name, __json_default_export$1 as nested };"
+export { age, _exports as arrayOfObjects, _exports$1 as bar, bar_json_d_exports as barNs, __json_default_export as foo, foo_json_d_exports as fooNs, invalid_json_d_exports as invalidNs, name, __json_default_export$1 as nested };"
 `;
 
 exports[`tsc > jsdoc 1`] = `
