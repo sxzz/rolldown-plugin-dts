@@ -88,8 +88,8 @@
     "@sxzz/eslint-config": "^7.5.1",
     "@sxzz/prettier-config": "^2.2.6",
     "@sxzz/test-utils": "^0.5.15",
-    "@types/node": "^25.0.10",
-    "@typescript/native-preview": "7.0.0-dev.20260126.1",
+    "@types/node": "^25.1.0",
+    "@typescript/native-preview": "7.0.0-dev.20260129.1",
     "@volar/typescript": "^2.4.27",
     "@vue/language-core": "^3.2.4",
     "arktype": "^2.1.29",
@@ -97,7 +97,7 @@
     "diff": "^8.0.3",
     "eslint": "^9.39.2",
     "prettier": "^3.8.1",
-    "rolldown": "^1.0.0-rc.1",
+    "rolldown": "^1.0.0-rc.2",
     "rolldown-plugin-dts-snapshot": "^0.3.2",
     "rolldown-plugin-require-cjs": "^0.3.3",
     "rollup-plugin-dts": "^6.3.0",
@@ -109,7 +109,7 @@
     "vue-tsc": "^3.2.4"
   },
   "resolutions": {
-    "rolldown": "^1.0.0-rc.1"
+    "rolldown": "^1.0.0-rc.2"
   },
   "prettier": "@sxzz/prettier-config"
 }
