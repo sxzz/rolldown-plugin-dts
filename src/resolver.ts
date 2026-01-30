@@ -53,12 +53,6 @@ export function createDtsResolvePlugin({
           moduleSideEffects: sideEffects,
         }
 
-        // Guard: Externalize non-code imports
-        if (RE_CSS.test(id)) {
-          debug('Externalizing css import:', id)
-          return external
-        }
-
         // Get Rolldown's resolution first for fallback and policy checks
         const rolldownResolution = await this.resolve(id, importer, options)
         debug(
@@ -86,6 +80,11 @@ export function createDtsResolvePlugin({
 
         // If resolution failed, error or externalize
         if (!dtsResolution) {
+          if (RE_CSS.test(id)) {
+            debug('Externalizing css import:', id)
+            return external
+          }
+
           debug('Unresolvable dts import:', id, 'from', importer)
 
           const isFileImport = isFilePath(id)

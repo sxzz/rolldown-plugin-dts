@@ -529,6 +529,23 @@ test('tsgo with custom path', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+test('css.ts files', async () => {
+  const root = path.resolve(dirname, 'fixtures/css-ts')
+  const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+    dts({ emitDtsOnly: true }),
+  ])
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('real css imports are externalized', async () => {
+  const root = path.resolve(dirname, 'fixtures/css-real')
+  const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+    dts({ emitDtsOnly: true }),
+  ])
+  expect(snapshot).toMatchSnapshot()
+  expect(snapshot).not.toContain('.main')
+})
+
 test('sub namespace', async () => {
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/sub-namespace.ts'),

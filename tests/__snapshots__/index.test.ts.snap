@@ -70,6 +70,14 @@ declare const shared1 = "shared1";
 export { shared1 as t };"
 `;
 
+exports[`css.ts files 1`] = `
+"// index.d.ts
+//#region tests/fixtures/css-ts/file.css.d.ts
+declare const myClass: string;
+//#endregion
+export { myClass };"
+`;
+
 exports[`cyclic import 1`] = `
 "// a-B8uCZscZ.d.ts
 //#region b.d.ts
@@ -357,6 +365,14 @@ exports[`re-export from lib > onlyB 1`] = `
 import * as import_stub_lib from "stub-lib";
 type LibType = import_stub_lib.LibType;
 export { type LibType };"
+`;
+
+exports[`real css imports are externalized 1`] = `
+"// index.d.ts
+//#region tests/fixtures/css-real/index.d.ts
+declare const foo: number;
+//#endregion
+export { foo };"
 `;
 
 exports[`resolve dts 1`] = `
