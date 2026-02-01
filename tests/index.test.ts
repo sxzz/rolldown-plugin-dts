@@ -373,6 +373,28 @@ test('type-only export', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+test('type-only import', async () => {
+  // Test that `import type { Sql } from './types'` (type keyword outside braces)
+  // is properly recognized as a type-only import and doesn't trigger MISSING_EXPORT warnings
+  const { snapshot } = await rolldownBuild(
+    [path.resolve(dirname, 'fixtures/type-only-import/index.ts')],
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('export-equals-namespace', async () => {
+  // Test that `export = namespace` pattern works with type-only imports.
+  // Packages like 'postgres' use `export = postgres` with `declare namespace postgres { ... }`
+  // and consumers import types like `import type { Sql } from 'postgres'`.
+  // This should NOT produce MISSING_EXPORT warnings.
+  const { snapshot } = await rolldownBuild(
+    [path.resolve(dirname, 'fixtures/export-equals-namespace/index.ts')],
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
 test('cjs exports', async () => {
   {
     const { snapshot } = await rolldownBuild(

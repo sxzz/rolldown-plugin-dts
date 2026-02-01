@@ -13,6 +13,7 @@ import {
   filename_js_to_dts,
   RE_DTS,
   RE_DTS_MAP,
+  RE_NODE_MODULES,
   replaceTemplateName,
   resolveTemplateFn,
 } from './filename.ts'
@@ -158,6 +159,171 @@ export function createFakeJsPlugin({
 
     const appendStmts: t.Statement[] = []
     const namespaceStmts: NamespaceMap = new Map()
+
+    // First pass: collect namespace members and identify export = X patterns
+    // Also collect top-level imports to distinguish declared vs re-exported types
+    // And detect if file has explicit export statements (for .d.ts ambient module handling)
+    const namespaceMembersMap = new Map<
+      string,
+      { declared: string[]; reexported: string[] }
+    >()
+    let exportAssignmentName: string | null = null
+    const importedIdentifiers = new Set<string>()
+    // Per TypeScript spec (microsoft/TypeScript#57764), in .d.ts files ALL top-level
+    // declarations are considered exported UNLESS there's an `export { }` or explicit
+    // export statement. We track this to know whether to auto-export non-exported types.
+    let hasExplicitExportStatement = false
+
+    for (const stmt of program.body) {
+      // Check for explicit export statements (export { }, export type { X }, etc.)
+      // This determines if the file opts out of ambient .d.ts "everything is exported" behavior
+      if (
+        stmt.type === 'ExportNamedDeclaration' &&
+        !stmt.declaration &&
+        stmt.specifiers.length === 0
+      ) {
+        // Empty export: export { }
+        hasExplicitExportStatement = true
+      }
+      // Collect imported identifiers
+      if (stmt.type === 'ImportDeclaration') {
+        for (const spec of stmt.specifiers) {
+          if (
+            spec.type === 'ImportSpecifier' &&
+            spec.local.type === 'Identifier'
+          ) {
+            importedIdentifiers.add(spec.local.name)
+          } else if (
+            spec.type === 'ImportDefaultSpecifier' &&
+            spec.local.type === 'Identifier'
+          ) {
+            importedIdentifiers.add(spec.local.name)
+          } else if (
+            spec.type === 'ImportNamespaceSpecifier' &&
+            spec.local.type === 'Identifier'
+          ) {
+            importedIdentifiers.add(spec.local.name)
+          }
+        }
+      }
+
+      if (
+        stmt.type === 'TSModuleDeclaration' &&
+        stmt.id.type === 'Identifier'
+      ) {
+        const members = extractNamespaceMembers(stmt, importedIdentifiers)
+        if (members.declared.length > 0 || members.reexported.length > 0) {
+          namespaceMembersMap.set(stmt.id.name, members)
+        }
+      }
+      // Check for export = X pattern
+      if (
+        stmt.type === 'TSExportAssignment' &&
+        stmt.expression.type === 'Identifier'
+      ) {
+        exportAssignmentName = stmt.expression.name
+      }
+    }
+
+    // If we have export = X where X is a namespace, create exports for each member
+    // - For declared members: create `export type X = namespace.X`
+    // - For re-exported members: create `export { X }` to re-export the import
+    if (exportAssignmentName && namespaceMembersMap.has(exportAssignmentName)) {
+      const { declared, reexported } =
+        namespaceMembersMap.get(exportAssignmentName)!
+      // Reserved keywords that cannot be used as identifiers in export declarations
+      const reservedKeywords = new Set([
+        'default',
+        'class',
+        'function',
+        'var',
+        'let',
+        'const',
+        'if',
+        'else',
+        'for',
+        'while',
+        'do',
+        'switch',
+        'case',
+        'break',
+        'continue',
+        'return',
+        'throw',
+        'try',
+        'catch',
+        'finally',
+        'new',
+        'delete',
+        'typeof',
+        'void',
+        'in',
+        'instanceof',
+        'this',
+        'super',
+        'import',
+        'export',
+        'extends',
+        'implements',
+        'static',
+        'public',
+        'private',
+        'protected',
+        'yield',
+        'await',
+        'enum',
+        'interface',
+        'package',
+        'with',
+        'debugger',
+      ])
+
+      // Handle declared members: create type aliases
+      for (const memberName of declared) {
+        // Skip reserved keywords - they cannot be used as identifiers
+        if (reservedKeywords.has(memberName)) continue
+        // Create: export type MemberName = NamespaceName.MemberName
+        const typeAlias: t.TSTypeAliasDeclaration = {
+          type: 'TSTypeAliasDeclaration',
+          id: t.identifier(memberName),
+          typeAnnotation: t.tsTypeReference(
+            t.tsQualifiedName(
+              t.identifier(exportAssignmentName),
+              t.identifier(memberName),
+            ),
+          ),
+          declare: true,
+        }
+        const exportedTypeAlias: t.ExportNamedDeclaration = {
+          type: 'ExportNamedDeclaration',
+          declaration: typeAlias,
+          specifiers: [],
+          source: null,
+        }
+        program.body.push(exportedTypeAlias)
+      }
+
+      // Handle re-exported members: create re-exports
+      // These are types imported from other files and re-exported via `export type { X }`
+      const reexportSpecifiers: t.ExportSpecifier[] = []
+      for (const memberName of reexported) {
+        if (reservedKeywords.has(memberName)) continue
+        reexportSpecifiers.push({
+          type: 'ExportSpecifier',
+          local: t.identifier(memberName),
+          exported: t.identifier(memberName),
+        })
+      }
+      if (reexportSpecifiers.length > 0) {
+        const reexportDecl: t.ExportNamedDeclaration = {
+          type: 'ExportNamedDeclaration',
+          declaration: null,
+          specifiers: reexportSpecifiers,
+          source: null,
+        }
+        program.body.push(reexportDecl)
+      }
+    }
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.Statement) => (program.body[i] = stmt)
@@ -319,9 +485,29 @@ export function createFakeJsPlugin({
         )
         // replace the whole statement
         setStmt(runtimeAssignment)
-      } else {
+      } else if (isExportDecl) {
         // replace declaration, keep `export`
         setDecl(runtimeAssignment)
+      } else if (RE_NODE_MODULES.test(id) && !hasExplicitExportStatement) {
+        // Per TypeScript spec (microsoft/TypeScript#57764), in .d.ts files ALL
+        // top-level declarations are considered exported UNLESS there's an
+        // `export { }` statement (which tsc auto-inserts).
+        // Without `export { }`, non-exported types can be imported from other files.
+        // We need to export them for rolldown to resolve cross-file imports.
+        // Tree-shaking will remove unused types from the final output.
+        // We only do this for node_modules AND when no `export { }` exists.
+        setStmt(runtimeAssignment)
+        appendStmts.push(
+          t.exportNamedDeclaration(null, [
+            t.exportSpecifier(bindings[0], bindings[0]),
+          ]),
+        )
+      } else {
+        // Non-exported declaration - keep as-is (no export)
+        // This applies when:
+        // - User's own code (not in node_modules)
+        // - Or .d.ts file has `export { }` (opts out of ambient behavior)
+        setStmt(runtimeAssignment)
       }
     }
 
@@ -1090,6 +1276,71 @@ function patchReExport(nodes: t.Statement[]) {
   return nodes
 }
 
+/**
+ * Extract exported member names from a namespace declaration.
+ * Returns declared members (defined in the namespace) and re-exported members (imported then re-exported).
+ */
+function extractNamespaceMembers(
+  nsDecl: t.TSModuleDeclaration,
+  importedIdentifiers: Set<string>,
+): { declared: string[]; reexported: string[] } {
+  const declared: string[] = []
+  const reexported: string[] = []
+  const body = nsDecl.body
+
+  if (!body) return { declared, reexported }
+
+  if (body.type === 'TSModuleBlock') {
+    for (const stmt of body.body) {
+      if (stmt.type === 'ExportNamedDeclaration') {
+        if (stmt.declaration) {
+          // Handle: export interface X { } / export type X = ...
+          const decl = stmt.declaration
+          if ('id' in decl && decl.id && decl.id.type === 'Identifier') {
+            declared.push(decl.id.name)
+          }
+        } else if (stmt.specifiers.length > 0) {
+          // Handle: export type { X, Y, Z } (re-exports from other files)
+          for (const spec of stmt.specifiers) {
+            if (
+              spec.type === 'ExportSpecifier' &&
+              spec.exported.type === 'Identifier'
+            ) {
+              const exportedName = spec.exported.name
+              // Check if this was imported at the top level
+              const localName =
+                spec.local.type === 'Identifier'
+                  ? spec.local.name
+                  : exportedName
+              if (importedIdentifiers.has(localName)) {
+                reexported.push(exportedName)
+              } else {
+                // It's declared somewhere in the namespace
+                declared.push(exportedName)
+              }
+            }
+          }
+        }
+      }
+      if ('id' in stmt && stmt.id && stmt.id.type === 'Identifier') {
+        declared.push(stmt.id.name)
+      }
+      if (stmt.type === 'VariableDeclaration') {
+        for (const varDecl of stmt.declarations) {
+          if (varDecl.id.type === 'Identifier') {
+            declared.push(varDecl.id.name)
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    declared: [...new Set(declared)],
+    reexported: [...new Set(reexported)],
+  }
+}
+
 // fix:
 // - import type { ... } from '...'
 // - import { type ... } from '...'
@@ -1176,6 +1427,7 @@ function rewriteImportExport(
         },
       ],
     })
+
     return true
   } else if (
     node.type === 'ExportDefaultDeclaration' &&
