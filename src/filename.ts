@@ -8,6 +8,7 @@ export const RE_NODE_MODULES: RegExp = /[\\/]node_modules[\\/]/
 export const RE_CSS: RegExp = /\.css$/
 export const RE_VUE: RegExp = /\.vue$/
 export const RE_JSON: RegExp = /\.json$/
+export const RE_ROLLDOWN_RUNTIME: RegExp = /^\0rolldown\/runtime\.js$/
 
 export function filename_js_to_dts(id: string): string {
   return id.replace(RE_JS, '.d.$1ts')
