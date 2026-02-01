@@ -224,25 +224,31 @@ export function createGeneratePlugin({
         if (tsgo) {
           if (RE_VUE.test(id))
             throw new Error('tsgo does not support Vue files.')
-          const dtsPath = path.resolve(
-            tsgoDist!,
-            path.relative(path.resolve(rootDir), filename_to_dts(id)),
-          )
-          if (!existsSync(dtsPath)) {
-            debug('[tsgo]', dtsPath, 'is missing')
-            throw new Error(
-              `tsgo did not generate dts file for ${id}, please check your tsconfig.`,
+
+          // JSON files don't get .d.ts files from tsgo - generate synthetic types
+          if (RE_JSON.test(id)) {
+            dtsCode = generateJsonDts(code)
+          } else {
+            const dtsPath = path.resolve(
+              tsgoDist!,
+              path.relative(path.resolve(rootDir), filename_to_dts(id)),
             )
-          }
+            if (!existsSync(dtsPath)) {
+              debug('[tsgo]', dtsPath, 'is missing')
+              throw new Error(
+                `tsgo did not generate dts file for ${id}, please check your tsconfig.`,
+              )
+            }
 
-          dtsCode = await readFile(dtsPath, 'utf8')
+            dtsCode = await readFile(dtsPath, 'utf8')
 
-          const mapPath = `${dtsPath}.map`
-          if (existsSync(mapPath)) {
-            const mapRaw = await readFile(mapPath, 'utf8')
-            map = {
-              ...JSON.parse(mapRaw),
-              sources: [id],
+            const mapPath = `${dtsPath}.map`
+            if (existsSync(mapPath)) {
+              const mapRaw = await readFile(mapPath, 'utf8')
+              map = {
+                ...JSON.parse(mapRaw),
+                sources: [id],
+              }
             }
           }
         } else if (oxc && !RE_VUE.test(id)) {
@@ -430,4 +436,70 @@ function collectJsonExports(code: string) {
   }
 
   return exports
+}
+
+/**
+ * Generate a synthetic .d.ts file for JSON content.
+ * This is needed when using tsgo which doesn't generate .d.ts for JSON files.
+ */
+function generateJsonDts(jsonContent: string): string {
+  try {
+    const parsed = JSON.parse(jsonContent)
+
+    // Generate named exports for object properties and a default export
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      !Array.isArray(parsed)
+    ) {
+      const validKeys = Object.keys(parsed).filter((key) =>
+        /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
+      )
+      const namedExports = validKeys
+        .map(
+          (key) => `declare let ${key}: ${jsonValueToTypeString(parsed[key])};`,
+        )
+        .join('\n')
+
+      return `${namedExports}
+declare namespace __json_default_export {
+  export { ${validKeys.join(', ')} }
+}
+export { __json_default_export as default }`
+    }
+
+    // For non-object JSON (arrays, primitives), just export as default
+    const typeString = jsonValueToTypeString(parsed)
+    return `declare const _default: ${typeString};\nexport default _default;`
+  } catch {
+    // If JSON parsing fails, return a generic type
+    return 'declare const _default: unknown;\nexport default _default;'
+  }
+}
+
+/**
+ * Convert a JSON value to its TypeScript type string representation.
+ */
+function jsonValueToTypeString(value: unknown): string {
+  if (value === null) return 'null'
+  if (typeof value === 'string') return 'string'
+  if (typeof value === 'number') return 'number'
+  if (typeof value === 'boolean') return 'boolean'
+  if (Array.isArray(value)) {
+    if (value.length === 0) return 'never[]'
+    // Get unique types in the array
+    const types = [...new Set(value.map((v) => jsonValueToTypeString(v)))]
+    if (types.length === 1) return `${types[0]}[]`
+    return `(${types.join(' | ')})[]`
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+    if (entries.length === 0) return '{}'
+    const props = entries.map(([k, v]) => {
+      const key = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k) ? k : JSON.stringify(k)
+      return `${key}: ${jsonValueToTypeString(v)}`
+    })
+    return `{ ${props.join('; ')} }`
+  }
+  return 'unknown'
 }
