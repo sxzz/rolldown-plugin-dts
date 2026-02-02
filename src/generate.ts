@@ -12,6 +12,7 @@ import {
   RE_JS,
   RE_JSON,
   RE_NODE_MODULES,
+  RE_ROLLDOWN_RUNTIME,
   RE_TS,
   RE_VUE,
   replaceTemplateName,
@@ -176,7 +177,7 @@ export function createGeneratePlugin({
       filter: {
         id: {
           include: [RE_JS, RE_TS, RE_VUE, RE_JSON],
-          exclude: [RE_DTS, RE_NODE_MODULES],
+          exclude: [RE_DTS, RE_NODE_MODULES, RE_ROLLDOWN_RUNTIME],
         },
       },
       handler(code, id) {
