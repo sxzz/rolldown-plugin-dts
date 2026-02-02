@@ -522,7 +522,9 @@ export function createFakeJsPlugin({
           node.typeParameters?.type === 'TSTypeParameterDeclaration'
         ) {
           typeParams.push(
-            ...node.typeParameters.params.map((param) => param.name),
+            ...node.typeParameters.params.map(({ name }) =>
+              typeof name === 'string' ? t.identifier(name) : name,
+            ),
           )
         }
       },
