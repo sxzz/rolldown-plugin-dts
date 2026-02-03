@@ -20,6 +20,7 @@ import type { OptionsResolved } from './options.ts'
 import type {
   Plugin,
   RenderedChunk,
+  RolldownFsModule,
   TransformPluginContext,
   TransformResult,
 } from 'rolldown'
@@ -60,6 +61,55 @@ type NamespaceMap = Map<
   }
 >
 
+async function detectExportEqualsNamespace(
+  resolvedId: string,
+  fs: RolldownFsModule,
+  cache: Map<string, string | false>,
+): Promise<string | false> {
+  if (cache.has(resolvedId)) {
+    return cache.get(resolvedId)!
+  }
+
+  let code: string
+  try {
+    code = await fs.readFile(resolvedId, { encoding: 'utf8' })
+  } catch {
+    cache.set(resolvedId, false)
+    return false
+  }
+
+  const file = parse(code, {
+    plugins: [['typescript', { dts: true }]],
+    sourceType: 'module',
+    errorRecovery: true,
+  })
+
+  let exportedName: string | false = false
+  for (const stmt of file.program.body) {
+    if (
+      stmt.type === 'TSExportAssignment' &&
+      stmt.expression.type === 'Identifier'
+    ) {
+      const candidateName = stmt.expression.name
+      for (const s of file.program.body) {
+        if (
+          s.type === 'TSModuleDeclaration' &&
+          s.kind === 'namespace' &&
+          s.id.type === 'Identifier' &&
+          s.id.name === candidateName
+        ) {
+          exportedName = candidateName
+          break
+        }
+      }
+      break
+    }
+  }
+
+  cache.set(resolvedId, exportedName)
+  return exportedName
+}
+
 export function createFakeJsPlugin({
   sourcemap,
   cjsDefault,
@@ -70,6 +120,7 @@ export function createFakeJsPlugin({
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
   const typeOnlyMap = new Map<string /* filename */, string[]>()
+  const exportEqualsNamespaceCache = new Map<string, string | false>()
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
@@ -137,11 +188,11 @@ export function createFakeJsPlugin({
     },
   }
 
-  function transform(
+  async function transform(
     this: TransformPluginContext,
     code: string,
     id: string,
-  ): TransformResult {
+  ): Promise<TransformResult> {
     const file = parse(code, {
       plugins: [['typescript', { dts: true }]],
       sourceType: 'module',
@@ -158,6 +209,124 @@ export function createFakeJsPlugin({
 
     const appendStmts: t.Statement[] = []
     const namespaceStmts: NamespaceMap = new Map()
+
+    const namespaceReplacements = new Map<
+      string,
+      { namespace: t.Identifier; originalName: string }
+    >()
+    const clearedImports = new Set<t.ImportDeclaration>()
+
+    for (const stmt of program.body) {
+      if (stmt.type !== 'ImportDeclaration') continue
+      if (!stmt.source || typeof stmt.source.value !== 'string') continue
+
+      const namedSpecifiers = stmt.specifiers.filter(
+        (s): s is t.ImportSpecifier => s.type === 'ImportSpecifier',
+      )
+      if (namedSpecifiers.length === 0) continue
+
+      const moduleSpec = stmt.source.value
+
+      const resolved = await this.resolve(moduleSpec, id)
+      if (!resolved || resolved.external) continue
+
+      const namespaceName = await detectExportEqualsNamespace(
+        resolved.id,
+        this.fs,
+        exportEqualsNamespaceCache,
+      )
+      if (!namespaceName) continue
+
+      let nsLocal: t.Identifier
+      if (namespaceStmts.has(moduleSpec)) {
+        nsLocal = namespaceStmts.get(moduleSpec)!.local as t.Identifier
+      } else {
+        nsLocal = t.identifier(namespaceName)
+        namespaceStmts.set(moduleSpec, {
+          stmt: t.importDeclaration(
+            [t.importSpecifier(nsLocal, t.identifier(namespaceName))],
+            t.stringLiteral(moduleSpec),
+          ),
+          local: nsLocal,
+        })
+      }
+
+      for (const spec of namedSpecifiers) {
+        const importedName =
+          spec.imported.type === 'Identifier'
+            ? spec.imported.name
+            : spec.imported.value
+        const localName = spec.local.name
+
+        namespaceReplacements.set(localName, {
+          namespace: nsLocal,
+          originalName: importedName,
+        })
+      }
+
+      stmt.specifiers = stmt.specifiers.filter(
+        (s) => s.type !== 'ImportSpecifier',
+      )
+
+      if (stmt.specifiers.length === 0) {
+        clearedImports.add(stmt)
+      }
+    }
+
+    if (namespaceReplacements.size > 0) {
+      walkAST(program, {
+        enter(node, parent) {
+          if (parent?.type === 'ImportSpecifier') return
+
+          if (
+            node.type === 'TSTypeReference' &&
+            node.typeName.type === 'Identifier' &&
+            namespaceReplacements.has(node.typeName.name)
+          ) {
+            const { namespace, originalName } = namespaceReplacements.get(
+              node.typeName.name,
+            )!
+            node.typeName = t.tsQualifiedName(
+              namespace,
+              t.identifier(originalName),
+            )
+          }
+        },
+      })
+    }
+
+    program.body = program.body.filter((stmt) => {
+      if (stmt.type !== 'ImportDeclaration') return true
+      return !clearedImports.has(stmt)
+    })
+
+    const tsExportAssignment = program.body.find(
+      (stmt): stmt is t.TSExportAssignment =>
+        stmt.type === 'TSExportAssignment',
+    )
+    if (
+      tsExportAssignment &&
+      tsExportAssignment.expression.type === 'Identifier'
+    ) {
+      const exportedName = tsExportAssignment.expression.name
+      const hasNamespaceDecl = program.body.some(
+        (stmt): stmt is t.TSModuleDeclaration =>
+          stmt.type === 'TSModuleDeclaration' &&
+          stmt.kind === 'namespace' &&
+          stmt.id.type === 'Identifier' &&
+          stmt.id.name === exportedName,
+      )
+      if (hasNamespaceDecl) {
+        appendStmts.push(
+          t.exportNamedDeclaration(null, [
+            t.exportSpecifier(
+              t.identifier(exportedName),
+              t.identifier(exportedName),
+            ),
+          ]),
+        )
+      }
+    }
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.Statement) => (program.body[i] = stmt)
@@ -1165,6 +1334,8 @@ function rewriteImportExport(
     node.type === 'TSExportAssignment' &&
     node.expression.type === 'Identifier'
   ) {
+    // Transform `export = X` to `export { X as default }`
+    // Note: If X is a namespace, the caller should also add `export { X }` separately
     set({
       type: 'ExportNamedDeclaration',
       specifiers: [

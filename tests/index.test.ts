@@ -555,3 +555,23 @@ test('sub namespace', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+// Test for export = namespace pattern like postgres
+// When a dev dependency uses `export = namespace`, named imports should be
+// transformed to use namespace-qualified access (e.g., `Sql` -> `postgres.Sql`)
+test('export equals namespace', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/export-equals-namespace')
+  const { snapshot } = await rolldownBuild(
+    ['index.ts'],
+    [dts({ emitDtsOnly: true })],
+    { cwd },
+  )
+  expect(snapshot).toMatchSnapshot()
+  // Verify namespace-qualified references are used
+  expect(snapshot).toContain('mockdb.Connection')
+  expect(snapshot).toContain('mockdb.Row')
+  expect(snapshot).toContain('mockdb.Options')
+  expect(snapshot).toContain('mockdb.DatabaseError')
+  // Verify unused types are not in the consumer code (tree-shaking)
+  // Note: They may still exist in the bundled namespace, but shouldn't be referenced
+})

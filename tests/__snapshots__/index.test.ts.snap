@@ -245,6 +245,53 @@ import { n as input2, t as Input2 } from "./input2-459dIHr0.js";
 export { Input2, input2 };"
 `;
 
+exports[`export equals namespace 1`] = `
+"// index.d.ts
+//#region node_modules/mock-db/index.d.ts
+declare function mockdb(): mockdb.Connection;
+declare function mockdb(url: string): mockdb.Connection;
+declare namespace mockdb {
+  interface Connection {
+    query(sql: string): Promise<Row[]>;
+    close(): void;
+  }
+  interface Row {
+    [key: string]: unknown;
+  }
+  interface Options {
+    host: string;
+    port: number;
+  }
+  class DatabaseError extends Error {
+    code: string;
+  }
+  interface UnusedType1 {
+    foo: string;
+  }
+  interface UnusedType2 {
+    bar: number;
+  }
+}
+//#endregion
+//#region index.d.ts
+interface DbConfig {
+  connection: mockdb.Connection;
+  options?: mockdb.Options;
+}
+declare function runQuery(conn: mockdb.Connection, sql: string): Promise<mockdb.Row[]>;
+declare class Database {
+  private conn;
+  private lastError?;
+  constructor(conn: mockdb.Connection);
+  getConnection(): mockdb.Connection;
+  getLastError(): mockdb.DatabaseError | undefined;
+}
+type QueryResult = mockdb.Row[];
+type IsError<T> = T extends mockdb.DatabaseError ? true : false;
+//#endregion
+export { Database, DbConfig, IsError, QueryResult, runQuery };"
+`;
+
 exports[`infer false branch 1`] = `
 "// index.d.ts
 //#region tests/fixtures/infer-false-branch/mod.d.ts
@@ -344,8 +391,10 @@ exports[`re-export from lib > both 1`] = `
 "// a.d.ts
 export * from "stub-lib";
 
-//#region rolldown:runtime
-
+//#region \\0rolldown/runtime.js
+declare namespace a_d_exports {
+  export {};
+}
 import * as import_stub_lib from "stub-lib";
 //#endregion
 export { import_stub_lib as t };
@@ -362,6 +411,9 @@ export * from "stub-lib";"
 
 exports[`re-export from lib > onlyB 1`] = `
 "// b.d.ts
+declare namespace a_d_exports {
+  export {};
+}
 import * as import_stub_lib from "stub-lib";
 type LibType = import_stub_lib.LibType;
 export { type LibType };"

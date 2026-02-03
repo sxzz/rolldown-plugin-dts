@@ -1,0 +1,7 @@
+{
+  "name": "export-equals-namespace-test",
+  "version": "1.0.0",
+  "devDependencies": {
+    "mock-db": "1.0.0"
+  }
+}
