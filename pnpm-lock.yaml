@@ -14,6 +14,9 @@ importers:
       '@babel/generator':
         specifier: 8.0.0-rc.1
         version: 8.0.0-rc.1
+      '@babel/helper-validator-identifier':
+        specifier: 8.0.0-rc.1
+        version: 8.0.0-rc.1
       '@babel/parser':
         specifier: 8.0.0-rc.1
         version: 8.0.0-rc.1

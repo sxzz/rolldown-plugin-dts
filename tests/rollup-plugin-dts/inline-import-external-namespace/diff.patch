@@ -1,0 +1,27 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,15 +1,15 @@
+ // index.d.ts
+-import * as ___foo_bar from 'foo/bar'
+-import * as __foo_bar from 'foo.bar'
+-import * as _foo_bar from 'foo-bar'
+-import * as foo_bar from 'foo_bar'
+ import * as foo from 'foo'
++import * as foo_bar from 'foo_bar'
++import * as foo_bar0 from 'foo-bar'
++import * as foo_bar1 from 'foo.bar'
++import * as foo_bar2 from 'foo/bar'
+ interface Foo {
+   ns1: foo
+   ns2: typeof foo
+   ns3: foo_bar.T
+-  ns4: _foo_bar.T
+-  ns5: __foo_bar.T
+-  ns6: ___foo_bar.T
++  ns4: foo_bar0.T
++  ns5: foo_bar1.T
++  ns6: foo_bar2.T
+ }
+ export { Foo }

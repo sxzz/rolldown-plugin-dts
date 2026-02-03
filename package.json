@@ -75,6 +75,7 @@
   },
   "dependencies": {
     "@babel/generator": "8.0.0-rc.1",
+    "@babel/helper-validator-identifier": "8.0.0-rc.1",
     "@babel/parser": "8.0.0-rc.1",
     "@babel/types": "8.0.0-rc.1",
     "ast-kit": "^3.0.0-beta.1",
