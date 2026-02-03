@@ -575,3 +575,24 @@ test('export equals namespace', async () => {
   // Verify unused types are not in the consumer code (tree-shaking)
   // Note: They may still exist in the bundled namespace, but shouldn't be referenced
 })
+
+// Test for export = namespace with re-exports (like fastify -> pino pattern)
+// When a module imports from an export = namespace module and re-exports those types,
+// we need to generate type aliases to maintain the bindings for the re-exports
+test('export equals namespace with re-exports', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/export-equals-reexport')
+  const { snapshot } = await rolldownBuild(
+    ['index.ts'],
+    [dts({ emitDtsOnly: true })],
+    { cwd },
+  )
+  expect(snapshot).toMatchSnapshot()
+  // Verify the re-exported types are properly aliased
+  expect(snapshot).toContain('type FrameworkLogFn')
+  expect(snapshot).toContain('type LogLevel')
+  expect(snapshot).toContain('type Bindings')
+  // Verify namespace-qualified references in the aliases
+  expect(snapshot).toContain('logger.LogFn')
+  expect(snapshot).toContain('logger.Level')
+  expect(snapshot).toContain('logger.Bindings')
+})

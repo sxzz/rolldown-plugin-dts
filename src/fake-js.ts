@@ -216,6 +216,23 @@ export function createFakeJsPlugin({
     >()
     const clearedImports = new Set<t.ImportDeclaration>()
 
+    const reExportedNames = new Set<string>()
+    for (const stmt of program.body) {
+      if (stmt.type === 'ExportNamedDeclaration' && !stmt.declaration) {
+        for (const spec of stmt.specifiers) {
+          if (spec.type === 'ExportSpecifier') {
+            reExportedNames.add(resolveString(spec.local))
+          }
+        }
+      }
+    }
+
+    const typeAliasesNeeded: Array<{
+      localName: string
+      namespace: t.Identifier
+      originalName: string
+    }> = []
+
     for (const stmt of program.body) {
       if (stmt.type !== 'ImportDeclaration') continue
       if (!stmt.source || typeof stmt.source.value !== 'string') continue
@@ -258,10 +275,18 @@ export function createFakeJsPlugin({
             : spec.imported.value
         const localName = spec.local.name
 
-        namespaceReplacements.set(localName, {
-          namespace: nsLocal,
-          originalName: importedName,
-        })
+        if (reExportedNames.has(localName)) {
+          typeAliasesNeeded.push({
+            localName,
+            namespace: nsLocal,
+            originalName: importedName,
+          })
+        } else {
+          namespaceReplacements.set(localName, {
+            namespace: nsLocal,
+            originalName: importedName,
+          })
+        }
       }
 
       stmt.specifiers = stmt.specifiers.filter(
@@ -293,6 +318,18 @@ export function createFakeJsPlugin({
           }
         },
       })
+    }
+
+    for (const { localName, namespace, originalName } of typeAliasesNeeded) {
+      appendStmts.push(
+        t.tsTypeAliasDeclaration(
+          t.identifier(localName),
+          null,
+          t.tsTypeReference(
+            t.tsQualifiedName(namespace, t.identifier(originalName)),
+          ),
+        ),
+      )
     }
 
     program.body = program.body.filter((stmt) => {
