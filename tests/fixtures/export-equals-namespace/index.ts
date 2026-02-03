@@ -1,8 +1,16 @@
-import type { Connection, Row, Options, DatabaseError } from 'mock-db'
+import type {
+  Connection,
+  Row,
+  Options,
+  DatabaseError,
+  DriverType,
+} from 'mock-db'
 
 export interface DbConfig {
   connection: Connection
   options?: Options
+  // Test qualified name usage: DriverType.Postgres should become mockdb.DriverType.Postgres
+  defaultDriver: DriverType.Postgres
 }
 
 export function runQuery(conn: Connection, sql: string): Promise<Row[]> {
@@ -29,3 +37,6 @@ export class Database {
 export type QueryResult = Row[]
 
 export type IsError<T> = T extends DatabaseError ? true : false
+
+// Test re-export of namespace types
+export type { DriverType }

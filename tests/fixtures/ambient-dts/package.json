@@ -1,0 +1,8 @@
+{
+  "name": "ambient-dts-test",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "ambient-lib": "file:node_modules/ambient-lib"
+  }
+}
