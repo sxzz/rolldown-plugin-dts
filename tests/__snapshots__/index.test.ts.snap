@@ -143,6 +143,78 @@ declare module "virtual" {
 }"
 `;
 
+exports[`deterministic namespace import index 1`] = `
+"// a.d.ts
+import * as stub_lib from "stub_lib";
+
+//#region a.d.ts
+type MyTypeA = stub_lib.LibType;
+//#endregion
+export { MyTypeA };
+// b.d.ts
+import * as stub_lib from "stub_lib";
+
+//#region b.d.ts
+type MyTypeB = stub_lib.LibType;
+//#endregion
+export { MyTypeB };
+// c.d.ts
+import * as stub_lib from "stub_lib";
+
+//#region c.d.ts
+type MyTypeC = stub_lib.LibType;
+//#endregion
+export { MyTypeC };"
+`;
+
+exports[`deterministic namespace import index 2`] = `
+"// a.d.ts
+import * as stub_lib from "stub_lib";
+
+//#region a.d.ts
+type MyTypeA = stub_lib.LibType;
+//#endregion
+export { MyTypeA };
+// b.d.ts
+import * as stub_lib from "stub_lib";
+
+//#region b.d.ts
+type MyTypeB = stub_lib.LibType;
+//#endregion
+export { MyTypeB };
+// c.d.ts
+import * as stub_lib from "stub_lib";
+
+//#region c.d.ts
+type MyTypeC = stub_lib.LibType;
+//#endregion
+export { MyTypeC };"
+`;
+
+exports[`deterministic namespace import index 3`] = `
+"// a.d.ts
+import * as stub_lib from "stub_lib";
+
+//#region a.d.ts
+type MyTypeA = stub_lib.LibType;
+//#endregion
+export { MyTypeA };
+// b.d.ts
+import * as stub_lib from "stub_lib";
+
+//#region b.d.ts
+type MyTypeB = stub_lib.LibType;
+//#endregion
+export { MyTypeB };
+// c.d.ts
+import * as stub_lib from "stub_lib";
+
+//#region c.d.ts
+type MyTypeC = stub_lib.LibType;
+//#endregion
+export { MyTypeC };"
+`;
+
 exports[`dts input > custom chunk name 2`] = `
 "// chunks/BCXvBysl-types.d.ts
 //#region tests/fixtures/dts-multi-input/types.d.ts

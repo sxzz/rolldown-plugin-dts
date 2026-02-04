@@ -1,7 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "type": "module",
-  "version": "0.21.8",
+  "version": "0.21.9",
   "packageManager": "pnpm@10.28.2",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
@@ -75,6 +75,7 @@
   },
   "dependencies": {
     "@babel/generator": "8.0.0-rc.1",
+    "@babel/helper-validator-identifier": "8.0.0-rc.1",
     "@babel/parser": "8.0.0-rc.1",
     "@babel/types": "8.0.0-rc.1",
     "ast-kit": "^3.0.0-beta.1",

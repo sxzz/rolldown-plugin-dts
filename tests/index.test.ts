@@ -556,6 +556,35 @@ test('sub namespace', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+test('deterministic namespace import index', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/import-type-multi')
+  // Build multiple times to verify deterministic output
+  const results: string[] = []
+  for (let i = 0; i < 3; i++) {
+    const { snapshot } = await rolldownBuild(
+      ['a.d.ts', 'b.d.ts', 'c.d.ts'],
+      [
+        dts({
+          dtsInput: true,
+          tsconfig: path.resolve(cwd, 'tsconfig.json'),
+          emitDtsOnly: true,
+        }),
+      ],
+      { cwd },
+    )
+    results.push(snapshot)
+    expect(snapshot).toMatchSnapshot()
+  }
+
+  // All results should be identical
+  expect(results[0]).toBe(results[1])
+  expect(results[1]).toBe(results[2])
+  // Valid identifiers (stub_lib) don't need index suffix
+  expect(results[0]).toContain('import * as stub_lib from "stub_lib"')
+  // Should not have stub_lib0 since each file is independent
+  expect(results[0]).not.toContain('stub_lib0')
+})
+
 // Test for export = namespace pattern like postgres
 // When a dev dependency uses `export = namespace`, named imports should be
 // transformed to use namespace-qualified access (e.g., `Sql` -> `postgres.Sql`)

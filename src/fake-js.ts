@@ -1,4 +1,5 @@
 import { generate } from '@babel/generator'
+import { isIdentifierName } from '@babel/helper-validator-identifier'
 import { parse } from '@babel/parser'
 import * as t from '@babel/types'
 import {
@@ -117,7 +118,6 @@ export function createFakeJsPlugin({
   sideEffects,
 }: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin {
   let declarationIdx = 0
-  const identifierMap: Record<string, number> = Object.create(null)
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
   const typeOnlyMap = new Map<string /* filename */, string[]>()
@@ -202,6 +202,7 @@ export function createFakeJsPlugin({
     })
     const { program, comments } = file
     const typeOnlyIds: string[] = []
+    const identifierMap: Record<string, number> = Object.create(null)
 
     const isNodeModulesFile = RE_NODE_MODULES.test(id)
 
@@ -488,7 +489,7 @@ export function createFakeJsPlugin({
         }
 
         binding = sideEffect
-          ? t.identifier(`_${getIdentifierIndex('')}`)
+          ? t.identifier(`_${getIdentifierIndex(identifierMap, '')}`)
           : binding
 
         if (binding.type !== 'Identifier') {
@@ -506,7 +507,12 @@ export function createFakeJsPlugin({
       const params: TypeParams = collectParams(decl)
 
       const childrenSet = new Set<t.Node>()
-      const deps = collectDependencies(decl, namespaceStmts, childrenSet)
+      const deps = collectDependencies(
+        decl,
+        namespaceStmts,
+        childrenSet,
+        identifierMap,
+      )
       const children = Array.from(childrenSet).filter((child) =>
         bindings.every((b) => child !== b),
       )
@@ -770,9 +776,13 @@ export function createFakeJsPlugin({
     }
   }
 
-  function getIdentifierIndex(name: string) {
+  // eslint-disable-next-line unicorn/consistent-function-scoping
+  function getIdentifierIndex(
+    identifierMap: Record<string, number>,
+    name: string,
+  ): number {
     if (name in identifierMap) {
-      return identifierMap[name]++
+      return ++identifierMap[name]
     }
     return (identifierMap[name] = 0)
   }
@@ -831,6 +841,7 @@ export function createFakeJsPlugin({
     node: t.Node,
     namespaceStmts: NamespaceMap,
     children: Set<t.Node>,
+    identifierMap: Record<string, number>,
   ): Dep[] {
     const deps = new Set<Dep>()
     const seen = new Set<t.Node>()
@@ -918,6 +929,7 @@ export function createFakeJsPlugin({
                 qualifier,
                 source,
                 namespaceStmts,
+                identifierMap,
               )
               addDependency(dep)
               break
@@ -942,11 +954,14 @@ export function createFakeJsPlugin({
     imported: t.TSEntityName | null | undefined,
     source: t.StringLiteral,
     namespaceStmts: NamespaceMap,
+    identifierMap: Record<string, number>,
   ): Dep {
     const sourceText = source.value.replaceAll(/\W/g, '_')
-    let local: t.Identifier | t.TSQualifiedName = t.identifier(
-      `${sourceText}${getIdentifierIndex(sourceText)}`,
-    )
+    // Use original source if it's already a valid identifier, otherwise use formatted text with index
+    const localName = isIdentifierName(source.value)
+      ? source.value
+      : `${sourceText}${getIdentifierIndex(identifierMap, sourceText)}`
+    let local: t.Identifier | t.TSQualifiedName = t.identifier(localName)
 
     if (namespaceStmts.has(source.value)) {
       local = namespaceStmts.get(source.value)!.local
