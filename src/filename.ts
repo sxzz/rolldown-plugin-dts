@@ -1,4 +1,8 @@
-import type { ChunkFileNamesFunction, PreRenderedChunk } from 'rolldown'
+import {
+  RUNTIME_MODULE_ID,
+  type ChunkFileNamesFunction,
+  type PreRenderedChunk,
+} from 'rolldown'
 
 export const RE_JS: RegExp = /\.([cm]?)jsx?$/
 export const RE_TS: RegExp = /\.([cm]?)tsx?$/
@@ -8,7 +12,7 @@ export const RE_NODE_MODULES: RegExp = /[\\/]node_modules[\\/]/
 export const RE_CSS: RegExp = /\.css$/
 export const RE_VUE: RegExp = /\.vue$/
 export const RE_JSON: RegExp = /\.json$/
-export const RE_ROLLDOWN_RUNTIME: RegExp = /^\0rolldown\/runtime\.js$/
+export const RE_ROLLDOWN_RUNTIME: RegExp = new RegExp(`^${RUNTIME_MODULE_ID}$`)
 
 export function filename_js_to_dts(id: string): string {
   return id.replace(RE_JS, '.d.$1ts')
