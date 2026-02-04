@@ -90,7 +90,7 @@
     "@sxzz/prettier-config": "^2.3.1",
     "@sxzz/test-utils": "^0.5.15",
     "@types/node": "^25.2.0",
-    "@typescript/native-preview": "7.0.0-dev.20260202.1",
+    "@typescript/native-preview": "7.0.0-dev.20260204.1",
     "@volar/typescript": "^2.4.28",
     "@vue/language-core": "^3.2.4",
     "arktype": "^2.1.29",
