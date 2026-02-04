@@ -422,9 +422,7 @@ exports[`re-export from lib > both 1`] = `
 export * from "stub-lib";
 
 //#region \\0rolldown/runtime.js
-declare namespace a_d_exports {
-  export {};
-}
+
 import * as import_stub_lib from "stub-lib";
 //#endregion
 export { import_stub_lib as t };
@@ -441,9 +439,6 @@ export * from "stub-lib";"
 
 exports[`re-export from lib > onlyB 1`] = `
 "// b.d.ts
-declare namespace a_d_exports {
-  export {};
-}
 import * as import_stub_lib from "stub-lib";
 type LibType = import_stub_lib.LibType;
 export { type LibType };"

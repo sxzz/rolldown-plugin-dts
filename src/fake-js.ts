@@ -972,6 +972,7 @@ function patchTsNamespace(nodes: t.Statement[]) {
     if (!result) continue
 
     const [binding, exports] = result
+    if (!exports.properties.length) continue
 
     nodes[i] = {
       type: 'TSModuleDeclaration',
