@@ -331,8 +331,8 @@ describe('entryFileNames', () => {
     expect(chunkNames).toMatchInlineSnapshot(`
       [
         "input1.d.mts",
-        "input2-459dIHr0.d.ts",
         "input2.d.mts",
+        "shared-BLqvEiJ6.d.ts",
       ]
     `)
 
