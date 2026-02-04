@@ -1,7 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "type": "module",
-  "version": "0.21.9",
+  "version": "0.22.1",
   "packageManager": "pnpm@10.28.2",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
@@ -55,7 +55,7 @@
   "peerDependencies": {
     "@ts-macro/tsc": "^0.3.6",
     "@typescript/native-preview": ">=7.0.0-dev.20250601.1",
-    "rolldown": "^1.0.0-beta.57",
+    "rolldown": "^1.0.0-rc.3",
     "typescript": "^5.0.0",
     "vue-tsc": "~3.2.0"
   },
@@ -90,7 +90,7 @@
     "@sxzz/prettier-config": "^2.3.1",
     "@sxzz/test-utils": "^0.5.15",
     "@types/node": "^25.2.0",
-    "@typescript/native-preview": "7.0.0-dev.20260202.1",
+    "@typescript/native-preview": "7.0.0-dev.20260204.1",
     "@volar/typescript": "^2.4.28",
     "@vue/language-core": "^3.2.4",
     "arktype": "^2.1.29",
@@ -98,7 +98,7 @@
     "diff": "^8.0.3",
     "eslint": "^9.39.2",
     "prettier": "^3.8.1",
-    "rolldown": "^1.0.0-rc.2",
+    "rolldown": "^1.0.0-rc.3",
     "rolldown-plugin-dts-snapshot": "^0.3.2",
     "rolldown-plugin-require-cjs": "^0.3.3",
     "rollup-plugin-dts": "^6.3.0",
@@ -110,7 +110,7 @@
     "vue-tsc": "^3.2.4"
   },
   "resolutions": {
-    "rolldown": "^1.0.0-rc.2"
+    "rolldown": "^1.0.0-rc.3"
   },
   "prettier": "@sxzz/prettier-config"
 }
