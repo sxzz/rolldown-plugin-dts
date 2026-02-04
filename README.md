@@ -8,7 +8,7 @@ A Rolldown plugin to generate and bundle dts files.
 
 ## Install
 
-Requires **`rolldown@1.0.0-beta.57`** or later.
+Requires **`rolldown@1.0.0-rc.3`** or later.
 
 ```bash
 npm i -D rolldown-plugin-dts
