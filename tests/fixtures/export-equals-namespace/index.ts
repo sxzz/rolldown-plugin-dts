@@ -1,0 +1,42 @@
+import type {
+  Connection,
+  Row,
+  Options,
+  DatabaseError,
+  DriverType,
+} from 'mock-db'
+
+export interface DbConfig {
+  connection: Connection
+  options?: Options
+  // Test qualified name usage: DriverType.Postgres should become mockdb.DriverType.Postgres
+  defaultDriver: DriverType.Postgres
+}
+
+export function runQuery(conn: Connection, sql: string): Promise<Row[]> {
+  return conn.query(sql)
+}
+
+export class Database {
+  private conn: Connection
+  private lastError?: DatabaseError
+
+  constructor(conn: Connection) {
+    this.conn = conn
+  }
+
+  getConnection(): Connection {
+    return this.conn
+  }
+
+  getLastError(): DatabaseError | undefined {
+    return this.lastError
+  }
+}
+
+export type QueryResult = Row[]
+
+export type IsError<T> = T extends DatabaseError ? true : false
+
+// Test re-export of namespace types
+export type { DriverType }
