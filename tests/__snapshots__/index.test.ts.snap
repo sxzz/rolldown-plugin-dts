@@ -287,7 +287,7 @@ interface UserWithAge extends User {
 export { UserWithAge };"
 `;
 
-exports[`entryFileNames > default chunk name 2`] = `
+exports[`entryFileNames > default chunk name 1`] = `
 "// input1.d.mts
 import "./shared-BLqvEiJ6.js";
 import { Input2 } from "./input2.mjs";
