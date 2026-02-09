@@ -96,7 +96,7 @@
     "arktype": "^2.1.29",
     "bumpp": "^10.4.0",
     "diff": "^8.0.3",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.0",
     "prettier": "^3.8.1",
     "rolldown": "^1.0.0-rc.3",
     "rolldown-plugin-dts-snapshot": "^0.3.2",
