@@ -56,7 +56,7 @@
     "@ts-macro/tsc": "^0.3.6",
     "@typescript/native-preview": ">=7.0.0-dev.20250601.1",
     "rolldown": "^1.0.0-rc.3",
-    "typescript": "^5.0.0",
+    "typescript": "^5.0.0 || ^6.0.0-beta",
     "vue-tsc": "~3.2.0"
   },
   "peerDependenciesMeta": {
@@ -104,7 +104,7 @@
     "rollup-plugin-dts": "^6.3.0",
     "tinyglobby": "^0.2.15",
     "tsdown": "^0.20.1",
-    "typescript": "^5.9.3",
+    "typescript": "6.0.0-beta",
     "vitest": "^4.0.18",
     "vue": "^3.5.27",
     "vue-tsc": "^3.2.4"
