@@ -421,6 +421,20 @@ const a = 1;
 export { a };"
 `;
 
+exports[`tsc > rename infer 1`] = `
+"// infer-renaming.d.ts
+import { infer as __Infer, z } from "zod";
+
+//#region tests/fixtures/infer-renaming.d.ts
+declare const productSchema: z.ZodObject<{
+  id: z.ZodString;
+  price: z.ZodNumber;
+}, z.core.$strip>;
+declare const product: __Infer<typeof productSchema>;
+//#endregion
+export { product, productSchema };"
+`;
+
 exports[`tsc > resolve paths > resolver: oxc 1`] = `
 "// index.d.ts
 //#region tests/fixtures/paths/mod.d.ts

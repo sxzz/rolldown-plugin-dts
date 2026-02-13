@@ -324,4 +324,20 @@ describe('tsc', () => {
       expect(snapshot).toMatchSnapshot()
     })
   })
+
+  test('rename infer', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/infer-renaming.ts'),
+      [
+        dts({
+          compilerOptions: {
+            isolatedDeclarations: false,
+          },
+          emitDtsOnly: true,
+        }),
+      ],
+      { external: ['zod'] },
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
 })
