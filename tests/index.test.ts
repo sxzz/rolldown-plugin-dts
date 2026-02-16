@@ -403,6 +403,19 @@ test('declare module', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+test('declare relative module', async () => {
+  const fixture = path.resolve(dirname, 'fixtures/declare-relative-module')
+  const { snapshot } = await rolldownBuild(
+    {
+      'main-foo': path.resolve(fixture, 'foo.ts'),
+      'main-bar': path.resolve(fixture, 'bar.ts'),
+      'main-baz/index': path.resolve(fixture, 'baz/index.ts'),
+    },
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
 test('should error when file import cannot be found', async () => {
   await expect(() =>
     rolldownBuild(path.resolve(dirname, 'fixtures/unresolved-import/ts.ts'), [

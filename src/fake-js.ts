@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { generate } from '@babel/generator'
 import { isIdentifierName } from '@babel/helper-validator-identifier'
 import { parse } from '@babel/parser'
@@ -12,6 +13,7 @@ import {
 import {
   filename_dts_to,
   filename_js_to_dts,
+  filename_to_dts,
   RE_DTS,
   RE_DTS_MAP,
   replaceTemplateName,
@@ -51,6 +53,7 @@ interface DeclarationInfo {
   params: TypeParams
   deps: Dep[]
   children: t.Node[]
+  resolvedModuleId?: string
 }
 
 type NamespaceMap = Map<
@@ -60,6 +63,8 @@ type NamespaceMap = Map<
     local: t.Identifier | t.TSQualifiedName
   }
 >
+
+const CROSS_CHUNK_PLACEHOLDER = '__rolldown_dts_resolve__:'
 
 export function createFakeJsPlugin({
   sourcemap,
@@ -121,6 +126,37 @@ export function createFakeJsPlugin({
     renderChunk,
 
     generateBundle(options, bundle) {
+      // Build moduleId → chunk.fileName mapping
+      const moduleToChunk = new Map<string, string>()
+      for (const chunk of Object.values(bundle)) {
+        if (chunk.type !== 'chunk') continue
+        for (const moduleId of chunk.moduleIds) {
+          moduleToChunk.set(moduleId, chunk.fileName)
+        }
+      }
+
+      // Rewrite `declare module` placeholders to output chunk paths
+      const placeholderRe = new RegExp(`"${CROSS_CHUNK_PLACEHOLDER}(.+?)"`, 'g')
+      for (const chunk of Object.values(bundle)) {
+        if (chunk.type !== 'chunk' || !RE_DTS.test(chunk.fileName)) continue
+        if (!chunk.code.includes(CROSS_CHUNK_PLACEHOLDER)) continue
+
+        chunk.code = chunk.code.replaceAll(
+          placeholderRe,
+          (_match, resolvedId: string) => {
+            const targetFileName = moduleToChunk.get(resolvedId)
+            if (!targetFileName) return _match
+            let specifier = path.posix.relative(
+              path.posix.dirname(chunk.fileName),
+              targetFileName,
+            )
+            if (!specifier.startsWith('.')) specifier = `./${specifier}`
+            specifier = filename_dts_to(specifier, 'js')
+            return JSON.stringify(specifier)
+          },
+        )
+      }
+
       for (const chunk of Object.values(bundle)) {
         if (!RE_DTS_MAP.test(chunk.fileName)) continue
 
@@ -137,11 +173,11 @@ export function createFakeJsPlugin({
     },
   }
 
-  function transform(
+  async function transform(
     this: TransformPluginContext,
     code: string,
     id: string,
-  ): TransformResult {
+  ): Promise<TransformResult> {
     const file = parse(code, {
       plugins: [['typescript', { dts: true }]],
       sourceType: 'module',
@@ -167,14 +203,20 @@ export function createFakeJsPlugin({
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
 
-      if (
-        sideEffect &&
-        stmt.id.type === 'StringLiteral' &&
-        stmt.id.value[0] === '.'
-      ) {
-        this.warn(
-          `\`declare module ${JSON.stringify(stmt.id.value)}\` will be kept as-is in the output. Relative module declaration may cause unexpected issues. Found in ${id}.`,
-        )
+      // Resolve local `declare module './foo'` targets so that specifiers
+      // can be rewritten to point to the correct output chunk.
+      let resolvedModuleId: string | undefined
+      if (sideEffect && stmt.id.type === 'StringLiteral') {
+        const resolved = await this.resolve(stmt.id.value, id)
+        if (resolved && !resolved.external) {
+          resolvedModuleId = RE_DTS.test(resolved.id)
+            ? resolved.id
+            : filename_to_dts(resolved.id)
+        } else if (stmt.id.value[0] === '.') {
+          this.warn(
+            `\`declare module ${JSON.stringify(stmt.id.value)}\` will be kept as-is in the output. Relative module declaration may cause unexpected issues. Found in ${id}.`,
+          )
+        }
       }
 
       if (
@@ -264,6 +306,7 @@ export function createFakeJsPlugin({
         bindings,
         params,
         children,
+        resolvedModuleId,
       })
 
       const declarationIdNode = t.numericLiteral(declarationId)
@@ -455,6 +498,15 @@ export function createFakeJsPlugin({
           } else {
             Object.assign(originalDep, transformedDep)
           }
+        }
+
+        // Rewrite local `declare module` specifier → placeholder for generateBundle
+        if (
+          declaration.decl.type === 'TSModuleDeclaration' &&
+          declaration.resolvedModuleId
+        ) {
+          ;(declaration.decl.id as t.StringLiteral).value =
+            CROSS_CHUNK_PLACEHOLDER + declaration.resolvedModuleId
         }
 
         return inheritNodeComments(node, declaration.decl)
