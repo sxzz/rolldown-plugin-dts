@@ -5,7 +5,10 @@ import type Ts from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:volar')
 
-export function loadVueLanguageTools() {
+export function loadVueLanguageTools(): {
+  volarTs: typeof import('@volar/typescript')
+  vue: typeof import('@vue/language-core')
+} {
   debug('loading vue language tools')
   try {
     const vueTscPath = require.resolve('vue-tsc')

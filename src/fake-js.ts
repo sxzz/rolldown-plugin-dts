@@ -723,6 +723,8 @@ export function createFakeJsPlugin({
               start: transformedDep.start,
               end: transformedDep.end,
             }
+          } else if (isInfer(transformedDep)) {
+            transformedDep.name = '__Infer'
           }
 
           if (originalDep.replace) {
@@ -1352,6 +1354,9 @@ function isThisExpression(node: t.Node): boolean {
   )
 }
 
+function isInfer(node: t.Node): node is t.Identifier {
+  return isIdentifierOf(node, 'infer')
+}
 function TSEntityNameToRuntime(
   node: t.TSEntityName,
 ): t.MemberExpression | t.Identifier | t.ThisExpression {
@@ -1393,7 +1398,7 @@ function isHelperImport(node: t.Node) {
  * patch `.d.ts` suffix in import source to `.js`
  */
 function patchImportExport(
-  node: t.Node,
+  node: t.Statement,
   typeOnlyIds: string[],
   cjsDefault: boolean,
 ): t.Statement | false | undefined {
@@ -1405,6 +1410,14 @@ function patchImportExport(
     !node.attributes?.length
   ) {
     return false
+  }
+
+  if (node.type === 'ImportDeclaration' && node.specifiers.length) {
+    for (const specifier of node.specifiers) {
+      if (isInfer(specifier.local)) {
+        specifier.local.name = '__Infer'
+      }
+    }
   }
 
   if (
