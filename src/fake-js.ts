@@ -14,6 +14,7 @@ import {
   filename_js_to_dts,
   RE_DTS,
   RE_DTS_MAP,
+  RE_NODE_MODULES,
   replaceTemplateName,
   resolveTemplateFn,
 } from './filename.ts'
@@ -21,6 +22,7 @@ import type { OptionsResolved } from './options.ts'
 import type {
   Plugin,
   RenderedChunk,
+  RolldownFsModule,
   TransformPluginContext,
   TransformResult,
 } from 'rolldown'
@@ -61,6 +63,55 @@ type NamespaceMap = Map<
   }
 >
 
+async function detectExportEqualsNamespace(
+  resolvedId: string,
+  fs: RolldownFsModule,
+  cache: Map<string, string | false>,
+): Promise<string | false> {
+  if (cache.has(resolvedId)) {
+    return cache.get(resolvedId)!
+  }
+
+  let code: string
+  try {
+    code = await fs.readFile(resolvedId, { encoding: 'utf8' })
+  } catch {
+    cache.set(resolvedId, false)
+    return false
+  }
+
+  const file = parse(code, {
+    plugins: [['typescript', { dts: true }]],
+    sourceType: 'module',
+    errorRecovery: true,
+  })
+
+  let exportedName: string | false = false
+  for (const stmt of file.program.body) {
+    if (
+      stmt.type === 'TSExportAssignment' &&
+      stmt.expression.type === 'Identifier'
+    ) {
+      const candidateName = stmt.expression.name
+      for (const s of file.program.body) {
+        if (
+          s.type === 'TSModuleDeclaration' &&
+          s.kind === 'namespace' &&
+          s.id.type === 'Identifier' &&
+          s.id.name === candidateName
+        ) {
+          exportedName = candidateName
+          break
+        }
+      }
+      break
+    }
+  }
+
+  cache.set(resolvedId, exportedName)
+  return exportedName
+}
+
 export function createFakeJsPlugin({
   sourcemap,
   cjsDefault,
@@ -70,6 +121,7 @@ export function createFakeJsPlugin({
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
   const typeOnlyMap = new Map<string /* filename */, string[]>()
+  const exportEqualsNamespaceCache = new Map<string, string | false>()
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
@@ -137,11 +189,11 @@ export function createFakeJsPlugin({
     },
   }
 
-  function transform(
+  async function transform(
     this: TransformPluginContext,
     code: string,
     id: string,
-  ): TransformResult {
+  ): Promise<TransformResult> {
     const file = parse(code, {
       plugins: [['typescript', { dts: true }]],
       sourceType: 'module',
@@ -152,13 +204,224 @@ export function createFakeJsPlugin({
     const typeOnlyIds: string[] = []
     const identifierMap: Record<string, number> = Object.create(null)
 
+    const isNodeModulesFile = RE_NODE_MODULES.test(id)
+
     if (comments) {
       const directives = collectReferenceDirectives(comments)
       commentsMap.set(id, directives)
     }
 
     const appendStmts: t.Statement[] = []
+    const ambientExports: t.Identifier[] = []
     const namespaceStmts: NamespaceMap = new Map()
+
+    const namespaceReplacements = new Map<
+      string,
+      { namespace: t.Identifier; originalName: string }
+    >()
+    const clearedImports = new Set<t.ImportDeclaration>()
+
+    const reExportedNames = new Set<string>()
+    for (const stmt of program.body) {
+      if (stmt.type === 'ExportNamedDeclaration' && !stmt.declaration) {
+        for (const spec of stmt.specifiers) {
+          if (spec.type === 'ExportSpecifier') {
+            reExportedNames.add(resolveString(spec.local))
+          }
+        }
+      }
+    }
+
+    const typeAliasesNeeded: Array<{
+      localName: string
+      namespace: t.Identifier
+      originalName: string
+    }> = []
+
+    for (const stmt of program.body) {
+      if (stmt.type !== 'ImportDeclaration') continue
+      if (!stmt.source || typeof stmt.source.value !== 'string') continue
+
+      const namedSpecifiers = stmt.specifiers.filter(
+        (s): s is t.ImportSpecifier => s.type === 'ImportSpecifier',
+      )
+      if (namedSpecifiers.length === 0) continue
+
+      const moduleSpec = stmt.source.value
+
+      const resolved = await this.resolve(moduleSpec, id)
+      if (!resolved || resolved.external) continue
+
+      const namespaceName = await detectExportEqualsNamespace(
+        resolved.id,
+        this.fs,
+        exportEqualsNamespaceCache,
+      )
+      if (!namespaceName) continue
+
+      let nsLocal: t.Identifier
+      if (namespaceStmts.has(moduleSpec)) {
+        nsLocal = namespaceStmts.get(moduleSpec)!.local as t.Identifier
+      } else {
+        nsLocal = t.identifier(namespaceName)
+        namespaceStmts.set(moduleSpec, {
+          stmt: t.importDeclaration(
+            [t.importSpecifier(nsLocal, t.identifier(namespaceName))],
+            t.stringLiteral(moduleSpec),
+          ),
+          local: nsLocal,
+        })
+      }
+
+      for (const spec of namedSpecifiers) {
+        const importedName =
+          spec.imported.type === 'Identifier'
+            ? spec.imported.name
+            : spec.imported.value
+        const localName = spec.local.name
+
+        if (reExportedNames.has(localName)) {
+          typeAliasesNeeded.push({
+            localName,
+            namespace: nsLocal,
+            originalName: importedName,
+          })
+        }
+        namespaceReplacements.set(localName, {
+          namespace: nsLocal,
+          originalName: importedName,
+        })
+      }
+
+      stmt.specifiers = stmt.specifiers.filter(
+        (s) => s.type !== 'ImportSpecifier',
+      )
+
+      if (stmt.specifiers.length === 0) {
+        clearedImports.add(stmt)
+      }
+    }
+
+    if (namespaceReplacements.size > 0) {
+      walkAST(program, {
+        enter(node, parent) {
+          if (parent?.type === 'ImportSpecifier') return
+
+          if (
+            node.type === 'TSTypeReference' &&
+            node.typeName.type === 'Identifier' &&
+            namespaceReplacements.has(node.typeName.name)
+          ) {
+            const { namespace, originalName } = namespaceReplacements.get(
+              node.typeName.name,
+            )!
+            node.typeName = t.tsQualifiedName(
+              namespace,
+              t.identifier(originalName),
+            )
+          }
+
+          if (
+            node.type === 'TSTypeReference' &&
+            node.typeName.type === 'TSQualifiedName'
+          ) {
+            let current: t.TSQualifiedName = node.typeName
+            while (current.left.type === 'TSQualifiedName') {
+              current = current.left
+            }
+            if (
+              current.left.type === 'Identifier' &&
+              namespaceReplacements.has(current.left.name)
+            ) {
+              const { namespace, originalName } = namespaceReplacements.get(
+                current.left.name,
+              )!
+              current.left = t.tsQualifiedName(
+                namespace,
+                t.identifier(originalName),
+              )
+            }
+          }
+        },
+      })
+    }
+
+    for (const { localName, namespace, originalName } of typeAliasesNeeded) {
+      const bindingId = t.identifier(localName)
+      const typeAliasDecl = t.tsTypeAliasDeclaration(
+        bindingId,
+        null,
+        t.tsTypeReference(
+          t.tsQualifiedName(namespace, t.identifier(originalName)),
+        ),
+      )
+
+      const deps: Dep[] = [namespace]
+
+      const declarationId = registerDeclaration({
+        decl: typeAliasDecl,
+        deps,
+        bindings: [bindingId],
+        params: [],
+        children: [],
+      })
+
+      const declarationIdNode = t.numericLiteral(declarationId)
+      const depsNode = t.arrowFunctionExpression([], t.arrayExpression(deps))
+      const childrenNode = t.arrayExpression([])
+      const runtimeArrayNode = runtimeBindingArrayExpression([
+        declarationIdNode,
+        depsNode,
+        childrenNode,
+      ])
+
+      const runtimeAssignment: RuntimeBindingVariableDeclration = {
+        type: 'VariableDeclaration',
+        kind: 'var',
+        declarations: [
+          {
+            type: 'VariableDeclarator',
+            id: { ...bindingId, typeAnnotation: null },
+            init: runtimeArrayNode,
+          },
+        ],
+      }
+
+      appendStmts.push(runtimeAssignment)
+    }
+
+    program.body = program.body.filter((stmt) => {
+      if (stmt.type !== 'ImportDeclaration') return true
+      return !clearedImports.has(stmt)
+    })
+
+    const tsExportAssignment = program.body.find(
+      (stmt): stmt is t.TSExportAssignment =>
+        stmt.type === 'TSExportAssignment',
+    )
+    if (
+      tsExportAssignment &&
+      tsExportAssignment.expression.type === 'Identifier'
+    ) {
+      const exportedName = tsExportAssignment.expression.name
+      const hasNamespaceDecl = program.body.some(
+        (stmt): stmt is t.TSModuleDeclaration =>
+          stmt.type === 'TSModuleDeclaration' &&
+          stmt.kind === 'namespace' &&
+          stmt.id.type === 'Identifier' &&
+          stmt.id.name === exportedName,
+      )
+      if (hasNamespaceDecl) {
+        appendStmts.push(
+          t.exportNamedDeclaration(null, [
+            t.exportSpecifier(
+              t.identifier(exportedName),
+              t.identifier(exportedName),
+            ),
+          ]),
+        )
+      }
+    }
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.Statement) => (program.body[i] = stmt)
@@ -325,10 +588,24 @@ export function createFakeJsPlugin({
         )
         // replace the whole statement
         setStmt(runtimeAssignment)
+      } else if (!isExportDecl && isNodeModulesFile) {
+        setStmt(runtimeAssignment)
+        ambientExports.push(...bindings)
       } else {
         // replace declaration, keep `export`
         setDecl(runtimeAssignment)
       }
+    }
+
+    if (ambientExports.length > 0) {
+      appendStmts.push(
+        t.exportNamedDeclaration(
+          null,
+          ambientExports.map((binding) =>
+            t.exportSpecifier(binding, t.cloneNode(binding)),
+          ),
+        ),
+      )
     }
 
     if (sideEffects) {
@@ -460,6 +737,9 @@ export function createFakeJsPlugin({
         return inheritNodeComments(node, declaration.decl)
       })
       .filter((node) => !!node)
+
+    program.body = fixSelfReferentialTypeAliases(program.body)
+    program.body = inlineExportsNamespaces(program.body)
 
     if (program.body.length === 0) {
       return 'export { };'
@@ -746,6 +1026,214 @@ function collectInferredNames(node: t.Node) {
     },
   })
   return inferred
+}
+
+/**
+ * Fixes redundant type aliases inside namespace declarations.
+ *
+ * This handles two cases:
+ * 1. Self-referential: `type X = X` (when X exists at module level)
+ * 2. Namespace-qualified: `type X = ns.X` (when X exists at module level)
+ *
+ * Both are converted to direct re-exports: `export { type X }`
+ */
+function fixSelfReferentialTypeAliases(body: t.Statement[]): t.Statement[] {
+  const moduleLevelTypes = new Set<string>()
+
+  for (const node of body) {
+    if (node.type === 'TSInterfaceDeclaration') {
+      moduleLevelTypes.add(node.id.name)
+    } else if (node.type === 'TSTypeAliasDeclaration') {
+      moduleLevelTypes.add(node.id.name)
+    }
+  }
+
+  if (moduleLevelTypes.size === 0) return body
+
+  for (const node of body) {
+    if (node.type !== 'TSModuleDeclaration') continue
+    if (!node.body || node.body.type !== 'TSModuleBlock') continue
+
+    const nsBody = node.body.body
+    const aliasesToConvert: string[] = []
+
+    for (let i = nsBody.length - 1; i >= 0; i--) {
+      const stmt = nsBody[i]
+
+      let alias: t.TSTypeAliasDeclaration | undefined
+
+      if (stmt.type === 'TSTypeAliasDeclaration') {
+        alias = stmt
+      } else if (
+        stmt.type === 'ExportNamedDeclaration' &&
+        stmt.declaration?.type === 'TSTypeAliasDeclaration'
+      ) {
+        alias = stmt.declaration
+      }
+
+      if (!alias) continue
+
+      const aliasName = alias.id.name
+
+      if (!moduleLevelTypes.has(aliasName)) continue
+
+      let referencedTypeName: string | undefined
+
+      if (alias.typeAnnotation.type === 'TSTypeReference') {
+        const typeName = alias.typeAnnotation.typeName
+
+        if (typeName.type === 'Identifier') {
+          referencedTypeName = typeName.name
+        } else if (typeName.type === 'TSQualifiedName') {
+          referencedTypeName = typeName.right.name
+        }
+      }
+
+      if (referencedTypeName === aliasName) {
+        nsBody.splice(i, 1)
+        aliasesToConvert.push(aliasName)
+      }
+    }
+
+    if (aliasesToConvert.length > 0) {
+      const specifiers = aliasesToConvert.toReversed().map((name) => {
+        const spec = t.exportSpecifier(t.identifier(name), t.identifier(name))
+        spec.exportKind = 'type'
+        return spec
+      })
+      const exportStmt = t.exportNamedDeclaration(null, specifiers)
+      nsBody.push(exportStmt)
+    }
+  }
+
+  return body
+}
+
+/**
+ * Inlines `_exports` namespaces by replacing `typeof ns` with an object type.
+ *
+ * When bundling, rolldown creates internal namespaces like `index_d_exports` to
+ * represent module exports. These are only needed for `typeof ns` expressions.
+ * We can inline them as object types and remove the namespace declaration.
+ */
+function inlineExportsNamespaces(body: t.Statement[]): t.Statement[] {
+  const moduleValues = new Map<string, t.Statement>()
+  const moduleTypes = new Set<string>()
+
+  for (const node of body) {
+    if (node.type === 'FunctionDeclaration' && node.id) {
+      moduleValues.set(node.id.name, node)
+    } else if (node.type === 'TSDeclareFunction' && node.id) {
+      moduleValues.set(node.id.name, node)
+    } else if (node.type === 'VariableDeclaration') {
+      for (const decl of node.declarations) {
+        if (decl.id.type === 'Identifier') {
+          moduleValues.set(decl.id.name, node)
+        }
+      }
+    } else if (node.type === 'ClassDeclaration' && node.id) {
+      moduleValues.set(node.id.name, node)
+    } else if (node.type === 'TSInterfaceDeclaration') {
+      moduleTypes.add(node.id.name)
+    } else if (node.type === 'TSTypeAliasDeclaration') {
+      moduleTypes.add(node.id.name)
+    }
+  }
+
+  const exportsNamespaces = new Map<
+    string,
+    { node: t.TSModuleDeclaration; exports: string[]; index: number }
+  >()
+
+  for (const [i, node] of body.entries()) {
+    if (
+      node.type === 'TSModuleDeclaration' &&
+      node.id.type === 'Identifier' &&
+      node.id.name.endsWith('_exports') &&
+      node.body?.type === 'TSModuleBlock'
+    ) {
+      const exports: string[] = []
+      for (const stmt of node.body.body) {
+        if (stmt.type === 'ExportNamedDeclaration' && !stmt.declaration) {
+          for (const spec of stmt.specifiers) {
+            if (spec.type === 'ExportSpecifier') {
+              exports.push(resolveString(spec.exported))
+            }
+          }
+        }
+      }
+      exportsNamespaces.set(node.id.name, { node, exports, index: i })
+    }
+  }
+
+  if (exportsNamespaces.size === 0) return body
+
+  const namespacesStillReferenced = new Set<string>()
+
+  walkAST({ type: 'Program', body } as t.Program, {
+    enter(node, parent) {
+      if (
+        node.type === 'TSTypeQuery' &&
+        node.exprName.type === 'Identifier' &&
+        exportsNamespaces.has(node.exprName.name)
+      ) {
+        const nsName = node.exprName.name
+        const nsInfo = exportsNamespaces.get(nsName)!
+
+        const properties: t.TSPropertySignature[] = []
+        for (const exportName of nsInfo.exports) {
+          if (moduleValues.has(exportName) && !moduleTypes.has(exportName)) {
+            const prop: t.TSPropertySignature = {
+              type: 'TSPropertySignature',
+              computed: false,
+              key: t.identifier(exportName),
+              typeAnnotation: t.tsTypeAnnotation(
+                t.tsTypeQuery(t.identifier(exportName)),
+              ),
+            }
+            properties.push(prop)
+          }
+        }
+
+        const typeLiteral: t.TSTypeLiteral = {
+          type: 'TSTypeLiteral',
+          members: properties,
+        }
+        overwriteNode(node, typeLiteral)
+      }
+
+      if (
+        node.type === 'TSQualifiedName' &&
+        node.left.type === 'Identifier' &&
+        exportsNamespaces.has(node.left.name) &&
+        parent?.type !== 'TSTypeQuery'
+      ) {
+        namespacesStillReferenced.add(node.left.name)
+      }
+
+      if (
+        node.type === 'ExportSpecifier' &&
+        node.local.type === 'Identifier' &&
+        exportsNamespaces.has(node.local.name)
+      ) {
+        namespacesStillReferenced.add(node.local.name)
+      }
+    },
+  })
+
+  const indicesToRemove: number[] = []
+  for (const [nsName, nsInfo] of exportsNamespaces) {
+    if (!namespacesStillReferenced.has(nsName)) {
+      indicesToRemove.push(nsInfo.index)
+    }
+  }
+
+  indicesToRemove.sort((a, b) => b - a)
+  for (const idx of indicesToRemove) {
+    body.splice(idx, 1)
+  }
+
+  return body
 }
 
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
@@ -1194,6 +1682,8 @@ function rewriteImportExport(
     node.type === 'TSExportAssignment' &&
     node.expression.type === 'Identifier'
   ) {
+    // Transform `export = X` to `export { X as default }`
+    // Note: If X is a namespace, the caller should also add `export { X }` separately
     set({
       type: 'ExportNamedDeclaration',
       specifiers: [

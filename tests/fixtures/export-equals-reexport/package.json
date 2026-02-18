@@ -1,0 +1,8 @@
+{
+  "name": "export-equals-reexport-test",
+  "version": "1.0.0",
+  "devDependencies": {
+    "mock-framework": "1.0.0",
+    "mock-logger": "1.0.0"
+  }
+}
