@@ -5,7 +5,7 @@
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "outDir": "build/shared",
+    "outDir": "temp/shared",
     "rootDir": "src",
     "module": "ESNext",
     "target": "ESNext",

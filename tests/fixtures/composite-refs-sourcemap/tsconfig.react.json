@@ -5,7 +5,7 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "baseUrl": ".",
-    "outDir": "build/react",
+    "outDir": "temp/react",
     "rootDir": "src",
     "module": "ESNext",
     "target": "ESNext",

@@ -1,3 +1,3 @@
 export interface LibType {
-  name: string;
+  name: string
 }
