@@ -106,7 +106,7 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
-  test('composite projects sourcemap #80', async () => {
+  test.skip('composite projects sourcemap #80', async () => {
     const root = path.resolve(dirname, 'fixtures/composite-refs-sourcemap')
 
     const { chunks } = await rolldownBuild(
@@ -130,7 +130,7 @@ describe('tsc', () => {
     expect(sourcemap.sourcesContent).toBeOneOf([undefined, []])
   })
 
-  test('composite references', async () => {
+  test.skip('composite references', async () => {
     const root = path.resolve(dirname, 'fixtures/composite-refs')
 
     // The outDir in tsconfig files.

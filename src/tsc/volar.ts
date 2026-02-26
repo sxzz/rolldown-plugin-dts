@@ -27,6 +27,7 @@ export function loadVueLanguageTools(): {
     debug('vue language tools not found', error)
     throw new Error(
       'Failed to load vue language tools. Please manually install vue-tsc.',
+      { cause: error },
     )
   }
 }
@@ -97,6 +98,7 @@ function initTsMacro() {
     debug('ts-macro language tools not found', error)
     throw new Error(
       'Failed to load ts-macro language tools. Please manually install @ts-macro/tsc.',
+      { cause: error },
     )
   }
 }

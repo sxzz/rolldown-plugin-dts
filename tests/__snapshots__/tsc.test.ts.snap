@@ -505,7 +505,7 @@ declare const __VLS_export: vue.DefineComponent<{
   foo: string;
   bar?: string | undefined;
   innerHTML?: string | undefined;
-  class?: any;
+  class?: vue.ClassValue;
   style?: vue.StyleValue;
   accesskey?: string | undefined;
   contenteditable?: (boolean | "true" | "false") | "inherit" | "plaintext-only" | undefined;
@@ -705,7 +705,7 @@ declare const __VLS_export: vue.DefineComponent<{
   foo: string;
   bar?: string | undefined;
   innerHTML?: string | undefined;
-  class?: any;
+  class?: vue.ClassValue;
   style?: vue.StyleValue;
   accesskey?: string | undefined;
   contenteditable?: (boolean | "true" | "false") | "inherit" | "plaintext-only" | undefined;

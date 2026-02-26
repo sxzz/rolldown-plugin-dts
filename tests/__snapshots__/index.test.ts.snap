@@ -79,19 +79,7 @@ export { myClass };"
 `;
 
 exports[`cyclic import 1`] = `
-"// a.d.ts
-import { SomeBoolean } from "./b.js";
-
-//#region a.d.ts
-interface SomeInterface<T> {
-  value: T;
-}
-type T = SomeBoolean;
-//#endregion
-export { SomeInterface, T };
-// b.d.ts
-import { SomeInterface } from "./a.js";
-
+"// a-B8uCZscZ.d.ts
 //#region b.d.ts
 declare class SomeClass<T extends SomeInterface<number>> {
   value: T;
@@ -100,11 +88,25 @@ declare class SomeClass<T extends SomeInterface<number>> {
 }
 type SomeBoolean = boolean;
 //#endregion
+//#region a.d.ts
+interface SomeInterface<T> {
+  value: T;
+}
+type T = SomeBoolean;
+//#endregion
+export { SomeClass as i, T as n, SomeBoolean as r, SomeInterface as t };
+// a.d.ts
+import { n as T, t as SomeInterface } from "./a-B8uCZscZ.js";
+export { SomeInterface, T };
+// b.d.ts
+import { i as SomeClass, r as SomeBoolean } from "./a-B8uCZscZ.js";
 export { SomeBoolean, SomeClass };"
 `;
 
 exports[`declare module 1`] = `
 "// declare-module.d.ts
+import "./chunk-DtKFMgIm.js";
+
 //#region tests/fixtures/declare-module.d.ts
 declare module "virtual" {
   const _default: string;
@@ -288,9 +290,22 @@ export { UserWithAge };"
 `;
 
 exports[`entryFileNames > default chunk name 1`] = `
-"// input1.d.mts
-import "./shared-BLqvEiJ6.js";
-import { Input2 } from "./input2.mjs";
+"// chunks/CmCTH2kN.d.ts
+//#region tests/fixtures/alias/shared.d.ts
+interface Shared {
+  shared: string;
+}
+declare const shared: Shared;
+//#endregion
+//#region tests/fixtures/alias/input2.d.ts
+interface Input2 extends Shared {
+  input2: string;
+}
+declare const input2: Input2;
+//#endregion
+export { input2 as n, Input2 as t };
+// input1.d.mts
+import { t as Input2 } from "./chunks/CmCTH2kN.js";
 
 //#region tests/fixtures/alias/input1.d.ts
 interface Input1 extends Input2 {
@@ -300,23 +315,8 @@ declare const input1: Input1;
 //#endregion
 export { Input1, input1 };
 // input2.d.mts
-import { t as Shared } from "./shared-BLqvEiJ6.js";
-
-//#region tests/fixtures/alias/input2.d.ts
-interface Input2 extends Shared {
-  input2: string;
-}
-declare const input2: Input2;
-//#endregion
-export { Input2, input2 };
-// shared-BLqvEiJ6.d.ts
-//#region tests/fixtures/alias/shared.d.ts
-interface Shared {
-  shared: string;
-}
-declare const shared: Shared;
-//#endregion
-export { Shared as t };"
+import { n as input2, t as Input2 } from "./chunks/CmCTH2kN.js";
+export { Input2, input2 };"
 `;
 
 exports[`infer false branch 1`] = `
@@ -342,9 +342,35 @@ export { Fn1, Fn2 };"
 `;
 
 exports[`input alias 1`] = `
-"// output1.d.ts
-import "./shared-D5vxJC7l.js";
-import { Input2 } from "./output2/index.js";
+"// input2-BRYOrfUi.d.ts
+//#region shared.d.ts
+interface Shared {
+  shared: string;
+}
+declare const shared: Shared;
+//#endregion
+//#region input2.d.ts
+interface Input2 extends Shared {
+  input2: string;
+}
+declare const input2: Input2;
+//#endregion
+export { input2 as n, Input2 as t };
+// input2-Cn0-MVuN.js
+//#region shared.ts
+const shared = { shared: "shared" };
+
+//#endregion
+//#region input2.ts
+const input2 = {
+	...shared,
+	input2: "input2"
+};
+
+//#endregion
+export { input2 as t };
+// output1.d.ts
+import { t as Input2 } from "./input2-BRYOrfUi.js";
 
 //#region input1.d.ts
 interface Input1 extends Input2 {
@@ -354,8 +380,7 @@ declare const input1: Input1;
 //#endregion
 export { Input1, input1 };
 // output1.js
-import "./shared-DBZIgKQm.js";
-import { input2 } from "./output2/index.js";
+import { t as input2 } from "./input2-Cn0-MVuN.js";
 
 //#region input1.ts
 const input1 = {
@@ -366,40 +391,12 @@ const input1 = {
 //#endregion
 export { input1 };
 // output2/index.d.ts
-import { t as Shared } from "../shared-D5vxJC7l.js";
-
-//#region input2.d.ts
-interface Input2 extends Shared {
-  input2: string;
-}
-declare const input2: Input2;
-//#endregion
+import { n as input2, t as Input2 } from "../input2-BRYOrfUi.js";
 export { Input2, input2 };
 // output2/index.js
-import { t as shared } from "../shared-DBZIgKQm.js";
+import { t as input2 } from "../input2-Cn0-MVuN.js";
 
-//#region input2.ts
-const input2 = {
-	...shared,
-	input2: "input2"
-};
-
-//#endregion
-export { input2 };
-// shared-D5vxJC7l.d.ts
-//#region shared.d.ts
-interface Shared {
-  shared: string;
-}
-declare const shared: Shared;
-//#endregion
-export { Shared as t };
-// shared-DBZIgKQm.js
-//#region shared.ts
-const shared = { shared: "shared" };
-
-//#endregion
-export { shared as t };"
+export { input2 };"
 `;
 
 exports[`manualChunks 1`] = `

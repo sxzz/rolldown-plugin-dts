@@ -324,15 +324,16 @@ describe('entryFileNames', () => {
       {},
       {
         entryFileNames: '[name].mjs',
+        chunkFileNames: 'chunks/[hash].js',
       },
     )
     expect(snapshot).toMatchSnapshot()
 
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
-    expect(chunkNames).toEqual([
+    expect(chunkNames.toSorted()).toEqual([
+      expect.stringMatching(/^chunks\/.+\.d\.ts$/),
       'input1.d.mts',
       'input2.d.mts',
-      expect.stringMatching(/^shared-.+\.d\.ts$/),
     ])
   })
 
