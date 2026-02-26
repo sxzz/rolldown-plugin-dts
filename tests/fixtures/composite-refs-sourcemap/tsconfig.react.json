@@ -13,9 +13,7 @@
     "skipLibCheck": true,
     "isolatedDeclarations": false
   },
-  "include": [
-    "src/react"
-  ],
+  "include": ["src/react"],
   "references": [
     {
       "path": "./tsconfig.shared.json"
