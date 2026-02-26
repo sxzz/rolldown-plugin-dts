@@ -52,31 +52,6 @@ export { a };
 {"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
 `;
 
-exports[`tsc > composite references 1`] = `
-"// input1.d.ts
-//#region tests/fixtures/composite-refs/dir1/input1.d.ts
-declare const input1 = "input1";
-//#endregion
-export { input1 };
-// input1.js
-//#region tests/fixtures/composite-refs/dir1/input1.ts
-const input1 = "input1";
-
-//#endregion
-export { input1 };
-// input2.d.ts
-//#region tests/fixtures/composite-refs/dir2/input2.d.ts
-declare const input2 = "input2";
-//#endregion
-export { input2 };
-// input2.js
-//#region tests/fixtures/composite-refs/dir2/input2.ts
-const input2 = "input2";
-
-//#endregion
-export { input2 };"
-`;
-
 exports[`tsc > composite references incremental 1`] = `
 "// input1.d.ts
 //#region tests/fixtures/composite-refs-incremental/dir1/input1.d.ts
@@ -96,6 +71,31 @@ declare const input2 = "input2";
 export { input2 };
 // input2.js
 //#region tests/fixtures/composite-refs-incremental/dir2/input2.ts
+const input2 = "input2";
+
+//#endregion
+export { input2 };"
+`;
+
+exports[`tsc > composite references no incremental 1`] = `
+"// input1.d.ts
+//#region tests/fixtures/composite-refs-no-incremental/dir1/input1.d.ts
+declare const input1 = "input1";
+//#endregion
+export { input1 };
+// input1.js
+//#region tests/fixtures/composite-refs-no-incremental/dir1/input1.ts
+const input1 = "input1";
+
+//#endregion
+export { input1 };
+// input2.d.ts
+//#region tests/fixtures/composite-refs-no-incremental/dir2/input2.d.ts
+declare const input2 = "input2";
+//#endregion
+export { input2 };
+// input2.js
+//#region tests/fixtures/composite-refs-no-incremental/dir2/input2.ts
 const input2 = "input2";
 
 //#endregion
