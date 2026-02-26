@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "references": [
+    {
+      "path": "./tsconfig.1.json"
+    },
+    {
+      "path": "./tsconfig.2.json"
+    }
+  ],
+  "compilerOptions": {
+    "composite": true,
+    // When `composite` is `true`, `incremental` is also `true` by default.
+    // Since we want to test the case where `incremental` is `false` (and thus
+    // tsbuildinfo files are not created), we explicitly set it to `false` here.
+    "incremental": false,
+  },
+  "include": []
+}

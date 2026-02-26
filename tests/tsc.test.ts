@@ -130,8 +130,8 @@ describe('tsc', () => {
     expect(sourcemap.sourcesContent).toBeOneOf([undefined, []])
   })
 
-  test.skip('composite references', async () => {
-    const root = path.resolve(dirname, 'fixtures/composite-refs')
+  test('composite references no incremental', async () => {
+    const root = path.resolve(dirname, 'fixtures/composite-refs-no-incremental')
 
     // The outDir in tsconfig files.
     const tempDir = path.resolve(root, 'temp')
