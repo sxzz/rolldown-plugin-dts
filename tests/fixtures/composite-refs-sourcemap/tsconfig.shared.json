@@ -1,11 +1,13 @@
 {
-  "files": ["src/types.ts"],
+  "files": [
+    "src/types.ts"
+  ],
   "compilerOptions": {
     "composite": true,
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "outDir": "build/shared",
+    "outDir": "temp/shared",
     "rootDir": "src",
     "module": "ESNext",
     "target": "ESNext",
