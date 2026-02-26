@@ -1,4 +1,12 @@
 {
+  "context-!~{007}~.d.mts": {
+    "createContext": "declare function createContext(): TscContext",
+    "globalContext": "TscContext",
+    "invalidateContextFile": "declare function invalidateContextFile(_: TscContext, _: string): void",
+    "ParsedProject": "interface ParsedProject {\n tsconfigPath: string\n parsedConfig: ts.ParsedCommandLine\n}",
+    "SourceFileToProjectMap": "type SourceFileToProjectMap = Map<string, ParsedProject>",
+    "TscContext": "interface TscContext {\n programs: ts.Program[]\n files: Map<string, string>\n projects: Map<string, SourceFileToProjectMap>\n}"
+  },
   "filename.d.mts": {
     "filename_dts_to": "declare function filename_dts_to(_: string, _: 'js' | 'ts'): string",
     "filename_js_to_dts": "declare function filename_js_to_dts(_: string): string",
@@ -31,6 +39,12 @@
       "resolveTemplateFn"
     ]
   },
+  "index-!~{009}~.d.mts": {
+    "tscEmit": "declare function tscEmit(_: TscOptions): TscResult",
+    "TscModule": "interface TscModule {\n program: ts.Program\n file: ts.SourceFile\n}",
+    "TscOptions": "interface TscOptions {\n tsconfig?: string\n tsconfigRaw: TsConfigJson\n cwd: string\n build: boolean\n incremental: boolean\n entries?: string[]\n id: string\n sourcemap: boolean\n vue?: boolean\n tsMacro?: boolean\n context?: TscContext\n}",
+    "TscResult": "interface TscResult {\n code?: string\n map?: SourceMapInput\n error?: string\n}"
+  },
   "index.d.mts": {
     "createFakeJsPlugin": "declare function createFakeJsPlugin(_: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin",
     "createGeneratePlugin": "declare function createGeneratePlugin(_: Pick<OptionsResolved, 'cwd' | 'tsconfig' | 'tsconfigRaw' | 'build' | 'incremental' | 'oxc' | 'emitDtsOnly' | 'vue' | 'tsMacro' | 'parallel' | 'eager' | 'tsgo' | 'newContext' | 'emitJs' | 'sourcemap'>): Plugin",
@@ -51,12 +65,6 @@
     ]
   },
   "tsc-context.d.mts": {
-    "createContext": "declare function createContext(): TscContext",
-    "globalContext": "TscContext",
-    "invalidateContextFile": "declare function invalidateContextFile(_: TscContext, _: string): void",
-    "ParsedProject": "interface ParsedProject {\n tsconfigPath: string\n parsedConfig: ts.ParsedCommandLine\n}",
-    "SourceFileToProjectMap": "type SourceFileToProjectMap = Map<string, ParsedProject>",
-    "TscContext": "interface TscContext {\n programs: ts.Program[]\n files: Map<string, string>\n projects: Map<string, SourceFileToProjectMap>\n}",
     "#exports": [
       "ParsedProject",
       "SourceFileToProjectMap",
@@ -74,17 +82,11 @@
     ]
   },
   "tsc.d.mts": {
-    "tscEmit": "declare function tscEmit(_: TscOptions): TscResult",
     "#exports": [
       "TscModule",
       "TscOptions",
       "TscResult",
       "tscEmit"
     ]
-  },
-  "types-!~{007}~.d.mts": {
-    "TscModule": "interface TscModule {\n program: ts.Program\n file: ts.SourceFile\n}",
-    "TscOptions": "interface TscOptions {\n tsconfig?: string\n tsconfigRaw: TsConfigJson\n cwd: string\n build: boolean\n incremental: boolean\n entries?: string[]\n id: string\n sourcemap: boolean\n vue?: boolean\n tsMacro?: boolean\n context?: TscContext\n}",
-    "TscResult": "interface TscResult {\n code?: string\n map?: SourceMapInput\n error?: string\n}"
   }
 }

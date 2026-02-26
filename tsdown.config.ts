@@ -17,7 +17,9 @@ export default defineConfig({
   define: {
     'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.mjs'),
   },
-  inlineOnly: [],
+  deps: {
+    onlyAllowBundle: [],
+  },
   treeshake: {
     moduleSideEffects: false,
   },
