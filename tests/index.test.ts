@@ -582,3 +582,74 @@ test('deterministic namespace import index', async () => {
   // Should not have stub_lib0 since each file is independent
   expect(results[0]).not.toContain('stub_lib0')
 })
+
+// Test for export = namespace pattern like postgres
+// When a dev dependency uses `export = namespace`, named imports should be
+// transformed to use namespace-qualified access (e.g., `Sql` -> `postgres.Sql`)
+test('export equals namespace', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/export-equals-namespace')
+  const { snapshot } = await rolldownBuild(
+    ['index.ts'],
+    [dts({ emitDtsOnly: true })],
+    { cwd },
+  )
+  expect(snapshot).toMatchSnapshot()
+  // Verify namespace-qualified references are used
+  expect(snapshot).toContain('mockdb.Connection')
+  expect(snapshot).toContain('mockdb.Row')
+  expect(snapshot).toContain('mockdb.Options')
+  expect(snapshot).toContain('mockdb.DatabaseError')
+  expect(snapshot).toContain('mockdb.DriverType.Postgres')
+  expect(snapshot).toContain('type DriverType = mockdb.DriverType')
+})
+
+test('export equals namespace with re-exports', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/export-equals-reexport')
+  const { snapshot } = await rolldownBuild(
+    ['index.ts'],
+    [dts({ emitDtsOnly: true })],
+    { cwd },
+  )
+  expect(snapshot).toMatchSnapshot()
+  expect(snapshot).toContain('type FrameworkLogFn')
+  expect(snapshot).toContain('type LogLevel')
+  expect(snapshot).toContain('type Bindings')
+  expect(snapshot).toContain('logger.LogFn')
+  expect(snapshot).toContain('logger.Level')
+  expect(snapshot).toContain('logger.Bindings')
+})
+
+test('ambient declarations in node_modules', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/ambient-dts')
+  const { snapshot } = await rolldownBuild(
+    ['index.ts'],
+    [dts({ emitDtsOnly: true })],
+    { cwd, treeshake: true },
+  )
+  expect(snapshot).toMatchSnapshot()
+  expect(snapshot).toContain('interface AmbientConnection')
+  expect(snapshot).toContain('interface AmbientConfig')
+  expect(snapshot).toContain('declare class AmbientDatabase')
+  expect(snapshot).not.toContain('UnusedInterface')
+  expect(snapshot).not.toContain('UnusedType')
+  expect(snapshot).not.toContain('unusedFunction')
+  expect(snapshot).not.toContain('UnusedClass')
+})
+
+test('namespace re-exports types via direct exports', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/namespace-reexport-types')
+  const { snapshot } = await rolldownBuild(
+    ['index.ts'],
+    [dts({ emitDtsOnly: true })],
+    { cwd },
+  )
+  expect(snapshot).toMatchSnapshot()
+  expect(snapshot).toContain('export { type SerializedError')
+  expect(snapshot).toContain('type SerializedRequest')
+  expect(snapshot).toContain('type SerializedResponse')
+  expect(snapshot).toContain('interface SerializedError')
+  expect(snapshot).toContain('interface SerializedRequest')
+  expect(snapshot).toContain('interface SerializedResponse')
+  expect(snapshot).toContain('stdSerializers: {')
+  expect(snapshot).toContain('err: typeof err')
+})

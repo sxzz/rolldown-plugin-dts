@@ -1,5 +1,36 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`ambient declarations in node_modules 1`] = `
+"// index.d.ts
+//#region node_modules/ambient-lib/index.d.ts
+interface PublicApi {
+  name: string;
+}
+interface AmbientConnection {
+  host: string;
+  port: number;
+}
+interface AmbientConfig {
+  timeout: number;
+  retries: number;
+}
+declare class AmbientDatabase {
+  connection: AmbientConnection;
+  query(sql: string): Promise<unknown>;
+}
+//#endregion
+//#region index.d.ts
+interface MyService {
+  api: PublicApi;
+  connection: AmbientConnection;
+  config: AmbientConfig;
+  db: AmbientDatabase;
+}
+declare function connect(config: AmbientConfig): AmbientConnection;
+//#endregion
+export { MyService, connect };"
+`;
+
 exports[`basic 1`] = `
 "// basic.d.ts
 //#region tests/fixtures/basic.d.ts
@@ -319,6 +350,130 @@ import { n as input2, t as Input2 } from "./chunks/CmCTH2kN.js";
 export { Input2, input2 };"
 `;
 
+exports[`export equals namespace 1`] = `
+"// index.d.ts
+//#region node_modules/mock-db/index.d.ts
+declare function mockdb(): mockdb.Connection;
+declare function mockdb(url: string): mockdb.Connection;
+declare namespace mockdb {
+  interface Connection {
+    query(sql: string): Promise<Row[]>;
+    close(): void;
+  }
+  interface Row {
+    [key: string]: unknown;
+  }
+  interface Options {
+    host: string;
+    port: number;
+  }
+  class DatabaseError extends Error {
+    code: string;
+  } // Enum for testing qualified name replacement (like HTTPVersion.V1)
+  const enum DriverType {
+    Postgres = 1,
+    MySQL = 2,
+    SQLite = 3
+  }
+  interface UnusedType1 {
+    foo: string;
+  }
+  interface UnusedType2 {
+    bar: number;
+  }
+}
+//#endregion
+//#region index.d.ts
+interface DbConfig {
+  connection: mockdb.Connection;
+  options?: mockdb.Options;
+  defaultDriver: mockdb.DriverType.Postgres;
+}
+declare function runQuery(conn: mockdb.Connection, sql: string): Promise<mockdb.Row[]>;
+declare class Database {
+  private conn;
+  private lastError?;
+  constructor(conn: mockdb.Connection);
+  getConnection(): mockdb.Connection;
+  getLastError(): mockdb.DatabaseError | undefined;
+}
+type QueryResult = mockdb.Row[];
+type IsError<T> = T extends mockdb.DatabaseError ? true : false;
+type DriverType = mockdb.DriverType;
+//#endregion
+export { Database, DbConfig, type DriverType, IsError, QueryResult, runQuery };"
+`;
+
+exports[`export equals namespace with re-exports 1`] = `
+"// index.d.ts
+//#region node_modules/mock-logger/index.d.ts
+// Mock logger module that simulates pino's export = namespace pattern
+declare function logger(options?: logger.LoggerOptions): logger.Logger;
+declare namespace logger {
+  type Level = 'debug' | 'info' | 'warn' | 'error';
+  interface LoggerOptions {
+    level?: Level;
+    name?: string;
+  }
+  type LogFn = (msg: string, ...args: unknown[]) => void;
+  interface Bindings {
+    [key: string]: unknown;
+  }
+  interface ChildLoggerOptions {
+    level?: Level;
+    bindings?: Bindings;
+  }
+  interface Logger {
+    level: Level;
+    info: LogFn;
+    warn: LogFn;
+    error: LogFn;
+    debug: LogFn;
+    child(bindings: Bindings, options?: ChildLoggerOptions): Logger;
+  }
+}
+//#endregion
+//#region node_modules/mock-framework/types/logger.d.ts
+// Framework's own logger interface that uses the imported types
+interface FrameworkLogger {
+  level: logger.Level;
+  info: logger.LogFn;
+  warn: logger.LogFn;
+  error: logger.LogFn;
+  child(bindings: logger.Bindings, options?: logger.ChildLoggerOptions): FrameworkLogger;
+}
+interface FrameworkOptions {
+  logger?: FrameworkLogger | logger.LoggerOptions | boolean;
+}
+type FrameworkLogFn = logger.LogFn;
+type LogLevel = logger.Level;
+type Bindings$1 = logger.Bindings;
+type ChildLoggerOptions$1 = logger.ChildLoggerOptions;
+type BaseLoggerOptions = logger.LoggerOptions;
+//#endregion
+//#region node_modules/mock-framework/index.d.ts
+interface FrameworkInstance {
+  listen(port: number): Promise<void>;
+  close(): Promise<void>;
+}
+declare function createFramework(options?: FrameworkOptions): FrameworkInstance;
+//#endregion
+//#region index.d.ts
+interface AppLogger {
+  logger: FrameworkLogger;
+}
+declare class LoggerService {
+  private logger;
+  private level;
+  constructor(logger: FrameworkLogger);
+  log(fn: FrameworkLogFn, msg: string): void;
+  withBindings(bindings: Bindings$1): FrameworkLogger;
+  getLevel(): LogLevel;
+}
+//#endregion
+export { AppLogger, type FrameworkLogFn, type FrameworkLogger, type LogLevel, LoggerService };"
+`;
+
 exports[`infer false branch 1`] = `
 "// index.d.ts
 //#region tests/fixtures/infer-false-branch/mod.d.ts
@@ -412,6 +567,42 @@ export { shared1, shared2 };
 declare const shared1 = "shared1";
 //#endregion
 export { shared1 as t };"
+`;
+
+exports[`namespace re-exports types via direct exports 1`] = `
+"// index.d.ts
+// Simulates pino-std-serializers pattern
+// Module exports types directly at module level
+interface SerializedError {
+  type: string;
+  message: string;
+  stack: string;
+}
+interface SerializedRequest {
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+}
+interface SerializedResponse {
+  statusCode: number;
+  headers: Record<string, string>;
+}
+declare function err(error: Error): SerializedError;
+declare function req(request: any): SerializedRequest;
+declare function res(response: any): SerializedResponse;
+//#endregion
+//#region index.d.ts
+declare function formatError(err: Error): SerializedError;
+declare namespace logger {
+  const stdSerializers: {
+    err: typeof err;
+    req: typeof req;
+    res: typeof res;
+  };
+  export { type SerializedError, type SerializedRequest, type SerializedResponse };
+}
+//#endregion
+export { formatError, logger };"
 `;
 
 exports[`re-export from lib > both 1`] = `
