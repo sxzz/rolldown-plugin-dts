@@ -79,7 +79,7 @@ export { myClass };"
 `;
 
 exports[`cyclic import 1`] = `
-"// a-B8uCZscZ.d.ts
+"// a-VernZcHd.d.ts
 //#region b.d.ts
 declare class SomeClass<T extends SomeInterface<number>> {
   value: T;
@@ -96,10 +96,10 @@ type T = SomeBoolean;
 //#endregion
 export { SomeClass as i, T as n, SomeBoolean as r, SomeInterface as t };
 // a.d.ts
-import { n as T, t as SomeInterface } from "./a-B8uCZscZ.js";
+import { n as T, t as SomeInterface } from "./a-VernZcHd.js";
 export { SomeInterface, T };
 // b.d.ts
-import { i as SomeClass, r as SomeBoolean } from "./a-B8uCZscZ.js";
+import { i as SomeClass, r as SomeBoolean } from "./a-VernZcHd.js";
 export { SomeBoolean, SomeClass };"
 `;
 
@@ -342,7 +342,7 @@ export { Fn1, Fn2 };"
 `;
 
 exports[`input alias 1`] = `
-"// input2-BRYOrfUi.d.ts
+"// input2-C4w5Qa2O.d.ts
 //#region shared.d.ts
 interface Shared {
   shared: string;
@@ -370,7 +370,7 @@ const input2 = {
 //#endregion
 export { input2 as t };
 // output1.d.ts
-import { t as Input2 } from "./input2-BRYOrfUi.js";
+import { t as Input2 } from "./input2-C4w5Qa2O.js";
 
 //#region input1.d.ts
 interface Input1 extends Input2 {
@@ -391,7 +391,7 @@ const input1 = {
 //#endregion
 export { input1 };
 // output2/index.d.ts
-import { n as input2, t as Input2 } from "../input2-BRYOrfUi.js";
+import { n as input2, t as Input2 } from "../input2-C4w5Qa2O.js";
 export { Input2, input2 };
 // output2/index.js
 import { t as input2 } from "../input2-Cn0-MVuN.js";

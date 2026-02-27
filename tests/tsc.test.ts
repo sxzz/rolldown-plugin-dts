@@ -201,15 +201,19 @@ describe('tsc', () => {
 
   test('vue-sfc w/ ts-compiler', async () => {
     const root = path.resolve(dirname, 'fixtures/vue-sfc')
-    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
-      dts({
-        emitDtsOnly: true,
-        vue: true,
-        compilerOptions: {
-          isolatedDeclarations: false,
-        },
-      }),
-    ])
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'main.ts'),
+      [
+        dts({
+          emitDtsOnly: true,
+          vue: true,
+          compilerOptions: {
+            isolatedDeclarations: false,
+          },
+        }),
+      ],
+      { external: [/^@vue/] },
+    )
     expect(snapshot).toMatchSnapshot()
   })
 

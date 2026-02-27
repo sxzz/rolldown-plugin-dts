@@ -35,7 +35,7 @@ await testFixtures(
         ],
         {
           treeshake: true,
-          external: ['typescript'],
+          external: ['typescript', 'rollup'],
         },
       ).then(({ snapshot }) => snapshot),
       rollupBuild(entries, [rollupDts()], undefined, {

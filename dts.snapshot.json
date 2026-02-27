@@ -1,5 +1,5 @@
 {
-  "context-!~{007}~.d.mts": {
+  "context-!~{002}~.d.mts": {
     "createContext": "declare function createContext(): TscContext",
     "globalContext": "TscContext",
     "invalidateContextFile": "declare function invalidateContextFile(_: TscContext, _: string): void",
@@ -39,7 +39,7 @@
       "resolveTemplateFn"
     ]
   },
-  "index-!~{009}~.d.mts": {
+  "index-!~{003}~.d.mts": {
     "tscEmit": "declare function tscEmit(_: TscOptions): TscResult",
     "TscModule": "interface TscModule {\n program: ts.Program\n file: ts.SourceFile\n}",
     "TscOptions": "interface TscOptions {\n tsconfig?: string\n tsconfigRaw: TsConfigJson\n cwd: string\n build: boolean\n incremental: boolean\n entries?: string[]\n id: string\n sourcemap: boolean\n vue?: boolean\n tsMacro?: boolean\n context?: TscContext\n}",
