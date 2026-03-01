@@ -114,6 +114,62 @@ declare module "virtual" {
 }"
 `;
 
+exports[`declare relative module 1`] = `
+"// main-bar.d.ts
+//#region tests/fixtures/declare-relative-module/foobar/foo.d.ts
+interface FooBar {
+  foobar: string;
+}
+//#endregion
+//#region tests/fixtures/declare-relative-module/foobar/index.d.ts
+declare module "./main-bar.js" {
+  interface FooBar {
+    foobar2: string;
+  }
+}
+//#endregion
+//#region tests/fixtures/declare-relative-module/foobaz.d.ts
+declare module "./main-bar.js" {
+  interface Bar {
+    bar2: string;
+  }
+}
+interface FooBaz {
+  foobaz: string;
+}
+//#endregion
+//#region tests/fixtures/declare-relative-module/bar.d.ts
+declare module "./main-foo.js" {
+  interface Foo {
+    foo2: string;
+  }
+}
+interface Bar {
+  bar: string;
+}
+//#endregion
+export { Bar, FooBar, FooBaz };
+// main-baz/index.d.ts
+//#region tests/fixtures/declare-relative-module/baz/index.d.ts
+declare module "../main-foo.js" {
+  interface Foo {
+    baz: string;
+  }
+}
+interface Baz {
+  baz: string;
+}
+//#endregion
+export { Baz };
+// main-foo.d.ts
+//#region tests/fixtures/declare-relative-module/foo.d.ts
+interface Foo {
+  foo: string;
+}
+//#endregion
+export { Foo };"
+`;
+
 exports[`deterministic namespace import index 1`] = `
 "// a.d.ts
 import * as stub_lib from "stub_lib";
