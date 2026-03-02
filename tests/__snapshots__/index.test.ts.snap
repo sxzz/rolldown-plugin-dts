@@ -105,8 +105,6 @@ export { SomeBoolean, SomeClass };"
 
 exports[`declare module 1`] = `
 "// declare-module.d.ts
-import "./chunk-DtKFMgIm.js";
-
 //#region tests/fixtures/declare-module.d.ts
 declare module "virtual" {
   const _default: string;
@@ -461,9 +459,7 @@ export { Foo };
 
 exports[`side effects 1`] = `
 "// index.d.ts
-import "./mod.js";
-
-//#region tests/fixtures/side-effects/index.d.ts
+export { };
 // mod.d.ts
 //#region tests/fixtures/side-effects/mod.d.ts
 declare global {
