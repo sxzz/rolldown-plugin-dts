@@ -896,7 +896,6 @@ function isReferenceId(
 function isHelperImport(node: t.Node) {
   return (
     node.type === 'ImportDeclaration' &&
-    node.specifiers.length === 1 &&
     node.specifiers.every(
       (spec) =>
         spec.type === 'ImportSpecifier' &&
