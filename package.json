@@ -80,7 +80,6 @@
     "@babel/types": "8.0.0-rc.2",
     "ast-kit": "^3.0.0-beta.1",
     "birpc": "^4.0.0",
-    "dts-resolver": "^2.1.3",
     "get-tsconfig": "^4.13.6",
     "obug": "^2.1.1"
   },
