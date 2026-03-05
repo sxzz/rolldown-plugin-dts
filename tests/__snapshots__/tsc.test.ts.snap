@@ -24,9 +24,9 @@ export { a };
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
-
 //#endregion
 export { a };
+
 //# sourceMappingURL=index.js.map
 // index.js.map
 {"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
@@ -44,9 +44,9 @@ export { a };
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
-
 //#endregion
 export { a };
+
 //# sourceMappingURL=index.js.map
 // index.js.map
 {"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
@@ -61,9 +61,9 @@ export { input1 };
 // input1.js
 //#region tests/fixtures/composite-refs-incremental/dir1/input1.ts
 const input1 = "input1";
-
 //#endregion
 export { input1 };
+
 // input2.d.ts
 //#region tests/fixtures/composite-refs-incremental/dir2/input2.d.ts
 declare const input2 = "input2";
@@ -72,9 +72,9 @@ export { input2 };
 // input2.js
 //#region tests/fixtures/composite-refs-incremental/dir2/input2.ts
 const input2 = "input2";
-
 //#endregion
-export { input2 };"
+export { input2 };
+"
 `;
 
 exports[`tsc > composite references no incremental 1`] = `
@@ -86,9 +86,9 @@ export { input1 };
 // input1.js
 //#region tests/fixtures/composite-refs-no-incremental/dir1/input1.ts
 const input1 = "input1";
-
 //#endregion
 export { input1 };
+
 // input2.d.ts
 //#region tests/fixtures/composite-refs-no-incremental/dir2/input2.d.ts
 declare const input2 = "input2";
@@ -97,9 +97,9 @@ export { input2 };
 // input2.js
 //#region tests/fixtures/composite-refs-no-incremental/dir2/input2.ts
 const input2 = "input2";
-
 //#endregion
-export { input2 };"
+export { input2 };
+"
 `;
 
 exports[`tsc > import JSON 1`] = `
@@ -390,9 +390,9 @@ function fn() {
 * default export
 */
 var jsdoc_default = fn();
-
 //#endregion
-export { jsdoc_default as default, fn };"
+export { jsdoc_default as default, fn };
+"
 `;
 
 exports[`tsc > multi declarations 1`] = `
@@ -416,9 +416,9 @@ export { a };
 // index.js
 //#region tests/fixtures/refs/src/index.ts
 const a = 1;
-
 //#endregion
-export { a };"
+export { a };
+"
 `;
 
 exports[`tsc > rename infer 1`] = `

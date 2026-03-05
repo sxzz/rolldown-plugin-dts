@@ -33,19 +33,18 @@ var Cls = class {
 	foo;
 	fn(e) {}
 };
-
 //#endregion
-export { Cls, Enum, fn, foo };"
+export { Cls, Enum, fn, foo };
+"
 `;
 
 exports[`cjs exports 1`] = `
 "// cjs-exports.js
-
 //#region tests/fixtures/cjs-exports.ts
 var cjs_exports_default = 42;
-
 //#endregion
-module.exports = cjs_exports_default;"
+module.exports = cjs_exports_default;
+"
 `;
 
 exports[`cjs exports 2`] = `
@@ -354,19 +353,16 @@ interface Input2 extends Shared {
 declare const input2: Input2;
 //#endregion
 export { input2 as n, Input2 as t };
-// input2-Cn0-MVuN.js
-//#region shared.ts
-const shared = { shared: "shared" };
-
+// input2-D2_37Q97.js
 //#endregion
 //#region input2.ts
 const input2 = {
-	...shared,
+	shared: "shared",
 	input2: "input2"
 };
-
 //#endregion
 export { input2 as t };
+
 // output1.d.ts
 import { t as Input2 } from "./input2-C4w5Qa2O.js";
 
@@ -378,23 +374,22 @@ declare const input1: Input1;
 //#endregion
 export { Input1, input1 };
 // output1.js
-import { t as input2 } from "./input2-Cn0-MVuN.js";
-
+import { t as input2 } from "./input2-D2_37Q97.js";
 //#region input1.ts
 const input1 = {
 	...input2,
 	input1: "input1"
 };
-
 //#endregion
 export { input1 };
+
 // output2/index.d.ts
 import { n as input2, t as Input2 } from "../input2-C4w5Qa2O.js";
 export { Input2, input2 };
 // output2/index.js
-import { t as input2 } from "../input2-Cn0-MVuN.js";
-
-export { input2 };"
+import { t as input2 } from "../input2-D2_37Q97.js";
+export { input2 };
+"
 `;
 
 exports[`manualChunks 1`] = `
@@ -520,9 +515,9 @@ var Cls = class {
 	foo;
 	fn(e) {}
 };
-
 //#endregion
-export { Cls, Enum, fn, foo };"
+export { Cls, Enum, fn, foo };
+"
 `;
 
 exports[`tsx 1`] = `
@@ -535,14 +530,13 @@ declare function createComponent(): JSX.HTMLAttributes<HTMLElement>;
 export { createComponent };
 // tsx.js
 import { jsx } from "react/jsx-runtime";
-
 //#region tests/fixtures/tsx.tsx
 function createComponent() {
 	return /* @__PURE__ */ jsx("div", {});
 }
-
 //#endregion
-export { createComponent };"
+export { createComponent };
+"
 `;
 
 exports[`type-only export 1`] = `
