@@ -1,5 +1,4 @@
 import path from 'node:path'
-import { createResolver } from 'dts-resolver'
 import { createDebug } from 'obug'
 import { ResolverFactory } from 'rolldown/experimental'
 import { importerId, include } from 'rolldown/filter'
@@ -30,10 +29,12 @@ export function createDtsResolvePlugin({
   OptionsResolved,
   'cwd' | 'tsconfig' | 'tsconfigRaw' | 'resolver' | 'sideEffects'
 >): Plugin {
-  const baseDtsResolver = createResolver({
-    tsconfig,
-    resolveNodeModules: true,
-    ResolverFactory,
+  const dtsResolver = new ResolverFactory({
+    mainFields: ['types', 'typings', 'module', 'main'],
+    conditionNames: ['types', 'typings', 'import', 'require'],
+    tsconfig: tsconfig
+      ? { configFile: tsconfig, references: 'auto' }
+      : undefined,
   })
   const moduleSideEffects = sideEffects ? true : null
 
@@ -133,7 +134,7 @@ export function createDtsResolvePlugin({
         // TODO reference
       )
     } else {
-      dtsPath = baseDtsResolver(id, importer)
+      dtsPath = dtsResolver.resolveDtsSync(importer, id).path
     }
     debug('Using %s for dts import: %O -> %O', resolver, id, dtsPath)
 
