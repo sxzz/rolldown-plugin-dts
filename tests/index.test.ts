@@ -546,6 +546,15 @@ test('real css imports are externalized', async () => {
   expect(snapshot).not.toContain('.main')
 })
 
+test('scss imports are externalized', async () => {
+  const root = path.resolve(dirname, 'fixtures/css-scss')
+  const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+    dts({ emitDtsOnly: true }),
+  ])
+  expect(snapshot).toMatchSnapshot()
+  expect(snapshot).not.toContain('.main')
+})
+
 test('sub namespace', async () => {
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/sub-namespace.ts'),
