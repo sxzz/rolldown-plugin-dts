@@ -452,6 +452,14 @@ export { Foo };
 "
 `;
 
+exports[`scss imports are externalized 1`] = `
+"// index.d.ts
+//#region tests/fixtures/css-scss/index.d.ts
+declare const foo: number;
+//#endregion
+export { foo };"
+`;
+
 exports[`side effects 1`] = `
 "// index.d.ts
 export { };
