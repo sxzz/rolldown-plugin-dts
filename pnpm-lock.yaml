@@ -88,8 +88,8 @@ importers:
         specifier: ^0.4.0
         version: 0.4.0(rolldown@1.0.0-rc.9)
       rolldown-plugin-require-cjs:
-        specifier: ^0.3.3
-        version: 0.3.3(rolldown@1.0.0-rc.9)
+        specifier: ^0.4.0
+        version: 0.4.0(rolldown@1.0.0-rc.9)
       rollup-plugin-dts:
         specifier: ^6.3.0
         version: 6.3.0(rollup@4.59.0)(typescript@6.0.0-dev.20260301)
@@ -2077,8 +2077,8 @@ packages:
       vue-tsc:
         optional: true
 
-  rolldown-plugin-require-cjs@0.3.3:
-    resolution: {integrity: sha512-b5H27aM1qA3Ioojqr1177AVPfc8TAKfKOC1XB1U1ZKpyW9GvbtYzukVDfQvbVAJJyukAAUSBZ7JIU0T5MCW8zQ==}
+  rolldown-plugin-require-cjs@0.4.0:
+    resolution: {integrity: sha512-ZG2oKzLHyTSZL9HeUSf/zUlb9IjcgKBJZTCgYsnBhVWkzHtXj1uzi1pv2qmpSfcbmTgR6D1MRSXlyYWjPWyYtg==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       rolldown: ^1.0.0-rc.9
@@ -3034,8 +3034,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.56.1(typescript@6.0.0-dev.20260301)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.56.1(typescript@6.0.0-dev.20260301)
-      '@typescript-eslint/types': 8.56.1
+      '@typescript-eslint/tsconfig-utils': 8.57.0(typescript@6.0.0-dev.20260301)
+      '@typescript-eslint/types': 8.57.0
       debug: 4.4.3
       typescript: 6.0.0-dev.20260301
     transitivePeerDependencies:
@@ -4460,7 +4460,7 @@ snapshots:
     transitivePeerDependencies:
       - oxc-resolver
 
-  rolldown-plugin-require-cjs@0.3.3(rolldown@1.0.0-rc.9):
+  rolldown-plugin-require-cjs@0.4.0(rolldown@1.0.0-rc.9):
     dependencies:
       cjs-module-lexer: 2.2.0
       empathic: 2.0.0

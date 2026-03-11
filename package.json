@@ -100,7 +100,7 @@
     "prettier": "^3.8.1",
     "rolldown": "^1.0.0-rc.9",
     "rolldown-plugin-dts-snapshot": "^0.4.0",
-    "rolldown-plugin-require-cjs": "^0.3.3",
+    "rolldown-plugin-require-cjs": "^0.4.0",
     "rollup-plugin-dts": "^6.3.0",
     "tinyglobby": "^0.2.15",
     "tsdown": "^0.21.1",
