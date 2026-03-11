@@ -591,3 +591,11 @@ test('deterministic namespace import index', async () => {
   // Should not have stub_lib0 since each file is independent
   expect(results[0]).not.toContain('stub_lib0')
 })
+
+test('decorators', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/decorator.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})

@@ -143,7 +143,7 @@ export function createFakeJsPlugin({
     id: string,
   ): TransformResult {
     const file = parse(code, {
-      plugins: [['typescript', { dts: true }]],
+      plugins: [['typescript', { dts: true }], 'decoratorAutoAccessors'],
       sourceType: 'module',
       errorRecovery: true,
       createParenthesizedExpressions: true,

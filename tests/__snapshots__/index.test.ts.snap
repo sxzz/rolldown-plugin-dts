@@ -111,6 +111,16 @@ declare module "virtual" {
 }"
 `;
 
+exports[`decorators 1`] = `
+"// decorator.d.ts
+//#region tests/fixtures/decorator.d.ts
+declare class Product {
+  accessor price;
+}
+//#endregion
+export { Product };"
+`;
+
 exports[`deterministic namespace import index 1`] = `
 "// a.d.ts
 import * as stub_lib from "stub_lib";
