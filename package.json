@@ -94,7 +94,7 @@
     "@volar/typescript": "^2.4.28",
     "@vue/language-core": "^3.2.5",
     "arktype": "^2.2.0",
-    "bumpp": "^10.4.1",
+    "bumpp": "^11.0.0",
     "diff": "^8.0.3",
     "eslint": "^10.0.3",
     "prettier": "^3.8.1",
