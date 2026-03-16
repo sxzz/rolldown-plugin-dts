@@ -128,18 +128,7 @@ export function createGeneratePlugin({
         }
       }
 
-      if (!Array.isArray(options.input)) {
-        for (const [name, id] of Object.entries(options.input)) {
-          debug('resolving input alias %s -> %s', name, id)
-          let resolved = await this.resolve(id)
-          if (!id.startsWith('./')) {
-            resolved ||= await this.resolve(`./${id}`)
-          }
-          const resolvedId = resolved?.id || id
-          debug('resolved input alias %s -> %s', id, resolvedId)
-          inputAliasMap.set(resolvedId, name)
-        }
-      } else {
+      if (Array.isArray(options.input)) {
         for (const id of options.input) {
           debug('resolving array input %s', id)
           let resolved = await this.resolve(id)
@@ -148,7 +137,23 @@ export function createGeneratePlugin({
           }
           const resolvedId = resolved?.id || id
           const name = path.basename(resolvedId).replace(RE_TS, '')
-          debug('resolved array input %s -> %s (name: %s)', id, resolvedId, name)
+          debug(
+            'resolved array input %s -> %s (name: %s)',
+            id,
+            resolvedId,
+            name,
+          )
+          inputAliasMap.set(resolvedId, name)
+        }
+      } else {
+        for (const [name, id] of Object.entries(options.input)) {
+          debug('resolving input alias %s -> %s', name, id)
+          let resolved = await this.resolve(id)
+          if (!id.startsWith('./')) {
+            resolved ||= await this.resolve(`./${id}`)
+          }
+          const resolvedId = resolved?.id || id
+          debug('resolved input alias %s -> %s', id, resolvedId)
           inputAliasMap.set(resolvedId, name)
         }
       }
