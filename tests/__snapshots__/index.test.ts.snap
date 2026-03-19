@@ -326,6 +326,19 @@ import { n as input2, t as Input2 } from "./chunks/CmCTH2kN.js";
 export { Input2, input2 };"
 `;
 
+exports[`function overloads 1`] = `
+"// function-overloads.d.ts
+//#region tests/fixtures/function-overloads.d.ts
+interface Config {
+  name: string;
+  version: number;
+}
+declare function useConfig(): Config;
+declare function useConfig<T>(selector: (config: Config) => T): T;
+//#endregion
+export { useConfig };"
+`;
+
 exports[`infer false branch 1`] = `
 "// index.d.ts
 //#region tests/fixtures/infer-false-branch/mod.d.ts
