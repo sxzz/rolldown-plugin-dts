@@ -45,12 +45,27 @@ type TypeParams = Array<{
   typeParams: t.Identifier[]
 }>
 
+interface OverloadInfo {
+  decl: t.Declaration
+  params: TypeParams
+  deps: Dep[]
+  children: t.Node[]
+  depsOffset: number
+  paramsOffset: number
+  childrenOffset: number
+}
+
 interface DeclarationInfo {
   decl: t.Declaration
   bindings: t.Identifier[]
   params: TypeParams
   deps: Dep[]
   children: t.Node[]
+  overloads?: OverloadInfo[]
+  /** Number of deps/params/children belonging to the primary declaration (before merging overloads) */
+  primaryDepsCount?: number
+  primaryParamsCount?: number
+  primaryChildrenCount?: number
 }
 
 type NamespaceMap = Map<
@@ -159,6 +174,9 @@ export function createFakeJsPlugin({
 
     const appendStmts: t.Statement[] = []
     const namespaceStmts: NamespaceMap = new Map()
+    // Track binding names to their declaration IDs for function overload merging
+    const bindingToDeclarationId = new Map<string, number>()
+    const stmtsToRemove = new Set<number>()
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.Statement) => (program.body[i] = stmt)
@@ -258,6 +276,38 @@ export function createFakeJsPlugin({
         decl.leadingComments = stmt.leadingComments
       }
 
+      // Handle function overloads: merge into existing declaration
+      if (
+        decl.type === 'TSDeclareFunction' &&
+        bindings.length === 1 &&
+        bindingToDeclarationId.has(bindings[0].name)
+      ) {
+        const existingId = bindingToDeclarationId.get(bindings[0].name)!
+        const existing = getDeclaration(existingId)
+        if (!existing.overloads) {
+          existing.overloads = []
+          existing.primaryDepsCount = existing.deps.length
+          existing.primaryParamsCount = existing.params.length
+          existing.primaryChildrenCount = existing.children.length
+        }
+        existing.overloads.push({
+          decl,
+          params,
+          deps,
+          children,
+          depsOffset: existing.deps.length,
+          paramsOffset: existing.params.length,
+          childrenOffset: existing.children.length,
+        })
+        // Merge deps, params, and children into the primary so they go through
+        // Rolldown's identifier renaming pipeline
+        existing.deps.push(...deps)
+        existing.params.push(...params)
+        existing.children.push(...children)
+        stmtsToRemove.add(i)
+        continue
+      }
+
       const declarationId = registerDeclaration({
         decl,
         deps,
@@ -265,6 +315,11 @@ export function createFakeJsPlugin({
         params,
         children,
       })
+
+      // Track binding name for potential overload merging
+      if (decl.type === 'TSDeclareFunction' && bindings.length === 1) {
+        bindingToDeclarationId.set(bindings[0].name, declarationId)
+      }
 
       const declarationIdNode = t.numericLiteral(declarationId)
       const depsNode = t.arrowFunctionExpression(
@@ -340,7 +395,7 @@ export function createFakeJsPlugin({
 
     program.body = [
       ...Array.from(namespaceStmts.values()).map(({ stmt }) => stmt),
-      ...program.body,
+      ...program.body.filter((_, idx) => !stmtsToRemove.has(idx)),
       ...appendStmts,
     ]
 
@@ -378,19 +433,18 @@ export function createFakeJsPlugin({
     program.body = patchReExport(program.body)
 
     program.body = program.body
-      .map((node) => {
-        if (isHelperImport(node)) return null
-        if (node.type === 'ExpressionStatement') return null
+      .flatMap((node) => {
+        if (isHelperImport(node)) return []
+        if (node.type === 'ExpressionStatement') return []
 
         const newNode = patchImportExport(node, typeOnlyIds, cjsDefault)
-        if (newNode || newNode === false) {
-          return newNode
-        }
+        if (newNode === false) return []
+        if (newNode) return [newNode]
 
-        if (node.type !== 'VariableDeclaration') return node
+        if (node.type !== 'VariableDeclaration') return [node]
 
         if (!isRuntimeBindingVariableDeclaration(node)) {
-          return null
+          return []
         }
 
         const [declarationIdNode, depsFn, children /*, ignore sideEffect */] =
@@ -416,16 +470,23 @@ export function createFakeJsPlugin({
           overwriteNode(declaration.bindings[i], transformedBinding)
         }
 
-        for (const [i, child] of (
-          children.elements as t.StringLiteral[]
-        ).entries()) {
+        const primaryChildrenCount =
+          declaration.primaryChildrenCount ?? declaration.children.length
+        const primaryParamsCount =
+          declaration.primaryParamsCount ?? declaration.params.length
+        const primaryDepsCount =
+          declaration.primaryDepsCount ?? declaration.deps.length
+
+        for (let i = 0; i < primaryChildrenCount; i++) {
+          const child = (children.elements as t.StringLiteral[])[i]
           Object.assign(declaration.children[i], {
             loc: child.loc,
           })
         }
 
         const transformedParams = depsFn.params as t.Identifier[]
-        for (const [i, transformedParam] of transformedParams.entries()) {
+        for (let i = 0; i < primaryParamsCount; i++) {
+          const transformedParam = transformedParams[i]
           const transformedName = transformedParam.name
           for (const originalTypeParam of declaration.params[i].typeParams) {
             originalTypeParam.name = transformedName
@@ -434,7 +495,8 @@ export function createFakeJsPlugin({
 
         const transformedDeps = (depsFn.body as t.ArrayExpression)
           .elements as t.Expression[]
-        for (const [i, originalDep] of declaration.deps.entries()) {
+        for (let i = 0; i < primaryDepsCount; i++) {
+          const originalDep = declaration.deps[i]
           let transformedDep = transformedDeps[i]
           if (
             transformedDep.type === 'UnaryExpression' &&
@@ -457,9 +519,75 @@ export function createFakeJsPlugin({
           }
         }
 
-        return inheritNodeComments(node, declaration.decl)
+        // Restore overloaded declarations before the primary declaration
+        const overloadDecls: t.Statement[] = []
+        if (declaration.overloads) {
+          for (const overload of declaration.overloads) {
+            walkAST<t.Node | t.Comment>(overload.decl, {
+              enter(node) {
+                if (node.type === 'CommentBlock') return
+                delete node.loc
+              },
+            })
+            // Use the transformed binding name from the primary declaration
+            if ('id' in overload.decl && overload.decl.id) {
+              overwriteNode(overload.decl.id, { ...declaration.bindings[0] })
+            }
+
+            // Patch overload children locations from the merged children array
+            for (const [i, child] of overload.children.entries()) {
+              const mergedChild = (children.elements as t.StringLiteral[])[
+                overload.childrenOffset + i
+              ]
+              if (mergedChild) {
+                Object.assign(child, { loc: mergedChild.loc })
+              }
+            }
+
+            // Patch overload type params from the merged params array
+            for (const [i, param] of overload.params.entries()) {
+              const mergedParam = transformedParams[overload.paramsOffset + i]
+              if (mergedParam) {
+                for (const typeParam of param.typeParams) {
+                  typeParam.name = mergedParam.name
+                }
+              }
+            }
+
+            // Patch overload deps from the merged deps array
+            for (const [i, originalDep] of overload.deps.entries()) {
+              let transformedDep = transformedDeps[overload.depsOffset + i]
+              if (!transformedDep) continue
+              if (
+                transformedDep.type === 'UnaryExpression' &&
+                transformedDep.operator === 'void'
+              ) {
+                transformedDep = {
+                  ...t.identifier('undefined'),
+                  loc: transformedDep.loc,
+                  start: transformedDep.start,
+                  end: transformedDep.end,
+                }
+              } else if (isInfer(transformedDep)) {
+                transformedDep.name = '__Infer'
+              }
+
+              if (originalDep.replace) {
+                originalDep.replace(transformedDep)
+              } else {
+                Object.assign(originalDep, transformedDep)
+              }
+            }
+
+            overloadDecls.push(overload.decl as t.Statement)
+          }
+        }
+
+        return [
+          inheritNodeComments(node, declaration.decl),
+          ...overloadDecls,
+        ]
       })
-      .filter((node) => !!node)
 
     if (program.body.length === 0) {
       return 'export { };'
