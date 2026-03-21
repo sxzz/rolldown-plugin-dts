@@ -63,7 +63,7 @@ export function createDtsResolvePlugin({
         )
         if (rolldownResolution?.external) {
           debug('Rolldown marked dts import as external:', id)
-          return external
+          return rolldownResolution
         }
 
         const dtsResolution = await resolveDtsPath(
