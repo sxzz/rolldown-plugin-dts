@@ -194,7 +194,7 @@ export function createFakeJsPlugin({
 
       const decl: t.Node = isExportDecl ? stmt.declaration! : stmt
       const setDecl = isExportDecl
-        ? (decl: t.Declaration) => (stmt.declaration = decl)
+        ? (decl: t.VariableDeclaration) => (stmt.declaration = decl)
         : setStmt
 
       if (decl.type !== 'TSDeclareFunction' && !isDeclarationType(decl)) {
