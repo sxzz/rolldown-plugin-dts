@@ -54,9 +54,9 @@
   },
   "peerDependencies": {
     "@ts-macro/tsc": "^0.3.6",
-    "@typescript/native-preview": ">=7.0.0-dev.20250601.1",
-    "rolldown": "^1.0.0-rc.3",
-    "typescript": "^5.0.0 || ^6.0.0-beta",
+    "@typescript/native-preview": ">=7.0.0-dev.20260325.1",
+    "rolldown": "^1.0.0-rc.12",
+    "typescript": "^5.0.0 || ^6.0.0",
     "vue-tsc": "~3.2.0"
   },
   "peerDependenciesMeta": {
