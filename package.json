@@ -74,10 +74,10 @@
     }
   },
   "dependencies": {
-    "@babel/generator": "8.0.0-rc.2",
-    "@babel/helper-validator-identifier": "8.0.0-rc.2",
-    "@babel/parser": "8.0.0-rc.2",
-    "@babel/types": "8.0.0-rc.2",
+    "@babel/generator": "8.0.0-rc.3",
+    "@babel/helper-validator-identifier": "8.0.0-rc.3",
+    "@babel/parser": "8.0.0-rc.3",
+    "@babel/types": "8.0.0-rc.3",
     "ast-kit": "^3.0.0-beta.1",
     "birpc": "^4.0.0",
     "dts-resolver": "^2.1.3",
