@@ -25,7 +25,7 @@
   ],
   "exports": {
     ".": "./dist/index.mjs",
-    "./filename": "./dist/filename.mjs",
+    "./internal": "./dist/internal.mjs",
     "./tsc": "./dist/tsc.mjs",
     "./tsc-context": "./dist/tsc-context.mjs",
     "./tsc-worker": "./dist/tsc-worker.mjs",

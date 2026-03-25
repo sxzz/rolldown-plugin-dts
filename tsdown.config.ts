@@ -7,7 +7,7 @@ import { dts } from './src/index.ts'
 export default defineConfig({
   entry: {
     index: './src/index.ts',
-    filename: './src/filename.ts',
+    internal: './src/internal.ts',
     tsc: './src/tsc/index.ts',
     'tsc-context': './src/tsc/context.ts',
     'tsc-worker': './src/tsc/worker.ts',
@@ -18,7 +18,7 @@ export default defineConfig({
     'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.mjs'),
   },
   deps: {
-    onlyAllowBundle: [],
+    onlyBundle: [],
   },
   treeshake: {
     moduleSideEffects: false,
@@ -34,7 +34,6 @@ export default defineConfig({
         // perf: TypeScript is large and takes time to detect ESM/CJS.
         if (id === 'typescript') return true
       },
-      builtinNodeModules: true,
     }),
   ],
 })
