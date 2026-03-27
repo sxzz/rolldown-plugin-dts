@@ -1,6 +1,6 @@
 import { generate } from '@babel/generator'
 import { isIdentifierName } from '@babel/helper-validator-identifier'
-import { parse } from '@babel/parser'
+import { parse, type ParseResult } from '@babel/parser'
 import * as t from '@babel/types'
 import {
   isDeclarationType,
@@ -142,12 +142,21 @@ export function createFakeJsPlugin({
     code: string,
     id: string,
   ): TransformResult {
-    const file = parse(code, {
-      plugins: [['typescript', { dts: true }], 'decoratorAutoAccessors'],
-      sourceType: 'module',
-      errorRecovery: true,
-      createParenthesizedExpressions: true,
-    })
+    let file: ParseResult
+    try {
+      file = parse(code, {
+        plugins: [['typescript', { dts: true }], 'decoratorAutoAccessors'],
+        sourceType: 'module',
+        errorRecovery: true,
+        createParenthesizedExpressions: true,
+      })
+    } catch (error) {
+      throw new Error(
+        `Failed to parse ${id}. This may be caused by a syntax error in the declaration file or a bug in the plugin. Please report this issue to https://github.com/sxzz/rolldown-plugin-dts\n${error}`,
+        { cause: error },
+      )
+    }
+
     const { program, comments } = file
     const typeOnlyIds: string[] = []
     const identifierMap: Record<string, number> = Object.create(null)
@@ -369,11 +378,17 @@ export function createFakeJsPlugin({
       if (ids) typeOnlyIds.push(...ids)
     }
 
-    const file = parse(code, {
-      sourceType: 'module',
-    })
-    const { program } = file
+    let file: ParseResult
+    try {
+      file = parse(code, { sourceType: 'module' })
+    } catch (error) {
+      throw new Error(
+        `Failed to parse generated code for chunk ${chunk.fileName}. This may be caused by a bug in the plugin. Please report this issue to https://github.com/sxzz/rolldown-plugin-dts\n${error}`,
+        { cause: error },
+      )
+    }
 
+    const { program } = file
     program.body = patchTsNamespace(program.body)
     program.body = patchReExport(program.body)
 
