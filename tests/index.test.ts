@@ -587,7 +587,7 @@ test('deterministic namespace import index', async () => {
   expect(results[0]).toBe(results[1])
   expect(results[1]).toBe(results[2])
   // Valid identifiers (stub_lib) don't need index suffix
-  expect(results[0]).toContain('import * as stub_lib from "stub_lib"')
+  expect(results[0]).toContain('import * as _$stub_lib from "stub_lib"')
   // Should not have stub_lib0 since each file is independent
   expect(results[0]).not.toContain('stub_lib0')
 })

@@ -695,9 +695,11 @@ export function createFakeJsPlugin({
   ): Dep {
     const sourceText = source.value.replaceAll(/\W/g, '_')
     // Use original source if it's already a valid identifier, otherwise use formatted text with index
-    const localName = isIdentifierName(source.value)
-      ? source.value
-      : `${sourceText}${getIdentifierIndex(identifierMap, sourceText)}`
+    const localName = `_$${
+      isIdentifierName(source.value)
+        ? source.value
+        : `${sourceText}${getIdentifierIndex(identifierMap, sourceText)}`
+    }`
     let local: t.Identifier | t.TSQualifiedName = t.identifier(localName)
 
     if (namespaceStmts.has(source.value)) {

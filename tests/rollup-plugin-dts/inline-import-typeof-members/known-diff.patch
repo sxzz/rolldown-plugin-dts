@@ -2,12 +2,16 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,7 +1,7 @@
+@@ -1,8 +1,8 @@
  // index.d.ts
 -import * as rollup from 'rollup'
- import * as typescript from 'typescript'
-+import * as rollup from 'rollup'
- type TypeScript = typeof typescript
+-import * as typescript from 'typescript'
+-type TypeScript = typeof typescript
++import * as _$typescript from 'typescript'
++import * as _$rollup from 'rollup'
++type TypeScript = typeof _$typescript
  interface Test {
-   rollup: rollup.RollupOptions
+-  rollup: rollup.RollupOptions
++  rollup: _$rollup.RollupOptions
  }
+ export { Test, TypeScript }
