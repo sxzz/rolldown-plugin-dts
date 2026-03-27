@@ -82,7 +82,8 @@
     "birpc": "^4.0.0",
     "dts-resolver": "^2.1.3",
     "get-tsconfig": "^4.13.7",
-    "obug": "^2.1.1"
+    "obug": "^2.1.1",
+    "picomatch": "^4.0.4"
   },
   "devDependencies": {
     "@jridgewell/source-map": "^0.3.11",
@@ -90,6 +91,7 @@
     "@sxzz/prettier-config": "^2.3.1",
     "@sxzz/test-utils": "^0.5.15",
     "@types/node": "^25.5.0",
+    "@types/picomatch": "^4.0.2",
     "@typescript/native-preview": "7.0.0-dev.20260325.1",
     "@volar/typescript": "^2.4.28",
     "@vue/language-core": "^3.2.6",

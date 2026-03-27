@@ -70,6 +70,48 @@ test('input alias', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+test('entry option - include glob', async () => {
+  const root = path.resolve(dirname, 'fixtures/alias')
+  const { chunks } = await rolldownBuild(
+    {
+      output1: 'input1.ts',
+      'output2/index': 'input2.ts',
+    },
+    [dts({ entry: 'input1.ts', emitDtsOnly: false, cwd: root })],
+    { cwd: root },
+  )
+  const fileNames = chunks.map((chunk) => chunk.fileName).toSorted()
+
+  expect(fileNames).toContain('output1.d.ts')
+  expect(fileNames).toContain('output1.js')
+  expect(fileNames).toContain('output2/index.js')
+  expect(fileNames).not.toContain('output2/index.d.ts')
+})
+
+test('entry option - negation glob', async () => {
+  const root = path.resolve(dirname, 'fixtures/alias')
+  const { chunks } = await rolldownBuild(
+    {
+      output1: 'input1.ts',
+      'output2/index': 'input2.ts',
+    },
+    [
+      dts({
+        entry: ['**/*.ts', '!input2.ts'],
+        emitDtsOnly: false,
+        cwd: root,
+      }),
+    ],
+    { cwd: root },
+  )
+  const fileNames = chunks.map((chunk) => chunk.fileName).toSorted()
+
+  expect(fileNames).toContain('output1.d.ts')
+  expect(fileNames).toContain('output1.js')
+  expect(fileNames).toContain('output2/index.js')
+  expect(fileNames).not.toContain('output2/index.d.ts')
+})
+
 test('isolated declaration error', async () => {
   const error = await rolldownBuild(
     path.resolve(dirname, 'fixtures/isolated-decl-error.ts'),

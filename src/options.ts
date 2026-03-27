@@ -11,6 +11,21 @@ import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 //#region General Options
 export interface GeneralOptions {
   /**
+   * Glob pattern(s) to filter which entry files get `.d.ts` generation.
+   *
+   * When specified, only entry files matching these patterns will emit `.d.ts` chunks.
+   * When not specified, all entries get `.d.ts` generation.
+   *
+   * Supports negation patterns (e.g., `['**', '!src/icons/**']`) for exclusion.
+   * Patterns are matched against file paths relative to `cwd`.
+   *
+   * @example
+   * entry: 'src/index.ts'
+   * entry: ['src/*.ts', '!src/internal/**']
+   */
+  entry?: string | string[]
+
+  /**
    * The directory in which the plugin will search for the `tsconfig.json` file.
    */
   cwd?: string
@@ -224,6 +239,7 @@ type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 export type OptionsResolved = Overwrite<
   Required<Omit<Options, 'compilerOptions'>>,
   {
+    entry?: string[]
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions | false
     tsconfigRaw: TsConfigJson
@@ -234,6 +250,7 @@ export type OptionsResolved = Overwrite<
 let warnedTsgo = false
 
 export function resolveOptions({
+  entry,
   cwd = process.cwd(),
   dtsInput = false,
   emitDtsOnly = false,
@@ -340,7 +357,14 @@ export function resolveOptions({
     warnedTsgo = true
   }
 
+  const resolvedEntry = entry
+    ? Array.isArray(entry)
+      ? entry
+      : [entry]
+    : undefined
+
   return {
+    entry: resolvedEntry,
     cwd,
     dtsInput,
     emitDtsOnly,

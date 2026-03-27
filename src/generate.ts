@@ -4,6 +4,7 @@ import { readFile, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { parse } from '@babel/parser'
 import { createDebug } from 'obug'
+import picomatch from 'picomatch'
 import { isolatedDeclarationSync } from 'rolldown/experimental'
 import {
   filename_to_dts,
@@ -47,6 +48,7 @@ export interface TsModule {
 export type DtsMap = Map<string, TsModule>
 
 export function createGeneratePlugin({
+  entry,
   tsconfig,
   tsconfigRaw,
   build,
@@ -64,6 +66,7 @@ export function createGeneratePlugin({
   sourcemap,
 }: Pick<
   OptionsResolved,
+  | 'entry'
   | 'cwd'
   | 'tsconfig'
   | 'tsconfigRaw'
@@ -80,6 +83,13 @@ export function createGeneratePlugin({
   | 'emitJs'
   | 'sourcemap'
 >): Plugin {
+  const entryMatcher = entry
+    ? picomatch(entry, {
+        ignore: entry
+          .filter((p: string) => p.startsWith('!'))
+          .map((p: string) => p.slice(1)),
+      })
+    : undefined
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
   /**
@@ -185,7 +195,9 @@ export function createGeneratePlugin({
 
         if (shouldEmit) {
           const mod = this.getModuleInfo(id)
-          const isEntry = !!mod?.isEntry
+          const isEntry = entryMatcher
+            ? entryMatcher(path.relative(cwd, id))
+            : !!mod?.isEntry
           const dtsId = filename_to_dts(id)
           dtsMap.set(dtsId, { code, id, isEntry })
           debug('register dts source: %s', id)
