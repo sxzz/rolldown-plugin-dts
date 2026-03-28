@@ -40,6 +40,18 @@ Configuration options for the plugin.
 
 ### General Options
 
+#### `entry`
+
+Glob pattern(s) to filter which files get `.d.ts` generation.
+
+When specified, only files matching these patterns will emit `.d.ts` chunks — even if they are not Rolldown entry points. Supports negation patterns for exclusion. Patterns are matched against file paths relative to `cwd`.
+
+```ts
+dts({
+  entry: ['src/**/*.ts', '!src/icons/**'],
+})
+```
+
 #### `cwd`
 
 The directory in which the plugin will search for the `tsconfig.json` file.
