@@ -641,3 +641,14 @@ test('decorators', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+// https://github.com/sxzz/rolldown-plugin-dts/issues/209
+test('function overloads', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/function-overloads.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+  expect(snapshot).toContain('declare function useConfig(): Config')
+  expect(snapshot).toContain('declare function useConfig<T>')
+})
