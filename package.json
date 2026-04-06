@@ -90,17 +90,17 @@
     "@sxzz/eslint-config": "^7.8.4",
     "@sxzz/prettier-config": "^2.3.1",
     "@sxzz/test-utils": "^0.5.16",
-    "@types/node": "^25.5.0",
-    "@types/picomatch": "^4.0.2",
-    "@typescript/native-preview": "7.0.0-dev.20260329.1",
+    "@types/node": "^25.5.2",
+    "@types/picomatch": "^4.0.3",
+    "@typescript/native-preview": "7.0.0-dev.20260405.1",
     "@volar/typescript": "^2.4.28",
     "@vue/language-core": "^3.2.6",
     "arktype": "^2.2.0",
     "bumpp": "^11.0.1",
     "diff": "^8.0.4",
-    "eslint": "^10.1.0",
+    "eslint": "^10.2.0",
     "prettier": "^3.8.1",
-    "rolldown": "^1.0.0-rc.12",
+    "rolldown": "^1.0.0-rc.13",
     "rolldown-plugin-dts-snapshot": "^0.4.0",
     "rolldown-plugin-require-cjs": "^0.4.0",
     "rollup-plugin-dts": "^6.4.1",
@@ -108,12 +108,12 @@
     "tsdown": "^0.21.7",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2",
-    "vue": "^3.5.31",
+    "vue": "^3.5.32",
     "vue-tsc": "^3.2.6",
     "zod": "^4.3.6"
   },
   "resolutions": {
-    "rolldown": "^1.0.0-rc.12"
+    "rolldown": "^1.0.0-rc.13"
   },
   "prettier": "@sxzz/prettier-config"
 }
