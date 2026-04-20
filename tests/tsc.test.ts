@@ -242,6 +242,14 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
+  test('jsdoc members', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/jsdoc-members.ts'),
+      [dts({ oxc: false })],
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
+
   test.fails('jsdoc in js', async () => {
     const root = path.resolve(dirname, 'fixtures/jsdoc-js')
     const { snapshot } = await rolldownBuild(path.resolve(root, 'main.js'), [
