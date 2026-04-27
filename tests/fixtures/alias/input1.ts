@@ -1,4 +1,4 @@
-import { Input2, input2 } from './input2'
+import { type Input2, input2 } from './input2'
 
 export interface Input1 extends Input2 {
   input1: string

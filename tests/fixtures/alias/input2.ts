@@ -1,4 +1,4 @@
-import { Shared, shared } from './shared'
+import { type Shared, shared } from './shared'
 
 export interface Input2 extends Shared {
   input2: string
