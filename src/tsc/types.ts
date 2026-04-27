@@ -1,5 +1,5 @@
 import type { TscContext } from './context.ts'
-import type { TsConfigJson } from 'get-tsconfig'
+import type { TsconfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'
 import type ts from 'typescript'
 
@@ -10,7 +10,7 @@ export interface TscModule {
 
 export interface TscOptions {
   tsconfig?: string
-  tsconfigRaw: TsConfigJson
+  tsconfigRaw: TsconfigJson
   cwd: string
   build: boolean
   incremental: boolean

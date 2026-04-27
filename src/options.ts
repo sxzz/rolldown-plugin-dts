@@ -2,9 +2,9 @@ import path from 'node:path'
 import process from 'node:process'
 import {
   getTsconfig,
-  parseTsconfig,
-  type TsConfigJson,
-  type TsConfigJsonResolved,
+  readTsconfig,
+  type TsconfigJson,
+  type TsconfigJsonResolved,
 } from 'get-tsconfig'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
@@ -59,14 +59,14 @@ export interface GeneralOptions {
    *
    * @see https://www.typescriptlang.org/tsconfig
    */
-  tsconfigRaw?: Omit<TsConfigJson, 'compilerOptions'>
+  tsconfigRaw?: Omit<TsconfigJson, 'compilerOptions'>
 
   /**
    * Override the `compilerOptions` specified in `tsconfig.json`.
    *
    * @see https://www.typescriptlang.org/tsconfig/#compilerOptions
    */
-  compilerOptions?: TsConfigJson.CompilerOptions
+  compilerOptions?: TsconfigJson.CompilerOptions
 
   /**
    * If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
@@ -242,7 +242,7 @@ export type OptionsResolved = Overwrite<
     entry?: string[]
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions | false
-    tsconfigRaw: TsConfigJson
+    tsconfigRaw: TsconfigJson
     tsgo: Omit<TsgoOptions, 'enabled'> | false
   }
 >
@@ -282,14 +282,14 @@ export function resolveOptions({
     tsgo = false
   }
 
-  let resolvedTsconfig: TsConfigJsonResolved | undefined
+  let resolvedTsconfig: TsconfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
     tsconfig = path
     resolvedTsconfig = config
   } else if (typeof tsconfig === 'string') {
     tsconfig = path.resolve(cwd || process.cwd(), tsconfig)
-    resolvedTsconfig = parseTsconfig(tsconfig)
+    resolvedTsconfig = readTsconfig(tsconfig).config
   } else {
     tsconfig = undefined
   }

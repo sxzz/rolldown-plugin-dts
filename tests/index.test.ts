@@ -34,7 +34,7 @@ test('resolve dependencies', async () => {
     ],
     { external: ['rolldown'] },
   )
-  expect(snapshot).contain('type TsConfigResult')
+  expect(snapshot).contain('type TsconfigResult')
   expect(snapshot).not.contain('node_modules/rolldown')
 })
 

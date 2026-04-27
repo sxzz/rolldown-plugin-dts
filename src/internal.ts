@@ -1,2 +1,2 @@
 export * from './filename.ts'
-export { parseTsconfig } from 'get-tsconfig'
+export { readTsconfig } from 'get-tsconfig'
