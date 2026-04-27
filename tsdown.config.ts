@@ -1,7 +1,7 @@
 // import { dts } from './dist/index.js' // to test built version
-import { DtsSnapshot } from 'rolldown-plugin-dts-snapshot'
 import { RequireCJS } from 'rolldown-plugin-require-cjs'
 import { defineConfig } from 'tsdown'
+import ApiSnapshot from 'tsnapi/rolldown'
 import { dts } from './src/index.ts'
 
 export default defineConfig({
@@ -28,7 +28,7 @@ export default defineConfig({
     dts({
       oxc: true,
     }),
-    DtsSnapshot(),
+    ApiSnapshot(),
     RequireCJS({
       shouldTransform(id) {
         // perf: TypeScript is large and takes time to detect ESM/CJS.
