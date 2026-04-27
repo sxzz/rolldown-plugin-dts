@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    uses: sxzz/workflows/.github/workflows/release-jsr.yml@v1
+    uses: sxzz/workflows/.github/workflows/release-jsr.yml@main
     permissions:
       contents: read
       id-token: write
