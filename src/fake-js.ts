@@ -1,7 +1,7 @@
 import { generate } from '@babel/generator'
 import { isIdentifierName } from '@babel/helper-validator-identifier'
 import { parse, type ParseResult } from '@babel/parser'
-import * as t from '@babel/types'
+import type * as t from '@babel/types'
 import {
   isDeclarationType,
   isIdentifierOf,
@@ -235,7 +235,10 @@ export function createFakeJsPlugin({
         }
 
         binding = sideEffect
-          ? t.identifier(`_${getIdentifierIndex(identifierMap, '')}`)
+          ? {
+              type: 'Identifier',
+              name: `_${getIdentifierIndex(identifierMap, '')}`,
+            }
           : binding
 
         if (binding.type !== 'Identifier') {
@@ -244,7 +247,10 @@ export function createFakeJsPlugin({
 
         bindings.push(binding)
       } else {
-        const binding = t.identifier('export_default')
+        const binding: t.Identifier = {
+          type: 'Identifier',
+          name: 'export_default',
+        }
         bindings.push(binding)
         // @ts-expect-error
         decl.id = binding
@@ -275,23 +281,38 @@ export function createFakeJsPlugin({
         children,
       })
 
-      const declarationIdNode = t.numericLiteral(declarationId)
-      const depsNode = t.arrowFunctionExpression(
-        params.map(({ name }) => t.identifier(name)),
-        t.arrayExpression(deps),
-      )
-      const childrenNode = t.arrayExpression(
-        children.map((node) => ({
+      const declarationIdNode: t.NumericLiteral = {
+        type: 'NumericLiteral',
+        value: declarationId,
+      }
+      const depsBody: t.ArrayExpression = {
+        type: 'ArrayExpression',
+        elements: deps,
+      }
+      const depsNode: t.ArrowFunctionExpression = {
+        type: 'ArrowFunctionExpression',
+        params: params.map(
+          ({ name }): t.Identifier => ({ type: 'Identifier', name }),
+        ),
+        body: depsBody,
+        async: false,
+        expression: true,
+      }
+      const childrenNode: t.ArrayExpression = {
+        type: 'ArrayExpression',
+        elements: children.map((node) => ({
           type: 'StringLiteral',
           value: '',
           start: node.start,
           end: node.end,
           loc: node.loc,
         })),
-      )
-      const sideEffectNode =
-        sideEffect &&
-        t.callExpression(t.identifier('sideEffect'), [bindings[0]])
+      }
+      const sideEffectNode: t.CallExpression | false = sideEffect && {
+        type: 'CallExpression',
+        callee: { type: 'Identifier', name: 'sideEffect' },
+        arguments: [bindings[0]],
+      }
       const runtimeArrayNode = runtimeBindingArrayExpression([
         declarationIdNode,
         depsNode,
@@ -327,11 +348,19 @@ export function createFakeJsPlugin({
 
       if (isDefaultExport) {
         // export { ${binding} as default }
-        appendStmts.push(
-          t.exportNamedDeclaration(null, [
-            t.exportSpecifier(bindings[0], t.identifier('default')),
-          ]),
-        )
+        appendStmts.push({
+          type: 'ExportNamedDeclaration',
+          declaration: null,
+          specifiers: [
+            {
+              type: 'ExportSpecifier',
+              local: bindings[0],
+              exported: { type: 'Identifier', name: 'default' },
+            },
+          ],
+          source: null,
+          attributes: null,
+        })
         // replace the whole statement
         setStmt(runtimeAssignment)
       } else {
@@ -342,9 +371,14 @@ export function createFakeJsPlugin({
 
     if (sideEffects) {
       // module side effect marker
-      appendStmts.push(
-        t.expressionStatement(t.callExpression(t.identifier('sideEffect'), [])),
-      )
+      appendStmts.push({
+        type: 'ExpressionStatement',
+        expression: {
+          type: 'CallExpression',
+          callee: { type: 'Identifier', name: 'sideEffect' },
+          arguments: [],
+        },
+      })
     }
 
     program.body = [
@@ -456,7 +490,8 @@ export function createFakeJsPlugin({
             transformedDep.operator === 'void'
           ) {
             transformedDep = {
-              ...t.identifier('undefined'),
+              type: 'Identifier',
+              name: 'undefined',
               loc: transformedDep.loc,
               start: transformedDep.start,
               end: transformedDep.end,
@@ -549,8 +584,9 @@ export function createFakeJsPlugin({
           node.typeParameters?.type === 'TSTypeParameterDeclaration'
         ) {
           typeParams.push(
-            ...node.typeParameters.params.map(({ name }) =>
-              typeof name === 'string' ? t.identifier(name) : name,
+            ...node.typeParameters.params.map(
+              ({ name }): t.Identifier =>
+                typeof name === 'string' ? { type: 'Identifier', name } : name,
             ),
           )
         }
@@ -700,14 +736,22 @@ export function createFakeJsPlugin({
         ? source.value
         : `${sourceText}${getIdentifierIndex(identifierMap, sourceText)}`
     }`
-    let local: t.Identifier | t.TSQualifiedName = t.identifier(localName)
+    let local: t.Identifier | t.TSQualifiedName = {
+      type: 'Identifier',
+      name: localName,
+    }
 
     if (namespaceStmts.has(source.value)) {
       local = namespaceStmts.get(source.value)!.local
     } else {
       // prepend: import * as ${local} from ${source}
       namespaceStmts.set(source.value, {
-        stmt: t.importDeclaration([t.importNamespaceSpecifier(local)], source),
+        stmt: {
+          type: 'ImportDeclaration',
+          specifiers: [{ type: 'ImportNamespaceSpecifier', local }],
+          source,
+          attributes: null,
+        },
         local,
       })
     }
@@ -720,13 +764,21 @@ export function createFakeJsPlugin({
       ) {
         throw new Error('Cannot import `this` from module.')
       }
-      overwriteNode(importedLeft, t.tsQualifiedName(local, { ...importedLeft }))
+      overwriteNode(importedLeft, {
+        type: 'TSQualifiedName',
+        left: local,
+        right: { ...importedLeft },
+      })
       local = imported
     }
 
     let replacement: t.Node = node
     if (node.typeArguments) {
-      overwriteNode(node, t.tsTypeReference(local, node.typeArguments))
+      overwriteNode(node, {
+        type: 'TSTypeReference',
+        typeName: local,
+        typeArguments: node.typeArguments,
+      })
       replacement = local
     } else {
       overwriteNode(node, local)
@@ -857,7 +909,10 @@ function isRuntimeBindingArrayElements(
 function runtimeBindingArrayExpression(
   elements: RuntimeBindingArrayElements,
 ): RuntimeBindingArrayExpression {
-  return t.arrayExpression(elements) as RuntimeBindingArrayExpression
+  return {
+    type: 'ArrayExpression',
+    elements,
+  }
 }
 
 type RuntimeBindingArrayElementsBase = [
@@ -894,7 +949,12 @@ function TSEntityNameToRuntime(
   }
 
   const left = TSEntityNameToRuntime(node.left)
-  return Object.assign(node, t.memberExpression(left, node.right))
+  return Object.assign(node, {
+    type: 'MemberExpression' as const,
+    object: left,
+    property: node.right,
+    computed: false,
+  })
 }
 
 function getIdFromTSEntityName(node: t.TSEntityName) {
@@ -1019,7 +1079,7 @@ function patchTsNamespace(nodes: t.Statement[]) {
                 const local = (property.value as t.ArrowFunctionExpression)
                   .body as t.Identifier
                 const exported = property.key as t.Identifier
-                return t.exportSpecifier(local, exported)
+                return { type: 'ExportSpecifier', local, exported }
               }),
             source: null,
             declaration: null,
@@ -1234,7 +1294,7 @@ function rewriteImportExport(
         {
           type: 'ExportSpecifier',
           local: node.declaration,
-          exported: t.identifier('default'),
+          exported: { type: 'Identifier', name: 'default' },
         },
       ],
     })
