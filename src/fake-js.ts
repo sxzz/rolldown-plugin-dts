@@ -1,7 +1,6 @@
 import { generate } from '@babel/generator'
 import { isIdentifierName } from '@babel/helper-validator-identifier'
 import { parse, type ParseResult } from '@babel/parser'
-import type * as t from '@babel/types'
 import {
   isDeclarationType,
   isIdentifierOf,
@@ -18,6 +17,7 @@ import {
   resolveTemplateFn,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
+import type * as t from '@babel/types'
 import type {
   Plugin,
   RenderedChunk,
