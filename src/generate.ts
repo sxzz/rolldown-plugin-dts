@@ -4,7 +4,6 @@ import { readFile, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { parse } from '@babel/parser'
 import { createDebug } from 'obug'
-import picomatch from 'picomatch'
 import { isolatedDeclarationSync } from 'rolldown/experimental'
 import {
   filename_to_dts,
@@ -83,12 +82,12 @@ export function createGeneratePlugin({
   | 'emitJs'
   | 'sourcemap'
 >): Plugin {
+  const entryIncludes = entry?.filter((p) => p[0] !== '!')
+  const entryIgnores = entry?.filter((p) => p[0] === '!').map((p) => p.slice(1))
   const entryMatcher = entry
-    ? picomatch(entry, {
-        ignore: entry
-          .filter((p: string) => p.startsWith('!'))
-          .map((p: string) => p.slice(1)),
-      })
+    ? (file: string) =>
+        entryIncludes!.some((p) => path.matchesGlob(file, p)) &&
+        !entryIgnores!.some((p) => path.matchesGlob(file, p))
     : undefined
   const dtsMap: DtsMap = new Map<string, TsModule>()
 

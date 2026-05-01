@@ -24,9 +24,6 @@ catalogs:
     '@types/node':
       specifier: ^25.6.0
       version: 25.6.0
-    '@types/picomatch':
-      specifier: ^4.0.3
-      version: 4.0.3
     '@typescript/native-preview':
       specifier: 7.0.0-dev.20260430.1
       version: 7.0.0-dev.20260430.1
@@ -103,9 +100,6 @@ catalogs:
     obug:
       specifier: ^2.1.1
       version: 2.1.1
-    picomatch:
-      specifier: ^4.0.4
-      version: 4.0.4
 
 overrides:
   rolldown: ^1.0.0-rc.18
@@ -141,9 +135,6 @@ importers:
       obug:
         specifier: catalog:prod
         version: 2.1.1
-      picomatch:
-        specifier: catalog:prod
-        version: 4.0.4
     devDependencies:
       '@babel/types':
         specifier: 'catalog:'
@@ -163,9 +154,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.6.0
-      '@types/picomatch':
-        specifier: 'catalog:'
-        version: 4.0.3
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260430.1
@@ -1041,9 +1029,6 @@ packages:
 
   '@types/node@25.6.0':
     resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
-
-  '@types/picomatch@4.0.3':
-    resolution: {integrity: sha512-iG0T6+nYJ9FAPmx9SsUlnwcq1ZVRuCXcVEvWnntoPlrOpwtSTKNDC9uVAxTsC3PUvJ+99n4RpAcNgBbHX3JSnQ==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -3223,8 +3208,6 @@ snapshots:
   '@types/node@25.6.0':
     dependencies:
       undici-types: 7.19.2
-
-  '@types/picomatch@4.0.3': {}
 
   '@types/unist@3.0.3': {}
 

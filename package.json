@@ -81,8 +81,7 @@
     "birpc": "catalog:prod",
     "dts-resolver": "catalog:prod",
     "get-tsconfig": "catalog:prod",
-    "obug": "catalog:prod",
-    "picomatch": "catalog:prod"
+    "obug": "catalog:prod"
   },
   "devDependencies": {
     "@babel/types": "catalog:",
@@ -91,7 +90,6 @@
     "@sxzz/prettier-config": "catalog:",
     "@sxzz/test-utils": "catalog:",
     "@types/node": "catalog:",
-    "@types/picomatch": "catalog:",
     "@typescript/native-preview": "catalog:",
     "@volar/typescript": "catalog:",
     "@vue/language-core": "catalog:",
