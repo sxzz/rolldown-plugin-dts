@@ -1,13 +1,15 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
-import { glob } from 'tinyglobby'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 import { findSourceMapChunk } from './utils.ts'
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
+const { dirname } = import.meta
+
+function slash(path: string) {
+  return path.replaceAll('\\', '/')
+}
 
 describe('tsc', () => {
   test('typescript compiler', async () => {
@@ -155,10 +157,11 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
 
     // Ensure .tsbuildinfo files are not created after the test
-    const tsBuildInfoFiles = await glob('**/*.tsbuildinfo', {
-      cwd: tempDir,
-      absolute: false,
-    })
+    const tsBuildInfoFiles = await Array.fromAsync(
+      fs.glob('**/*.tsbuildinfo', {
+        cwd: tempDir,
+      }),
+    )
     expect(tsBuildInfoFiles).toHaveLength(0)
   })
 
@@ -187,11 +190,12 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
 
     // Ensure .tsbuildinfo files are created after the test
-    const tsBuildInfoFiles = await glob('**/*.tsbuildinfo', {
-      cwd: tempDir,
-      absolute: false,
-    })
-    expect(tsBuildInfoFiles.toSorted()).toMatchInlineSnapshot(`
+    const tsBuildInfoFiles = await Array.fromAsync(
+      fs.glob('**/*.tsbuildinfo', {
+        cwd: tempDir,
+      }),
+    )
+    expect(tsBuildInfoFiles.map(slash).toSorted()).toMatchInlineSnapshot(`
       [
         "dir1/tsconfig.1.tsbuildinfo",
         "dir2/tsconfig.2.tsbuildinfo",

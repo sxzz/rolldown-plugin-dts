@@ -57,9 +57,6 @@ catalogs:
     rollup-plugin-dts:
       specifier: ^6.4.1
       version: 6.4.1
-    tinyglobby:
-      specifier: ^0.2.16
-      version: 0.2.16
     tsdown:
       specifier: ^0.22.0-beta.2
       version: 0.22.0-beta.2
@@ -202,9 +199,6 @@ importers:
       rollup-plugin-dts:
         specifier: 'catalog:'
         version: 6.4.1(rollup@4.60.2)(typescript@6.0.3)
-      tinyglobby:
-        specifier: 'catalog:'
-        version: 0.2.16
       tsdown:
         specifier: 'catalog:'
         version: 0.22.0-beta.2(@ts-macro/tsc@0.3.7(rollup@4.60.2))(@typescript/native-preview@7.0.0-dev.20260430.1)(typescript@6.0.3)(vue-tsc@3.2.7(typescript@6.0.3))

@@ -103,7 +103,6 @@
     "rolldown": "catalog:",
     "rolldown-plugin-require-cjs": "catalog:",
     "rollup-plugin-dts": "catalog:",
-    "tinyglobby": "catalog:",
     "tsdown": "catalog:",
     "tsnapi": "catalog:",
     "typescript": "catalog:",

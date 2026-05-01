@@ -1,10 +1,11 @@
-import { access, readFile, unlink } from 'node:fs/promises'
+/// <reference lib="esnext.array" />
+
+import { access, glob, readFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { rolldownBuild, rollupBuild, testFixtures } from '@sxzz/test-utils'
 import { createPatch } from 'diff'
 import { dts as rollupDts } from 'rollup-plugin-dts'
-import { glob } from 'tinyglobby'
 import { expect } from 'vitest'
 import { dts } from '../src/index.ts'
 
@@ -19,7 +20,11 @@ await testFixtures(
 
     let entries = [id]
     if (id.endsWith('main-a.d.ts')) {
-      entries = await glob('main-*.d.ts', { cwd: dirname, absolute: true })
+      entries = (
+        await Array.fromAsync(
+          glob('main-*.d.ts', { cwd: dirname, withFileTypes: true }),
+        )
+      ).map((dirent) => path.resolve(dirname, dirent.name))
     }
 
     let error: any

@@ -20,7 +20,6 @@ catalog:
   rolldown: ^1.0.0-rc.18
   rolldown-plugin-require-cjs: ^0.4.0
   rollup-plugin-dts: ^6.4.1
-  tinyglobby: ^0.2.16
   tsdown: ^0.22.0-beta.2
   tsnapi: ^0.3.2
   typescript: ^6.0.3
