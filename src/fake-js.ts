@@ -448,14 +448,35 @@ export function createFakeJsPlugin({
         const declarationId = declarationIdNode.value
         const declaration = getDeclaration(declarationId)
 
-        walkAST<t.Node | t.Comment>(declaration.decl, {
-          enter(node) {
-            if (node.type === 'CommentBlock') {
-              return
-            }
-            delete node.loc
-          },
-        })
+        {
+          let syntheticLine = 1
+          walkAST<t.Node | t.Comment>(declaration.decl, {
+            enter(node) {
+              if (node.type === 'CommentBlock') {
+                return
+              }
+              delete node.loc
+              // Assign synthetic sequential line numbers to nodes
+              // with leading comments so Babel's generator positions
+              // each comment on its own line inside type literals.
+              if ('leadingComments' in node && node.leadingComments?.length) {
+                for (const c of node.leadingComments!) {
+                  const col = c.loc?.start.column ?? 0
+                  c.loc = {
+                    start: { line: syntheticLine, column: col },
+                    end: { line: syntheticLine, column: col },
+                  } as t.SourceLocation
+                  syntheticLine++
+                }
+                node.loc = {
+                  start: { line: syntheticLine, column: 0 },
+                  end: { line: syntheticLine, column: 0 },
+                } as t.SourceLocation
+                syntheticLine++
+              }
+            },
+          })
+        }
 
         for (const [i, decl] of node.declarations.entries()) {
           const transformedBinding = {
