@@ -70,6 +70,8 @@ export function createFakeJsPlugin({
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
   const typeOnlyMap = new Map<string /* filename */, string[]>()
+  const typeOnlyStarSources = new Set<string>()
+  const moduleExportBindings = new Map<string, string[]>()
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
@@ -137,11 +139,11 @@ export function createFakeJsPlugin({
     },
   }
 
-  function transform(
+  async function transform(
     this: TransformPluginContext,
     code: string,
     id: string,
-  ): TransformResult {
+  ): Promise<TransformResult> {
     let file: ParseResult
     try {
       file = parse(code, {
@@ -161,6 +163,20 @@ export function createFakeJsPlugin({
     const typeOnlyIds: string[] = []
     const identifierMap: Record<string, number> = Object.create(null)
 
+    // Pre-scan: resolve sources for `export type *` before
+    // rewriteImportExport strips the type modifier.
+    for (const stmt of program.body) {
+      if (
+        stmt.type === 'ExportAllDeclaration' &&
+        stmt.exportKind === 'type'
+      ) {
+        const resolved = await this.resolve(stmt.source.value, id)
+        if (resolved && !resolved.external) {
+          typeOnlyStarSources.add(resolved.id)
+        }
+      }
+    }
+
     if (comments) {
       const directives = collectReferenceDirectives(comments)
       commentsMap.set(id, directives)
@@ -168,6 +184,7 @@ export function createFakeJsPlugin({
 
     const appendStmts: t.Statement[] = []
     const namespaceStmts: NamespaceMap = new Map()
+    const exportedBindingNames: string[] = []
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.Statement) => (program.body[i] = stmt)
@@ -254,6 +271,12 @@ export function createFakeJsPlugin({
         bindings.push(binding)
         // @ts-expect-error
         decl.id = binding
+      }
+
+      if (isExportDecl) {
+        for (const binding of bindings) {
+          exportedBindingNames.push(binding.name)
+        }
       }
 
       const params: TypeParams = collectParams(decl)
@@ -388,6 +411,7 @@ export function createFakeJsPlugin({
     ]
 
     typeOnlyMap.set(id, typeOnlyIds)
+    moduleExportBindings.set(id, exportedBindingNames)
 
     const result = generate(file, {
       comments: false,
@@ -410,6 +434,11 @@ export function createFakeJsPlugin({
     for (const module of chunk.moduleIds) {
       const ids = typeOnlyMap.get(module)
       if (ids) typeOnlyIds.push(...ids)
+
+      if (typeOnlyStarSources.has(module)) {
+        const names = moduleExportBindings.get(module)
+        if (names) typeOnlyIds.push(...names)
+      }
     }
 
     let file: ParseResult
