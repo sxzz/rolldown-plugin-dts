@@ -34,7 +34,7 @@ catalogs:
     '@babel/parser': 8.0.0-rc.4
     ast-kit: ^3.0.0-beta.1
     birpc: ^4.0.0
-    dts-resolver: ^2.1.3
+    dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.5
     obug: ^2.1.1
 
