@@ -8,7 +8,7 @@ catalog:
   '@sxzz/prettier-config': ^2.3.1
   '@sxzz/test-utils': ^0.5.18
   '@types/node': ^25.6.0
-  '@typescript/native-preview': 7.0.0-dev.20260430.1
+  '@typescript/native-preview': 7.0.0-dev.20260503.1
   '@volar/typescript': ^2.4.28
   '@vue/language-core': ^3.2.7
   arktype: ^2.2.0
