@@ -55,7 +55,7 @@
   "peerDependencies": {
     "@ts-macro/tsc": "^0.3.6",
     "@typescript/native-preview": ">=7.0.0-dev.20260325.1",
-    "rolldown": "^1.0.0-rc.12",
+    "rolldown": "^1.0.0",
     "typescript": "^6.0.0",
     "vue-tsc": "~3.2.0"
   },
