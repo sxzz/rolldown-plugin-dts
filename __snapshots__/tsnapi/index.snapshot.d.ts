@@ -18,6 +18,7 @@ export declare function createGeneratePlugin({
   entry,
   tsconfig,
   tsconfigRaw,
+  isTsconfigOverridden,
   build,
   incremental,
   cwd,
@@ -31,7 +32,7 @@ export declare function createGeneratePlugin({
   newContext,
   emitJs,
   sourcemap
-}: Pick<OptionsResolved, "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "build" | "incremental" | "oxc" | "emitDtsOnly" | "vue" | "tsMacro" | "parallel" | "eager" | "tsgo" | "newContext" | "emitJs" | "sourcemap">): Plugin;
+}: Pick<OptionsResolved, "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "isTsconfigOverridden" | "build" | "incremental" | "oxc" | "emitDtsOnly" | "vue" | "tsMacro" | "parallel" | "eager" | "tsgo" | "newContext" | "emitJs" | "sourcemap">): Plugin;
 export declare function dts(_?: Options): Plugin[];
 export declare function resolveOptions({
   entry,
@@ -40,7 +41,7 @@ export declare function resolveOptions({
   emitDtsOnly,
   tsconfig,
   tsconfigRaw: overriddenTsconfigRaw,
-  compilerOptions,
+  compilerOptions: overriddenCompilerOptions,
   sourcemap,
   resolver,
   cjsDefault,

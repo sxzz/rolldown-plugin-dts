@@ -1,6 +1,6 @@
 import { fork, type ChildProcess } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { readFile, rm } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { parse } from '@babel/parser'
 import { createDebug } from 'obug'
@@ -50,6 +50,7 @@ export function createGeneratePlugin({
   entry,
   tsconfig,
   tsconfigRaw,
+  isTsconfigOverridden,
   build,
   incremental,
   cwd,
@@ -69,6 +70,7 @@ export function createGeneratePlugin({
   | 'cwd'
   | 'tsconfig'
   | 'tsconfigRaw'
+  | 'isTsconfigOverridden'
   | 'build'
   | 'incremental'
   | 'oxc'
@@ -106,7 +108,7 @@ export function createGeneratePlugin({
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscModule: typeof import('./tsc/index.ts')
   let tscContext: TscContext | undefined
-  let tsgoDist: string | undefined
+  let tsgoReturn: Awaited<ReturnType<typeof runTsgo>> | undefined
   const rootDir = tsconfig ? path.dirname(tsconfig) : cwd
 
   return {
@@ -114,7 +116,14 @@ export function createGeneratePlugin({
 
     async buildStart(options) {
       if (tsgo) {
-        tsgoDist = await runTsgo(rootDir, tsconfig, sourcemap, tsgo.path)
+        tsgoReturn = await runTsgo(
+          rootDir,
+          tsconfig,
+          tsconfigRaw,
+          isTsconfigOverridden,
+          sourcemap,
+          tsgo.path,
+        )
       } else if (!oxc) {
         // tsc
         if (parallel) {
@@ -237,7 +246,7 @@ export function createGeneratePlugin({
           if (RE_VUE.test(id))
             throw new Error('tsgo does not support Vue files.')
           const dtsPath = path.resolve(
-            tsgoDist!,
+            tsgoReturn!.dist,
             path.relative(path.resolve(rootDir), filename_to_dts(id)),
           )
           if (!existsSync(dtsPath)) {
@@ -359,10 +368,10 @@ export { __json_default_export as default }`
 
     async buildEnd() {
       childProcess?.kill()
-      if (!debug.enabled && tsgoDist) {
-        await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
+      if (!debug.enabled && tsgoReturn) {
+        await tsgoReturn.cleanup()
       }
-      tsgoDist = undefined
+      tsgoReturn = undefined
       if (newContext) {
         tscContext = undefined
       }

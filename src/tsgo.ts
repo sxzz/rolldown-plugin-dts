@@ -1,8 +1,9 @@
 import { spawn } from 'node:child_process'
-import { mkdtemp } from 'node:fs/promises'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createDebug } from 'obug'
+import type { TsconfigJson } from 'get-tsconfig'
 
 const debug = createDebug('rolldown-plugin-dts:tsgo')
 
@@ -23,11 +24,23 @@ export async function getTsgoPathFromNodeModules(): Promise<string> {
 
 export async function runTsgo(
   rootDir: string,
-  tsconfig?: string,
-  sourcemap?: boolean,
-  tsgoPath?: string,
-): Promise<string> {
+  tsconfig: string | undefined,
+  tsconfigRaw: TsconfigJson,
+  isTsconfigOverridden: boolean,
+  sourcemap: boolean,
+  tsgoPath: string | undefined,
+): Promise<{ dist: string; cleanup: () => Promise<void> }> {
   debug('[tsgo] rootDir', rootDir)
+
+  let tsconfigPath: string | undefined
+  if (isTsconfigOverridden) {
+    tsconfigPath = path.join(rootDir, 'tsconfig.rolldown-plugin-dts.json')
+    await writeFile(tsconfigPath, JSON.stringify(tsconfigRaw, null, 2))
+    debug('[tsgo] using overridden tsconfig file', tsconfigPath)
+  } else {
+    tsconfigPath = tsconfig
+    debug('[tsgo] using original tsconfig file', tsconfigPath)
+  }
 
   let tsgo: string
   if (tsgoPath) {
@@ -46,7 +59,7 @@ export async function runTsgo(
     'false',
     '--declaration',
     '--emitDeclarationOnly',
-    ...(tsconfig ? ['-p', tsconfig] : []),
+    ...(tsconfigPath ? ['-p', tsconfigPath] : []),
     '--outDir',
     tsgoDist,
     '--rootDir',
@@ -56,6 +69,16 @@ export async function runTsgo(
   ]
   debug('[tsgo] args %o', args)
 
+  const cleanupTsgoOutput = async () => {
+    if (isTsconfigOverridden && tsconfigPath) {
+      debug('[tsgo] cleaning up tsgo tsconfig', tsconfigPath)
+      await rm(tsconfigPath, { force: true }).catch(() => {})
+    }
+
+    debug('[tsgo] cleaning up tsgo dist', tsgoDist)
+    await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
+  }
+
   await spawnAsync(tsgo, args, { stdio: 'inherit' })
-  return tsgoDist
+  return { dist: tsgoDist, cleanup: cleanupTsgoOutput }
 }

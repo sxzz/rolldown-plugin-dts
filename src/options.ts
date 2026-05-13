@@ -243,6 +243,7 @@ export type OptionsResolved = Overwrite<
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions | false
     tsconfigRaw: TsconfigJson
+    isTsconfigOverridden: boolean
     tsgo: Omit<TsgoOptions, 'enabled'> | false
   }
 >
@@ -255,8 +256,8 @@ export function resolveOptions({
   dtsInput = false,
   emitDtsOnly = false,
   tsconfig,
-  tsconfigRaw: overriddenTsconfigRaw = {},
-  compilerOptions = {},
+  tsconfigRaw: overriddenTsconfigRaw,
+  compilerOptions: overriddenCompilerOptions,
   sourcemap,
   resolver = 'oxc',
   cjsDefault = false,
@@ -294,9 +295,9 @@ export function resolveOptions({
     tsconfig = undefined
   }
 
-  compilerOptions = {
+  const compilerOptions = {
     ...resolvedTsconfig?.compilerOptions,
-    ...compilerOptions,
+    ...overriddenCompilerOptions,
   }
 
   incremental ||=
@@ -309,6 +310,9 @@ export function resolveOptions({
     ...overriddenTsconfigRaw,
     compilerOptions,
   }
+  const isTsconfigOverridden =
+    overriddenTsconfigRaw !== undefined ||
+    overriddenCompilerOptions !== undefined
 
   oxc ??= !!(compilerOptions?.isolatedDeclarations && !vue && !tsgo && !tsMacro)
   if (oxc === true) {
@@ -370,6 +374,7 @@ export function resolveOptions({
     emitDtsOnly,
     tsconfig,
     tsconfigRaw,
+    isTsconfigOverridden,
     sourcemap,
     resolver,
     cjsDefault,
