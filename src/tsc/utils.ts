@@ -3,6 +3,10 @@ import { pathToFileURL } from 'node:url'
 import ts from 'typescript'
 import type { ExistingRawSourceMap } from 'rolldown'
 
+/**
+ * Host object required by TypeScript's
+ * {@linkcode ts.formatDiagnostics | formatDiagnostics()} API.
+ */
 export const formatHost: ts.FormatDiagnosticsHost = {
   getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
   getNewLine: () => ts.sys.newLine,
@@ -11,7 +15,13 @@ export const formatHost: ts.FormatDiagnosticsHost = {
     : (f) => f.toLowerCase(),
 }
 
-// fix #77
+/**
+ * Rewrites private-identifier property signatures to string-literal keys so
+ * that the TypeScript declaration emitter does not produce invalid `.d.ts`
+ * output.
+ *
+ * @see {@link https://github.com/sxzz/rolldown-plugin-dts/issues/77 | Issue #77}
+ */
 const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
   ctx,
 ) => {
@@ -31,18 +41,28 @@ const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
     ts.visitNode(sourceFile, visitor, ts.isSourceFile) ?? sourceFile
 }
 
+/**
+ * Custom TypeScript transformers applied during declaration emit.
+ * Includes a transformer that replaces private-identifier property signatures
+ * with string literals to avoid invalid output in declaration files.
+ */
 export const customTransformers: ts.CustomTransformers = {
   afterDeclarations: [stripPrivateFields],
 }
 
-// Since the output directory of tsc and rolldown-plugin-dts might be different,
-// we need to explicitly set the `sourceRoot` of the source map so that the
-// final sourcemap has correct paths in `sources` field.
+/**
+ * Sets the {@linkcode ExistingRawSourceMap.sourceRoot | sourceRoot} of a
+ * source map so that {@linkcode ExistingRawSourceMap.sources | sources} paths
+ * remain correct when the output directory used by `tsc` differs from the
+ * directory where `rolldown-plugin-dts` finally writes the file.
+ *
+ * @param map - The raw source map to mutate. A no-op if `undefined` or if {@linkcode ExistingRawSourceMap.sourceRoot | sourceRoot} is already set.
+ * @param originalFilePath - The path where `tsc` originally emitted the map.
+ * @param finalFilePath - The path where `rolldown-plugin-dts` will write the map.
+ */
 export function setSourceMapRoot(
   map: ExistingRawSourceMap | undefined,
-  // The original path of the source map file (e.g. configured by tsconfig.json `outDir` and emitted by tsc)
   originalFilePath: string,
-  // The final path of the source map file (e.g. emitted by rolldown-plugin-dts)
   finalFilePath: string,
 ): void {
   if (!map) {

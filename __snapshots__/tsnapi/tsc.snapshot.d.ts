@@ -6,17 +6,10 @@ export interface TscModule {
   program: ts.Program;
   file: ts.SourceFile;
 }
-export interface TscOptions {
+export interface TscOptions extends Required<Pick<Options, "build" | "cwd" | "incremental" | "sourcemap" | "tsconfigRaw">>, Pick<Options, "tsconfig" | "tsMacro" | "vue"> {
   tsconfig?: string;
-  tsconfigRaw: TsconfigJson;
-  cwd: string;
-  build: boolean;
-  incremental: boolean;
   entries?: string[];
   id: string;
-  sourcemap: boolean;
-  vue?: boolean;
-  tsMacro?: boolean;
   context?: TscContext;
 }
 export interface TscResult {

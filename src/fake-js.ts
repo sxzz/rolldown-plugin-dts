@@ -38,34 +38,96 @@ import type {
 type Dep = t.Expression & { replace?: (newNode: t.Node) => void }
 
 /**
- * A collection of type parameters grouped by parameter name
+ * A collection of type parameters grouped by parameter name.
  */
 type TypeParams = Array<{
+  /**
+   * The type parameter name shared by all entries in this group.
+   */
   name: string
+
+  /**
+   * The {@linkcode t.Identifier | Identifier} nodes extracted from the
+   * {@linkcode t.TSTypeParameterDeclaration | TSTypeParameterDeclaration}
+   * params for this type parameter name, collected so each one can be renamed
+   * in lock-step.
+   */
   typeParams: t.Identifier[]
 }>
 
+/**
+ * Stores everything the plugin needs to reconstruct a TypeScript declaration
+ * after Rolldown renames its bindings during the fake-JS bundling phase.
+ */
 interface DeclarationInfo {
+  /**
+   * The original TypeScript declaration node.
+   */
   decl: t.Declaration
+
+  /**
+   * The identifier nodes that name this declaration (may be multiple for
+   * `var a, b`).
+   */
   bindings: t.Identifier[]
+
+  /**
+   * Type parameter groups collected from the declaration, used to propagate
+   * renames.
+   */
   params: TypeParams
+
+  /**
+   * Runtime expressions that represent type-level dependencies of this
+   * declaration.
+   */
   deps: Dep[]
+
+  /**
+   * Child identifier nodes whose source positions are tracked for source-map
+   * accuracy.
+   */
   children: t.Node[]
 }
 
+/**
+ * Maps a module source string (e.g. `'./foo'`) to the namespace import
+ * statement and its local identifier, used when rewriting `import()`-style
+ * `type` references.
+ */
 type NamespaceMap = Map<
   string,
   {
+    /**
+     * The `import * as X from './bar'` statement prepended to the module.
+     */
     stmt: t.Statement
+
+    /**
+     * The local namespace identifier (or qualified name) introduced by the
+     * import.
+     */
     local: t.Identifier | t.TSQualifiedName
   }
 >
 
-export function createFakeJsPlugin({
-  sourcemap,
-  cjsDefault,
-  sideEffects,
-}: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin {
+/**
+ * Creates the Rolldown {@linkcode Plugin | plugin} responsible for
+ * transforming `.d.ts` declaration files into valid JavaScript so Rolldown can
+ * bundle them, then reconstructing the original TypeScript declarations in the
+ * {@linkcode Plugin.renderChunk | renderChunk} phase.
+ *
+ * @param resolvedOptions - Resolved plugin options controlling source-map generation, CommonJS `default` export rewriting, and side-effects marking.
+ * @returns A Rolldown {@linkcode Plugin | plugin} that registers {@linkcode Plugin.transform | transform} and {@linkcode Plugin.renderChunk | renderChunk} hooks for `.d.ts` files.
+ */
+export function createFakeJsPlugin(
+  resolvedOptions: Pick<
+    OptionsResolved,
+    'sourcemap' | 'cjsDefault' | 'sideEffects'
+  >,
+): Plugin {
+  const { sourcemap, cjsDefault, sideEffects } = resolvedOptions
+
   let declarationIdx = 0
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
@@ -328,7 +390,7 @@ export function createFakeJsPlugin({
         sideEffect()
       ]
       */
-      const runtimeAssignment: RuntimeBindingVariableDeclration = {
+      const runtimeAssignment: RuntimeBindingVariableDeclaration = {
         type: 'VariableDeclaration',
         kind: 'var',
         declarations: [
@@ -548,6 +610,14 @@ export function createFakeJsPlugin({
     }
   }
 
+  /**
+   * Returns (and bumps) the usage count for {@linkcode name} in
+   * {@linkcode identifierMap}, returning `0` on the first use.
+   *
+   * @param identifierMap - Mutable map from identifier base name to usage count.
+   * @param name - The identifier base name to look up.
+   * @returns The zero-based index for this name.
+   */
   // eslint-disable-next-line unicorn/consistent-function-scoping
   function getIdentifierIndex(
     identifierMap: Record<string, number>,
@@ -559,21 +629,38 @@ export function createFakeJsPlugin({
     return (identifierMap[name] = 0)
   }
 
+  /**
+   * Stores a {@linkcode DeclarationInfo} in the plugin's
+   * {@linkcode declarationMap} and returns its unique numeric ID.
+   *
+   * @param info - The declaration metadata to store.
+   * @returns The unique numeric ID assigned to this declaration.
+   */
   function registerDeclaration(info: DeclarationInfo) {
     const declarationId = declarationIdx++
     declarationMap.set(declarationId, info)
     return declarationId
   }
 
+  /**
+   * Retrieves the {@linkcode DeclarationInfo} for the given
+   * {@linkcode declarationId}.
+   *
+   * @param declarationId - The numeric ID previously returned by {@linkcode registerDeclaration | registerDeclaration()}.
+   * @returns The stored {@linkcode DeclarationInfo}.
+   */
   function getDeclaration(declarationId: number) {
     return declarationMap.get(declarationId)!
   }
 
   /**
-   * Collects all TSTypeParameter nodes from the given node and groups them by
-   * their name. One name can associate with one or more type parameters. These
-   * names will be used as the parameter name in the generated JavaScript
-   * dependency function.
+   * Collects all {@linkcode t.TSTypeParameter | TSTypeParameter} nodes from
+   * the given node and groups them by their name. One name can associate with
+   * one or more type parameters. These names will be used as the parameter
+   * name in the generated JavaScript dependency function.
+   *
+   * @param node - The AST node to walk when collecting type parameters.
+   * @returns An array of {@linkcode TypeParams | name/typeParams pairs}, one entry per unique type parameter name found in the {@linkcode node}.
    */
   function collectParams(node: t.Node): TypeParams {
     const typeParams: t.Identifier[] = []
@@ -610,6 +697,16 @@ export function createFakeJsPlugin({
     }))
   }
 
+  /**
+   * Walks {@linkcode node} and collects all runtime dependency expressions
+   * needed to preserve type-level references after Rolldown renames bindings.
+   *
+   * @param node - The TypeScript declaration AST node to analyze.
+   * @param namespaceStmts - Accumulator map for `import * as` statements added for `import()` type references.
+   * @param children - Set populated with child identifier nodes whose source positions need to be tracked.
+   * @param identifierMap - Counter map used to generate unique identifiers for namespace imports.
+   * @returns An array of {@linkcode Dep | runtime dependency expressions}.
+   */
   function collectDependencies(
     node: t.Node,
     namespaceStmts: NamespaceMap,
@@ -722,6 +819,19 @@ export function createFakeJsPlugin({
     }
   }
 
+  /**
+   * Generates a namespace import for a
+   * {@linkcode t.TSImportType | TSImportType} node and rewrites the node in
+   * place to a qualified name (`_$module.Qualifier`).
+   *
+   * @param node - The {@linkcode t.TSImportType | TSImportType} AST node to rewrite.
+   * @param imported - Optional qualifier path inside the imported namespace.
+   * @param source - The string-literal source of the import.
+   * @param namespaceStmts - Accumulator map that deduplicates namespace imports.
+   * @param identifierMap - Counter map for generating unique local identifiers.
+   * @returns A {@linkcode Dep | runtime dependency expression} referencing the namespace member.
+   * @throws An {@linkcode Error} when the imported qualifier's left-most name is `this`.
+   */
   function importNamespace(
     node: t.TSImportType,
     imported: t.TSEntityName | null | undefined,
@@ -794,6 +904,17 @@ export function createFakeJsPlugin({
   }
 }
 
+/**
+ * Returns `true` if {@linkcode node} represents a child symbol within
+ * {@linkcode parent} i.e. an {@linkcode t.Identifier | Identifier} or a
+ * computed key in a
+ * {@linkcode t.TSPropertySignature | TSPropertySignature} / {@linkcode t.TSMethodSignature | TSMethodSignature}
+ * whose source position should be tracked for source-map accuracy.
+ *
+ * @param node - The AST node to test.
+ * @param parent - The parent AST node of {@linkcode node}.
+ * @returns `true` if {@linkcode node} is a trackable child symbol.
+ */
 function isChildSymbol(node: t.Node, parent: t.Node) {
   if (node.type === 'Identifier') return true
   if (
@@ -805,6 +926,14 @@ function isChildSymbol(node: t.Node, parent: t.Node) {
   return false
 }
 
+/**
+ * Collects all type-parameter names introduced by `infer` clauses inside a
+ * conditional type's {@linkcode t.TSConditionalType.extendsType | extendsType}
+ * branch, so they can be excluded from dependency tracking.
+ *
+ * @param node - The AST node to walk (typically a {@linkcode t.TSConditionalType | TSConditionalType}'s {@linkcode t.TSConditionalType.extendsType | extendsType}).
+ * @returns An array of inferred type-parameter names.
+ */
 function collectInferredNames(node: t.Node) {
   const inferred: string[] = []
   walkAST(node, {
@@ -818,34 +947,52 @@ function collectInferredNames(node: t.Node) {
 }
 
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
-function collectReferenceDirectives(comment: t.Comment[], negative = false) {
-  return comment.filter((c) => REFERENCE_RE.test(c.value) !== negative)
+
+/**
+ * Filters the {@linkcode comments} array to those that are
+ * `/// <reference path=...>` or `/// <reference types=...>` directives,
+ * optionally inverting the filter.
+ *
+ * @param comments - The array of {@linkcode t.Comment | Comment} nodes to filter.
+ * @param [negative] - When `true`, returns comments that do NOT match the {@linkcode REFERENCE_RE | reference pattern} instead. Defaults to `false`.
+ * @returns The filtered array of reference-directive {@linkcode t.Comment | Comment} nodes.
+ */
+function collectReferenceDirectives(comments: t.Comment[], negative = false) {
+  return comments.filter((c) => REFERENCE_RE.test(c.value) !== negative)
 }
 
 //#region Runtime binding variable
 
 /**
- * A variable declaration that declares a runtime binding variable. It represents a declaration like:
+ * A variable declaration that declares a runtime binding variable. It
+ * represents a declaration like:
  *
  * ```js
- * var binding = [declarationId, (param, ...) => [dep, ...], sideEffect()]
+ * var binding = [
+ *   declarationId,
+ *   (param, ...) => [dep, ...],
+ *   ['children symbol name'],
+ *   sideEffect(),
+ * ];
  * ```
  *
- * For an more concrete example, the following TypeScript declaration:
+ * For a more concrete example, the following TypeScript declaration:
  *
  * ```ts
- * interface Bar extends Foo { bar: number }
+ * interface Bar extends Foo {
+ *   bar: number;
+ * }
  * ```
  *
  * Will be transformed to the following JavaScript code:
  *
  * ```js
- * const Bar = [123, () => [Foo]]
+ * const Bar = [123, () => [Foo], []];
  * ```
  *
  * Which will be represented by this type.
  */
-type RuntimeBindingVariableDeclration = t.VariableDeclaration & {
+type RuntimeBindingVariableDeclaration = t.VariableDeclaration & {
   declarations: [
     t.VariableDeclarator & { init: RuntimeBindingArrayExpression },
     ...t.VariableDeclarator[],
@@ -853,11 +1000,15 @@ type RuntimeBindingVariableDeclration = t.VariableDeclaration & {
 }
 
 /**
- * Check if the given node is a {@link RuntimeBindingVariableDeclration}
+ * Check if the given {@linkcode node} is a
+ * {@linkcode RuntimeBindingVariableDeclaration}.
+ *
+ * @param node - The AST node to test.
+ * @returns `true` if {@linkcode node} is a {@linkcode RuntimeBindingVariableDeclaration}.
  */
 function isRuntimeBindingVariableDeclaration(
   node: t.Node | null | undefined,
-): node is RuntimeBindingVariableDeclration {
+): node is RuntimeBindingVariableDeclaration {
   return (
     node?.type === 'VariableDeclaration' &&
     node.declarations.length > 0 &&
@@ -867,12 +1018,12 @@ function isRuntimeBindingVariableDeclaration(
 }
 
 /**
- * A array expression that contains {@link RuntimeBindingArrayElements}
+ * An array expression that contains {@linkcode RuntimeBindingArrayElements}.
  *
  * It can be used to represent the following JavaScript code:
  *
  * ```js
- * [declarationId, (param, ...) => [dep, ...], sideEffect()]
+ * [declarationId, (param, ...) => [dep, ...], ['children'], sideEffect()];
  * ```
  */
 type RuntimeBindingArrayExpression = t.ArrayExpression & {
@@ -880,7 +1031,11 @@ type RuntimeBindingArrayExpression = t.ArrayExpression & {
 }
 
 /**
- * Check if the given node is a {@link RuntimeBindingArrayExpression}
+ * Check if the given {@linkcode node} is a
+ * {@linkcode RuntimeBindingArrayExpression}.
+ *
+ * @param node - The AST node to test.
+ * @returns `true` if {@linkcode node} is a {@linkcode RuntimeBindingArrayExpression}.
  */
 function isRuntimeBindingArrayExpression(
   node: t.Node | null | undefined,
@@ -892,7 +1047,10 @@ function isRuntimeBindingArrayExpression(
 }
 
 /**
- * Check if the given array is a {@link RuntimeBindingArrayElements}
+ * Check if the given array is a {@linkcode RuntimeBindingArrayElements}.
+ *
+ * @param elements - The array of AST nodes to test.
+ * @returns `true` if {@linkcode elements} matches the shape of {@linkcode RuntimeBindingArrayElements}.
  */
 function isRuntimeBindingArrayElements(
   elements: Array<t.Node | null | undefined>,
@@ -906,6 +1064,13 @@ function isRuntimeBindingArrayElements(
   )
 }
 
+/**
+ * Wraps {@linkcode elements} in a {@linkcode RuntimeBindingArrayExpression}
+ * object.
+ *
+ * @param elements - The tuple elements for the runtime binding array.
+ * @returns A new {@linkcode RuntimeBindingArrayExpression} node.
+ */
 function runtimeBindingArrayExpression(
   elements: RuntimeBindingArrayElements,
 ): RuntimeBindingArrayExpression {
@@ -922,7 +1087,8 @@ type RuntimeBindingArrayElementsBase = [
 ]
 
 /**
- * An array that represents the elements in {@link RuntimeBindingArrayExpression}
+ * An array that represents the elements in
+ * {@linkcode RuntimeBindingArrayExpression}
  */
 type RuntimeBindingArrayElements =
   | RuntimeBindingArrayElementsBase
@@ -930,6 +1096,14 @@ type RuntimeBindingArrayElements =
 
 // #endregion
 
+/**
+ * Returns `true` if {@linkcode node} represents a
+ * {@linkcode t.ThisExpression | ThisExpression}
+ * (including `this.member` chains).
+ *
+ * @param node - The AST node to test.
+ * @returns `true` if {@linkcode node} is or contains a `this` reference.
+ */
 function isThisExpression(node: t.Node): boolean {
   return (
     isIdentifierOf(node, 'this') ||
@@ -938,9 +1112,23 @@ function isThisExpression(node: t.Node): boolean {
   )
 }
 
+/**
+ * Returns `true` if {@linkcode node} is an
+ * {@linkcode t.Identifier | Identifier} named `infer`.
+ *
+ * @param node - The AST node to test.
+ * @returns `true` if {@linkcode node} is an {@linkcode t.Identifier | Identifier} named `infer`.
+ */
 function isInfer(node: t.Node): node is t.Identifier {
   return isIdentifierOf(node, 'infer')
 }
+/**
+ * Converts a TypeScript qualified name (`A.B.C`) to an equivalent JavaScript
+ * member expression (`A.B.C`) by mutating the node in place.
+ *
+ * @param node - The {@linkcode t.TSEntityName | TSEntityName} AST node to convert.
+ * @returns The rewritten node as a {@linkcode t.MemberExpression | MemberExpression}, {@linkcode t.Identifier | Identifier}, or {@linkcode t.ThisExpression | ThisExpression}.
+ */
 function TSEntityNameToRuntime(
   node: t.TSEntityName,
 ): t.MemberExpression | t.Identifier | t.ThisExpression {
@@ -957,6 +1145,14 @@ function TSEntityNameToRuntime(
   })
 }
 
+/**
+ * Walks a qualified name left-recursively and returns its leftmost
+ * {@linkcode t.Identifier | Identifier} or
+ * {@linkcode t.ThisExpression | ThisExpression} node.
+ *
+ * @param node - The {@linkcode t.TSEntityName | TSEntityName} to unwrap.
+ * @returns The leftmost {@linkcode t.Identifier | Identifier} or {@linkcode t.ThisExpression | ThisExpression} node.
+ */
 function getIdFromTSEntityName(node: t.TSEntityName) {
   if (node.type === 'Identifier' || node.type === 'ThisExpression') {
     return node
@@ -964,12 +1160,29 @@ function getIdFromTSEntityName(node: t.TSEntityName) {
   return getIdFromTSEntityName(node.left)
 }
 
+/**
+ * Returns `true` if {@linkcode node} is an
+ * {@linkcode t.Identifier | Identifier} or
+ * {@linkcode t.MemberExpression | MemberExpression}, i.e. a node that can
+ * appear as a runtime reference to a `type`.
+ *
+ * @param [node] - The AST node to test.
+ * @returns `true` if {@linkcode node} is a referenceable {@linkcode t.Identifier | Identifier} or {@linkcode t.MemberExpression | MemberExpression}.
+ */
 function isReferenceId(
   node?: t.Node | null,
 ): node is t.Identifier | t.MemberExpression {
   return isTypeOf(node, ['Identifier', 'MemberExpression'])
 }
 
+/**
+ * Returns `true` if {@linkcode node} is an import declaration that imports
+ * only Rolldown's internal helpers (`__exportAll`, `__reExport`), which must
+ * be stripped from the final `.d.ts` output.
+ *
+ * @param node - The AST node to test.
+ * @returns `true` if {@linkcode node} is a Rolldown-helper-only import declaration.
+ */
 function isHelperImport(node: t.Node) {
   return (
     node.type === 'ImportDeclaration' &&
@@ -983,7 +1196,14 @@ function isHelperImport(node: t.Node) {
 }
 
 /**
- * patch `.d.ts` suffix in import source to `.js`
+ * Rewrites `import`/`export` sources by replacing `.d.ts` extensions with
+ * `.js` and applies `export =` rewriting for CommonJS `default` exports when
+ * {@linkcode cjsDefault} is enabled.
+ *
+ * @param node - The AST statement node to inspect and possibly rewrite.
+ * @param typeOnlyIds - Exported names that should be marked `type`-only in the output.
+ * @param cjsDefault - Whether to rewrite a `export { x as default }` into `export = x` for CommonJS compatibility.
+ * @returns The (possibly mutated) {@linkcode t.Statement | Statement}, `false` to signal the `node` should be removed, or `undefined` if no rewrite applies.
  */
 function patchImportExport(
   node: t.Statement,
@@ -1041,7 +1261,7 @@ function patchImportExport(
       node.specifiers[0].type === 'ExportSpecifier' &&
       resolveString(node.specifiers[0].exported) === 'default'
     ) {
-      const defaultExport = node.specifiers[0] as t.ExportSpecifier
+      const defaultExport = node.specifiers[0]
       return {
         type: 'TSExportAssignment',
         expression: defaultExport.local,
@@ -1051,7 +1271,12 @@ function patchImportExport(
 }
 
 /**
- * Handle `__exportAll` call
+ * Rewrites `__exportAll` helper calls emitted by Rolldown into proper
+ * `declare namespace` blocks so the output remains valid TypeScript
+ * declaration syntax.
+ *
+ * @param nodes - The list of top-level AST statements to scan and rewrite in-place.
+ * @returns The filtered statement list with `__exportAll` calls replaced by `declare namespace` declarations.
  */
 function patchTsNamespace(nodes: t.Statement[]) {
   const removed = new Set<t.Node>()
@@ -1115,7 +1340,12 @@ function patchTsNamespace(nodes: t.Statement[]) {
 }
 
 /**
- * Handle `__reExport` call
+ * Rewrites `__reExport` helper calls emitted by Rolldown into `type` alias
+ * declarations, preserving cross-module `type` re-exports in the bundled
+ * declaration output.
+ *
+ * @param nodes - The list of top-level AST statements to scan and rewrite in-place.
+ * @returns The (mutated) statement list with `__reExport` patterns replaced by {@linkcode t.TSTypeAliasDeclaration | TSTypeAliasDeclaration} nodes.
  */
 function patchReExport(nodes: t.Statement[]) {
   const exportsNames = new Map<string, string>()
@@ -1197,15 +1427,24 @@ function patchReExport(nodes: t.Statement[]) {
   return nodes
 }
 
-// fix:
-// - import type { ... } from '...'
-// - import { type ... } from '...'
-// - export type { ... }
-// - export { type ... }
-// - export type * as x '...'
-// - import Foo = require("./bar")
-// - export = Foo
-// - export default x
+/**
+ * Rewrites `type`-only imports/exports and special-case syntax (`export =`,
+ * `export default Identifier`, `import Foo = require('./bar')`) to their
+ * runtime equivalents so Rolldown can process them as JavaScript. Handles:
+ * - `import type { X } from './bar'` -> `import { X } from './bar'`
+ * - `import { type X } from './bar'` -> `import { X } from './bar'`
+ * - `export type { X }` -> `export { X }`
+ * - `export { type X }` -> `export { X }`
+ * - `export type * as X from './bar'` -> `export * as X from './bar'`
+ * - `import Foo = require('./bar')` -> `import Foo from './bar'`
+ * - `export = Foo` -> `export { Foo as default }`
+ * - `export default X` -> `export { X as default }`
+ *
+ * @param node - The AST node to inspect.
+ * @param set - Callback that replaces {@linkcode node} in its parent's body array.
+ * @param typeOnlyIds - Accumulator for exported names that should be re-marked as `type`-only in the rendered output.
+ * @returns `true` if the {@linkcode node} was an `import`/`export` statement that was handled (and should be skipped by the caller), `false` otherwise.
+ */
 function rewriteImportExport(
   node: t.Node,
   set: (node: t.Statement) => void,
@@ -1235,23 +1474,33 @@ function rewriteImportExport(
         )
       }
 
+      // rewrite `import { type X } from './bar'` to `import { X } from './bar'`
       if (specifier.type === 'ImportSpecifier') {
         specifier.importKind = 'value'
+
+        // `export { type X }` to `export { X }`
       } else if (specifier.type === 'ExportSpecifier') {
         specifier.exportKind = 'value'
       }
     }
 
+    // rewrite `import type * as X from './bar'` to `import * as X from './bar'`
     if (node.type === 'ImportDeclaration') {
       node.importKind = 'value'
+
+      // rewrite `export type { X }` to `export { X }`
     } else if (node.type === 'ExportNamedDeclaration') {
       node.exportKind = 'value'
     }
 
     return true
+
+    // rewrite `export type * as X from './bar'` to `export * as X from './bar'`
   } else if (node.type === 'ExportAllDeclaration') {
     node.exportKind = 'value'
     return true
+
+    // `import Foo = require('./bar')` to `import Foo from './bar'`
   } else if (node.type === 'TSImportEqualsDeclaration') {
     if (node.moduleReference.type === 'TSExternalModuleReference') {
       set({
@@ -1266,6 +1515,8 @@ function rewriteImportExport(
       })
     }
     return true
+
+    // `export = Foo` to `export { Foo as default }`
   } else if (
     node.type === 'TSExportAssignment' &&
     node.expression.type === 'Identifier'
@@ -1284,6 +1535,8 @@ function rewriteImportExport(
       ],
     })
     return true
+
+    // `export default Foo` to `export { Foo as default }`
   } else if (
     node.type === 'ExportDefaultDeclaration' &&
     node.declaration.type === 'Identifier'
@@ -1304,6 +1557,18 @@ function rewriteImportExport(
   return false
 }
 
+/**
+ * Clears all own properties of {@linkcode node} and assigns
+ * {@linkcode newNode}'s properties onto it, effectively mutating the original
+ * AST node in place. This preserves any object references that point to
+ * {@linkcode node} while changing its content.
+ *
+ * @template T - The shape of the new node.
+ *
+ * @param node - The AST node to overwrite.
+ * @param newNode - The replacement data to assign.
+ * @returns The mutated {@linkcode node} cast to {@linkcode T}.
+ */
 function overwriteNode<T>(node: t.Node, newNode: T): T {
   // clear object keys
   for (const key of Object.keys(node)) {
@@ -1313,6 +1578,17 @@ function overwriteNode<T>(node: t.Node, newNode: T): T {
   return node as T
 }
 
+/**
+ * Copies leading comments from {@linkcode oldNode} to {@linkcode newNode},
+ * keeping only non-reference-directive leading comments and filtering out
+ * reference directives from the result.
+ *
+ * @template T - The shape of the new node.
+ *
+ * @param oldNode - The original node to copy comments from.
+ * @param newNode - The target node to attach comments to.
+ * @returns The {@linkcode newNode} with the inherited leading comments applied.
+ */
 function inheritNodeComments<T extends t.Node>(oldNode: t.Node, newNode: T): T {
   newNode.leadingComments ||= []
 
