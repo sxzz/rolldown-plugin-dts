@@ -1,11 +1,11 @@
 /// <reference lib="esnext.array" />
 
-import { format, type Options } from 'prettier'
 import { access, glob, readFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { rolldownBuild, rollupBuild, testFixtures } from '@sxzz/test-utils'
 import { createPatch } from 'diff'
+import { format, type Options } from 'prettier'
 import { dts as rollupDts } from 'rollup-plugin-dts'
 import { expect } from 'vitest'
 import { dts } from '../src/index.ts'

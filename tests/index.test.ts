@@ -1,5 +1,3 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
@@ -190,40 +188,19 @@ describe('dts input', () => {
   })
 
   test('warns to externalize CommonJS dts dependencies', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
-    const dep = path.join(root, 'node_modules/cjs-dts-dep')
+    const root = path.resolve(dirname, 'fixtures/cjs-dts-dep-warning')
     const warnings: string[] = []
 
-    try {
-      await mkdir(dep, { recursive: true })
-      await Promise.all([
-        writeFile(
-          path.join(root, 'index.d.ts'),
-          `export interface Wrapped {\n  value: import("cjs-dts-dep").Value\n}\n`,
-        ),
-        writeFile(
-          path.join(dep, 'package.json'),
-          `{"name":"cjs-dts-dep","types":"index.d.ts"}`,
-        ),
-        writeFile(
-          path.join(dep, 'index.d.ts'),
-          `declare namespace CjsDtsDep {\n  export interface Value {\n    foo: string\n  }\n}\nexport = CjsDtsDep\n`,
-        ),
-      ])
-
-      await rolldownBuild(
-        [path.join(root, 'index.d.ts')],
-        [dts({ dtsInput: true })],
-        {
-          cwd: root,
-          onwarn(warning) {
-            warnings.push(warning.message)
-          },
+    await rolldownBuild(
+      [path.join(root, 'index.d.ts')],
+      [dts({ dtsInput: true })],
+      {
+        cwd: root,
+        onwarn(warning) {
+          warnings.push(warning.message)
         },
-      )
-    } finally {
-      await rm(root, { force: true, recursive: true })
-    }
+      },
+    )
 
     const cjsWarning =
       warnings.find((warning) =>
