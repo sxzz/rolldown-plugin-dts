@@ -2,10 +2,13 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -2,5 +2,5 @@
- interface Leading {}
- interface Middle {}
- type UsesLeading = [...Array<Leading>, number]
- type UsesMiddle = [boolean, ...Array<Middle>, boolean]
--export type { UsesLeading, UsesMiddle }
-+export { UsesLeading, UsesMiddle }
+@@ -11,8 +11,8 @@
+     boolean,
+     ...Array<Middle>,
+     boolean,
+   ]
+-export type {
++export {
+   UsesLeading,
+   UsesMiddle,
+ }

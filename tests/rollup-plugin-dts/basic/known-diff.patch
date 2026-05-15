@@ -2,10 +2,16 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -14,5 +14,5 @@
- declare class Cls {
-   foo: string
-   fn(e: Enum): void
+@@ -24,9 +24,9 @@
+     e: Enum,
+   ): void
  }
--export { Cls, bar, fn, foo }
-+export { type Cls, bar, type fn, type foo }
+ export {
+-  Cls,
++  type Cls,
+   bar,
+-  fn,
+-  foo,
++  type fn,
++  type foo,
+ }

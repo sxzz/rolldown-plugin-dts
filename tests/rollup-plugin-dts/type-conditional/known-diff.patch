@@ -2,10 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -2,5 +2,5 @@
- interface A {}
- interface B {}
- interface C {}
- declare type Foo = A extends B ? C : never
+@@ -5,5 +5,5 @@
+ declare type Foo =
+   A extends B
+     ? C
+     : never
 -export type { Foo }
 +export { Foo }

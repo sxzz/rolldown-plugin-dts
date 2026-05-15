@@ -2,11 +2,14 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -4,6 +4,5 @@
- type VerticalAlignment = "top" | "middle" | "bottom"
- type HorizontalAlignment = "left" | "center" | "right"
- type SeussFish = `${Quantity | Color} fish`
- declare function setAlignment(value: `${VerticalAlignment}-${HorizontalAlignment}`): void
+@@ -21,6 +21,8 @@
+   `${Quantity | Color} fish`
+ declare function setAlignment(
+   value: `${VerticalAlignment}-${HorizontalAlignment}`,
+ ): void
 -export { setAlignment }
 -export type { SeussFish }
-+export { SeussFish, setAlignment }
++export {
++  SeussFish,
++  setAlignment,
++}

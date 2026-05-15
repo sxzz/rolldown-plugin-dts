@@ -12,7 +12,7 @@ Index: diff.patch
  interface Referenced2 {}
  declare namespace ns {
    class Shadowed1 {}
-@@ -13,8 +17,8 @@
+@@ -14,8 +18,8 @@
      d: Shadowed3
      e: typeof Shadowed4
    }

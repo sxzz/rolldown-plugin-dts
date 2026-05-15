@@ -2,11 +2,14 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -6,6 +6,5 @@
- declare const fn: {
-   (arg: string): string
+@@ -10,6 +10,8 @@
+     arg: string,
+   ): string
    staticProp: string
  }
 -export { fn }
 -export type { I }
-+export { I, fn }
++export {
++  I,
++  fn,
++}

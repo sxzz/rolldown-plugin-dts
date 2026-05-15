@@ -2,13 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,7 +1,5 @@
- // index.d.ts
- interface A {}
- interface B {}
--declare type Foo = {
--  [P in keyof A]: B[P]
--}
+@@ -4,5 +4,5 @@
+ declare type Foo =
+   {
+     [P in keyof A]: B[P]
+   }
 -export type { Foo }
-+declare type Foo = { [P in keyof A]: B[P] }
 +export { Foo }

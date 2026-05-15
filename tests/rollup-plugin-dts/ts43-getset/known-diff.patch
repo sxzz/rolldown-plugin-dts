@@ -2,10 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -4,5 +4,5 @@
- interface Thing {
-   get size(): GetT
-   set size(value: GetT | SetT | boolean)
+@@ -9,5 +9,5 @@
+       | SetT
+       | boolean,
+   )
  }
 -export type { Thing }
 +export { Thing }

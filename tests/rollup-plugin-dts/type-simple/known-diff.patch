@@ -2,11 +2,12 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -15,6 +15,5 @@
- interface N {
-   foo(): this
+@@ -29,7 +29,7 @@
+   J,
+   K,
+   L,
+   M,
++  N,
+   O,
  }
- declare const O: bigint
--export { A, B, C, D, E, F, G, H, I, J, K, L, M, O }
 -export type { N }
-+export { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O }

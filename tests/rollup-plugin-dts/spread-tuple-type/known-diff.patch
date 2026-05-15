@@ -2,8 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,3 +1,3 @@
- // index.d.ts
- declare type SpreadedTuple = [number, ...string[]]
+@@ -3,5 +3,5 @@
+   [
+     number,
+     ...string[],
+   ]
 -export type { SpreadedTuple }
 +export { SpreadedTuple }

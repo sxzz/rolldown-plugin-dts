@@ -2,10 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -2,5 +2,5 @@
- interface A {}
- interface B {}
- interface C {}
- declare type Foo = new (a: A, b: B) => C
+@@ -6,5 +6,5 @@
+   new (
+     a: A,
+     b: B,
+   ) => C
 -export type { Foo }
 +export { Foo }

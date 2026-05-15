@@ -2,10 +2,13 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -4,5 +4,5 @@
- interface State<in out T> {
-   get: () => T
-   set: (value: T) => void
+@@ -17,8 +17,8 @@
+   set: (
+     value: T,
+   ) => void
  }
--export type { FirstHammer, State }
-+export { FirstHammer, State }
+-export type {
++export {
+   FirstHammer,
+   State,
+ }

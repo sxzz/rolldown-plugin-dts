@@ -2,9 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,4 +1,4 @@
+@@ -1,5 +1,5 @@
  // index.d.ts
  interface Foo {}
- declare type Bar = Foo
+ declare type Bar =
+   Foo
 -export type { Bar }
 +export { Bar }

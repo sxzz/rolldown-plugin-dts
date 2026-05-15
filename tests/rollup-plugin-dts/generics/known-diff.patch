@@ -2,11 +2,18 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -30,6 +30,5 @@
- declare function fn<T = G>(g: T, h: Gen<H>): void
- declare type TyFn = <T = J>(j: T, k: Gen<K>) => L
- declare type TyCtor = new <T = M>(m: T, n: Gen<N>) => O
+@@ -65,13 +65,11 @@
+   ) => O
  interface I2 extends Gen<P> {}
--export { Cl, fn }
--export type { I1, I2, Ty, TyCtor, TyFn }
-+export { Cl, I1, I2, Ty, TyCtor, TyFn, fn }
+ export {
+   Cl,
+-  fn,
+-}
+-export type {
+   I1,
+   I2,
+   Ty,
+   TyCtor,
+   TyFn,
++  fn,
+ }

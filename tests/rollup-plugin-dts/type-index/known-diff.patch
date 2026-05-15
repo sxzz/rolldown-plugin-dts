@@ -2,10 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -2,5 +2,5 @@
- interface A {}
- declare type Foo = {
-   [k: string]: A
- }
+@@ -5,5 +5,5 @@
+     [
+       k: string
+     ]: A
+   }
 -export type { Foo }
 +export { Foo }

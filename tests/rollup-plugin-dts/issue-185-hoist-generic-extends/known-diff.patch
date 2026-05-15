@@ -2,18 +2,30 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,14 +1,10 @@
+@@ -1,5 +1,11 @@
  // index.d.ts
 +declare namespace a_d_exports {
-+  export { Props, System }
++  export {
++    Props,
++    System,
++  }
 +}
- declare type Props = Record<string, number>
- declare class System<T extends Props> {
-   _obj: T
-   constructor(src: T)
+ declare type Props =
+   Record<
+     string,
+     number
+@@ -12,17 +18,5 @@
+   constructor(
+     src: T,
+   )
  }
--type a_d_Props = Props
--type a_d_System<T extends Props> = System<T>
+-type a_d_Props =
+-  Props
+-type a_d_System<
+-  T extends
+-    Props,
+-> =
+-  System<T>
 -declare const a_d_System: typeof System
 -declare namespace a_d {
 -  export { a_d_System as System }

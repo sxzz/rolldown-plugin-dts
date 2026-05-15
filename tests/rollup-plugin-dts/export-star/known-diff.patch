@@ -2,10 +2,13 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,5 +1,4 @@
+@@ -1,5 +1,7 @@
  // index.d.ts
  interface B {}
  declare class A {}
 -export { A }
 -export type { B }
-+export { A, B }
++export {
++  A,
++  B,
++}

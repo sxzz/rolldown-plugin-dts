@@ -2,7 +2,7 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -5,16 +5,16 @@
+@@ -5,18 +5,18 @@
  interface D$1 {}
  interface E$1 {}
  interface F$1 {}
@@ -15,15 +15,17 @@ Index: diff.patch
 +interface Interface extends B$1 {
    c: C$1
  }
--declare function Func$1(d: D$1): E$1
--declare type Type$1 = {
-+declare function Func(d: D$1): E$1
-+declare type Type = {
-   f: F$1
- }
+-declare function Func$1(
++declare function Func(
+   d: D$1,
+ ): E$1
+-declare type Type$1 =
++declare type Type =
+   {
+     f: F$1
+   }
  interface A {}
- interface B {}
-@@ -22,16 +22,15 @@
+@@ -25,29 +25,27 @@
  interface D {}
  interface E {}
  interface F {}
@@ -36,12 +38,32 @@ Index: diff.patch
 +interface Interface$1 extends B {
    c: C
  }
--declare function Func(d: D): E
--declare type Type = {
-+declare function Func$1(d: D): E
-+declare type Type$1 = {
-   f: F
+-declare function Func(
++declare function Func$1(
+   d: D,
+ ): E
+-declare type Type =
++declare type Type$1 =
+   {
+     f: F
+   }
+ export {
+-  Func$1 as AFunc,
+-  Klass$1 as AKlass,
+-  Func as BFunc,
+-  Klass as BKlass,
++  Func as AFunc,
++  Interface as AInterface,
++  Klass as AKlass,
++  Type as AType,
++  Func$1 as BFunc,
++  Interface$1 as BInterface,
++  Klass$1 as BKlass,
++  Type$1 as BType,
  }
--export { Func$1 as AFunc, Klass$1 as AKlass, Func as BFunc, Klass as BKlass }
--export type { Interface$1 as AInterface, Type$1 as AType, Interface as BInterface, Type as BType }
-+export { Func as AFunc, Interface as AInterface, Klass as AKlass, Type as AType, Func$1 as BFunc, Interface$1 as BInterface, Klass$1 as BKlass, Type$1 as BType }
+-export type {
+-  Interface$1 as AInterface,
+-  Type$1 as AType,
+-  Interface as BInterface,
+-  Type as BType,
+-}
