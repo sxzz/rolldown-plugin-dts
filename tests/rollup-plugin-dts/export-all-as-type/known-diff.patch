@@ -6,4 +6,4 @@ Index: diff.patch
  // index.d.ts
  declare const foo: number
 -export { foo }
-+export { type foo }
++export type { foo }

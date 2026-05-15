@@ -33,5 +33,5 @@ export { mod_d_exports as Mod, Ns, Obj, a, b, fn };
 ## index.d.ts.map
 
 ```map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../../fixtures/source-map/mod.ts","../../fixtures/source-map/index.ts"],"mappings":";;;cAAa,GAAA;;;cCAA,CAAA;AAAA,cAEA,CAAA;AAAA,KAIR,GAAA;AAAA,iBACW,EAAA,CAAG,KAAA,EAAO,GAAA;AAAA,UAIT,GAAA;EACf,MAAA;IACE,GAAA;EAAA;EAEF,MAAA;EACA,SAAA;AAAA;AAAA,kBAGe,EAAA;EAAA,KACH,GAAA;EAAA,KACA,GAAA,MAAS,CAAA;EAAA,KACT,GAAA;IACV,EAAA;EAAA;AAAA"}
+{"version":3,"file":"index.d.ts","names":[],"sources":["../../fixtures/source-map/mod.ts","../../fixtures/source-map/index.ts"],"mappings":";;;cAAa,GAAA;;;cCAA,CAAA;AAAA,cAEA,CAAA;AAAA,KAIR,GAAA;AAAA,iBACW,EAAA,CAAG,KAAU,EAAH,GAAG;AAAA,UAIZ,GAAA;EACf,MAAA;IACE,GAAA;EAAA;EAEF,MAAA;EACA,SAAA;AAAA;AAAA,kBAGe,EAAA;EAAA,KACH,GAAA;EAAA,KACA,GAAA,MAAS,CAAC;EAAA,KACV,GAAA;IACV,EAAA;EAAA;AAAA"}
 ```

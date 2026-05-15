@@ -429,7 +429,7 @@ export { import_stub_lib as t };
 // b.d.ts
 import { t as a_d_exports } from "./a.js";
 type LibType = a_d_exports.LibType;
-export { type LibType };"
+export type { LibType };"
 `;
 
 exports[`re-export from lib > onlyA 1`] = `
@@ -441,7 +441,7 @@ exports[`re-export from lib > onlyB 1`] = `
 "// b.d.ts
 import * as import_stub_lib from "stub-lib";
 type LibType = import_stub_lib.LibType;
-export { type LibType };"
+export type { LibType };"
 `;
 
 exports[`real css imports are externalized 1`] = `
@@ -457,7 +457,7 @@ exports[`resolve dts 1`] = `
 //#region tests/fixtures/resolve-dts/mod.d.ts
 type Foo = string;
 //#endregion
-export { type Foo };
+export type { Foo };
 // index.js
 "
 `;
@@ -495,7 +495,7 @@ exports[`tree-shaking 1`] = `
 //#region tests/fixtures/tree-shaking/mod.d.ts
 type A = string;
 //#endregion
-export { type A };
+export type { A };
 // index.js
 "
 `;

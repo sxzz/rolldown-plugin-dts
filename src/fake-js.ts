@@ -1342,6 +1342,7 @@ function patchImportExport(
           }
         }
       }
+      normalizeTypeOnlyExport(node)
     }
 
     if (node.source?.value && RE_DTS.test(node.source.value)) {
@@ -1362,6 +1363,26 @@ function patchImportExport(
         type: 'TSExportAssignment',
         expression: defaultExport.local,
       }
+    }
+  }
+}
+
+function normalizeTypeOnlyExport(node: t.ExportNamedDeclaration): void {
+  if (node.declaration || !node.specifiers.length) return
+
+  for (const specifier of node.specifiers) {
+    if (
+      specifier.type !== 'ExportSpecifier' ||
+      specifier.exportKind !== 'type'
+    ) {
+      return
+    }
+  }
+
+  node.exportKind = 'type'
+  for (const specifier of node.specifiers) {
+    if (specifier.type === 'ExportSpecifier') {
+      specifier.exportKind = 'value'
     }
   }
 }
