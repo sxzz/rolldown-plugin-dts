@@ -395,6 +395,38 @@ export { jsdoc_default as default, fn };
 "
 `;
 
+exports[`tsc > jsdoc members 1`] = `
+"// jsdoc-members.d.ts
+//#region tests/fixtures/jsdoc-members.d.ts
+declare const foo: string;
+interface A {
+  /** Comment A1 */
+  AA?: string;
+  /** Comment A2 */
+  AB?: string;
+  /** Comment A3 */
+  AC?: string;
+}
+type B = {
+  /** Comment B1 */
+  BA?: string;
+  /** Comment B2 */
+  BB?: string;
+  /** Comment B3 */
+  BC?: string;
+};
+declare function fn(): void;
+//#endregion
+export { A, B, fn, foo };
+// jsdoc-members.js
+//#region tests/fixtures/jsdoc-members.ts
+const foo = "foo";
+function fn() {}
+//#endregion
+export { fn, foo };
+"
+`;
+
 exports[`tsc > multi declarations 1`] = `
 "// index.d.ts
 //#region tests/fixtures/multi-decls/mod.d.ts
