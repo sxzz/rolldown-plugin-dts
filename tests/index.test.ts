@@ -234,6 +234,47 @@ describe('dts input', () => {
     expect(cjsWarning).toContain('Please mark this module as external')
   })
 
+  test('reference to external CommonJS dts should not be transformed', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
+    const dep = path.join(root, 'node_modules/cjs-dts-dep')
+
+    try {
+      await mkdir(dep, { recursive: true })
+      await Promise.all([
+        writeFile(
+          path.join(root, 'index.d.ts'),
+          `export const useDep: (dep: import("cjs-dts-dep")) => void\n`,
+        ),
+        writeFile(
+          path.join(dep, 'package.json'),
+          `{"name":"cjs-dts-dep","types":"index.d.ts"}`,
+        ),
+        writeFile(
+          path.join(dep, 'index.d.ts'),
+          `declare namespace CjsDtsDep {\n  export interface Value {\n    foo: string\n  }\n}\nexport = CjsDtsDep\n`,
+        ),
+      ])
+
+      const { chunks } = await rolldownBuild(
+        [path.join(root, 'index.d.ts')],
+        [dts({ dtsInput: true })],
+        {
+          cwd: root,
+          external: 'cjs-dts-dep',
+          onwarn(warning) {
+            expect.unreachable(warning.message)
+          },
+        },
+      )
+      expect(chunks[0].code).toContain(
+        `declare const useDep: (dep: import("cjs-dts-dep")) => void`,
+      )
+    } finally {
+      await rm(root, { force: true, recursive: true })
+    }
+    expect.hasAssertions()
+  })
+
   test('input object', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       { index: path.resolve(dirname, 'fixtures/dts-input.d.ts') },
