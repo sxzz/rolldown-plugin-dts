@@ -13,6 +13,7 @@ import {
   filename_js_to_dts,
   RE_DTS,
   RE_DTS_MAP,
+  RE_NODE_MODULES,
   replaceTemplateName,
   resolveTemplateFn,
 } from './filename.ts'
@@ -70,6 +71,7 @@ export function createFakeJsPlugin({
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
   const typeOnlyMap = new Map<string /* filename */, string[]>()
+  const warnedCjsDtsInputs = new Set<string>()
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
@@ -160,6 +162,15 @@ export function createFakeJsPlugin({
     const { program, comments } = file
     const typeOnlyIds: string[] = []
     const identifierMap: Record<string, number> = Object.create(null)
+
+    if (!warnedCjsDtsInputs.has(id) && program.body.some(isCjsDtsInputSyntax)) {
+      warnedCjsDtsInputs.add(id)
+      this.warn(
+        RE_NODE_MODULES.test(id)
+          ? `${id} uses CommonJS dts syntax. CommonJS dts modules cannot be reliably bundled by rolldown-plugin-dts. Please mark this module as external in your Rolldown config.`
+          : `${id} uses CommonJS dts syntax. rolldown-plugin-dts does not support reliably bundling CommonJS dts input.`,
+      )
+    }
 
     if (comments) {
       const directives = collectReferenceDirectives(comments)
@@ -820,6 +831,14 @@ function collectInferredNames(node: t.Node) {
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
 function collectReferenceDirectives(comment: t.Comment[], negative = false) {
   return comment.filter((c) => REFERENCE_RE.test(c.value) !== negative)
+}
+
+function isCjsDtsInputSyntax(node: t.Statement): boolean {
+  return (
+    node.type === 'TSExportAssignment' ||
+    (node.type === 'TSImportEqualsDeclaration' &&
+      node.moduleReference.type === 'TSExternalModuleReference')
+  )
 }
 
 //#region Runtime binding variable

@@ -1,6 +1,8 @@
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { rolldownBuild } from '@sxzz/test-utils'
+import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 import { getTsgoPathFromNodeModules } from '../src/tsgo.ts'
@@ -155,6 +157,81 @@ describe('dts input', () => {
     )
     expect(chunks[0].fileName).toBe('dts-input.d.ts')
     expect(snapshot).toMatchSnapshot()
+  })
+
+  test('warns for CommonJS dts input syntax', async () => {
+    const warnings: string[] = []
+
+    await rolldownBuild(
+      [
+        path.resolve(
+          dirname,
+          'rollup-plugin-dts/issue-89-import-equals/index.d.ts',
+        ),
+      ],
+      [dts({ dtsInput: true })],
+      {
+        onwarn(warning) {
+          warnings.push(warning.message)
+        },
+      },
+    )
+
+    expect(warnings).toHaveLength(2)
+    expect(warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('index.d.ts uses CommonJS dts syntax'),
+        expect.stringContaining('bar.d.ts uses CommonJS dts syntax'),
+      ]),
+    )
+    expect(warnings.join('\n')).toContain(
+      'rolldown-plugin-dts does not support reliably bundling CommonJS dts input',
+    )
+  })
+
+  test('warns to externalize CommonJS dts dependencies', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
+    const dep = path.join(root, 'node_modules/cjs-dts-dep')
+    const warnings: string[] = []
+
+    try {
+      await mkdir(dep, { recursive: true })
+      await Promise.all([
+        writeFile(
+          path.join(root, 'index.d.ts'),
+          `export interface Wrapped {\n  value: import("cjs-dts-dep").Value\n}\n`,
+        ),
+        writeFile(
+          path.join(dep, 'package.json'),
+          `{"name":"cjs-dts-dep","types":"index.d.ts"}`,
+        ),
+        writeFile(
+          path.join(dep, 'index.d.ts'),
+          `declare namespace CjsDtsDep {\n  export interface Value {\n    foo: string\n  }\n}\nexport = CjsDtsDep\n`,
+        ),
+      ])
+
+      await rolldownBuild(
+        [path.join(root, 'index.d.ts')],
+        [dts({ dtsInput: true })],
+        {
+          cwd: root,
+          onwarn(warning) {
+            warnings.push(warning.message)
+          },
+        },
+      )
+    } finally {
+      await rm(root, { force: true, recursive: true })
+    }
+
+    const cjsWarning =
+      warnings.find((warning) =>
+        normalizePath(warning).includes('node_modules/cjs-dts-dep/index.d.ts'),
+      ) ?? ''
+
+    expect(cjsWarning).toContain('uses CommonJS dts syntax')
+    expect(cjsWarning).toContain('Please mark this module as external')
   })
 
   test('input object', async () => {

@@ -109,6 +109,8 @@ Determines how the default export is emitted.
 If set to `true`, and you are only exporting a single item using `export default ...`,
 the output will use `export = ...` instead of the standard ES module syntax.
 This is useful for compatibility with CommonJS.
+This option only controls the output format and does not enable support for
+CommonJS-style `.d.ts` input.
 
 #### `sideEffects`
 
@@ -235,6 +237,11 @@ However, this functionality is limited to ESM output format. Consequently,
 **two** distinct build processes are required for CommonJS source code (`.cjs`)
 and its corresponding type definition files (`.d.cts`).
 In such cases, the `emitDtsOnly` option can be particularly helpful.
+
+The plugin expects ESM-style `.d.ts` input. CommonJS-style declaration syntax
+such as `export =` or `import x = require("x")` will produce a warning and is
+not guaranteed to bundle correctly. If this syntax comes from a dependency in
+`node_modules`, mark that dependency as external in your Rolldown config.
 
 ## Credits
 

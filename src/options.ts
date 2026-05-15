@@ -89,6 +89,8 @@ export interface GeneralOptions {
    * If set to `true`, and you are only exporting a single item using `export default ...`,
    * the output will use `export = ...` instead of the standard ES module syntax.
    * This is useful for compatibility with CommonJS.
+   * This only controls the output format and does not enable support for
+   * CommonJS-style `.d.ts` input.
    */
   cjsDefault?: boolean
 
