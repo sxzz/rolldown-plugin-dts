@@ -7,6 +7,7 @@ import {
   isTypeOf,
   resolveString,
   walkAST,
+  walkASTAsync,
 } from 'ast-kit'
 import {
   filename_dts_to,
@@ -295,8 +296,10 @@ export function createFakeJsPlugin({
       const params: TypeParams = collectParams(decl)
 
       const childrenSet = new Set<t.Node>()
-      const deps = collectDependencies(
+      const deps = await collectDependencies(
+        this,
         decl,
+        id,
         namespaceStmts,
         childrenSet,
         identifierMap,
@@ -903,14 +906,17 @@ function collectParams(node: t.Node): TypeParams {
   }))
 }
 
-function collectDependencies(
+async function collectDependencies(
+  context: TransformPluginContext,
   node: t.Node,
+  importer: string,
   namespaceStmts: NamespaceMap,
   children: Set<t.Node>,
   identifierMap: Record<string, number>,
-): Dep[] {
+): Promise<Dep[]> {
   const deps = new Set<Dep>()
   const seen = new Set<t.Node>()
+  const preserveImportTypeCache = new Map<string, boolean>()
 
   const inferredStack: string[][] = []
   let currentInferred = new Set<string>()
@@ -918,14 +924,15 @@ function collectDependencies(
     return node.type === 'Identifier' && currentInferred.has(node.name)
   }
 
-  walkAST(node, {
+  await walkASTAsync(node, {
     enter(node) {
       if (node.type === 'TSConditionalType') {
         const inferred = collectInferredNames(node.extendsType)
         inferredStack.push(inferred)
       }
+      return Promise.resolve()
     },
-    leave(node, parent) {
+    async leave(node, parent) {
       // handle infer scope
       if (node.type === 'TSConditionalType') {
         inferredStack.pop()
@@ -990,14 +997,18 @@ function collectDependencies(
           case 'TSImportType': {
             seen.add(node)
             const { source, qualifier } = node
-            const dep = importNamespace(
+
+            const dep = await importNamespace(
+              context,
+              importer,
               node,
               qualifier,
               source,
               namespaceStmts,
               identifierMap,
+              preserveImportTypeCache,
             )
-            addDependency(dep)
+            if (dep) addDependency(dep)
             break
           }
         }
@@ -1008,6 +1019,7 @@ function collectDependencies(
       }
     },
   })
+
   return Array.from(deps)
 
   function addDependency(node: Dep) {
@@ -1016,13 +1028,25 @@ function collectDependencies(
   }
 }
 
-function importNamespace(
+async function importNamespace(
+  context: TransformPluginContext,
+  importer: string,
   node: t.TSImportType,
   imported: t.TSEntityName | null | undefined,
   source: t.StringLiteral,
   namespaceStmts: NamespaceMap,
   identifierMap: Record<string, number>,
-): Dep {
+  preserveCache: Map<string, boolean>,
+): Promise<Dep | undefined> {
+  let preserve = preserveCache.get(source.value)
+  if (preserve === undefined) {
+    const resolved = await context.resolve(source.value, importer)
+    preserve = !resolved || !!resolved.external
+    preserveCache.set(source.value, preserve)
+  }
+
+  if (preserve) return
+
   const sourceText = source.value.replaceAll(/\W/g, '_')
   // Use original source if it's already a valid identifier,
   // otherwise use formatted text with index.

@@ -123,72 +123,54 @@ export { Product };"
 
 exports[`deterministic namespace import index 1`] = `
 "// a.d.ts
-import * as _$stub_lib from "stub_lib";
-
 //#region a.d.ts
-type MyTypeA = _$stub_lib.LibType;
+type MyTypeA = import('stub_lib').LibType;
 //#endregion
 export { MyTypeA };
 // b.d.ts
-import * as _$stub_lib from "stub_lib";
-
 //#region b.d.ts
-type MyTypeB = _$stub_lib.LibType;
+type MyTypeB = import('stub_lib').LibType;
 //#endregion
 export { MyTypeB };
 // c.d.ts
-import * as _$stub_lib from "stub_lib";
-
 //#region c.d.ts
-type MyTypeC = _$stub_lib.LibType;
+type MyTypeC = import('stub_lib').LibType;
 //#endregion
 export { MyTypeC };"
 `;
 
 exports[`deterministic namespace import index 2`] = `
 "// a.d.ts
-import * as _$stub_lib from "stub_lib";
-
 //#region a.d.ts
-type MyTypeA = _$stub_lib.LibType;
+type MyTypeA = import('stub_lib').LibType;
 //#endregion
 export { MyTypeA };
 // b.d.ts
-import * as _$stub_lib from "stub_lib";
-
 //#region b.d.ts
-type MyTypeB = _$stub_lib.LibType;
+type MyTypeB = import('stub_lib').LibType;
 //#endregion
 export { MyTypeB };
 // c.d.ts
-import * as _$stub_lib from "stub_lib";
-
 //#region c.d.ts
-type MyTypeC = _$stub_lib.LibType;
+type MyTypeC = import('stub_lib').LibType;
 //#endregion
 export { MyTypeC };"
 `;
 
 exports[`deterministic namespace import index 3`] = `
 "// a.d.ts
-import * as _$stub_lib from "stub_lib";
-
 //#region a.d.ts
-type MyTypeA = _$stub_lib.LibType;
+type MyTypeA = import('stub_lib').LibType;
 //#endregion
 export { MyTypeA };
 // b.d.ts
-import * as _$stub_lib from "stub_lib";
-
 //#region b.d.ts
-type MyTypeB = _$stub_lib.LibType;
+type MyTypeB = import('stub_lib').LibType;
 //#endregion
 export { MyTypeB };
 // c.d.ts
-import * as _$stub_lib from "stub_lib";
-
 //#region c.d.ts
-type MyTypeC = _$stub_lib.LibType;
+type MyTypeC = import('stub_lib').LibType;
 //#endregion
 export { MyTypeC };"
 `;

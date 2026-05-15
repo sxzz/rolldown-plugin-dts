@@ -211,6 +211,25 @@ describe('dts input', () => {
     expect(cjsWarning).toContain('Please mark this module as external')
   })
 
+  test('preserves external CommonJS dts import types', async () => {
+    const root = path.resolve(dirname, 'fixtures/cjs-dts-dep-external')
+
+    const { chunks } = await rolldownBuild(
+      [path.join(root, 'index.d.ts')],
+      [dts({ dtsInput: true })],
+      {
+        cwd: root,
+        external: 'cjs-dts-dep',
+        onwarn(warning) {
+          expect.unreachable(warning.message)
+        },
+      },
+    )
+    expect(chunks[0].code).toContain(
+      "declare const useDep: (dep: import('cjs-dts-dep')) => void",
+    )
+  })
+
   test('input object', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       { index: path.resolve(dirname, 'fixtures/dts-input.d.ts') },
@@ -682,9 +701,8 @@ test('deterministic namespace import index', async () => {
   // All results should be identical
   expect(results[0]).toBe(results[1])
   expect(results[1]).toBe(results[2])
-  // Valid identifiers (stub_lib) don't need index suffix
-  expect(results[0]).toContain('import * as _$stub_lib from "stub_lib"')
-  // Should not have stub_lib0 since each file is independent
+  expect(results[0]).toContain("import('stub_lib').LibType")
+  expect(results[0]).not.toContain('import * as _$stub_lib from "stub_lib"')
   expect(results[0]).not.toContain('stub_lib0')
 })
 
