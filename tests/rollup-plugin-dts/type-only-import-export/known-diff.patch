@@ -41,7 +41,7 @@ Index: diff.patch
 +import * as I from 'i'
 +import * as O from 'o'
  export * from 'i1'
- export * from 'n'
+-export * from 'n'
 -import * as i from 'i'
 -export { i as I }
 -import * as o from 'o'
@@ -50,6 +50,7 @@ Index: diff.patch
 -declare class BarType { }
 -declare class BarValue { }
 -interface O {}
++export type * from 'n'
 +interface Foo {}
 +declare class BarType {}
 +declare class BarValue {}
@@ -60,5 +61,5 @@ Index: diff.patch
    inline: string
  }
 -export { BarType, BarValue, X }
--export { Foo$1 as Foo, Foo as FooInlne, O as O1 }
-+export { A, B, B1 as B2, B1 as B3, BarType, BarValue, C, C as C1, D, E3 as E2, E3, E4, F, Foo, Foo$1 as FooInlne, G, G1, H1, I, J, K1, L, M1, O, O$1 as O1, X, E as default }
+-export type { Foo$1 as Foo, Foo as FooInlne, O as O1 }
++export { A, type B, type B1 as B2, type B1 as B3, type BarType, BarValue, C, C as C1, type D, type E3 as E2, type E3, type E4, type F, type Foo, type Foo$1 as FooInlne, G, type G1, H1, I, type J, type K1, type L, type M1, type O, O$1 as O1, type X, E as default }

@@ -8,5 +8,5 @@ Index: diff.patch
  }
  declare class MyComponent extends React.Component<MyComponentProps> {}
 -export { MyComponent }
--export { MyComponentProps }
+-export type { MyComponentProps }
 +export { MyComponent, MyComponentProps }

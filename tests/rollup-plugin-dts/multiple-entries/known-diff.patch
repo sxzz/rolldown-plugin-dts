@@ -7,7 +7,7 @@ Index: diff.patch
 +// common-qE1sjDCn.d.ts
  interface A {}
  interface B {}
--export { A, B }
+-export type { A, B }
 -// main-b.ts
 -export { B } from './main-a.ts'
 +export { B as n, A as t }

@@ -8,5 +8,5 @@ Index: diff.patch
  type SeussFish = `${Quantity | Color} fish`
  declare function setAlignment(value: `${VerticalAlignment}-${HorizontalAlignment}`): void
 -export { setAlignment }
--export { SeussFish }
+-export type { SeussFish }
 +export { SeussFish, setAlignment }

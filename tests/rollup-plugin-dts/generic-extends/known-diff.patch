@@ -10,5 +10,6 @@ Index: diff.patch
 -type AnimatedComponent<T extends ElementType> = ForwardRefExoticComponent<
 -  AnimatedProps<ComponentPropsWithRef<T>>
 ->
+-export type { AnimatedComponent, AnimatedProps }
 +type AnimatedComponent<T extends ElementType> = ForwardRefExoticComponent<AnimatedProps<ComponentPropsWithRef<T>>>
- export { AnimatedComponent, AnimatedProps }
++export { AnimatedComponent, AnimatedProps }

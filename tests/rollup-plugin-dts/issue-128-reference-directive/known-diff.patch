@@ -17,11 +17,12 @@ Index: diff.patch
  declare type JSXElements = keyof JSX.IntrinsicElements
  declare const a: JSXElements[]
 -export { A, a }
--export { JSXElements }
+-export type { JSXElements }
 -// main-b.ts
 -/// <reference types="node" />
 -interface B {}
+-export type { B }
 +export { A, B, JSXElements, a }
 +// main-b.d.ts
 +import { t as B } from './common-AkXVRtKo.js'
- export { B }
++export { B }

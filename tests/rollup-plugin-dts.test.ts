@@ -104,10 +104,6 @@ function cleanupCode(text: string) {
     .replaceAll(/\/\/#region .*\n/g, '')
     .replaceAll('//#endregion', '')
     .replaceAll(/from "(.*)"/g, "from '$1'")
-    .replaceAll('export type', 'export') // FIXME
-    .replaceAll(/export \{([^}]*)\}/g, (_, specifiers: string) => {
-      return `export {${specifiers.replaceAll(/\btype\s+/g, '')}}`
-    })
     .replaceAll(/,$/gm, '')
     .split('\n')
     .filter((line) => line.trim() !== '')

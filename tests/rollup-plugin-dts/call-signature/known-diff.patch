@@ -8,5 +8,5 @@ Index: diff.patch
    staticProp: string
  }
 -export { fn }
--export { I }
+-export type { I }
 +export { I, fn }

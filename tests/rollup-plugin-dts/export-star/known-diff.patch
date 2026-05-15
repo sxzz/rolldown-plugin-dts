@@ -7,5 +7,5 @@ Index: diff.patch
  interface B {}
  declare class A {}
 -export { A }
--export { B }
+-export type { B }
 +export { A, B }

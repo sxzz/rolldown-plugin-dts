@@ -14,10 +14,11 @@ Index: diff.patch
 -type __bar_IBar = IBar
 -declare namespace __bar {
 -  export { __bar_Bar as Bar }
--  export { __bar_IBar as IBar }
+-  export type { __bar_IBar as IBar }
 -}
  interface Foo {
 -  ns: typeof __bar
 +  ns: typeof bar_d_exports
  }
- export { Foo }
+-export type { Foo }
++export { Foo }

@@ -8,5 +8,5 @@ Index: diff.patch
    export enum F {}
  }
 -export { Bar }
--export { Foo }
+-export type { Foo }
 +export { Bar, Foo }

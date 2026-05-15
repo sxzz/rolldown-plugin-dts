@@ -14,4 +14,5 @@ Index: diff.patch
 -  rollup: rollup.RollupOptions
 +  rollup: _$rollup.RollupOptions
  }
- export { Test, TypeScript }
+-export type { Test, TypeScript }
++export { Test, TypeScript }

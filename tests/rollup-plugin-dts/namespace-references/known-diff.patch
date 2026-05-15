@@ -12,3 +12,13 @@ Index: diff.patch
  interface Referenced2 {}
  declare namespace ns {
    class Shadowed1 {}
+@@ -13,8 +17,8 @@
+     d: Shadowed3
+     e: typeof Shadowed4
+   }
+   namespace childNS {
+-    export type { Referenced2 as ref }
++    export { Referenced2 as ref }
+   }
+ }
+ export { ns }

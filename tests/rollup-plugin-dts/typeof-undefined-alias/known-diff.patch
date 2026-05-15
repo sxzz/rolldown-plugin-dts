@@ -7,5 +7,5 @@ Index: diff.patch
  declare let undefined$1: string
  type T = typeof undefined$1
 -export { undefined$1 as undefined }
--export { T }
+-export type { T }
 +export { T, undefined$1 as undefined }

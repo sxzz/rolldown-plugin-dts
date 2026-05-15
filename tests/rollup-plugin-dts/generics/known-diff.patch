@@ -8,5 +8,5 @@ Index: diff.patch
  declare type TyCtor = new <T = M>(m: T, n: Gen<N>) => O
  interface I2 extends Gen<P> {}
 -export { Cl, fn }
--export { I1, I2, Ty, TyCtor, TyFn }
+-export type { I1, I2, Ty, TyCtor, TyFn }
 +export { Cl, I1, I2, Ty, TyCtor, TyFn, fn }

@@ -2,7 +2,7 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,18 +1,14 @@
+@@ -1,20 +1,16 @@
  // index.d.ts
 -type Getters<T> = {
 -  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K]
@@ -23,3 +23,6 @@ Index: diff.patch
    kind: "circle"
    radius: number
  }
+ type KindlessCircle = RemoveKindField<Circle>
+-export type { KindlessCircle, LazyPerson }
++export { KindlessCircle, LazyPerson }

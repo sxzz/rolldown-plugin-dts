@@ -26,7 +26,7 @@ Index: diff.patch
 -type defs_d_F = F
 -declare namespace defs_d {
 -  export { defs_d_B as B, defs_d_C as C, defs_d_D as D, defs_d_E as E }
--  export { defs_d_A as A, defs_d_F as F }
+-  export type { defs_d_A as A, defs_d_F as F }
 +declare namespace deep_d_exports {
 +  export { defs_d_exports as ns }
  }
@@ -39,11 +39,11 @@ Index: diff.patch
 -}
 -type onlyOne_d_A = A
 -declare namespace onlyOne_d {
--  export { onlyOne_d_A as A }
+-  export type { onlyOne_d_A as A }
 -}
  interface WithA {
    a: A
  }
 -export { deep_d as deep, defs_d as ns, onlyOne_d as onlyOne }
--export { WithA }
+-export type { WithA }
 +export { WithA, deep_d_exports as deep, defs_d_exports as ns, only_one_d_exports as onlyOne }

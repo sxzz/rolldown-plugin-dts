@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -14,5 +14,5 @@
+ declare class Cls {
+   foo: string
+   fn(e: Enum): void
+ }
+-export { Cls, bar, fn, foo }
++export { type Cls, bar, type fn, type foo }

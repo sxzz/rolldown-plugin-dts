@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -10,5 +10,5 @@
+   ["B"]: B
+   [0]: C
+   [Dprop]: D
+ }
+-export type { Klass }
++export { Klass }

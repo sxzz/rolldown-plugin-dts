@@ -15,7 +15,7 @@ Index: diff.patch
 -declare const example_d_dog: typeof dog
 -declare namespace example_d {
 -  export { example_d_dog as dog }
--  export { example_d_Example as Example }
+-  export type { example_d_Example as Example }
 -}
 -export { example_d as types }
 +export { example_d_exports as types }

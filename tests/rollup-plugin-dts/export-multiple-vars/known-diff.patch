@@ -22,5 +22,5 @@ Index: diff.patch
    normalize: (inVar: In) => Out
  }
 -export { config, options, params }
--export { In, Out }
+-export type { In, Out }
 +export { In, Out, config, options, params }

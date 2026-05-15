@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,5 +1,5 @@
+ // index.d.ts
+ interface Foo {
+   new (): any
+ }
+-export type { Foo }
++export { Foo }
