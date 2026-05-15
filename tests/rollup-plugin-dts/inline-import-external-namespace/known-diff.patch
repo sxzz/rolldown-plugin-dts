@@ -28,4 +28,5 @@ Index: diff.patch
 +  ns5: _$foo_bar1.T
 +  ns6: _$foo_bar2.T
  }
- export { Foo }
+-export type { Foo }
++export { Foo }

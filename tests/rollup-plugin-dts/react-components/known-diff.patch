@@ -2,11 +2,14 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -3,6 +3,5 @@
+@@ -3,6 +3,8 @@
  interface MyComponentProps extends React.HtmlHTMLAttributes<HTMLDivElement> {
    foo: string
  }
  declare class MyComponent extends React.Component<MyComponentProps> {}
 -export { MyComponent }
--export { MyComponentProps }
-+export { MyComponent, MyComponentProps }
+-export type { MyComponentProps }
++export {
++  MyComponent,
++  MyComponentProps,
++}

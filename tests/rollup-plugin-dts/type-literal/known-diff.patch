@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -3,5 +3,5 @@
+ declare type Foo =
+   {
+     a: A
+   }
+-export type { Foo }
++export { Foo }

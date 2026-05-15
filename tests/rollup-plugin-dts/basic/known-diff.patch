@@ -1,0 +1,17 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -24,9 +24,9 @@
+     e: Enum,
+   ): void
+ }
+ export {
+-  Cls,
++  type Cls,
+   bar,
+-  fn,
+-  foo,
++  type fn,
++  type foo,
+ }

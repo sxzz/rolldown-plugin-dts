@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -6,5 +6,5 @@
+ }
+ interface Foo {
+   bar: Bar<number>
+ }
+-export type { Foo }
++export { Foo }

@@ -1,0 +1,15 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -8,9 +8,9 @@
+ type Config2<
+   Client,
+ > =
+   Client
+-export type {
++export {
+   Client,
+   Config1,
+   Config2,
+ }

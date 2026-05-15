@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -2,5 +2,5 @@
+ type T =
+ 
+     | typeof undefined
+     | typeof NaN
+-export type { T }
++export { T }

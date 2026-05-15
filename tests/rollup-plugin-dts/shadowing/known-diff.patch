@@ -5,24 +5,24 @@ Index: diff.patch
 @@ -1,5 +1,6 @@
  // index.d.ts
 +interface J {}
- declare class GenericKlass<A = any, B = A> {
-   a: A
-   b: B
- }
-@@ -8,14 +9,11 @@
-   d: D
- }
- declare function genericFunction<E = any, F = E>(e: E): F
- declare type ConditionalInfer<G> = G extends Array<Array<infer H>> ? H : never
--declare type Mapped<I> = {
--  [J in keyof I]: I[J]
+ declare class GenericKlass<
+   A =
+     any,
+   B =
+@@ -59,14 +60,12 @@
+   M,
+   N
+ > {}
+ export {
+-  GenericKlass,
+-  genericFunction,
 -}
-+declare type Mapped<I> = { [J in keyof I]: I[J] }
- declare type GenericType<K = any, L = K> = {
-   k: K
-   l: L
+-export type {
+   ConditionalInfer,
+   GenericExtends,
+   GenericInterface,
++  GenericKlass,
+   GenericType,
+   Mapped,
++  genericFunction,
  }
- interface GenericExtends<M = any, N = M> extends GenericInterface<M, N> {}
--export { GenericKlass, genericFunction }
--export { ConditionalInfer, GenericExtends, GenericInterface, GenericType, Mapped }
-+export { ConditionalInfer, GenericExtends, GenericInterface, GenericKlass, GenericType, Mapped, genericFunction }

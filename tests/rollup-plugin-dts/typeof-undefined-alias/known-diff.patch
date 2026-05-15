@@ -2,10 +2,14 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,5 +1,4 @@
+@@ -1,6 +1,8 @@
  // index.d.ts
  declare let undefined$1: string
- type T = typeof undefined$1
+ type T =
+   typeof undefined$1
 -export { undefined$1 as undefined }
--export { T }
-+export { T, undefined$1 as undefined }
+-export type { T }
++export {
++  T,
++  undefined$1 as undefined,
++}

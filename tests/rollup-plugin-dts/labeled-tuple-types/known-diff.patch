@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -4,5 +4,5 @@
+     first: number,
+     second?: string,
+     ...rest: any[],
+   ]
+-export type { Foo }
++export { Foo }

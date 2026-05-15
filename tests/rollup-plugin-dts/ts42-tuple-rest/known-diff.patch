@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -11,8 +11,8 @@
+     boolean,
+     ...Array<Middle>,
+     boolean,
+   ]
+-export type {
++export {
+   UsesLeading,
+   UsesMiddle,
+ }

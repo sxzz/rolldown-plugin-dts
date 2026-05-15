@@ -1,5 +1,6 @@
 /// <reference lib="esnext.array" />
 
+import { format, type Options } from 'prettier'
 import { access, glob, readFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
@@ -59,8 +60,17 @@ await testFixtures(
       path.resolve(dirname, 'snapshot.d.ts'),
     )
 
-    rollupSnapshot = cleanupCode(rollupSnapshot)
-    rolldownSnapshot = cleanupCode(rolldownSnapshot)
+    const prettierOptions: Options = {
+      semi: false,
+      parser: 'babel-ts',
+      singleQuote: true,
+      printWidth: 1,
+    }
+    rollupSnapshot = await format(cleanupCode(rollupSnapshot), prettierOptions)
+    rolldownSnapshot = await format(
+      cleanupCode(rolldownSnapshot),
+      prettierOptions,
+    )
     const diffPath = path.resolve(dirname, 'diff.patch')
     const knownDiffPath = path.resolve(dirname, 'known-diff.patch')
     const diff = createPatch(
@@ -103,12 +113,7 @@ function cleanupCode(text: string) {
   return `${text
     .replaceAll(/\/\/#region .*\n/g, '')
     .replaceAll('//#endregion', '')
-    .replaceAll(/from "(.*)"/g, "from '$1'")
-    .replaceAll('export type', 'export') // FIXME
-    .replaceAll(/,$/gm, '')
     .split('\n')
     .filter((line) => line.trim() !== '')
-    .join('\n')
-    .replaceAll(/;$/gm, '')
-    .trim()}\n`
+    .join('\n')}\n`
 }
