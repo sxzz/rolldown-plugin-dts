@@ -2,10 +2,8 @@
 
 exports[`tsc > arktype 1`] = `
 "// arktype.d.ts
-import * as _$arktype_internal_variants_object_ts0 from "arktype/internal/variants/object.ts";
-
 //#region tests/fixtures/arktype.d.ts
-declare const test: _$arktype_internal_variants_object_ts0.ObjectType<{
+declare const test: import("arktype/internal/variants/object.ts").ObjectType<{
   test: string;
 }, {}>;
 //#endregion
@@ -479,8 +477,6 @@ export { Unused };"
 
 exports[`tsc > vue-sfc w/ ts-compiler 1`] = `
 "// main.d.ts
-import * as _$_vue_runtime_core0 from "@vue/runtime-core";
-
 //#region tests/fixtures/vue-sfc/App.vue.d.ts
 type __VLS_Props = {
   foo: string;
@@ -490,7 +486,7 @@ declare global {
     foo: string;
   }
 }
-declare const __VLS_export: _$_vue_runtime_core0.DefineComponent<__VLS_Props, {}, {}, {}, {}, _$_vue_runtime_core0.ComponentOptionsMixin, _$_vue_runtime_core0.ComponentOptionsMixin, {}, string, _$_vue_runtime_core0.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, _$_vue_runtime_core0.ComponentProvideOptions, false, {}, any>;
+declare const __VLS_export: import("@vue/runtime-core").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("@vue/runtime-core").ComponentOptionsMixin, import("@vue/runtime-core").ComponentOptionsMixin, {}, string, import("@vue/runtime-core").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("@vue/runtime-core").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 //#endregion
 export { _default as App };"
@@ -498,22 +494,20 @@ export { _default as App };"
 
 exports[`tsc > vue-sfc w/ ts-compiler w/ vueCompilerOptions in tsconfig 1`] = `
 "// main.d.ts
-import * as _$vue from "vue";
-
 //#region tests/fixtures/vue-sfc-fallthrough/App.vue.d.ts
-declare const __VLS_export: _$vue.DefineComponent<{
+declare const __VLS_export: import("vue").DefineComponent<{
   foo: string;
   bar?: string | undefined;
   innerHTML?: string | undefined;
-  class?: _$vue.ClassValue;
-  style?: _$vue.StyleValue;
+  class?: import("vue").ClassValue;
+  style?: import("vue").StyleValue;
   accesskey?: string | undefined;
   contenteditable?: (boolean | "true" | "false") | "inherit" | "plaintext-only" | undefined;
   contextmenu?: string | undefined;
   dir?: string | undefined;
   draggable?: (boolean | "true" | "false") | undefined;
   enterkeyhint?: "enter" | "done" | "go" | "next" | "previous" | "search" | "send" | undefined;
-  enterKeyHint?: _$vue.HTMLAttributes["enterkeyhint"];
+  enterKeyHint?: import("vue").HTMLAttributes["enterkeyhint"];
   hidden?: (boolean | "true" | "false") | "" | "hidden" | "until-found" | undefined;
   id?: string | undefined;
   inert?: (boolean | "true" | "false") | undefined;
@@ -692,28 +686,28 @@ declare const __VLS_export: _$vue.DefineComponent<{
   onTransitionrun?: ((payload: TransitionEvent) => void) | undefined;
   onTransitionstart?: ((payload: TransitionEvent) => void) | undefined;
   key?: PropertyKey | undefined;
-  ref?: _$vue.VNodeRef | undefined;
+  ref?: import("vue").VNodeRef | undefined;
   ref_for?: boolean | undefined | undefined;
   ref_key?: string | undefined | undefined;
-  onVnodeBeforeMount?: (((vnode: _$vue.VNode) => void) | ((vnode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeMounted?: (((vnode: _$vue.VNode) => void) | ((vnode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeBeforeUpdate?: (((vnode: _$vue.VNode, oldVNode: _$vue.VNode) => void) | ((vnode: _$vue.VNode, oldVNode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeUpdated?: (((vnode: _$vue.VNode, oldVNode: _$vue.VNode) => void) | ((vnode: _$vue.VNode, oldVNode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeBeforeUnmount?: (((vnode: _$vue.VNode) => void) | ((vnode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeUnmounted?: (((vnode: _$vue.VNode) => void) | ((vnode: _$vue.VNode) => void)[]) | undefined;
-}, {}, {}, {}, {}, _$vue.ComponentOptionsMixin, _$vue.ComponentOptionsMixin, {}, string, _$vue.PublicProps, Readonly<{
+  onVnodeBeforeMount?: (((vnode: import("vue").VNode) => void) | ((vnode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeMounted?: (((vnode: import("vue").VNode) => void) | ((vnode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeBeforeUpdate?: (((vnode: import("vue").VNode, oldVNode: import("vue").VNode) => void) | ((vnode: import("vue").VNode, oldVNode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeUpdated?: (((vnode: import("vue").VNode, oldVNode: import("vue").VNode) => void) | ((vnode: import("vue").VNode, oldVNode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeBeforeUnmount?: (((vnode: import("vue").VNode) => void) | ((vnode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeUnmounted?: (((vnode: import("vue").VNode) => void) | ((vnode: import("vue").VNode) => void)[]) | undefined;
+}, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<{
   foo: string;
   bar?: string | undefined;
   innerHTML?: string | undefined;
-  class?: _$vue.ClassValue;
-  style?: _$vue.StyleValue;
+  class?: import("vue").ClassValue;
+  style?: import("vue").StyleValue;
   accesskey?: string | undefined;
   contenteditable?: (boolean | "true" | "false") | "inherit" | "plaintext-only" | undefined;
   contextmenu?: string | undefined;
   dir?: string | undefined;
   draggable?: (boolean | "true" | "false") | undefined;
   enterkeyhint?: "enter" | "done" | "go" | "next" | "previous" | "search" | "send" | undefined;
-  enterKeyHint?: _$vue.HTMLAttributes["enterkeyhint"];
+  enterKeyHint?: import("vue").HTMLAttributes["enterkeyhint"];
   hidden?: (boolean | "true" | "false") | "" | "hidden" | "until-found" | undefined;
   id?: string | undefined;
   inert?: (boolean | "true" | "false") | undefined;
@@ -892,16 +886,16 @@ declare const __VLS_export: _$vue.DefineComponent<{
   onTransitionrun?: ((payload: TransitionEvent) => void) | undefined;
   onTransitionstart?: ((payload: TransitionEvent) => void) | undefined;
   key?: PropertyKey | undefined;
-  ref?: _$vue.VNodeRef | undefined;
+  ref?: import("vue").VNodeRef | undefined;
   ref_for?: boolean | undefined | undefined;
   ref_key?: string | undefined | undefined;
-  onVnodeBeforeMount?: (((vnode: _$vue.VNode) => void) | ((vnode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeMounted?: (((vnode: _$vue.VNode) => void) | ((vnode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeBeforeUpdate?: (((vnode: _$vue.VNode, oldVNode: _$vue.VNode) => void) | ((vnode: _$vue.VNode, oldVNode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeUpdated?: (((vnode: _$vue.VNode, oldVNode: _$vue.VNode) => void) | ((vnode: _$vue.VNode, oldVNode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeBeforeUnmount?: (((vnode: _$vue.VNode) => void) | ((vnode: _$vue.VNode) => void)[]) | undefined;
-  onVnodeUnmounted?: (((vnode: _$vue.VNode) => void) | ((vnode: _$vue.VNode) => void)[]) | undefined;
-}> & Readonly<{}>, {}, {}, {}, {}, string, _$vue.ComponentProvideOptions, false, {}, any>;
+  onVnodeBeforeMount?: (((vnode: import("vue").VNode) => void) | ((vnode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeMounted?: (((vnode: import("vue").VNode) => void) | ((vnode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeBeforeUpdate?: (((vnode: import("vue").VNode, oldVNode: import("vue").VNode) => void) | ((vnode: import("vue").VNode, oldVNode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeUpdated?: (((vnode: import("vue").VNode, oldVNode: import("vue").VNode) => void) | ((vnode: import("vue").VNode, oldVNode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeBeforeUnmount?: (((vnode: import("vue").VNode) => void) | ((vnode: import("vue").VNode) => void)[]) | undefined;
+  onVnodeUnmounted?: (((vnode: import("vue").VNode) => void) | ((vnode: import("vue").VNode) => void)[]) | undefined;
+}> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 //#endregion
 export { _default as App };"
@@ -909,8 +903,6 @@ export { _default as App };"
 
 exports[`tsc > vue-sfc w/ ts-macro w/ ts-compiler 1`] = `
 "// main.d.ts
-import * as _$vue from "vue";
-
 //#region tests/fixtures/vue-sfc-with-ts-macro/App.vue.d.ts
 type __VLS_Props = {
   foo: string;
@@ -920,7 +912,7 @@ declare global {
     foo: string;
   }
 }
-declare const __VLS_export: _$vue.DefineComponent<__VLS_Props, {}, {}, {}, {}, _$vue.ComponentOptionsMixin, _$vue.ComponentOptionsMixin, {}, string, _$vue.PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, _$vue.ComponentProvideOptions, false, {}, any>;
+declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 //#endregion
 //#region tests/fixtures/vue-sfc-with-ts-macro/main.d.ts
