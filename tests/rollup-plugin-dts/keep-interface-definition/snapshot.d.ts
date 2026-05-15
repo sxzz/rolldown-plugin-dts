@@ -5,4 +5,4 @@ interface Foo {
   b: Array<number>;
 }
 //#endregion
-export { type Foo };
+export { Foo };

@@ -457,7 +457,7 @@ exports[`resolve dts 1`] = `
 //#region tests/fixtures/resolve-dts/mod.d.ts
 type Foo = string;
 //#endregion
-export { Foo };
+export { type Foo };
 // index.js
 "
 `;

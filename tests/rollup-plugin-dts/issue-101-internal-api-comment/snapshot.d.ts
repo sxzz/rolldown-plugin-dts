@@ -10,4 +10,4 @@ declare function public_api_without_jsdoc(): void;
 /** JSDoc for public_type */
 type public_type = number;
 //#endregion
-export { public_api_with_jsdoc, public_api_without_jsdoc, type public_type };
+export { public_api_with_jsdoc, public_api_without_jsdoc, public_type };

@@ -4,4 +4,4 @@ interface Foo {
   new (): any;
 }
 //#endregion
-export { type Foo };
+export { Foo };

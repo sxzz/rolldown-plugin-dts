@@ -6,7 +6,7 @@ interface B {}
 export { B as n, A as t };
 // main-a.d.ts
 import { t as A } from "./common-qE1sjDCn.js";
-export { type A };
+export { A };
 // main-b.d.ts
 import { n as B } from "./common-qE1sjDCn.js";
-export { type B };
+export { B };

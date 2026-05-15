@@ -5,4 +5,4 @@ interface B {}
 interface C {}
 declare type Foo = new (a: A, b: B) => C;
 //#endregion
-export { type Foo };
+export { Foo };

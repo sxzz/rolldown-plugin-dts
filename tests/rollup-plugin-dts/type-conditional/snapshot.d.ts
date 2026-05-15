@@ -5,4 +5,4 @@ interface B {}
 interface C {}
 declare type Foo = A extends B ? C : never;
 //#endregion
-export { type Foo };
+export { Foo };

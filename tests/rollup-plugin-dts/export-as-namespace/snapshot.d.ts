@@ -2,4 +2,4 @@
 //#region tests/rollup-plugin-dts/export-as-namespace/foo.d.ts
 interface Foo {}
 //#endregion
-export { type Foo };
+export { Foo };

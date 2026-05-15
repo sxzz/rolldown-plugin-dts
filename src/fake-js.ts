@@ -55,7 +55,7 @@ interface DeclarationInfo {
 }
 
 interface ModuleExports {
-  declarations: Map<string, boolean>
+  typeOnlyLocals: Set<string>
   exports: Map<string, boolean>
   reExports: ReExportInfo[]
   exportAlls: ExportAllInfo[]
@@ -440,7 +440,7 @@ export function createFakeJsPlugin({
       return
     }
 
-    const exportInfo = collectChunkExportInfo(chunk)
+    const exportInfo = collectChunkExportInfo(chunk, moduleExportsMap)
 
     let file: ParseResult
     try {
@@ -578,141 +578,6 @@ export function createFakeJsPlugin({
     }
   }
 
-  async function collectModuleExports(
-    context: TransformPluginContext,
-    nodes: t.Statement[],
-    id: string,
-  ): Promise<ModuleExports> {
-    const info: ModuleExports = {
-      declarations: new Map(),
-      exports: new Map(),
-      reExports: [],
-      exportAlls: [],
-    }
-
-    for (const node of nodes) {
-      collectLocalDeclarations(node, info.declarations)
-    }
-
-    for (const node of nodes) {
-      await collectExportInfo(context, node, id, info)
-    }
-
-    return info
-  }
-
-  function collectChunkExportInfo(chunk: RenderedChunk): ChunkExportInfo {
-    const exportsByModule = resolveAllModuleExports()
-    const roots =
-      chunk.facadeModuleId && moduleExportsMap.has(chunk.facadeModuleId)
-        ? [chunk.facadeModuleId]
-        : chunk.moduleIds
-    const mergedExports = new Map<string, boolean>()
-    const typeOnlyExportAllSources = new Set<string>()
-
-    for (const root of roots) {
-      const exports = exportsByModule.get(root)
-      if (exports) {
-        for (const [name, typeOnly] of exports) {
-          setExportTypeOnly(mergedExports, name, typeOnly)
-        }
-      }
-
-      const moduleExports = moduleExportsMap.get(root)
-      if (!moduleExports) continue
-
-      for (const exportAll of moduleExports.exportAlls) {
-        if (!exportAll.typeOnly || exportAll.source) continue
-        typeOnlyExportAllSources.add(exportAll.rawSource)
-      }
-    }
-
-    const typeOnlyNames = new Set<string>()
-    for (const [name, typeOnly] of mergedExports) {
-      if (typeOnly) typeOnlyNames.add(name)
-    }
-
-    return { typeOnlyNames, typeOnlyExportAllSources }
-  }
-
-  function resolveAllModuleExports(): Map<string, Map<string, boolean>> {
-    const exportsByModule = new Map<string, Map<string, boolean>>()
-
-    for (const [id, info] of moduleExportsMap) {
-      exportsByModule.set(id, new Map(info.exports))
-    }
-
-    let changed = true
-    while (changed) {
-      changed = false
-
-      for (const [id, info] of moduleExportsMap) {
-        const exports = exportsByModule.get(id)!
-
-        for (const reExport of info.reExports) {
-          const sourceExports = reExport.source
-            ? exportsByModule.get(reExport.source)
-            : undefined
-          const sourceTypeOnly = sourceExports?.get(reExport.local) ?? false
-          if (
-            setExportTypeOnly(
-              exports,
-              reExport.exported,
-              reExport.typeOnly || sourceTypeOnly,
-            )
-          ) {
-            changed = true
-          }
-        }
-
-        for (const exportAll of info.exportAlls) {
-          if (!exportAll.source) continue
-
-          const sourceExports = exportsByModule.get(exportAll.source)
-          if (!sourceExports) continue
-
-          for (const [name, typeOnly] of sourceExports) {
-            if (name === 'default') continue
-            if (
-              setExportTypeOnly(exports, name, exportAll.typeOnly || typeOnly)
-            ) {
-              changed = true
-            }
-          }
-        }
-      }
-    }
-
-    return exportsByModule
-  }
-
-  function setExportTypeOnly(
-    exports: Map<string, boolean>,
-    name: string,
-    typeOnly: boolean,
-  ): boolean {
-    const current = exports.get(name)
-    if (current === false || current === typeOnly) return false
-
-    if (current === undefined || !typeOnly) {
-      exports.set(name, typeOnly)
-      return true
-    }
-
-    return false
-  }
-
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  function getIdentifierIndex(
-    identifierMap: Record<string, number>,
-    name: string,
-  ): number {
-    if (name in identifierMap) {
-      return ++identifierMap[name]
-    }
-    return (identifierMap[name] = 0)
-  }
-
   function registerDeclaration(info: DeclarationInfo) {
     const declarationId = declarationIdx++
     declarationMap.set(declarationId, info)
@@ -722,231 +587,508 @@ export function createFakeJsPlugin({
   function getDeclaration(declarationId: number) {
     return declarationMap.get(declarationId)!
   }
+}
 
-  /**
-   * Collects all TSTypeParameter nodes from the given node and groups them by
-   * their name. One name can associate with one or more type parameters. These
-   * names will be used as the parameter name in the generated JavaScript
-   * dependency function.
-   */
-  function collectParams(node: t.Node): TypeParams {
-    const typeParams: t.Identifier[] = []
-    walkAST(node, {
-      leave(node) {
-        if (
-          'typeParameters' in node &&
-          node.typeParameters?.type === 'TSTypeParameterDeclaration'
-        ) {
-          typeParams.push(
-            ...node.typeParameters.params.map(
-              ({ name }): t.Identifier =>
-                typeof name === 'string' ? { type: 'Identifier', name } : name,
-            ),
-          )
-        }
-      },
-    })
+//#region Export metadata
 
-    const paramMap = new Map<string, t.Identifier[]>()
-    for (const typeParam of typeParams) {
-      const name = typeParam.name
-      const group = paramMap.get(name)
-      if (group) {
-        group.push(typeParam)
-      } else {
-        paramMap.set(name, [typeParam])
-      }
-    }
-
-    return Array.from(paramMap.entries()).map(([name, typeParams]) => ({
-      name,
-      typeParams,
-    }))
+async function collectModuleExports(
+  context: TransformPluginContext,
+  nodes: t.Statement[],
+  id: string,
+): Promise<ModuleExports> {
+  const info: ModuleExports = {
+    typeOnlyLocals: new Set(),
+    exports: new Map(),
+    reExports: [],
+    exportAlls: [],
   }
 
-  function collectDependencies(
-    node: t.Node,
-    namespaceStmts: NamespaceMap,
-    children: Set<t.Node>,
-    identifierMap: Record<string, number>,
-  ): Dep[] {
-    const deps = new Set<Dep>()
-    const seen = new Set<t.Node>()
-
-    const inferredStack: string[][] = []
-    let currentInferred = new Set<string>()
-    function isInferred(node: t.Node): boolean {
-      return node.type === 'Identifier' && currentInferred.has(node.name)
-    }
-
-    walkAST(node, {
-      enter(node) {
-        if (node.type === 'TSConditionalType') {
-          const inferred = collectInferredNames(node.extendsType)
-          inferredStack.push(inferred)
-        }
-      },
-      leave(node, parent) {
-        // handle infer scope
-        if (node.type === 'TSConditionalType') {
-          inferredStack.pop()
-        } else if (parent?.type === 'TSConditionalType') {
-          const trueBranch = parent.trueType === node
-          currentInferred = new Set<string>(
-            (trueBranch ? inferredStack : inferredStack.slice(0, -1)).flat(),
-          )
-        } else {
-          currentInferred = new Set<string>()
-        }
-
-        if (node.type === 'ExportNamedDeclaration') {
-          for (const specifier of node.specifiers) {
-            if (specifier.type === 'ExportSpecifier') {
-              addDependency(specifier.local)
-            }
-          }
-        } else if (node.type === 'TSInterfaceDeclaration' && node.extends) {
-          for (const heritage of node.extends || []) {
-            addDependency(heritage.expression)
-          }
-        } else if (node.type === 'ClassDeclaration') {
-          if (node.superClass) addDependency(node.superClass)
-          if (node.implements) {
-            for (const implement of node.implements) {
-              if (implement.type === 'ClassImplements') {
-                throw new Error('Unexpected Flow syntax')
-              }
-              addDependency(implement.expression)
-            }
-          }
-        } else if (
-          isTypeOf(node, [
-            'ObjectMethod',
-            'ObjectProperty',
-            'ClassProperty',
-            'TSPropertySignature',
-            'TSDeclareMethod',
-          ])
-        ) {
-          if (node.computed && isReferenceId(node.key)) {
-            addDependency(node.key)
-          }
-          if ('value' in node && isReferenceId(node.value)) {
-            addDependency(node.value)
-          }
-        } else
-          switch (node.type) {
-            case 'TSTypeReference': {
-              addDependency(TSEntityNameToRuntime(node.typeName))
-              break
-            }
-            case 'TSTypeQuery': {
-              if (seen.has(node.exprName)) return
-              if (node.exprName.type === 'TSImportType') break
-
-              addDependency(TSEntityNameToRuntime(node.exprName))
-
-              break
-            }
-            case 'TSImportType': {
-              seen.add(node)
-              const { source, qualifier } = node
-              const dep = importNamespace(
-                node,
-                qualifier,
-                source,
-                namespaceStmts,
-                identifierMap,
-              )
-              addDependency(dep)
-              break
-            }
-          }
-
-        if (parent && !deps.has(node as any) && isChildSymbol(node, parent)) {
-          children.add(node)
-        }
-      },
-    })
-    return Array.from(deps)
-
-    function addDependency(node: Dep) {
-      if (isThisExpression(node) || isInferred(node)) return
-      deps.add(node)
-    }
+  for (const node of nodes) {
+    collectTypeOnlyLocals(node, info.typeOnlyLocals)
   }
 
-  function importNamespace(
-    node: t.TSImportType,
-    imported: t.TSEntityName | null | undefined,
-    source: t.StringLiteral,
-    namespaceStmts: NamespaceMap,
-    identifierMap: Record<string, number>,
-  ): Dep {
-    const sourceText = source.value.replaceAll(/\W/g, '_')
-    // Use original source if it's already a valid identifier, otherwise use formatted text with index
-    const localName = `_$${
-      isIdentifierName(source.value)
-        ? source.value
-        : `${sourceText}${getIdentifierIndex(identifierMap, sourceText)}`
-    }`
-    let local: t.Identifier | t.TSQualifiedName = {
-      type: 'Identifier',
-      name: localName,
-    }
+  for (const node of nodes) {
+    await collectExportInfo(context, node, id, info)
+  }
 
-    if (namespaceStmts.has(source.value)) {
-      local = namespaceStmts.get(source.value)!.local
-    } else {
-      // prepend: import * as ${local} from ${source}
-      namespaceStmts.set(source.value, {
-        stmt: {
-          type: 'ImportDeclaration',
-          specifiers: [{ type: 'ImportNamespaceSpecifier', local }],
-          source,
-          attributes: null,
-        },
-        local,
-      })
-    }
+  return info
+}
 
-    if (imported) {
-      const importedLeft = getIdFromTSEntityName(imported)
-      if (
-        imported.type === 'ThisExpression' ||
-        importedLeft.type === 'ThisExpression'
-      ) {
-        throw new Error('Cannot import `this` from module.')
-      }
-      overwriteNode(importedLeft, {
-        type: 'TSQualifiedName',
-        left: local,
-        right: { ...importedLeft },
-      })
-      local = imported
-    }
+function collectTypeOnlyLocals(
+  node: t.Statement,
+  typeOnlyLocals: Set<string>,
+): void {
+  if (node.type !== 'ImportDeclaration') return
 
-    let replacement: t.Node = node
-    if (node.typeArguments) {
-      overwriteNode(node, {
-        type: 'TSTypeReference',
-        typeName: local,
-        typeArguments: node.typeArguments,
-      })
-      replacement = local
-    } else {
-      overwriteNode(node, local)
+  for (const specifier of node.specifiers) {
+    if (
+      node.importKind === 'type' ||
+      ('importKind' in specifier && specifier.importKind === 'type')
+    ) {
+      typeOnlyLocals.add(specifier.local.name)
     }
-
-    const dep: Dep = {
-      ...TSEntityNameToRuntime(local),
-      replace(newNode) {
-        overwriteNode(replacement, newNode)
-      },
-    }
-    return dep
   }
 }
+
+function collectDeclarationNames(node: t.Node): string[] {
+  if (node.type === 'VariableDeclaration') {
+    return node.declarations.flatMap((decl) => collectPatternNames(decl.id))
+  }
+
+  if ('id' in node && node.id) {
+    if (node.id.type !== 'Identifier' && node.id.type !== 'TSQualifiedName') {
+      return []
+    }
+
+    const id = getIdFromTSEntityName(node.id)
+    return id.type === 'Identifier' ? [id.name] : []
+  }
+
+  return []
+}
+
+function collectPatternNames(node: t.Node | null | undefined): string[] {
+  if (!node) return []
+
+  if (node.type === 'Identifier') {
+    return [node.name]
+  }
+
+  if (node.type === 'RestElement') {
+    return collectPatternNames(node.argument)
+  }
+
+  if (node.type === 'AssignmentPattern') {
+    return collectPatternNames(node.left)
+  }
+
+  if (node.type === 'ArrayPattern') {
+    return node.elements.flatMap((element) => collectPatternNames(element))
+  }
+
+  if (node.type === 'ObjectPattern') {
+    return node.properties.flatMap((property) => {
+      if (property.type === 'RestElement') {
+        return collectPatternNames(property.argument)
+      }
+      return collectPatternNames(property.value)
+    })
+  }
+
+  return []
+}
+
+function isTypeOnlyExport(
+  node: t.ExportNamedDeclaration,
+  specifier:
+    | t.ExportSpecifier
+    | t.ExportDefaultSpecifier
+    | t.ExportNamespaceSpecifier,
+): boolean {
+  return (
+    node.exportKind === 'type' ||
+    ('exportKind' in specifier && specifier.exportKind === 'type')
+  )
+}
+
+async function collectExportInfo(
+  context: TransformPluginContext,
+  node: t.Statement,
+  id: string,
+  info: ModuleExports,
+): Promise<void> {
+  if (node.type === 'ExportNamedDeclaration') {
+    if (node.declaration) {
+      for (const name of collectDeclarationNames(node.declaration)) {
+        info.exports.set(name, false)
+      }
+      return
+    }
+
+    const source = await resolveExportSource(context, node.source, id)
+    for (const specifier of node.specifiers) {
+      const typeOnly = isTypeOnlyExport(node, specifier)
+
+      if (specifier.type === 'ExportSpecifier') {
+        const exported = resolveString(specifier.exported)
+        const local = resolveString(specifier.local)
+        if (source) {
+          info.reExports.push({ source, local, exported, typeOnly })
+        } else {
+          info.exports.set(exported, typeOnly || info.typeOnlyLocals.has(local))
+        }
+      } else {
+        const exported = resolveString(specifier.exported)
+        info.exports.set(exported, typeOnly)
+      }
+    }
+    return
+  }
+
+  if (node.type === 'ExportDefaultDeclaration') {
+    info.exports.set('default', false)
+    return
+  }
+
+  if (node.type === 'ExportAllDeclaration') {
+    info.exportAlls.push({
+      source: await resolveExportSource(context, node.source, id),
+      rawSource: node.source.value,
+      typeOnly: node.exportKind === 'type',
+    })
+  }
+}
+
+async function resolveExportSource(
+  context: TransformPluginContext,
+  source: t.StringLiteral | null | undefined,
+  importer: string,
+): Promise<string | undefined> {
+  if (!source) return
+
+  const resolved = await context.resolve(source.value, importer)
+  if (!resolved || resolved.external) return
+
+  return resolved.id
+}
+
+function collectChunkExportInfo(
+  chunk: RenderedChunk,
+  moduleExportsMap: Map<string, ModuleExports>,
+): ChunkExportInfo {
+  const exportsByModule = resolveAllModuleExports(moduleExportsMap)
+  const roots =
+    chunk.facadeModuleId && moduleExportsMap.has(chunk.facadeModuleId)
+      ? [chunk.facadeModuleId]
+      : chunk.moduleIds
+  const mergedExports = new Map<string, boolean>()
+  const typeOnlyExportAllSources = new Set<string>()
+
+  for (const root of roots) {
+    const exports = exportsByModule.get(root)
+    if (exports) {
+      for (const [name, typeOnly] of exports) {
+        setExportTypeOnly(mergedExports, name, typeOnly)
+      }
+    }
+
+    const moduleExports = moduleExportsMap.get(root)
+    if (!moduleExports) continue
+
+    for (const exportAll of moduleExports.exportAlls) {
+      if (!exportAll.typeOnly || exportAll.source) continue
+      typeOnlyExportAllSources.add(exportAll.rawSource)
+    }
+  }
+
+  const typeOnlyNames = new Set<string>()
+  for (const [name, typeOnly] of mergedExports) {
+    if (typeOnly) typeOnlyNames.add(name)
+  }
+
+  return { typeOnlyNames, typeOnlyExportAllSources }
+}
+
+function resolveAllModuleExports(
+  moduleExportsMap: Map<string, ModuleExports>,
+): Map<string, Map<string, boolean>> {
+  const exportsByModule = new Map<string, Map<string, boolean>>()
+
+  for (const [id, info] of moduleExportsMap) {
+    exportsByModule.set(id, new Map(info.exports))
+  }
+
+  let changed = true
+  while (changed) {
+    changed = false
+
+    for (const [id, info] of moduleExportsMap) {
+      const exports = exportsByModule.get(id)!
+
+      for (const reExport of info.reExports) {
+        const sourceExports = reExport.source
+          ? exportsByModule.get(reExport.source)
+          : undefined
+        const sourceTypeOnly = sourceExports?.get(reExport.local) ?? false
+        if (
+          setExportTypeOnly(
+            exports,
+            reExport.exported,
+            reExport.typeOnly || sourceTypeOnly,
+          )
+        ) {
+          changed = true
+        }
+      }
+
+      for (const exportAll of info.exportAlls) {
+        if (!exportAll.source) continue
+
+        const sourceExports = exportsByModule.get(exportAll.source)
+        if (!sourceExports) continue
+
+        for (const [name, typeOnly] of sourceExports) {
+          if (name === 'default') continue
+          if (
+            setExportTypeOnly(exports, name, exportAll.typeOnly || typeOnly)
+          ) {
+            changed = true
+          }
+        }
+      }
+    }
+  }
+
+  return exportsByModule
+}
+
+function setExportTypeOnly(
+  exports: Map<string, boolean>,
+  name: string,
+  typeOnly: boolean,
+): boolean {
+  const current = exports.get(name)
+  if (current === false || current === typeOnly) return false
+
+  if (current === undefined || !typeOnly) {
+    exports.set(name, typeOnly)
+    return true
+  }
+
+  return false
+}
+
+// #endregion
+
+//#region Declaration dependency collection
+
+/**
+ * Collects all TSTypeParameter nodes from the given node and groups them by
+ * their name. One name can associate with one or more type parameters. These
+ * names will be used as the parameter name in the generated JavaScript
+ * dependency function.
+ */
+function collectParams(node: t.Node): TypeParams {
+  const typeParams: t.Identifier[] = []
+  walkAST(node, {
+    leave(node) {
+      if (
+        'typeParameters' in node &&
+        node.typeParameters?.type === 'TSTypeParameterDeclaration'
+      ) {
+        typeParams.push(
+          ...node.typeParameters.params.map(
+            ({ name }): t.Identifier =>
+              typeof name === 'string' ? { type: 'Identifier', name } : name,
+          ),
+        )
+      }
+    },
+  })
+
+  const paramMap = new Map<string, t.Identifier[]>()
+  for (const typeParam of typeParams) {
+    const name = typeParam.name
+    const group = paramMap.get(name)
+    if (group) {
+      group.push(typeParam)
+    } else {
+      paramMap.set(name, [typeParam])
+    }
+  }
+
+  return Array.from(paramMap.entries()).map(([name, typeParams]) => ({
+    name,
+    typeParams,
+  }))
+}
+
+function collectDependencies(
+  node: t.Node,
+  namespaceStmts: NamespaceMap,
+  children: Set<t.Node>,
+  identifierMap: Record<string, number>,
+): Dep[] {
+  const deps = new Set<Dep>()
+  const seen = new Set<t.Node>()
+
+  const inferredStack: string[][] = []
+  let currentInferred = new Set<string>()
+  function isInferred(node: t.Node): boolean {
+    return node.type === 'Identifier' && currentInferred.has(node.name)
+  }
+
+  walkAST(node, {
+    enter(node) {
+      if (node.type === 'TSConditionalType') {
+        const inferred = collectInferredNames(node.extendsType)
+        inferredStack.push(inferred)
+      }
+    },
+    leave(node, parent) {
+      // handle infer scope
+      if (node.type === 'TSConditionalType') {
+        inferredStack.pop()
+      } else if (parent?.type === 'TSConditionalType') {
+        const trueBranch = parent.trueType === node
+        currentInferred = new Set<string>(
+          (trueBranch ? inferredStack : inferredStack.slice(0, -1)).flat(),
+        )
+      } else {
+        currentInferred = new Set<string>()
+      }
+
+      if (node.type === 'ExportNamedDeclaration') {
+        for (const specifier of node.specifiers) {
+          if (specifier.type === 'ExportSpecifier') {
+            addDependency(specifier.local)
+          }
+        }
+      } else if (node.type === 'TSInterfaceDeclaration' && node.extends) {
+        for (const heritage of node.extends || []) {
+          addDependency(heritage.expression)
+        }
+      } else if (node.type === 'ClassDeclaration') {
+        if (node.superClass) addDependency(node.superClass)
+        if (node.implements) {
+          for (const implement of node.implements) {
+            if (implement.type === 'ClassImplements') {
+              throw new Error('Unexpected Flow syntax')
+            }
+            addDependency(implement.expression)
+          }
+        }
+      } else if (
+        isTypeOf(node, [
+          'ObjectMethod',
+          'ObjectProperty',
+          'ClassProperty',
+          'TSPropertySignature',
+          'TSDeclareMethod',
+        ])
+      ) {
+        if (node.computed && isReferenceId(node.key)) {
+          addDependency(node.key)
+        }
+        if ('value' in node && isReferenceId(node.value)) {
+          addDependency(node.value)
+        }
+      } else {
+        switch (node.type) {
+          case 'TSTypeReference': {
+            addDependency(TSEntityNameToRuntime(node.typeName))
+            break
+          }
+          case 'TSTypeQuery': {
+            if (seen.has(node.exprName)) return
+            if (node.exprName.type === 'TSImportType') break
+
+            addDependency(TSEntityNameToRuntime(node.exprName))
+
+            break
+          }
+          case 'TSImportType': {
+            seen.add(node)
+            const { source, qualifier } = node
+            const dep = importNamespace(
+              node,
+              qualifier,
+              source,
+              namespaceStmts,
+              identifierMap,
+            )
+            addDependency(dep)
+            break
+          }
+        }
+      }
+
+      if (parent && !deps.has(node as any) && isChildSymbol(node, parent)) {
+        children.add(node)
+      }
+    },
+  })
+  return Array.from(deps)
+
+  function addDependency(node: Dep) {
+    if (isThisExpression(node) || isInferred(node)) return
+    deps.add(node)
+  }
+}
+
+function importNamespace(
+  node: t.TSImportType,
+  imported: t.TSEntityName | null | undefined,
+  source: t.StringLiteral,
+  namespaceStmts: NamespaceMap,
+  identifierMap: Record<string, number>,
+): Dep {
+  const sourceText = source.value.replaceAll(/\W/g, '_')
+  // Use original source if it's already a valid identifier,
+  // otherwise use formatted text with index.
+  const localName = `_$${
+    isIdentifierName(source.value)
+      ? source.value
+      : `${sourceText}${getIdentifierIndex(identifierMap, sourceText)}`
+  }`
+  let local: t.Identifier | t.TSQualifiedName = {
+    type: 'Identifier',
+    name: localName,
+  }
+
+  if (namespaceStmts.has(source.value)) {
+    local = namespaceStmts.get(source.value)!.local
+  } else {
+    // prepend: import * as ${local} from ${source}
+    namespaceStmts.set(source.value, {
+      stmt: {
+        type: 'ImportDeclaration',
+        specifiers: [{ type: 'ImportNamespaceSpecifier', local }],
+        source,
+        attributes: null,
+      },
+      local,
+    })
+  }
+
+  if (imported) {
+    const importedLeft = getIdFromTSEntityName(imported)
+    if (
+      imported.type === 'ThisExpression' ||
+      importedLeft.type === 'ThisExpression'
+    ) {
+      throw new Error('Cannot import `this` from module.')
+    }
+    overwriteNode(importedLeft, {
+      type: 'TSQualifiedName',
+      left: local,
+      right: { ...importedLeft },
+    })
+    local = imported
+  }
+
+  let replacement: t.Node = node
+  if (node.typeArguments) {
+    overwriteNode(node, {
+      type: 'TSTypeReference',
+      typeName: local,
+      typeArguments: node.typeArguments,
+    })
+    replacement = local
+  } else {
+    overwriteNode(node, local)
+  }
+
+  const dep: Dep = {
+    ...TSEntityNameToRuntime(local),
+    replace(newNode) {
+      overwriteNode(replacement, newNode)
+    },
+  }
+  return dep
+}
+
+// #endregion
 
 function isChildSymbol(node: t.Node, parent: t.Node) {
   if (node.type === 'Identifier') return true
@@ -1103,6 +1245,7 @@ function isThisExpression(node: t.Node): boolean {
 function isInfer(node: t.Node): node is t.Identifier {
   return isIdentifierOf(node, 'infer')
 }
+
 function TSEntityNameToRuntime(
   node: t.TSEntityName,
 ): t.MemberExpression | t.Identifier | t.ThisExpression {
@@ -1142,171 +1285,6 @@ function isHelperImport(node: t.Node) {
         ['__exportAll', '__reExport'].includes(spec.local.name),
     )
   )
-}
-
-function collectLocalDeclarations(
-  node: t.Statement,
-  declarations: Map<string, boolean>,
-): void {
-  if (node.type === 'ImportDeclaration') {
-    for (const specifier of node.specifiers) {
-      declarations.set(
-        specifier.local.name,
-        node.importKind === 'type' ||
-          ('importKind' in specifier && specifier.importKind === 'type'),
-      )
-    }
-    return
-  }
-
-  const declaration =
-    node.type === 'ExportNamedDeclaration' && node.declaration
-      ? node.declaration
-      : node
-
-  if (declaration.type === 'ExportDefaultDeclaration') {
-    return
-  }
-
-  if (
-    !isTypeOf(declaration, ['TSDeclareFunction']) &&
-    !isDeclarationType(declaration)
-  ) {
-    return
-  }
-
-  for (const name of collectDeclarationNames(declaration)) {
-    declarations.set(name, isTypeOnlyDeclaration(declaration))
-  }
-}
-
-function collectDeclarationNames(node: t.Node): string[] {
-  if (node.type === 'VariableDeclaration') {
-    return node.declarations.flatMap((decl) => collectPatternNames(decl.id))
-  }
-
-  if ('id' in node && node.id) {
-    if (node.id.type !== 'Identifier' && node.id.type !== 'TSQualifiedName') {
-      return []
-    }
-
-    const id = getIdFromTSEntityName(node.id)
-    return id.type === 'Identifier' ? [id.name] : []
-  }
-
-  return []
-}
-
-function collectPatternNames(node: t.Node | null | undefined): string[] {
-  if (!node) return []
-
-  if (node.type === 'Identifier') {
-    return [node.name]
-  }
-
-  if (node.type === 'RestElement') {
-    return collectPatternNames(node.argument)
-  }
-
-  if (node.type === 'AssignmentPattern') {
-    return collectPatternNames(node.left)
-  }
-
-  if (node.type === 'ArrayPattern') {
-    return node.elements.flatMap((element) => collectPatternNames(element))
-  }
-
-  if (node.type === 'ObjectPattern') {
-    return node.properties.flatMap((property) => {
-      if (property.type === 'RestElement') {
-        return collectPatternNames(property.argument)
-      }
-      return collectPatternNames(property.value)
-    })
-  }
-
-  return []
-}
-
-function isTypeOnlyDeclaration(node: t.Node): boolean {
-  return isTypeOf(node, ['TSInterfaceDeclaration', 'TSTypeAliasDeclaration'])
-}
-
-function isTypeOnlyExport(
-  node: t.ExportNamedDeclaration,
-  specifier:
-    | t.ExportSpecifier
-    | t.ExportDefaultSpecifier
-    | t.ExportNamespaceSpecifier,
-): boolean {
-  return (
-    node.exportKind === 'type' ||
-    ('exportKind' in specifier && specifier.exportKind === 'type')
-  )
-}
-
-async function collectExportInfo(
-  context: TransformPluginContext,
-  node: t.Statement,
-  id: string,
-  info: ModuleExports,
-): Promise<void> {
-  if (node.type === 'ExportNamedDeclaration') {
-    if (node.declaration) {
-      for (const name of collectDeclarationNames(node.declaration)) {
-        info.exports.set(name, isTypeOnlyDeclaration(node.declaration))
-      }
-      return
-    }
-
-    const source = await resolveExportSource(context, node.source, id)
-    for (const specifier of node.specifiers) {
-      const typeOnly = isTypeOnlyExport(node, specifier)
-
-      if (specifier.type === 'ExportSpecifier') {
-        const exported = resolveString(specifier.exported)
-        const local = resolveString(specifier.local)
-        if (source) {
-          info.reExports.push({ source, local, exported, typeOnly })
-        } else {
-          info.exports.set(
-            exported,
-            typeOnly || info.declarations.get(local) === true,
-          )
-        }
-      } else {
-        const exported = resolveString(specifier.exported)
-        info.exports.set(exported, typeOnly)
-      }
-    }
-    return
-  }
-
-  if (node.type === 'ExportDefaultDeclaration') {
-    info.exports.set('default', isTypeOnlyDeclaration(node.declaration))
-    return
-  }
-
-  if (node.type === 'ExportAllDeclaration') {
-    info.exportAlls.push({
-      source: await resolveExportSource(context, node.source, id),
-      rawSource: node.source.value,
-      typeOnly: node.exportKind === 'type',
-    })
-  }
-}
-
-async function resolveExportSource(
-  context: TransformPluginContext,
-  source: t.StringLiteral | null | undefined,
-  importer: string,
-): Promise<string | undefined> {
-  if (!source) return
-
-  const resolved = await context.resolve(source.value, importer)
-  if (!resolved || resolved.external) return
-
-  return resolved.id
 }
 
 /**
@@ -1395,7 +1373,7 @@ function patchTsNamespace(nodes: t.Statement[]) {
   const removed = new Set<t.Node>()
 
   for (const [i, node] of nodes.entries()) {
-    const result = handleExport(node)
+    const result = getExportAllNamespace(node)
     if (!result) continue
 
     const [binding, exports] = result
@@ -1428,28 +1406,28 @@ function patchTsNamespace(nodes: t.Statement[]) {
   }
 
   return nodes.filter((node) => !removed.has(node))
+}
 
-  function handleExport(
-    node: t.Statement,
-  ): false | [t.Identifier, t.ObjectExpression] {
-    if (
-      node.type !== 'VariableDeclaration' ||
-      node.declarations.length !== 1 ||
-      node.declarations[0].id.type !== 'Identifier' ||
-      node.declarations[0].init?.type !== 'CallExpression' ||
-      node.declarations[0].init.callee.type !== 'Identifier' ||
-      node.declarations[0].init.callee.name !== '__exportAll' ||
-      node.declarations[0].init.arguments.length !== 1 ||
-      node.declarations[0].init.arguments[0].type !== 'ObjectExpression'
-    ) {
-      return false
-    }
-
-    const source = node.declarations[0].id
-
-    const exports = node.declarations[0].init.arguments[0]
-    return [source, exports] as const
+function getExportAllNamespace(
+  node: t.Statement,
+): false | [t.Identifier, t.ObjectExpression] {
+  if (
+    node.type !== 'VariableDeclaration' ||
+    node.declarations.length !== 1 ||
+    node.declarations[0].id.type !== 'Identifier' ||
+    node.declarations[0].init?.type !== 'CallExpression' ||
+    node.declarations[0].init.callee.type !== 'Identifier' ||
+    node.declarations[0].init.callee.name !== '__exportAll' ||
+    node.declarations[0].init.arguments.length !== 1 ||
+    node.declarations[0].init.arguments[0].type !== 'ObjectExpression'
+  ) {
+    return false
   }
+
+  const source = node.declarations[0].id
+
+  const exports = node.declarations[0].init.arguments[0]
+  return [source, exports] as const
 }
 
 /**
@@ -1650,4 +1628,14 @@ function inheritNodeComments<T extends t.Node>(oldNode: t.Node, newNode: T): T {
   )
 
   return newNode
+}
+
+function getIdentifierIndex(
+  identifierMap: Record<string, number>,
+  name: string,
+): number {
+  if (name in identifierMap) {
+    return ++identifierMap[name]
+  }
+  return (identifierMap[name] = 0)
 }

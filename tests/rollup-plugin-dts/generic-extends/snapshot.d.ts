@@ -5,4 +5,4 @@ import { ComponentPropsWithRef, ElementType, ForwardRefExoticComponent } from "r
 type AnimatedProps<T> = T;
 type AnimatedComponent<T extends ElementType> = ForwardRefExoticComponent<AnimatedProps<ComponentPropsWithRef<T>>>;
 //#endregion
-export { type AnimatedComponent, type AnimatedProps };
+export { AnimatedComponent, AnimatedProps };

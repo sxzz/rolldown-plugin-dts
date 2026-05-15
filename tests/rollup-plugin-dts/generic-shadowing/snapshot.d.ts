@@ -6,4 +6,4 @@ type Config1<Client> = Client;
 type Client = any;
 type Config2<Client> = Client;
 //#endregion
-export { type Client, type Config1, type Config2 };
+export { Client, Config1, Config2 };

@@ -23,4 +23,4 @@ interface WithA {
   a: A;
 }
 //#endregion
-export { type WithA, deep_d_exports as deep, defs_d_exports as ns, only_one_d_exports as onlyOne };
+export { WithA, deep_d_exports as deep, defs_d_exports as ns, only_one_d_exports as onlyOne };

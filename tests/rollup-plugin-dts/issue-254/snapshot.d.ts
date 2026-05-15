@@ -8,4 +8,4 @@ declare namespace Bar {
   export enum F {}
 }
 //#endregion
-export { Bar, type Foo };
+export { Bar, Foo };

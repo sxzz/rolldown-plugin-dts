@@ -9,4 +9,4 @@ interface Thing {
   set size(value: GetT | SetT | boolean);
 }
 //#endregion
-export { type Thing };
+export { Thing };
