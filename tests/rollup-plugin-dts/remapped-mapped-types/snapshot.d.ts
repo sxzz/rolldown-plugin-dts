@@ -17,4 +17,4 @@ interface Circle {
 }
 type KindlessCircle = RemoveKindField<Circle>;
 //#endregion
-export { KindlessCircle, LazyPerson };
+export { type KindlessCircle, type LazyPerson };

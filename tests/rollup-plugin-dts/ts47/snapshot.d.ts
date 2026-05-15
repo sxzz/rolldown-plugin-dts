@@ -7,4 +7,4 @@ interface State<in out T> {
   set: (value: T) => void;
 }
 //#endregion
-export { FirstHammer, State };
+export { type FirstHammer, type State };

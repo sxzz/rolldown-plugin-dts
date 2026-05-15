@@ -4,4 +4,4 @@ interface Connection {
   uri: string;
 }
 //#endregion
-export { Connection };
+export { type Connection };

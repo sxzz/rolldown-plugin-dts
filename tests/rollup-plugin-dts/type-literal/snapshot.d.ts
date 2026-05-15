@@ -5,4 +5,4 @@ declare type Foo = {
   a: A;
 };
 //#endregion
-export { Foo };
+export { type Foo };

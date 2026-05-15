@@ -9,4 +9,4 @@ declare const fn: {
   staticProp: string;
 };
 //#endregion
-export { I, fn };
+export { type I, fn };

@@ -15,4 +15,4 @@ interface Foo {
   ns6: _$foo_bar2.T;
 }
 //#endregion
-export { Foo };
+export { type Foo };

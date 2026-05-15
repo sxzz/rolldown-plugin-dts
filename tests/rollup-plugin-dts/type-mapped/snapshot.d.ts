@@ -4,4 +4,4 @@ interface A {}
 interface B {}
 declare type Foo = { [P in keyof A]: B[P] };
 //#endregion
-export { Foo };
+export { type Foo };

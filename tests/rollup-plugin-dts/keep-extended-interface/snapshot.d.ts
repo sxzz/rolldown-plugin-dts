@@ -3,4 +3,4 @@
 interface Bar {}
 interface Foo extends Bar {}
 //#endregion
-export { Foo };
+export { type Foo };

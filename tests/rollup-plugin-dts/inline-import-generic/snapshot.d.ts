@@ -9,4 +9,4 @@ interface Foo {
   bar: Bar<number>;
 }
 //#endregion
-export { Foo };
+export { type Foo };

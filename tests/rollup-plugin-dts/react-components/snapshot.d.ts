@@ -7,4 +7,4 @@ interface MyComponentProps extends React.HtmlHTMLAttributes<HTMLDivElement> {
 }
 declare class MyComponent extends React.Component<MyComponentProps> {}
 //#endregion
-export { MyComponent, MyComponentProps };
+export { MyComponent, type MyComponentProps };

@@ -18,4 +18,4 @@ declare const params: {
   normalize: (inVar: In) => Out;
 };
 //#endregion
-export { In, Out, config, options, params };
+export { type In, type Out, config, options, params };

@@ -8,4 +8,4 @@ interface Test {
   rollup: _$rollup.RollupOptions;
 }
 //#endregion
-export { Test, TypeScript };
+export { type Test, type TypeScript };

@@ -16,4 +16,4 @@ interface CacheInfo {
 }
 declare const Cache2: () => Cache2;
 //#endregion
-export { Cache, Cache2, CacheInfo, uniqueId };
+export { Cache, Cache2, type CacheInfo, uniqueId };

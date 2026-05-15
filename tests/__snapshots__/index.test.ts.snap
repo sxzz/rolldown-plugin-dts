@@ -571,5 +571,15 @@ declare const ns = 42;
 //#region tests/fixtures/type-only-export/all.d.ts
 declare const all = 42;
 //#endregion
-export { A as RuntimeA, type A as TypeA, A as TypeC, type B as TypeB, all, type namespace_d_exports as ns };"
+//#region tests/fixtures/type-only-export/chain-c.d.ts
+interface c {}
+declare const runtime = 1;
+//#endregion
+//#region tests/fixtures/type-only-export/chain-b.d.ts
+interface Local {}
+//#endregion
+//#region tests/fixtures/type-only-export/class-source.d.ts
+declare class TypeOnlyClass {}
+//#endregion
+export { A as RuntimeA, type A as TypeA, type A as TypeC, type B as TypeB, type TypeOnlyClass, type all, type c, type namespace_d_exports as ns, runtime, type Local as typeOnly };"
 `;

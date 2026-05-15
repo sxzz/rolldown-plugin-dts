@@ -2,4 +2,4 @@
 //#region tests/rollup-plugin-dts/export-default-interface/index.d.ts
 interface Foo {}
 //#endregion
-export { Foo as default };
+export { type Foo as default };

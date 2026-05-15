@@ -16,7 +16,7 @@ declare const A = 2;
 declare type JSXElements = keyof JSX.IntrinsicElements;
 declare const a: JSXElements[];
 //#endregion
-export { A, B, JSXElements, a };
+export { A, type B, type JSXElements, a };
 // main-b.d.ts
 import { t as B } from "./common-AkXVRtKo.js";
-export { B };
+export { type B };

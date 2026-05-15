@@ -16,4 +16,4 @@ interface MyComponentProps extends ns.Props<G> {
 }
 declare class MyComponent extends ns.Component<MyComponentProps> {}
 //#endregion
-export { MyComponent, MyComponentProps };
+export { MyComponent, type MyComponentProps };

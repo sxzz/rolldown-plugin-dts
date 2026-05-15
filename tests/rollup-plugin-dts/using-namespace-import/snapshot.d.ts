@@ -7,4 +7,4 @@ interface Foo {
   bar: Bar;
 }
 //#endregion
-export { Foo };
+export { type Foo };

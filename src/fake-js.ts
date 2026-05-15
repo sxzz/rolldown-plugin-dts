@@ -54,6 +54,31 @@ interface DeclarationInfo {
   children: t.Node[]
 }
 
+interface ModuleExports {
+  declarations: Map<string, boolean>
+  exports: Map<string, boolean>
+  reExports: ReExportInfo[]
+  exportAlls: ExportAllInfo[]
+}
+
+interface ReExportInfo {
+  source?: string
+  local: string
+  exported: string
+  typeOnly: boolean
+}
+
+interface ExportAllInfo {
+  source?: string
+  rawSource: string
+  typeOnly: boolean
+}
+
+interface ChunkExportInfo {
+  typeOnlyNames: Set<string>
+  typeOnlyExportAllSources: Set<string>
+}
+
 type NamespaceMap = Map<
   string,
   {
@@ -70,7 +95,7 @@ export function createFakeJsPlugin({
   let declarationIdx = 0
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
-  const typeOnlyMap = new Map<string /* filename */, string[]>()
+  const moduleExportsMap = new Map<string /* filename */, ModuleExports>()
   const warnedCjsDtsInputs = new Set<string>()
 
   return {
@@ -139,11 +164,11 @@ export function createFakeJsPlugin({
     },
   }
 
-  function transform(
+  async function transform(
     this: TransformPluginContext,
     code: string,
     id: string,
-  ): TransformResult {
+  ): Promise<TransformResult> {
     let file: ParseResult
     try {
       file = parse(code, {
@@ -160,7 +185,7 @@ export function createFakeJsPlugin({
     }
 
     const { program, comments } = file
-    const typeOnlyIds: string[] = []
+    moduleExportsMap.set(id, await collectModuleExports(this, program.body, id))
     const identifierMap: Record<string, number> = Object.create(null)
 
     if (!warnedCjsDtsInputs.has(id) && program.body.some(isCjsDtsInputSyntax)) {
@@ -182,7 +207,7 @@ export function createFakeJsPlugin({
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.Statement) => (program.body[i] = stmt)
-      if (rewriteImportExport(stmt, setStmt, typeOnlyIds)) continue
+      if (rewriteImportExport(stmt, setStmt)) continue
 
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
@@ -398,8 +423,6 @@ export function createFakeJsPlugin({
       ...appendStmts,
     ]
 
-    typeOnlyMap.set(id, typeOnlyIds)
-
     const result = generate(file, {
       comments: false,
       sourceMaps: sourcemap,
@@ -417,11 +440,7 @@ export function createFakeJsPlugin({
       return
     }
 
-    const typeOnlyIds: string[] = []
-    for (const module of chunk.moduleIds) {
-      const ids = typeOnlyMap.get(module)
-      if (ids) typeOnlyIds.push(...ids)
-    }
+    const exportInfo = collectChunkExportInfo(chunk)
 
     let file: ParseResult
     try {
@@ -442,7 +461,7 @@ export function createFakeJsPlugin({
         if (isHelperImport(node)) return null
         if (node.type === 'ExpressionStatement') return null
 
-        const newNode = patchImportExport(node, typeOnlyIds, cjsDefault)
+        const newNode = patchImportExport(node, exportInfo, cjsDefault)
         if (newNode || newNode === false) {
           return newNode
         }
@@ -557,6 +576,130 @@ export function createFakeJsPlugin({
       code: result.code,
       map: result.map as any,
     }
+  }
+
+  async function collectModuleExports(
+    context: TransformPluginContext,
+    nodes: t.Statement[],
+    id: string,
+  ): Promise<ModuleExports> {
+    const info: ModuleExports = {
+      declarations: new Map(),
+      exports: new Map(),
+      reExports: [],
+      exportAlls: [],
+    }
+
+    for (const node of nodes) {
+      collectLocalDeclarations(node, info.declarations)
+    }
+
+    for (const node of nodes) {
+      await collectExportInfo(context, node, id, info)
+    }
+
+    return info
+  }
+
+  function collectChunkExportInfo(chunk: RenderedChunk): ChunkExportInfo {
+    const exportsByModule = resolveAllModuleExports()
+    const roots =
+      chunk.facadeModuleId && moduleExportsMap.has(chunk.facadeModuleId)
+        ? [chunk.facadeModuleId]
+        : chunk.moduleIds
+    const mergedExports = new Map<string, boolean>()
+    const typeOnlyExportAllSources = new Set<string>()
+
+    for (const root of roots) {
+      const exports = exportsByModule.get(root)
+      if (exports) {
+        for (const [name, typeOnly] of exports) {
+          setExportTypeOnly(mergedExports, name, typeOnly)
+        }
+      }
+
+      const moduleExports = moduleExportsMap.get(root)
+      if (!moduleExports) continue
+
+      for (const exportAll of moduleExports.exportAlls) {
+        if (!exportAll.typeOnly || exportAll.source) continue
+        typeOnlyExportAllSources.add(exportAll.rawSource)
+      }
+    }
+
+    const typeOnlyNames = new Set<string>()
+    for (const [name, typeOnly] of mergedExports) {
+      if (typeOnly) typeOnlyNames.add(name)
+    }
+
+    return { typeOnlyNames, typeOnlyExportAllSources }
+  }
+
+  function resolveAllModuleExports(): Map<string, Map<string, boolean>> {
+    const exportsByModule = new Map<string, Map<string, boolean>>()
+
+    for (const [id, info] of moduleExportsMap) {
+      exportsByModule.set(id, new Map(info.exports))
+    }
+
+    let changed = true
+    while (changed) {
+      changed = false
+
+      for (const [id, info] of moduleExportsMap) {
+        const exports = exportsByModule.get(id)!
+
+        for (const reExport of info.reExports) {
+          const sourceExports = reExport.source
+            ? exportsByModule.get(reExport.source)
+            : undefined
+          const sourceTypeOnly = sourceExports?.get(reExport.local) ?? false
+          if (
+            setExportTypeOnly(
+              exports,
+              reExport.exported,
+              reExport.typeOnly || sourceTypeOnly,
+            )
+          ) {
+            changed = true
+          }
+        }
+
+        for (const exportAll of info.exportAlls) {
+          if (!exportAll.source) continue
+
+          const sourceExports = exportsByModule.get(exportAll.source)
+          if (!sourceExports) continue
+
+          for (const [name, typeOnly] of sourceExports) {
+            if (name === 'default') continue
+            if (
+              setExportTypeOnly(exports, name, exportAll.typeOnly || typeOnly)
+            ) {
+              changed = true
+            }
+          }
+        }
+      }
+    }
+
+    return exportsByModule
+  }
+
+  function setExportTypeOnly(
+    exports: Map<string, boolean>,
+    name: string,
+    typeOnly: boolean,
+  ): boolean {
+    const current = exports.get(name)
+    if (current === false || current === typeOnly) return false
+
+    if (current === undefined || !typeOnly) {
+      exports.set(name, typeOnly)
+      return true
+    }
+
+    return false
   }
 
   // eslint-disable-next-line unicorn/consistent-function-scoping
@@ -1001,12 +1144,177 @@ function isHelperImport(node: t.Node) {
   )
 }
 
+function collectLocalDeclarations(
+  node: t.Statement,
+  declarations: Map<string, boolean>,
+): void {
+  if (node.type === 'ImportDeclaration') {
+    for (const specifier of node.specifiers) {
+      declarations.set(
+        specifier.local.name,
+        node.importKind === 'type' ||
+          ('importKind' in specifier && specifier.importKind === 'type'),
+      )
+    }
+    return
+  }
+
+  const declaration =
+    node.type === 'ExportNamedDeclaration' && node.declaration
+      ? node.declaration
+      : node
+
+  if (declaration.type === 'ExportDefaultDeclaration') {
+    return
+  }
+
+  if (
+    !isTypeOf(declaration, ['TSDeclareFunction']) &&
+    !isDeclarationType(declaration)
+  ) {
+    return
+  }
+
+  for (const name of collectDeclarationNames(declaration)) {
+    declarations.set(name, isTypeOnlyDeclaration(declaration))
+  }
+}
+
+function collectDeclarationNames(node: t.Node): string[] {
+  if (node.type === 'VariableDeclaration') {
+    return node.declarations.flatMap((decl) => collectPatternNames(decl.id))
+  }
+
+  if ('id' in node && node.id) {
+    if (node.id.type !== 'Identifier' && node.id.type !== 'TSQualifiedName') {
+      return []
+    }
+
+    const id = getIdFromTSEntityName(node.id)
+    return id.type === 'Identifier' ? [id.name] : []
+  }
+
+  return []
+}
+
+function collectPatternNames(node: t.Node | null | undefined): string[] {
+  if (!node) return []
+
+  if (node.type === 'Identifier') {
+    return [node.name]
+  }
+
+  if (node.type === 'RestElement') {
+    return collectPatternNames(node.argument)
+  }
+
+  if (node.type === 'AssignmentPattern') {
+    return collectPatternNames(node.left)
+  }
+
+  if (node.type === 'ArrayPattern') {
+    return node.elements.flatMap((element) => collectPatternNames(element))
+  }
+
+  if (node.type === 'ObjectPattern') {
+    return node.properties.flatMap((property) => {
+      if (property.type === 'RestElement') {
+        return collectPatternNames(property.argument)
+      }
+      return collectPatternNames(property.value)
+    })
+  }
+
+  return []
+}
+
+function isTypeOnlyDeclaration(node: t.Node): boolean {
+  return isTypeOf(node, ['TSInterfaceDeclaration', 'TSTypeAliasDeclaration'])
+}
+
+function isTypeOnlyExport(
+  node: t.ExportNamedDeclaration,
+  specifier:
+    | t.ExportSpecifier
+    | t.ExportDefaultSpecifier
+    | t.ExportNamespaceSpecifier,
+): boolean {
+  return (
+    node.exportKind === 'type' ||
+    ('exportKind' in specifier && specifier.exportKind === 'type')
+  )
+}
+
+async function collectExportInfo(
+  context: TransformPluginContext,
+  node: t.Statement,
+  id: string,
+  info: ModuleExports,
+): Promise<void> {
+  if (node.type === 'ExportNamedDeclaration') {
+    if (node.declaration) {
+      for (const name of collectDeclarationNames(node.declaration)) {
+        info.exports.set(name, isTypeOnlyDeclaration(node.declaration))
+      }
+      return
+    }
+
+    const source = await resolveExportSource(context, node.source, id)
+    for (const specifier of node.specifiers) {
+      const typeOnly = isTypeOnlyExport(node, specifier)
+
+      if (specifier.type === 'ExportSpecifier') {
+        const exported = resolveString(specifier.exported)
+        const local = resolveString(specifier.local)
+        if (source) {
+          info.reExports.push({ source, local, exported, typeOnly })
+        } else {
+          info.exports.set(
+            exported,
+            typeOnly || info.declarations.get(local) === true,
+          )
+        }
+      } else {
+        const exported = resolveString(specifier.exported)
+        info.exports.set(exported, typeOnly)
+      }
+    }
+    return
+  }
+
+  if (node.type === 'ExportDefaultDeclaration') {
+    info.exports.set('default', isTypeOnlyDeclaration(node.declaration))
+    return
+  }
+
+  if (node.type === 'ExportAllDeclaration') {
+    info.exportAlls.push({
+      source: await resolveExportSource(context, node.source, id),
+      rawSource: node.source.value,
+      typeOnly: node.exportKind === 'type',
+    })
+  }
+}
+
+async function resolveExportSource(
+  context: TransformPluginContext,
+  source: t.StringLiteral | null | undefined,
+  importer: string,
+): Promise<string | undefined> {
+  if (!source) return
+
+  const resolved = await context.resolve(source.value, importer)
+  if (!resolved || resolved.external) return
+
+  return resolved.id
+}
+
 /**
  * patch `.d.ts` suffix in import source to `.js`
  */
 function patchImportExport(
   node: t.Statement,
-  typeOnlyIds: string[],
+  exportInfo: ChunkExportInfo,
   cjsDefault: boolean,
 ): t.Statement | false | undefined {
   if (
@@ -1034,10 +1342,21 @@ function patchImportExport(
       'ExportNamedDeclaration',
     ])
   ) {
-    if (node.type === 'ExportNamedDeclaration' && typeOnlyIds.length) {
+    if (
+      node.type === 'ExportAllDeclaration' &&
+      node.source &&
+      exportInfo.typeOnlyExportAllSources.has(node.source.value)
+    ) {
+      node.exportKind = 'type'
+    }
+
+    if (
+      node.type === 'ExportNamedDeclaration' &&
+      exportInfo.typeOnlyNames.size
+    ) {
       for (const spec of node.specifiers) {
         const name = resolveString(spec.exported)
-        if (typeOnlyIds.includes(name)) {
+        if (exportInfo.typeOnlyNames.has(name)) {
           if (spec.type === 'ExportSpecifier') {
             spec.exportKind = 'type'
           } else {
@@ -1228,7 +1547,6 @@ function patchReExport(nodes: t.Statement[]) {
 function rewriteImportExport(
   node: t.Node,
   set: (node: t.Statement) => void,
-  typeOnlyIds: string[],
 ): node is
   | t.ImportDeclaration
   | t.ExportAllDeclaration
@@ -1238,22 +1556,6 @@ function rewriteImportExport(
     (node.type === 'ExportNamedDeclaration' && !node.declaration)
   ) {
     for (const specifier of node.specifiers) {
-      if (
-        ('exportKind' in specifier && specifier.exportKind === 'type') ||
-        ('exportKind' in node && node.exportKind === 'type')
-      ) {
-        typeOnlyIds.push(
-          resolveString(
-            (
-              specifier as
-                | t.ExportSpecifier
-                | t.ExportDefaultSpecifier
-                | t.ExportNamespaceSpecifier
-            ).exported,
-          ),
-        )
-      }
-
       if (specifier.type === 'ImportSpecifier') {
         specifier.importKind = 'value'
       } else if (specifier.type === 'ExportSpecifier') {

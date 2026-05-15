@@ -2,4 +2,4 @@
 //#region tests/rollup-plugin-dts/remove-unexported-interface/index.d.ts
 interface Foo {}
 //#endregion
-export { Foo };
+export { type Foo };

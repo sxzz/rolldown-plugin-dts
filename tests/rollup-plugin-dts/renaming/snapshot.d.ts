@@ -37,4 +37,4 @@ declare type Type$1 = {
   f: F;
 };
 //#endregion
-export { Func as AFunc, Interface as AInterface, Klass as AKlass, Type as AType, Func$1 as BFunc, Interface$1 as BInterface, Klass$1 as BKlass, Type$1 as BType };
+export { Func as AFunc, type Interface as AInterface, Klass as AKlass, type Type as AType, Func$1 as BFunc, type Interface$1 as BInterface, Klass$1 as BKlass, type Type$1 as BType };

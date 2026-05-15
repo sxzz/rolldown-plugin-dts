@@ -3,4 +3,4 @@
 interface Foo {}
 declare type Bar = Foo;
 //#endregion
-export { Bar };
+export { type Bar };

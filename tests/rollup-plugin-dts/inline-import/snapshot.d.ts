@@ -9,4 +9,4 @@ interface Foo {
   baz: typeof Baz;
 }
 //#endregion
-export { Foo };
+export { type Foo };
