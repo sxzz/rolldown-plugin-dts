@@ -2,7 +2,7 @@
   "name": "rolldown-plugin-dts",
   "type": "module",
   "version": "0.25.0",
-  "packageManager": "pnpm@11.0.9",
+  "packageManager": "pnpm@11.1.2",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
   "license": "MIT",

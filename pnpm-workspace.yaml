@@ -4,36 +4,38 @@ overrides:
 catalog:
   '@babel/types': ^8.0.0-rc.4
   '@jridgewell/source-map': ^0.3.11
-  '@sxzz/eslint-config': ^8.0.0
+  '@sxzz/eslint-config': ^8.1.0
   '@sxzz/prettier-config': ^2.3.1
   '@sxzz/test-utils': ^0.5.18
-  '@types/node': ^25.6.0
-  '@typescript/native-preview': 7.0.0-dev.20260510.1
+  '@types/node': ^25.8.0
+  '@typescript/native-preview': 7.0.0-dev.20260515.1
   '@volar/typescript': ^2.4.28
-  '@vue/language-core': ^3.2.8
+  '@vue/language-core': ^3.2.9
   arktype: ^2.2.0
   bumpp: ^11.1.0
   diff: ^9.0.0
-  eslint: ^10.3.0
+  eslint: ^10.4.0
   prettier: ^3.8.3
-  rolldown: ^1.0.0
+  rolldown: ^1.0.1
   rolldown-plugin-require-cjs: ^0.4.0
   rollup-plugin-dts: ^6.4.1
-  tsdown: ^0.22.0-beta.3
-  tsnapi: ^0.3.2
+  tsdown: ^0.22.0
+  tsnapi: ^0.3.3
   typescript: ^6.0.3
-  vitest: ^4.1.5
+  vitest: ^4.1.6
   vue: ^3.5.34
-  vue-tsc: ^3.2.8
+  vue-tsc: ^3.2.9
   zod: ^4.4.3
 
 catalogs:
   prod:
-    '@babel/generator': 8.0.0-rc.4
-    '@babel/helper-validator-identifier': 8.0.0-rc.4
+    '@babel/generator': 8.0.0-rc.5
+    '@babel/helper-validator-identifier': 8.0.0-rc.5
     '@babel/parser': 8.0.0-rc.4
     ast-kit: ^3.0.0-beta.1
     birpc: ^4.0.0
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.5
     obug: ^2.1.1
+
+minimumReleaseAge: 0
