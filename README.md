@@ -34,6 +34,20 @@ export default {
 
 You can find an example in [here](./rolldown.config.ts).
 
+### Vite
+
+When using this plugin with Vite, exclude declaration files from Oxc
+transformation to avoid processing generated outputs. Since `oxc.exclude`
+overrides the default exclude list, include JavaScript files as well:
+
+```ts
+dts({
+  oxc: {
+    exclude: [/\.js$/, /\.d\.[cm]?ts$/],
+  },
+})
+```
+
 ## Options
 
 Configuration options for the plugin.
