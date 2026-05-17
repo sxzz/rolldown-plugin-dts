@@ -7,7 +7,7 @@ settings:
 catalogs:
   default:
     '@babel/types':
-      specifier: ^8.0.0-rc.4
+      specifier: ^8.0.0-rc.5
       version: 8.0.0-rc.5
     '@jridgewell/source-map':
       specifier: ^0.3.11
@@ -83,8 +83,8 @@ catalogs:
       specifier: 8.0.0-rc.5
       version: 8.0.0-rc.5
     '@babel/parser':
-      specifier: 8.0.0-rc.4
-      version: 8.0.0-rc.4
+      specifier: 8.0.0-rc.5
+      version: 8.0.0-rc.5
     ast-kit:
       specifier: ^3.0.0-beta.1
       version: 3.0.0-beta.1
@@ -116,7 +116,7 @@ importers:
         version: 8.0.0-rc.5
       '@babel/parser':
         specifier: catalog:prod
-        version: 8.0.0-rc.4
+        version: 8.0.0-rc.5
       '@ts-macro/tsc':
         specifier: ^0.3.6
         version: 0.3.7(rollup@4.60.4)
@@ -2592,7 +2592,7 @@ snapshots:
 
   '@babel/generator@8.0.0-rc.4':
     dependencies:
-      '@babel/parser': 8.0.0-rc.4
+      '@babel/parser': 8.0.0-rc.5
       '@babel/types': 8.0.0-rc.5
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
@@ -3497,7 +3497,7 @@ snapshots:
 
   ast-kit@3.0.0-beta.1:
     dependencies:
-      '@babel/parser': 8.0.0-rc.4
+      '@babel/parser': 8.0.0-rc.5
       estree-walker: 3.0.3
       pathe: 2.0.3
 

@@ -2,7 +2,7 @@ overrides:
   rolldown: 'catalog:'
 
 catalog:
-  '@babel/types': ^8.0.0-rc.4
+  '@babel/types': ^8.0.0-rc.5
   '@jridgewell/source-map': ^0.3.11
   '@sxzz/eslint-config': ^8.1.0
   '@sxzz/prettier-config': ^2.3.1
@@ -31,7 +31,7 @@ catalogs:
   prod:
     '@babel/generator': 8.0.0-rc.5
     '@babel/helper-validator-identifier': 8.0.0-rc.5
-    '@babel/parser': 8.0.0-rc.4
+    '@babel/parser': 8.0.0-rc.5
     ast-kit: ^3.0.0-beta.1
     birpc: ^4.0.0
     dts-resolver: ^3.0.0
