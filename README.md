@@ -41,7 +41,9 @@ transformation to avoid processing generated outputs. Since `oxc.exclude`
 overrides the default exclude list, include JavaScript files as well:
 
 ```ts
-dts({
+// vite.config.ts
+
+export default defineConfig({
   oxc: {
     exclude: [/\.js$/, /\.d\.[cm]?ts$/],
   },
