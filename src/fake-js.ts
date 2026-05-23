@@ -972,6 +972,7 @@ async function collectDependencies(
           'ClassProperty',
           'TSPropertySignature',
           'TSDeclareMethod',
+          'TSMethodSignature',
         ])
       ) {
         if (node.computed && isReferenceId(node.key)) {

@@ -399,6 +399,23 @@ declare const shared1 = "shared1";
 export { shared1 as t };"
 `;
 
+exports[`method signature 1`] = `
+"// index.d.ts
+//#region tests/fixtures/method-signature/mod.d.ts
+declare const a = "aa";
+declare const b = "bb";
+declare const c = "cc";
+//#endregion
+//#region tests/fixtures/method-signature/index.d.ts
+interface Test {
+  [a]: string;
+  [b](): string;
+  get [c](): string;
+}
+//#endregion
+export { Test };"
+`;
+
 exports[`re-export from lib > both 1`] = `
 "// a.d.ts
 export * from "stub-lib";
