@@ -713,3 +713,11 @@ test('decorators', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test('method signature', async () => {
+  const root = path.resolve(dirname, 'fixtures/method-signature')
+  const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+    dts({ emitDtsOnly: true }),
+  ])
+  expect(snapshot).toMatchSnapshot()
+})
