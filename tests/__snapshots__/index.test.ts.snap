@@ -56,13 +56,13 @@ export = _default;"
 
 exports[`codeSplitting 1`] = `
 "// entry.d.ts
-import { t as shared1 } from "./shared1-chunk-DInpuBpE.js";
+import { t as shared1 } from "./shared1-chunk-qFQGuNhB.js";
 
 //#region tests/fixtures/manual-chunk/shared2.d.ts
 declare const shared2 = "shared2";
 //#endregion
 export { shared1, shared2 };
-// shared1-chunk-DInpuBpE.d.ts
+// shared1-chunk-qFQGuNhB.d.ts
 //#region tests/fixtures/manual-chunk/shared1.d.ts
 declare const shared1 = "shared1";
 //#endregion
@@ -78,7 +78,7 @@ export { myClass };"
 `;
 
 exports[`cyclic import 1`] = `
-"// a-VernZcHd.d.ts
+"// a-CKazneQu.d.ts
 //#region b.d.ts
 declare class SomeClass<T extends SomeInterface<number>> {
   value: T;
@@ -95,10 +95,10 @@ type T = SomeBoolean;
 //#endregion
 export { SomeClass as i, T as n, SomeBoolean as r, SomeInterface as t };
 // a.d.ts
-import { n as T, t as SomeInterface } from "./a-VernZcHd.js";
+import { n as T, t as SomeInterface } from "./a-CKazneQu.js";
 export { SomeInterface, T };
 // b.d.ts
-import { i as SomeClass, r as SomeBoolean } from "./a-VernZcHd.js";
+import { i as SomeClass, r as SomeBoolean } from "./a-CKazneQu.js";
 export { SomeBoolean, SomeClass };"
 `;
 
@@ -176,7 +176,7 @@ export { MyTypeC };"
 `;
 
 exports[`dts input > custom chunk name 2`] = `
-"// chunks/BCXvBysl-types.d.ts
+"// chunks/D2aRkv2b-types.d.ts
 //#region tests/fixtures/dts-multi-input/types.d.ts
 interface User {
   id: string;
@@ -185,7 +185,7 @@ interface User {
 //#endregion
 export { User as t };
 // input1.d.ts
-import { t as User } from "./chunks/BCXvBysl-types.js";
+import { t as User } from "./chunks/D2aRkv2b-types.js";
 
 //#region tests/fixtures/dts-multi-input/input1.d.ts
 interface ApiResponse {
@@ -194,7 +194,7 @@ interface ApiResponse {
 //#endregion
 export { ApiResponse };
 // input2.d.ts
-import { t as User } from "./chunks/BCXvBysl-types.js";
+import { t as User } from "./chunks/D2aRkv2b-types.js";
 
 //#region tests/fixtures/dts-multi-input/input2.d.ts
 interface UserWithAge extends User {
@@ -206,7 +206,7 @@ export { UserWithAge };"
 
 exports[`dts input > default chunk name 2`] = `
 "// input1.d.mts
-import { t as User } from "./types-B0jSiKC_.js";
+import { t as User } from "./types-D2aRkv2b.js";
 
 //#region tests/fixtures/dts-multi-input/input1.d.ts
 interface ApiResponse {
@@ -215,7 +215,7 @@ interface ApiResponse {
 //#endregion
 export { ApiResponse };
 // input2.d.mts
-import { t as User } from "./types-B0jSiKC_.js";
+import { t as User } from "./types-D2aRkv2b.js";
 
 //#region tests/fixtures/dts-multi-input/input2.d.ts
 interface UserWithAge extends User {
@@ -223,7 +223,7 @@ interface UserWithAge extends User {
 }
 //#endregion
 export { UserWithAge };
-// types-B0jSiKC_.d.ts
+// types-D2aRkv2b.d.ts
 //#region tests/fixtures/dts-multi-input/types.d.ts
 interface User {
   id: string;
@@ -250,7 +250,7 @@ export { Foo };"
 `;
 
 exports[`entryFileNames > custom chunk name 2`] = `
-"// chunks/BCXvBysl-types.d.ts
+"// chunks/D2aRkv2b-types.d.ts
 //#region tests/fixtures/dts-multi-input/types.d.ts
 interface User {
   id: string;
@@ -259,7 +259,7 @@ interface User {
 //#endregion
 export { User as t };
 // input1.d.ts
-import { t as User } from "./chunks/BCXvBysl-types.js";
+import { t as User } from "./chunks/D2aRkv2b-types.js";
 
 //#region tests/fixtures/dts-multi-input/input1.d.ts
 interface ApiResponse {
@@ -268,7 +268,7 @@ interface ApiResponse {
 //#endregion
 export { ApiResponse };
 // input2.d.ts
-import { t as User } from "./chunks/BCXvBysl-types.js";
+import { t as User } from "./chunks/D2aRkv2b-types.js";
 
 //#region tests/fixtures/dts-multi-input/input2.d.ts
 interface UserWithAge extends User {
@@ -279,7 +279,7 @@ export { UserWithAge };"
 `;
 
 exports[`entryFileNames > default chunk name 1`] = `
-"// chunks/CmCTH2kN.d.ts
+"// chunks/CR4BIi8r.d.ts
 //#region tests/fixtures/alias/shared.d.ts
 interface Shared {
   shared: string;
@@ -294,7 +294,7 @@ declare const input2: Input2;
 //#endregion
 export { input2 as n, Input2 as t };
 // input1.d.mts
-import { t as Input2 } from "./chunks/CmCTH2kN.js";
+import { t as Input2 } from "./chunks/CR4BIi8r.js";
 
 //#region tests/fixtures/alias/input1.d.ts
 interface Input1 extends Input2 {
@@ -304,7 +304,7 @@ declare const input1: Input1;
 //#endregion
 export { Input1, input1 };
 // input2.d.mts
-import { n as input2, t as Input2 } from "./chunks/CmCTH2kN.js";
+import { n as input2, t as Input2 } from "./chunks/CR4BIi8r.js";
 export { Input2, input2 };"
 `;
 
@@ -331,7 +331,17 @@ export { Fn1, Fn2 };"
 `;
 
 exports[`input alias 1`] = `
-"// input2-C4w5Qa2O.d.ts
+"// input2-2tKDBMMN.js
+//#endregion
+//#region input2.ts
+const input2 = {
+	shared: "shared",
+	input2: "input2"
+};
+//#endregion
+export { input2 as t };
+
+// input2-DJYu6NZD.d.ts
 //#region shared.d.ts
 interface Shared {
   shared: string;
@@ -345,18 +355,8 @@ interface Input2 extends Shared {
 declare const input2: Input2;
 //#endregion
 export { input2 as n, Input2 as t };
-// input2-D2_37Q97.js
-//#endregion
-//#region input2.ts
-const input2 = {
-	shared: "shared",
-	input2: "input2"
-};
-//#endregion
-export { input2 as t };
-
 // output1.d.ts
-import { t as Input2 } from "./input2-C4w5Qa2O.js";
+import { t as Input2 } from "./input2-DJYu6NZD.js";
 
 //#region input1.d.ts
 interface Input1 extends Input2 {
@@ -366,7 +366,7 @@ declare const input1: Input1;
 //#endregion
 export { Input1, input1 };
 // output1.js
-import { t as input2 } from "./input2-D2_37Q97.js";
+import { t as input2 } from "./input2-2tKDBMMN.js";
 //#region input1.ts
 const input1 = {
 	...input2,
@@ -376,23 +376,23 @@ const input1 = {
 export { input1 };
 
 // output2/index.d.ts
-import { n as input2, t as Input2 } from "../input2-C4w5Qa2O.js";
+import { n as input2, t as Input2 } from "../input2-DJYu6NZD.js";
 export { Input2, input2 };
 // output2/index.js
-import { t as input2 } from "../input2-D2_37Q97.js";
+import { t as input2 } from "../input2-2tKDBMMN.js";
 export { input2 };
 "
 `;
 
 exports[`manualChunks 1`] = `
 "// entry.d.ts
-import { t as shared1 } from "./shared1-chunk-DInpuBpE.js";
+import { t as shared1 } from "./shared1-chunk-qFQGuNhB.js";
 
 //#region tests/fixtures/manual-chunk/shared2.d.ts
 declare const shared2 = "shared2";
 //#endregion
 export { shared1, shared2 };
-// shared1-chunk-DInpuBpE.d.ts
+// shared1-chunk-qFQGuNhB.d.ts
 //#region tests/fixtures/manual-chunk/shared1.d.ts
 declare const shared1 = "shared1";
 //#endregion

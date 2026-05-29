@@ -327,7 +327,7 @@ describe('dts input', () => {
       [
         "input1.d.mts",
         "input2.d.mts",
-        "types-B0jSiKC_.d.ts",
+        "types-D2aRkv2b.d.ts",
       ]
     `)
 
@@ -350,7 +350,7 @@ describe('dts input', () => {
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toMatchInlineSnapshot(`
       [
-        "chunks/BCXvBysl-types.d.ts",
+        "chunks/D2aRkv2b-types.d.ts",
         "input1.d.ts",
         "input2.d.ts",
       ]
@@ -468,7 +468,7 @@ describe('entryFileNames', () => {
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toMatchInlineSnapshot(`
       [
-        "chunks/BCXvBysl-types.d.ts",
+        "chunks/D2aRkv2b-types.d.ts",
         "input1.d.ts",
         "input2.d.ts",
       ]
