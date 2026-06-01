@@ -281,8 +281,9 @@ export function createFakeJsPlugin({
         ;(decl as { id?: t.Identifier }).id = binding
       }
 
+      const params: TypeParams = collectParams(decl)
       const childrenSet = new Set<t.Node>()
-      const { deps, params } = await collectDependencies(
+      const deps = await collectDependencies(
         this,
         decl,
         id,
@@ -313,8 +314,6 @@ export function createFakeJsPlugin({
         params.map(({ name }) => b.identifier(name)),
         depsBody,
       )
-      // Placeholder per child symbol; carries the child's source offsets so the
-      // renderChunk pass can restore positions after rolldown renames things.
       const childrenNode: t.ArrayExpression = b.arrayExpression(
         children.map((node) => {
           const placeholder = b.stringLiteral('')
@@ -441,9 +440,6 @@ export function createFakeJsPlugin({
         const declarationId = declarationIdNode.value as number
         const declaration = getDeclaration(declarationId)
 
-        // Source positions only matter when a source map is emitted. Drop the
-        // stale offsets from the source `.d.ts` so they don't leak into the
-        // chunk-coordinate map; children/deps positions are restored below.
         if (sourcemap) {
           walk(declaration.decl, {
             enter(node) {
@@ -701,8 +697,6 @@ async function collectExportInfo(
   }
 
   if (node.type === 'ExportAllDeclaration') {
-    // `export * as ns from '...'` is a single named export (its name lives on
-    // `exported`), not a wildcard re-export.
     if (node.exported) {
       info.exports.set(nameOf(node.exported)!, node.exportKind === 'type')
       return
@@ -840,11 +834,24 @@ function setExportTypeOnly(
 //#region Declaration dependency collection
 
 /**
- * Groups the collected TSTypeParameter binding identifiers by name. One name
- * can map to one or more type parameters; these names become the parameter
- * names of the generated JavaScript dependency function.
+ * Collects all TSTypeParameter nodes from the given node and groups them by
+ * their name. One name can associate with one or more type parameters. These
+ * names will be used as the parameter name in the generated JavaScript
+ * dependency function.
  */
-function groupTypeParams(typeParams: t.Identifier[]): TypeParams {
+function collectParams(node: t.Node): TypeParams {
+  const typeParams: t.Identifier[] = []
+  walk(node, {
+    leave(node) {
+      if (
+        'typeParameters' in node &&
+        node.typeParameters?.type === 'TSTypeParameterDeclaration'
+      ) {
+        typeParams.push(...node.typeParameters.params.map(({ name }) => name))
+      }
+    },
+  })
+
   const paramMap = new Map<string, t.Identifier[]>()
   for (const typeParam of typeParams) {
     const name = typeParam.name
@@ -869,15 +876,11 @@ async function collectDependencies(
   namespaceStmts: NamespaceMap,
   children: Set<t.Node>,
   identifierMap: Record<string, number>,
-): Promise<{ deps: Dep[]; params: TypeParams }> {
+): Promise<Dep[]> {
   const deps = new Set<Dep>()
   const seen = new Set<t.Node>()
-  const typeParams: t.Identifier[] = []
   const preserveImportTypeCache = new Map<string, boolean>()
 
-  // `import('...')` is the only construct needing async resolution. Resolving
-  // every source up front lets the main traversal stay synchronous, avoiding
-  // walkAsync's per-node await overhead.
   const importSources = new Set<string>()
   walk(node, {
     TSImportType(node) {
@@ -908,14 +911,6 @@ async function collectDependencies(
     },
     leave(node, path) {
       const { parent } = path
-
-      // collect generic type parameters (fused in to avoid a second walk)
-      if (
-        'typeParameters' in node &&
-        node.typeParameters?.type === 'TSTypeParameterDeclaration'
-      ) {
-        typeParams.push(...node.typeParameters.params.map(({ name }) => name))
-      }
 
       // handle infer scope
       if (node.type === 'TSConditionalType') {
@@ -1001,7 +996,7 @@ async function collectDependencies(
     },
   })
 
-  return { deps: Array.from(deps), params: groupTypeParams(typeParams) }
+  return Array.from(deps)
 
   function addDependency(node: Dep) {
     if (isThisExpression(node) || isInferred(node)) return
@@ -1017,8 +1012,6 @@ function importNamespace(
   identifierMap: Record<string, number>,
   preserveCache: Map<string, boolean>,
 ): Dep | undefined {
-  // Resolution is pre-computed in collectDependencies; default to preserving
-  // (treat as external) if a source somehow wasn't resolved.
   const preserve = preserveCache.get(source.value) ?? true
 
   if (preserve) return
@@ -1105,9 +1098,6 @@ function collectReferenceDirectives(comment: t.Comment[], negative = false) {
   return comment.filter((c) => REFERENCE_RE.test(c.value) !== negative)
 }
 
-// `//# sourceMappingURL=...` / `//# sourceURL=...` pragmas from input modules
-// must not leak into the bundled output (the final map link is added once, for
-// the whole chunk).
 const SOURCE_MAP_PRAGMA_RE = /^#\s*source(?:Mapping)?URL=/
 function isSourceMapPragma(comment: { value: string }): boolean {
   return SOURCE_MAP_PRAGMA_RE.test(comment.value)
@@ -1594,8 +1584,6 @@ function overwriteNode<T>(node: t.Node, newNode: T): T {
 function inheritNodeComments<T extends t.Node>(oldNode: t.Node, newNode: T): T {
   newNode.comments ||= []
 
-  // carry over pragma-style leading comments (e.g. `//#region`) from the chunk
-  // node, but never source-map pragmas
   const pragmas = oldNode.comments?.filter(
     (comment) =>
       comment.position === 'before' &&
@@ -1606,8 +1594,6 @@ function inheritNodeComments<T extends t.Node>(oldNode: t.Node, newNode: T): T {
     newNode.comments.unshift(...pragmas)
   }
 
-  // drop reference directives (re-emitted at the top of the chunk) and any
-  // source-map pragmas carried over from input modules
   newNode.comments = newNode.comments.filter(
     (comment) =>
       !REFERENCE_RE.test(comment.value) && !isSourceMapPragma(comment),
