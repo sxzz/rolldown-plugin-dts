@@ -8,7 +8,6 @@ export { B as t };
 /// <reference types="jest" />
 /// <reference types="react" />
 import { t as B } from "./common-DdSWU8yq.js";
-
 //#region tests/rollup-plugin-dts/issue-128-reference-directive/ref-from-a.d.ts
 declare const A = 2;
 //#endregion

@@ -74,17 +74,15 @@
     }
   },
   "dependencies": {
-    "@babel/generator": "catalog:prod",
-    "@babel/helper-validator-identifier": "catalog:prod",
-    "@babel/parser": "catalog:prod",
-    "ast-kit": "catalog:prod",
     "birpc": "catalog:prod",
     "dts-resolver": "catalog:prod",
     "get-tsconfig": "catalog:prod",
-    "obug": "catalog:prod"
+    "obug": "catalog:prod",
+    "yuku-ast": "catalog:prod",
+    "yuku-codegen": "catalog:prod",
+    "yuku-parser": "catalog:prod"
   },
   "devDependencies": {
-    "@babel/types": "catalog:",
     "@jridgewell/source-map": "catalog:",
     "@sxzz/eslint-config": "catalog:",
     "@sxzz/prettier-config": "catalog:",

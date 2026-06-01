@@ -57,7 +57,6 @@ export = _default;"
 exports[`codeSplitting 1`] = `
 "// entry.d.ts
 import { t as shared1 } from "./shared1-chunk-qFQGuNhB.js";
-
 //#region tests/fixtures/manual-chunk/shared2.d.ts
 declare const shared2 = "shared2";
 //#endregion
@@ -186,7 +185,6 @@ interface User {
 export { User as t };
 // input1.d.ts
 import { t as User } from "./chunks/D2aRkv2b-types.js";
-
 //#region tests/fixtures/dts-multi-input/input1.d.ts
 interface ApiResponse {
   data: User;
@@ -195,7 +193,6 @@ interface ApiResponse {
 export { ApiResponse };
 // input2.d.ts
 import { t as User } from "./chunks/D2aRkv2b-types.js";
-
 //#region tests/fixtures/dts-multi-input/input2.d.ts
 interface UserWithAge extends User {
   age: number;
@@ -207,7 +204,6 @@ export { UserWithAge };"
 exports[`dts input > default chunk name 2`] = `
 "// input1.d.mts
 import { t as User } from "./types-D2aRkv2b.js";
-
 //#region tests/fixtures/dts-multi-input/input1.d.ts
 interface ApiResponse {
   data: User;
@@ -216,7 +212,6 @@ interface ApiResponse {
 export { ApiResponse };
 // input2.d.mts
 import { t as User } from "./types-D2aRkv2b.js";
-
 //#region tests/fixtures/dts-multi-input/input2.d.ts
 interface UserWithAge extends User {
   age: number;
@@ -260,7 +255,6 @@ interface User {
 export { User as t };
 // input1.d.ts
 import { t as User } from "./chunks/D2aRkv2b-types.js";
-
 //#region tests/fixtures/dts-multi-input/input1.d.ts
 interface ApiResponse {
   data: User;
@@ -269,7 +263,6 @@ interface ApiResponse {
 export { ApiResponse };
 // input2.d.ts
 import { t as User } from "./chunks/D2aRkv2b-types.js";
-
 //#region tests/fixtures/dts-multi-input/input2.d.ts
 interface UserWithAge extends User {
   age: number;
@@ -295,7 +288,6 @@ declare const input2: Input2;
 export { input2 as n, Input2 as t };
 // input1.d.mts
 import { t as Input2 } from "./chunks/CR4BIi8r.js";
-
 //#region tests/fixtures/alias/input1.d.ts
 interface Input1 extends Input2 {
   input1: string;
@@ -357,7 +349,6 @@ declare const input2: Input2;
 export { input2 as n, Input2 as t };
 // output1.d.ts
 import { t as Input2 } from "./input2-DJYu6NZD.js";
-
 //#region input1.d.ts
 interface Input1 extends Input2 {
   input1: string;
@@ -387,7 +378,6 @@ export { input2 };
 exports[`manualChunks 1`] = `
 "// entry.d.ts
 import { t as shared1 } from "./shared1-chunk-qFQGuNhB.js";
-
 //#region tests/fixtures/manual-chunk/shared2.d.ts
 declare const shared2 = "shared2";
 //#endregion
@@ -419,9 +409,6 @@ export { Test };"
 exports[`re-export from lib > both 1`] = `
 "// a.d.ts
 export * from "stub-lib";
-
-//#region \\0rolldown/runtime.js
-
 import * as import_stub_lib from "stub-lib";
 //#endregion
 export { import_stub_lib as t };
@@ -540,7 +527,6 @@ export { Cls, Enum, fn, foo };
 exports[`tsx 1`] = `
 "// tsx.d.ts
 import { JSX } from "solid-js";
-
 //#region tests/fixtures/tsx.d.ts
 declare function createComponent(): JSX.HTMLAttributes<HTMLElement>;
 //#endregion

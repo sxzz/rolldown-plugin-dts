@@ -18,7 +18,7 @@ declare const a = 1;
 export { a };
 //# sourceMappingURL=index.d.ts.map
 // index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":";cAAa,CAAA"}
+{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":";cAAa"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
@@ -38,7 +38,7 @@ declare const a = 1;
 export { a };
 //# sourceMappingURL=index.d.ts.map
 // index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.d.ts"],"mappings":";cAAqB,CAAA"}
+{"version":3,"file":"index.d.ts","names":["a"],"sources":["../src/index.d.ts"],"mappings":";cAAqBA"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
@@ -347,7 +347,6 @@ export { age, _exports as arrayOfObjects, _exports$1 as bar, bar_json_d_exports 
 exports[`tsc > jsdoc 1`] = `
 "// jsdoc.d.ts
 import { Plugin } from "rolldown";
-
 //#region tests/fixtures/jsdoc.d.ts
 /**
  * with imports
@@ -362,8 +361,8 @@ declare function fn(): number;
  */
 interface Options {
   /**
-   * interface member
-   */
+     * interface member
+     */
   foo: string;
 }
 /**
@@ -399,8 +398,7 @@ exports[`tsc > multi declarations 1`] = `
 declare const a: 1, b: 2;
 //#endregion
 //#region tests/fixtures/multi-decls/index.d.ts
-declare const a$1 = 3,
-  b$1 = 3;
+declare const a$1 = 3, b$1 = 3;
 //#endregion
 export { a, b, a$1 as c, b$1 as d };"
 `;
@@ -422,7 +420,6 @@ export { a };
 exports[`tsc > rename infer 1`] = `
 "// infer-renaming.d.ts
 import { infer as __Infer, z } from "zod";
-
 //#region tests/fixtures/infer-renaming.d.ts
 declare const productSchema: z.ZodObject<{
   id: z.ZodString;

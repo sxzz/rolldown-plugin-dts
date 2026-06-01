@@ -1,6 +1,5 @@
 // index.d.ts
 import { inspect } from "util";
-
 //#region tests/rollup-plugin-dts/computed-method/b.d.ts
 declare const b: "b";
 //#endregion

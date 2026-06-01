@@ -2,7 +2,6 @@ overrides:
   rolldown: 'catalog:'
 
 catalog:
-  '@babel/types': ^8.0.0-rc.6
   '@jridgewell/source-map': ^0.3.11
   '@sxzz/eslint-config': ^8.1.0
   '@sxzz/prettier-config': ^2.3.1
@@ -29,13 +28,12 @@ catalog:
 
 catalogs:
   prod:
-    '@babel/generator': 8.0.0-rc.6
-    '@babel/helper-validator-identifier': 8.0.0-rc.6
-    '@babel/parser': 8.0.0-rc.6
-    ast-kit: ^3.0.0-beta.1
     birpc: ^4.0.0
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.5
     obug: ^2.1.1
+    yuku-ast: ^0.1.4
+    yuku-codegen: ^0.5.20
+    yuku-parser: ^0.5.20
 
 minimumReleaseAge: 0
