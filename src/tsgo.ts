@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdtemp } from 'node:fs/promises'
+import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createDebug } from 'obug'
@@ -21,12 +21,17 @@ export async function getTsgoPathFromNodeModules(): Promise<string> {
   return getExePath()
 }
 
+export interface TsgoContext {
+  path: string
+  dispose: () => Promise<void>
+}
+
 export async function runTsgo(
   rootDir: string,
   tsconfig?: string,
   sourcemap?: boolean,
   tsgoPath?: string,
-): Promise<string> {
+): Promise<TsgoContext> {
   debug('[tsgo] rootDir', rootDir)
 
   let tsgo: string
@@ -57,5 +62,16 @@ export async function runTsgo(
   debug('[tsgo] args %o', args)
 
   await spawnAsync(tsgo, args, { stdio: 'inherit' })
-  return tsgoDist
+
+  return {
+    path: tsgoDist,
+    async dispose() {
+      if (debug.enabled) {
+        debug('[tsgo] skip cleanup of tsgoDist', tsgoDist)
+      } else {
+        debug('[tsgo] disposing tsgoDist', tsgoDist)
+        await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
+      }
+    },
+  }
 }
