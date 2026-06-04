@@ -1,6 +1,6 @@
 import { fork, type ChildProcess } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { access, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { createDebug } from 'obug'
 import { isolatedDeclarationSync } from 'rolldown/experimental'
@@ -42,6 +42,7 @@ export interface TsModule {
   /** `.ts` file name */
   id: string
   isEntry: boolean
+  jsFile: boolean
 }
 /** dts filename -> ts module */
 export type DtsMap = Map<string, TsModule>
@@ -190,15 +191,15 @@ export function createGeneratePlugin({
         },
       },
       handler(code, id) {
-        const shouldEmit = !RE_JS.test(id) || emitJs
+        const jsFile = RE_JS.test(id)
 
-        if (shouldEmit) {
+        if (!jsFile || emitJs) {
           const mod = this.getModuleInfo(id)
           const isEntry = entryMatcher
             ? entryMatcher(path.relative(cwd, id))
             : !!mod?.isEntry
           const dtsId = filename_to_dts(id)
-          dtsMap.set(dtsId, { code, id, isEntry })
+          dtsMap.set(dtsId, { code, id, isEntry, jsFile })
           debug('register dts source: %s', id)
 
           if (isEntry) {
@@ -226,9 +227,20 @@ export function createGeneratePlugin({
         },
       },
       async handler(dtsId) {
-        if (!dtsMap.has(dtsId)) return
+        const module = dtsMap.get(dtsId)
+        if (!module) return
 
-        const { code, id } = dtsMap.get(dtsId)!
+        const { code, id, jsFile } = module
+        if (
+          jsFile &&
+          (await access(dtsId)
+            .then(() => true)
+            .catch(() => false))
+        ) {
+          debug('dts file already exists for %s, skipping generation', id)
+          return
+        }
+
         let dtsCode: string | undefined
         let map: SourceMapInput | undefined
         debug('generate dts %s from %s', dtsId, id)
