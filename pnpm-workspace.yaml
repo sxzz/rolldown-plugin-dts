@@ -33,7 +33,7 @@ catalogs:
     get-tsconfig: 5.0.0-beta.5
     obug: ^2.1.1
     yuku-ast: ^0.1.4
-    yuku-codegen: ^0.5.20
-    yuku-parser: ^0.5.20
+    yuku-codegen: ^0.5.27
+    yuku-parser: ^0.5.27
 
 minimumReleaseAge: 0
