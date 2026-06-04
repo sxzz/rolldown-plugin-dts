@@ -2,7 +2,7 @@
   "name": "rolldown-plugin-dts",
   "type": "module",
   "version": "0.25.2",
-  "packageManager": "pnpm@11.5.0",
+  "packageManager": "pnpm@11.5.1",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
   "license": "MIT",
@@ -57,7 +57,7 @@
     "@typescript/native-preview": ">=7.0.0-dev.20260325.1",
     "rolldown": "^1.0.0",
     "typescript": "^5.0.0 || ^6.0.0",
-    "vue-tsc": "~3.2.0"
+    "vue-tsc": "~3.2.0 || ~3.3.0"
   },
   "peerDependenciesMeta": {
     "@ts-macro/tsc": {
