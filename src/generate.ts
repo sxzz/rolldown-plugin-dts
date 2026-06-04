@@ -1,6 +1,6 @@
 import { fork, type ChildProcess } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { readFile, rm } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { parse } from '@babel/parser'
 import { createDebug } from 'obug'
@@ -24,7 +24,7 @@ import {
   invalidateContextFile,
   type TscContext,
 } from './tsc/context.ts'
-import { runTsgo } from './tsgo.ts'
+import { runTsgo, type TsgoContext } from './tsgo.ts'
 import type { OptionsResolved } from './options.ts'
 import type { TscOptions, TscResult } from './tsc/index.ts'
 import type { TscFunctions } from './tsc/worker.ts'
@@ -106,7 +106,7 @@ export function createGeneratePlugin({
   let rpc: BirpcReturn<TscFunctions> | undefined
   let tscModule: typeof import('./tsc/index.ts')
   let tscContext: TscContext | undefined
-  let tsgoDist: string | undefined
+  let tsgoContext: TsgoContext | undefined
   const rootDir = tsconfig ? path.dirname(tsconfig) : cwd
 
   return {
@@ -114,7 +114,7 @@ export function createGeneratePlugin({
 
     async buildStart(options) {
       if (tsgo) {
-        tsgoDist = await runTsgo(rootDir, tsconfig, sourcemap, tsgo.path)
+        tsgoContext = await runTsgo(rootDir, tsconfig, sourcemap, tsgo.path)
       } else if (!oxc) {
         // tsc
         if (parallel) {
@@ -237,7 +237,7 @@ export function createGeneratePlugin({
           if (RE_VUE.test(id))
             throw new Error('tsgo does not support Vue files.')
           const dtsPath = path.resolve(
-            tsgoDist!,
+            tsgoContext!.path,
             path.relative(path.resolve(rootDir), filename_to_dts(id)),
           )
           if (!existsSync(dtsPath)) {
@@ -359,10 +359,8 @@ export { __json_default_export as default }`
 
     async buildEnd() {
       childProcess?.kill()
-      if (!debug.enabled && tsgoDist) {
-        await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
-      }
-      tsgoDist = undefined
+      await tsgoContext?.dispose()
+      tsgoContext = undefined
       if (newContext) {
         tscContext = undefined
       }
