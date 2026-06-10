@@ -89,11 +89,11 @@ catalogs:
       specifier: ^0.1.4
       version: 0.1.4
     yuku-codegen:
-      specifier: ^0.5.27
-      version: 0.5.27
+      specifier: ^0.5.31
+      version: 0.5.31
     yuku-parser:
-      specifier: ^0.5.27
-      version: 0.5.27
+      specifier: ^0.5.31
+      version: 0.5.31
 
 overrides:
   rolldown: ^1.1.0
@@ -119,13 +119,13 @@ importers:
         version: 2.1.2
       yuku-ast:
         specifier: catalog:prod
-        version: 0.1.4(yuku-parser@0.5.27)
+        version: 0.1.4(yuku-parser@0.5.31)
       yuku-codegen:
         specifier: catalog:prod
-        version: 0.5.27(yuku-parser@0.5.27)
+        version: 0.5.31(yuku-parser@0.5.31)
       yuku-parser:
         specifier: catalog:prod
-        version: 0.5.27
+        version: 0.5.31
     devDependencies:
       '@jridgewell/source-map':
         specifier: 'catalog:'
@@ -1183,125 +1183,125 @@ packages:
   '@vue/shared@3.5.35':
     resolution: {integrity: sha512-zSbjL7gRXwks2ZQLRGCajBtBXEOXW9Ddhn/HvSdrGkE2dqGnumzW8XtusRrxrE9LvqtiqDXQ+A60Hp6mvdYxfA==}
 
-  '@yuku-codegen/binding-darwin-arm64@0.5.27':
-    resolution: {integrity: sha512-i6/7KtGNetFUsqm9rTxCCGvBTBEazfQiTEnYoG7dsKUhiLpuroD/eeF+ImyyFAXOmMst+m4J1vsp9DXUHHg9bg==}
+  '@yuku-codegen/binding-darwin-arm64@0.5.31':
+    resolution: {integrity: sha512-KIGkWDJNf9wC6F2Wo0AMIXfExGY9n+/YGrh0ApeXbxI0XPPXpsdlneRCpwcCdxCLcgO1ddTW8y0u4q7be553cQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@yuku-codegen/binding-darwin-x64@0.5.27':
-    resolution: {integrity: sha512-V31MP6nSI5mVKTqapCrfN4Y5J4k8MO1L96+cdmfAGTP/iRyTWEBxmkFonjd7VNogDhyy2LsNu3cAAOtIzn15KA==}
+  '@yuku-codegen/binding-darwin-x64@0.5.31':
+    resolution: {integrity: sha512-8LKowisqjoYPqQd0KtVIay8bnyHykqg24GLP+rdeS0xhcqp5rYNoUOtS4x+B6S2mEeM4jQ1HA+blzJNdtbKExg==}
     cpu: [x64]
     os: [darwin]
 
-  '@yuku-codegen/binding-freebsd-x64@0.5.27':
-    resolution: {integrity: sha512-ywjMAuG+LwNCR7jdMOIJAzxCxXXqNEW4vCkWQ4zqHAmy/vT8DnYRT5GuOxrTQsnnDBuqN2wPykFRMLQEySbOEg==}
+  '@yuku-codegen/binding-freebsd-x64@0.5.31':
+    resolution: {integrity: sha512-cGBIzvLNoR1bB2kxCyzVejw3ymdwHJ1miNPzCPIYVcgm+//n+Q1DHlHqXkBkCEPc3/MSW1KL7i5gMZHn7Wp4Pw==}
     cpu: [x64]
     os: [freebsd]
 
-  '@yuku-codegen/binding-linux-arm-gnu@0.5.27':
-    resolution: {integrity: sha512-FL3A+KTyo4k7W7yJZ6Xdh85z9ragtC6+PwxHm8wHQHI30fmytr3G8SY+YS2LlUnS6LR6+TPHBQey8EXum6Pvtg==}
+  '@yuku-codegen/binding-linux-arm-gnu@0.5.31':
+    resolution: {integrity: sha512-9BfppXbOyf84IGRPzeCAdls8jHG+SomHJ/Act49DkmJBEcz/iqYv7relbYdPL+dGI2qL27tQGiWqcGJChdlySA==}
     cpu: [arm]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-codegen/binding-linux-arm-musl@0.5.27':
-    resolution: {integrity: sha512-sV2YxO7Wp3aopj6LdHKIb3RRhQUXHFMQMYhf2SNjiIvcHKs1uZQDR6L53X/dbXuJ1/CDeB96MTb4DTtxoX7l+A==}
+  '@yuku-codegen/binding-linux-arm-musl@0.5.31':
+    resolution: {integrity: sha512-3Ov2syRXCLW6XETTzcVCo/qgFO0APovbcfc6XJO6veBDh05EDR2u6GLlG4TwmlocJxFc2pzBB+DVPoft1MJw6A==}
     cpu: [arm]
     os: [linux]
     libc: [musl]
 
-  '@yuku-codegen/binding-linux-arm64-gnu@0.5.27':
-    resolution: {integrity: sha512-A+ICFTQebKaILYXaDUR0KR/1Bv4vBXWUo3Kj/iZONP24CJ3ZO1vqt8fOslghQw0IUvL0TbzpI9BB5mgCtf0nHA==}
+  '@yuku-codegen/binding-linux-arm64-gnu@0.5.31':
+    resolution: {integrity: sha512-yILPq1m0BDMqyTdeac/XmqHS2dEM3UkzRJohxVo+8zv9u7xQ5FiHr3AijW5ODC64LbaOXYlGGqES3p7Xd5C7Bg==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-codegen/binding-linux-arm64-musl@0.5.27':
-    resolution: {integrity: sha512-Q/1W9y/0LT2Tg2TWyPRfxFJNfxjyXnHc8+k9wsbtrwQxRgVOEmSelmMw8+nvSIX5YPqoWHjxRPK9Al4fDQT+1Q==}
+  '@yuku-codegen/binding-linux-arm64-musl@0.5.31':
+    resolution: {integrity: sha512-pQvPTrX21aYaISgoauHArg/eOJ+FhFtEY8WE6n+TTm5hS2Sd3JHC3eCNuuhUlS1vnhqtx/dwrcbrBhTogUQNZw==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@yuku-codegen/binding-linux-x64-gnu@0.5.27':
-    resolution: {integrity: sha512-id3oCTjT2zQI4Oyev06HKyLJWMx32TinLUb1WAg5NSY3FC5gvOBgQAHkCzfe3yab5m60HL8pbYZFIY8RT810lg==}
+  '@yuku-codegen/binding-linux-x64-gnu@0.5.31':
+    resolution: {integrity: sha512-NCL3iNO9rzSpnLMIuf0wyw/OKKkqxqKzpDdWvcefGWFHTb2J8mHZqlW9bAJqwtErvUaW8O1dyHrm/P4X+BfgMA==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-codegen/binding-linux-x64-musl@0.5.27':
-    resolution: {integrity: sha512-LBixLxDRBQrCnsyWLxLOM5sBWTv2+av3cz2+iV/+yREoj/og+1aU3RupLr9eRP36L0zvwmcTGQJH3YGWCPm0bg==}
+  '@yuku-codegen/binding-linux-x64-musl@0.5.31':
+    resolution: {integrity: sha512-UJSWB/QIvUMJaStSIKaHnDGlpNkVuAqzrJ60fTGD/C2trE3E0jSTTLa6cLxGCNbQm8WCiwc55z06HZWg9roiJw==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@yuku-codegen/binding-win32-arm64@0.5.27':
-    resolution: {integrity: sha512-J7l8qa2JRtfHuLvYN2qfPOyuA0orAEOhLtJ0kg83GUYD3EOv10uowB/2VyC0Omc2V5WCQhH86fDI90Qkou7Qjw==}
+  '@yuku-codegen/binding-win32-arm64@0.5.31':
+    resolution: {integrity: sha512-JdtS2r1FnNnS+sXTOrm4NAcvNwtClVWhEPSk5ayBPyePc8G5Or/QoitpspbdkUoUyhsLvUYPu6hcKnp80klq2g==}
     cpu: [arm64]
     os: [win32]
 
-  '@yuku-codegen/binding-win32-x64@0.5.27':
-    resolution: {integrity: sha512-KdewltSc4+g4hGCxPrsg3HM9SqkByCax/JzuTsGA/6OkqLLSYW14IjsAxgvr9GJGemWY5WulK2NvSIy6kIuo0w==}
+  '@yuku-codegen/binding-win32-x64@0.5.31':
+    resolution: {integrity: sha512-+9iAi9i9ZN9OuPIhUvaDHoTR67SaNj/LjRD9/gJa5aDbAjP0RwhcnNmdsqGbb4pZLKlvV/73cJgKED2g3mVbDA==}
     cpu: [x64]
     os: [win32]
 
-  '@yuku-parser/binding-darwin-arm64@0.5.27':
-    resolution: {integrity: sha512-Mlh5y03DjZ/VHTSL1wTCMw6bnAM5UYZ9TOO0hk9gXBTjQ8zrSwXv5g/w5IPQjKnF+sn0Y2aUs+FwzCxRlF/iiQ==}
+  '@yuku-parser/binding-darwin-arm64@0.5.31':
+    resolution: {integrity: sha512-giuGYbgTGs5cSxy4a2r9f8caYHIx6VOfhnUQlZMEiTTcepL32fztRnoOzFDgouMbyjpjPwaCF3uOUlP1OSdBGQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@yuku-parser/binding-darwin-x64@0.5.27':
-    resolution: {integrity: sha512-I/vYjYHn8S6D9gpH0RXe2aY0tMBXdwTQEWYmt2rAEWt7X3Tqc/qbEOZK0SwFbN2VoKsBAuAQlhU0zNH6uHa5yA==}
+  '@yuku-parser/binding-darwin-x64@0.5.31':
+    resolution: {integrity: sha512-F/ocOyYYpouM+oDbQGq5v2VgIa2ZRScsUFRp7z4izv6iXpdyNUv0p1aC+shDXKHdkAbu0w27VXxpcLNxyacwTg==}
     cpu: [x64]
     os: [darwin]
 
-  '@yuku-parser/binding-freebsd-x64@0.5.27':
-    resolution: {integrity: sha512-6FRxo12Gr6R32ViLQ8Itoxsuh30jsh2vTWfYW5ZJIXZoN15FIXVofOMRkXjONBUxuRNDpQlgBpkDb4YVryru8w==}
+  '@yuku-parser/binding-freebsd-x64@0.5.31':
+    resolution: {integrity: sha512-42cEde5f40gkZajS6xJ7Qx5RD8lI2aC/FaUHsd4lFHpoO2scvPf2Rk8vkQMm8uUWqLqODCNpJ3QK1DERjNm0Gw==}
     cpu: [x64]
     os: [freebsd]
 
-  '@yuku-parser/binding-linux-arm-gnu@0.5.27':
-    resolution: {integrity: sha512-MzeWwoGtLBVZt9Pg7VMUcQ5p3hHuZuH5pAz+5DX/bj8FaHAiDIvcaRxlhHGOavKghjID50xPSa3FrvinATOdEg==}
+  '@yuku-parser/binding-linux-arm-gnu@0.5.31':
+    resolution: {integrity: sha512-ftqY+OT7qzkwLdeRWxeekLVfklLavcsZ1SdHm3ST0aLkdnzT69s3RQBwi5igkDP3urgOt6mrRB9tdtJfLATMZQ==}
     cpu: [arm]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-parser/binding-linux-arm-musl@0.5.27':
-    resolution: {integrity: sha512-hHo68e2r9tKVZninV92R/TTzHk3ZZD8Hz+pxtAyY+l3PKz0JcoWoiKRQmK3/jEx5+wgC0TL5z3QOFFqrvkhj3Q==}
+  '@yuku-parser/binding-linux-arm-musl@0.5.31':
+    resolution: {integrity: sha512-NWwL+3ir+/jHcoRZUnw2SNsGeuq0prNxwzNDcsKQKHI3iwBRkhwFDAqcyJvwmn29StlAKoDXDR7AnBzy06wbLQ==}
     cpu: [arm]
     os: [linux]
     libc: [musl]
 
-  '@yuku-parser/binding-linux-arm64-gnu@0.5.27':
-    resolution: {integrity: sha512-s0D32FECLVkskov4cgajJlj/ZhA0ScnTQYQyqRuILk8ji3+3Lzwj+cXisUZSTW3BKi3UQgiyiGWwyE2LneJd/A==}
+  '@yuku-parser/binding-linux-arm64-gnu@0.5.31':
+    resolution: {integrity: sha512-0stTMqQSdtFQ0Ge2zEua8GLggPAMayAuyITvQz98C3fF7YgqiqQq3qpddgMGftmuDGYIZ/AxQt9hoye2rRGVuw==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-parser/binding-linux-arm64-musl@0.5.27':
-    resolution: {integrity: sha512-Q/T0Xy1z7igo5dA4KXnV4Bt0wkC1ACWC0a0xZOj82+XiAs5aSeKd1yGHzGQIKuIhpW1/sXxTdpUHusbOR5d6aQ==}
+  '@yuku-parser/binding-linux-arm64-musl@0.5.31':
+    resolution: {integrity: sha512-74zWlfJ5fJkMoh2PgGwrN1GRb2g+jTIw+FzaOVG8ibJYQVfwTGuCBzlBneywBIat/66K9/5Tskd3aO9J0OVQoQ==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@yuku-parser/binding-linux-x64-gnu@0.5.27':
-    resolution: {integrity: sha512-7qCs5xuSk1rUGR0nvY524HiS0IpdfnshjUFB35Mbx9juR01Zuq9wr7SR3JYqd9KfRWgnV5UCx7m2ykRNKK/2IA==}
+  '@yuku-parser/binding-linux-x64-gnu@0.5.31':
+    resolution: {integrity: sha512-IGqIC+LP/H5NfI9BAtRfLCud+zAVOclkLA+c83E9/976ry1kBTayuBYoDGgO/RE+FDXF0dQng9bGy3Zp1eI6zw==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-parser/binding-linux-x64-musl@0.5.27':
-    resolution: {integrity: sha512-bvgVZccAh6SXsxOXew8xNULCbpM4Y/p15tUmGJ/HzcylFf78qVbSRXGn8pZdP+iLT7rH3vl7oe5L66/oVnB47A==}
+  '@yuku-parser/binding-linux-x64-musl@0.5.31':
+    resolution: {integrity: sha512-tJ8+Vn28q1OVvZJCscPyH7+qW6YbuqNkhrdxcn0WyHo0+PuSzo14YUwehxxojte6/f57G+dyIfYdIR3YfjNEAg==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@yuku-parser/binding-win32-arm64@0.5.27':
-    resolution: {integrity: sha512-e+B0V46ggl8yDVUQVsD/q1ROfFRpy0EVSflWqOmvvsHSQuOOuGF2+JsfjllIs6VxDYbrX5fCYNeT22w/4yb6ZA==}
+  '@yuku-parser/binding-win32-arm64@0.5.31':
+    resolution: {integrity: sha512-aHLLqncsXpXXLPBLMGSlSB05nLLcfl8nW3WoJx0o+Ti/z1wm3z2705oSq+uCBrmuDtqgf0/KK40A7f563rVoAQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@yuku-parser/binding-win32-x64@0.5.27':
-    resolution: {integrity: sha512-dAJPDtrwEHnLGyY2y8mlogOSYlHrxvW3OR1caUN5l1jr7ts7q+Bg1jPS//AeIePqEkff2pu+HUU1ZMBbRV98Nw==}
+  '@yuku-parser/binding-win32-x64@0.5.31':
+    resolution: {integrity: sha512-6EzokrgZ1R01xSeKX88Vazgqen0LQpTcNhDBlM1rE/rX8ViaAYtoy4Pd8/kEHu2nJp6+I2lODDV0xnX7EYBWFg==}
     cpu: [x64]
     os: [win32]
 
@@ -2670,13 +2670,13 @@ packages:
     peerDependencies:
       yuku-parser: '>=0.5.20'
 
-  yuku-codegen@0.5.27:
-    resolution: {integrity: sha512-1PmR8/JfvR5+MbnQSFjBMWbWwb+PJmD11E/g9kGqQPtIFJpCjlhO9LWwyyvDc7nivlpBcRC0CN6zQlLlsNXMyQ==}
+  yuku-codegen@0.5.31:
+    resolution: {integrity: sha512-PGx9ENc1LMp7ssQnbzeg2/V31fFKWusy61cmgdoZssciknm6N73/+QrcBOMPAzWWlp6FqJmB8wgO1gHBNchrqQ==}
     peerDependencies:
-      yuku-parser: 0.5.22
+      yuku-parser: 0.5.28
 
-  yuku-parser@0.5.27:
-    resolution: {integrity: sha512-l8UrYNihu6RHAHoroHEmRTjL1a3d4VB5sIiUw65gMrk6Z/DkzQcHLdUmxNB4CfhaBMFjExJPyVlb2tLbi2rF9g==}
+  yuku-parser@0.5.31:
+    resolution: {integrity: sha512-gXSbHikTJPMAwumVaMJK96FeWYYZzxMdLe9MT4oJMVEfV3RFJifs2qMeRWDL8hKIki03PjQwIw/dsO1yFuIjMg==}
 
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
@@ -3549,70 +3549,70 @@ snapshots:
 
   '@vue/shared@3.5.35': {}
 
-  '@yuku-codegen/binding-darwin-arm64@0.5.27':
+  '@yuku-codegen/binding-darwin-arm64@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-darwin-x64@0.5.27':
+  '@yuku-codegen/binding-darwin-x64@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-freebsd-x64@0.5.27':
+  '@yuku-codegen/binding-freebsd-x64@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-linux-arm-gnu@0.5.27':
+  '@yuku-codegen/binding-linux-arm-gnu@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-linux-arm-musl@0.5.27':
+  '@yuku-codegen/binding-linux-arm-musl@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-linux-arm64-gnu@0.5.27':
+  '@yuku-codegen/binding-linux-arm64-gnu@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-linux-arm64-musl@0.5.27':
+  '@yuku-codegen/binding-linux-arm64-musl@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-linux-x64-gnu@0.5.27':
+  '@yuku-codegen/binding-linux-x64-gnu@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-linux-x64-musl@0.5.27':
+  '@yuku-codegen/binding-linux-x64-musl@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-win32-arm64@0.5.27':
+  '@yuku-codegen/binding-win32-arm64@0.5.31':
     optional: true
 
-  '@yuku-codegen/binding-win32-x64@0.5.27':
+  '@yuku-codegen/binding-win32-x64@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-darwin-arm64@0.5.27':
+  '@yuku-parser/binding-darwin-arm64@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-darwin-x64@0.5.27':
+  '@yuku-parser/binding-darwin-x64@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-freebsd-x64@0.5.27':
+  '@yuku-parser/binding-freebsd-x64@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-linux-arm-gnu@0.5.27':
+  '@yuku-parser/binding-linux-arm-gnu@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-linux-arm-musl@0.5.27':
+  '@yuku-parser/binding-linux-arm-musl@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-linux-arm64-gnu@0.5.27':
+  '@yuku-parser/binding-linux-arm64-gnu@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-linux-arm64-musl@0.5.27':
+  '@yuku-parser/binding-linux-arm64-musl@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-linux-x64-gnu@0.5.27':
+  '@yuku-parser/binding-linux-x64-gnu@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-linux-x64-musl@0.5.27':
+  '@yuku-parser/binding-linux-x64-musl@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-win32-arm64@0.5.27':
+  '@yuku-parser/binding-win32-arm64@0.5.31':
     optional: true
 
-  '@yuku-parser/binding-win32-x64@0.5.27':
+  '@yuku-parser/binding-win32-x64@0.5.31':
     optional: true
 
   acorn-jsx@5.3.2(acorn@8.16.0):
@@ -5119,39 +5119,39 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  yuku-ast@0.1.4(yuku-parser@0.5.27):
+  yuku-ast@0.1.4(yuku-parser@0.5.31):
     dependencies:
-      yuku-parser: 0.5.27
+      yuku-parser: 0.5.31
 
-  yuku-codegen@0.5.27(yuku-parser@0.5.27):
+  yuku-codegen@0.5.31(yuku-parser@0.5.31):
     dependencies:
-      yuku-parser: 0.5.27
+      yuku-parser: 0.5.31
     optionalDependencies:
-      '@yuku-codegen/binding-darwin-arm64': 0.5.27
-      '@yuku-codegen/binding-darwin-x64': 0.5.27
-      '@yuku-codegen/binding-freebsd-x64': 0.5.27
-      '@yuku-codegen/binding-linux-arm-gnu': 0.5.27
-      '@yuku-codegen/binding-linux-arm-musl': 0.5.27
-      '@yuku-codegen/binding-linux-arm64-gnu': 0.5.27
-      '@yuku-codegen/binding-linux-arm64-musl': 0.5.27
-      '@yuku-codegen/binding-linux-x64-gnu': 0.5.27
-      '@yuku-codegen/binding-linux-x64-musl': 0.5.27
-      '@yuku-codegen/binding-win32-arm64': 0.5.27
-      '@yuku-codegen/binding-win32-x64': 0.5.27
+      '@yuku-codegen/binding-darwin-arm64': 0.5.31
+      '@yuku-codegen/binding-darwin-x64': 0.5.31
+      '@yuku-codegen/binding-freebsd-x64': 0.5.31
+      '@yuku-codegen/binding-linux-arm-gnu': 0.5.31
+      '@yuku-codegen/binding-linux-arm-musl': 0.5.31
+      '@yuku-codegen/binding-linux-arm64-gnu': 0.5.31
+      '@yuku-codegen/binding-linux-arm64-musl': 0.5.31
+      '@yuku-codegen/binding-linux-x64-gnu': 0.5.31
+      '@yuku-codegen/binding-linux-x64-musl': 0.5.31
+      '@yuku-codegen/binding-win32-arm64': 0.5.31
+      '@yuku-codegen/binding-win32-x64': 0.5.31
 
-  yuku-parser@0.5.27:
+  yuku-parser@0.5.31:
     optionalDependencies:
-      '@yuku-parser/binding-darwin-arm64': 0.5.27
-      '@yuku-parser/binding-darwin-x64': 0.5.27
-      '@yuku-parser/binding-freebsd-x64': 0.5.27
-      '@yuku-parser/binding-linux-arm-gnu': 0.5.27
-      '@yuku-parser/binding-linux-arm-musl': 0.5.27
-      '@yuku-parser/binding-linux-arm64-gnu': 0.5.27
-      '@yuku-parser/binding-linux-arm64-musl': 0.5.27
-      '@yuku-parser/binding-linux-x64-gnu': 0.5.27
-      '@yuku-parser/binding-linux-x64-musl': 0.5.27
-      '@yuku-parser/binding-win32-arm64': 0.5.27
-      '@yuku-parser/binding-win32-x64': 0.5.27
+      '@yuku-parser/binding-darwin-arm64': 0.5.31
+      '@yuku-parser/binding-darwin-x64': 0.5.31
+      '@yuku-parser/binding-freebsd-x64': 0.5.31
+      '@yuku-parser/binding-linux-arm-gnu': 0.5.31
+      '@yuku-parser/binding-linux-arm-musl': 0.5.31
+      '@yuku-parser/binding-linux-arm64-gnu': 0.5.31
+      '@yuku-parser/binding-linux-arm64-musl': 0.5.31
+      '@yuku-parser/binding-linux-x64-gnu': 0.5.31
+      '@yuku-parser/binding-linux-x64-musl': 0.5.31
+      '@yuku-parser/binding-win32-arm64': 0.5.31
+      '@yuku-parser/binding-win32-x64': 0.5.31
 
   zod@4.4.3: {}
 
