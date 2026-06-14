@@ -1,5 +1,15 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`tsc > accessor in type literal 1`] = `
+"// accessor-in-type-literal.d.ts
+//#region tests/fixtures/accessor-in-type-literal.d.ts
+declare function makeBox(): {
+  get value(): number;
+};
+//#endregion
+export { makeBox };"
+`;
+
 exports[`tsc > arktype 1`] = `
 "// arktype.d.ts
 //#region tests/fixtures/arktype.d.ts

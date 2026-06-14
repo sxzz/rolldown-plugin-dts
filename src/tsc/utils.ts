@@ -25,7 +25,10 @@ const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
         node.type,
       )
     }
-    return ts.visitEachChild(node, visitor, ctx)
+    // Recurse with `undefined`, not `ctx`. With a real context, `visitEachChild`
+    // throws "Lexical environment is suspended" when a get/set accessor appears
+    // in a function-like node's return type. Declaration transforms don't hoist.
+    return ts.visitEachChild(node, visitor, undefined)
   }
   return (sourceFile) =>
     ts.visitNode(sourceFile, visitor, ts.isSourceFile) ?? sourceFile
