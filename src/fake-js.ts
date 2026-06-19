@@ -1,8 +1,8 @@
-import { b, is, walk } from 'yuku-ast'
+import { b, is } from 'yuku-ast'
 import { isIdentifierName } from 'yuku-ast/identifier'
 import { nameOf } from 'yuku-ast/utils'
 import { print } from 'yuku-codegen'
-import { parse, type ParseResult } from 'yuku-parser'
+import { parse, walk, type ParseResult } from 'yuku-parser'
 import {
   filename_dts_to,
   filename_js_to_dts,
