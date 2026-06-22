@@ -5,7 +5,6 @@ import { expectFilesSnapshot, rolldownBuild } from '@sxzz/test-utils'
 import { build } from 'rolldown'
 import { beforeAll, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
-import { warn } from 'node:console'
 
 const tempDir = path.join(import.meta.dirname, 'temp')
 const input = path.resolve(import.meta.dirname, 'fixtures/source-map/index.ts')
