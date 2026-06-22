@@ -545,7 +545,7 @@ export function createFakeJsPlugin({
       .filter((node) => !!node)
 
     if (program.body.length === 0) {
-      return 'export { };'
+      return { code: 'export { };', map: null }
     }
 
     // recover comments
