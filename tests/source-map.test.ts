@@ -102,7 +102,13 @@ test('empty dts chunk does not break output sourcemap', async () => {
   await rolldownBuild(
     path.resolve(import.meta.dirname, 'fixtures/empty-chunk/index.ts'),
     [dts()],
-    { onwarn: (warning) => warnings.push(warning.code!) },
+    {
+      onLog: (level, log) => {
+        if (level === 'warn') {
+          warnings.push(log.code!)
+        }
+      },
+    },
     { sourcemap: true, preserveModules: true },
   )
   expect(warnings).not.toContain('SOURCEMAP_BROKEN')
