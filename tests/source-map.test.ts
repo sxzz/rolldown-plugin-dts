@@ -5,6 +5,7 @@ import { expectFilesSnapshot, rolldownBuild } from '@sxzz/test-utils'
 import { build } from 'rolldown'
 import { beforeAll, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
+import { warn } from 'node:console'
 
 const tempDir = path.join(import.meta.dirname, 'temp')
 const input = path.resolve(import.meta.dirname, 'fixtures/source-map/index.ts')
@@ -105,6 +106,7 @@ test('empty dts chunk does not break output sourcemap', async () => {
     { sourcemap: true, preserveModules: true },
   )
   expect(warnings).not.toContain('SOURCEMAP_BROKEN')
+  expect(warnings).toHaveLength(0)
 })
 
 test('disable dts source map only', async () => {
