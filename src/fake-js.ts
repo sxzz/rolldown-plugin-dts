@@ -383,13 +383,13 @@ export function createFakeJsPlugin({
     const result = print(program, {
       comments: false,
       ...(sourcemap && {
-        sourceMaps: { lineStarts: file.lineStarts, sourceFileName: id },
+        sourceMaps: { source: code, sourceFileName: id },
       }),
     })
 
     return {
       code: result.code,
-      map: (result.map ?? undefined) as SourceMapInput | undefined,
+      map: (result.map ?? null) as SourceMapInput | null,
     }
   }
 
@@ -504,7 +504,7 @@ export function createFakeJsPlugin({
       .filter((node) => !!node)
 
     if (program.body.length === 0) {
-      return 'export { };'
+      return { code: 'export { };', map: null }
     }
 
     // recover comments
@@ -543,7 +543,7 @@ export function createFakeJsPlugin({
       comments: true,
       ...(sourcemap && {
         sourceMaps: {
-          lineStarts: file.lineStarts,
+          source: code,
           sourceFileName: chunk.fileName,
         },
       }),
@@ -551,7 +551,7 @@ export function createFakeJsPlugin({
 
     return {
       code: result.code,
-      map: (result.map ?? undefined) as SourceMapInput | undefined,
+      map: (result.map ?? null) as SourceMapInput | null,
     }
   }
 
