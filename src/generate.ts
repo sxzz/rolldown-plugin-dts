@@ -2,9 +2,10 @@ import { fork, type ChildProcess } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { access, readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { parse } from '@babel/parser'
 import { createDebug } from 'obug'
 import { isolatedDeclarationSync } from 'rolldown/experimental'
+import { is } from 'yuku-ast'
+import { parse, type TSPropertySignature } from 'yuku-parser'
 import {
   filename_to_dts,
   RE_DTS,
@@ -28,7 +29,6 @@ import { runTsgo, type TsgoContext } from './tsgo.ts'
 import type { OptionsResolved } from './options.ts'
 import type { TscOptions, TscResult } from './tsc/index.ts'
 import type { TscFunctions } from './tsc/worker.ts'
-import type { TSPropertySignature } from '@babel/types'
 import type { BirpcReturn } from 'birpc'
 import type { Plugin, SourceMapInput } from 'rolldown'
 
@@ -388,11 +388,7 @@ export { __json_default_export as default }`
 
 function collectJsonExportMap(code: string): Map<string, string> {
   const exportMap = new Map<string, string>()
-  const { program } = parse(code, {
-    sourceType: 'module',
-    plugins: [['typescript', { dts: true }]],
-    errorRecovery: true,
-  })
+  const { program } = parse(code, { sourceType: 'module', lang: 'dts' })
 
   for (const decl of program.body) {
     if (decl.type === 'ExportNamedDeclaration') {
@@ -436,17 +432,14 @@ function collectJsonExportMap(code: string): Map<string, string> {
 /** `declare const _exports` mode */
 function collectJsonExports(code: string) {
   const exports: string[] = []
-  const { program } = parse(code, {
-    sourceType: 'module',
-    plugins: [['typescript', { dts: true }]],
-  })
+  const { program } = parse(code, { sourceType: 'module', lang: 'dts' })
   const members = (program.body as any)[0].declarations[0].id.typeAnnotation
     .typeAnnotation.members as TSPropertySignature[]
 
   for (const member of members) {
     if (member.key.type === 'Identifier') {
       exports.push(member.key.name)
-    } else if (member.key.type === 'StringLiteral') {
+    } else if (is.StringLiteral(member.key)) {
       exports.push(member.key.value)
     }
   }
