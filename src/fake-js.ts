@@ -186,9 +186,11 @@ export function createFakeJsPlugin({
     if (!warnedCjsDtsInputs.has(id) && program.body.some(isCjsDtsInputSyntax)) {
       warnedCjsDtsInputs.add(id)
       this.warn(
-        RE_NODE_MODULES.test(id)
-          ? `${id} uses CommonJS dts syntax. CommonJS dts modules cannot be reliably bundled by rolldown-plugin-dts. Please mark this module as external in your Rolldown config.`
-          : `${id} uses CommonJS dts syntax. rolldown-plugin-dts does not support reliably bundling CommonJS dts input.`,
+        `${id} uses CommonJS dts syntax. ${
+          RE_NODE_MODULES.test(id)
+            ? `CommonJS dts modules cannot be bundled by rolldown-plugin-dts. Please mark this module as external in your Rolldown config.`
+            : `rolldown-plugin-dts does not support bundling CommonJS dts input.`
+        }`,
       )
     }
 
