@@ -348,4 +348,18 @@ describe('tsc', () => {
     )
     expect(snapshot).toMatchSnapshot()
   })
+
+  test('accessor in type literal', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/accessor-in-type-literal.ts'),
+      [
+        dts({
+          oxc: false,
+          emitDtsOnly: true,
+          compilerOptions: { isolatedDeclarations: false },
+        }),
+      ],
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
 })
