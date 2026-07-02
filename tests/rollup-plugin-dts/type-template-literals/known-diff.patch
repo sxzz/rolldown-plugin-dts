@@ -2,7 +2,7 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -21,6 +21,8 @@
+@@ -17,6 +17,8 @@
    `${Quantity | Color} fish`
  declare function setAlignment(
    value: `${VerticalAlignment}-${HorizontalAlignment}`,

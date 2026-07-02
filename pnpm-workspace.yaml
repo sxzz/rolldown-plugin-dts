@@ -3,27 +3,27 @@ overrides:
 
 catalog:
   '@jridgewell/source-map': ^0.3.11
-  '@sxzz/eslint-config': ^8.2.0
+  '@sxzz/eslint-config': ^8.2.1
   '@sxzz/prettier-config': ^2.3.1
   '@sxzz/test-utils': ^0.5.18
-  '@types/node': ^25.9.3
-  '@typescript/native-preview': 7.0.0-dev.20260628.1
+  '@types/node': ^26.1.0
+  '@typescript/native-preview': 7.0.0-dev.20260702.3
   '@volar/typescript': ^2.4.28
-  '@vue/language-core': ^3.3.5
-  arktype: ^2.2.0
+  '@vue/language-core': ^3.3.6
+  arktype: ^2.2.2
   bumpp: ^11.1.0
   diff: ^9.0.0
-  eslint: ^10.5.0
-  prettier: ^3.8.4
-  rolldown: ^1.1.1
+  eslint: ^10.6.0
+  prettier: ^3.9.4
+  rolldown: ^1.1.4
   rolldown-plugin-require-cjs: ^0.4.1
   rollup-plugin-dts: ^6.4.1
-  tsdown: ^0.22.2
-  tsnapi: ^0.3.3
+  tsdown: ^0.22.3
+  tsnapi: ^1.0.0
   typescript: ^6.0.3
   vitest: ^4.1.9
-  vue: ^3.5.38
-  vue-tsc: ^3.3.5
+  vue: ^3.5.39
+  vue-tsc: ^3.3.6
   zod: ^4.4.3
 
 catalogs:
