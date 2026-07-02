@@ -18,7 +18,6 @@ import * as I from "i";
 import * as O from "o";
 export * from "i1";
 export type * from "n";
-
 //#region tests/rollup-plugin-dts/type-only-import-export/foo.d.ts
 interface Foo {}
 //#endregion

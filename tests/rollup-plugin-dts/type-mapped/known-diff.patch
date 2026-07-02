@@ -2,10 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -4,5 +4,5 @@
- declare type Foo =
-   {
-     [P in keyof A]: B[P]
+@@ -6,5 +6,5 @@
+     [
+       P in keyof A
+     ]: B[P]
    }
 -export type { Foo }
 +export { Foo }

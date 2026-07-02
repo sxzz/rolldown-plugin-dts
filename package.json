@@ -1,8 +1,8 @@
 {
   "name": "rolldown-plugin-dts",
   "type": "module",
-  "version": "0.25.2",
-  "packageManager": "pnpm@11.5.2",
+  "version": "0.26.0",
+  "packageManager": "pnpm@11.9.0",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
   "license": "MIT",
@@ -39,7 +39,7 @@
     "access": "public"
   },
   "engines": {
-    "node": "^22.18.0 || >=24.0.0"
+    "node": "^22.18.0 || >=24.11.0"
   },
   "scripts": {
     "lint": "eslint --cache .",
@@ -74,17 +74,15 @@
     }
   },
   "dependencies": {
-    "@babel/generator": "catalog:prod",
-    "@babel/helper-validator-identifier": "catalog:prod",
-    "@babel/parser": "catalog:prod",
-    "ast-kit": "catalog:prod",
     "birpc": "catalog:prod",
     "dts-resolver": "catalog:prod",
     "get-tsconfig": "catalog:prod",
-    "obug": "catalog:prod"
+    "obug": "catalog:prod",
+    "yuku-ast": "catalog:prod",
+    "yuku-codegen": "catalog:prod",
+    "yuku-parser": "catalog:prod"
   },
   "devDependencies": {
-    "@babel/types": "catalog:",
     "@jridgewell/source-map": "catalog:",
     "@sxzz/eslint-config": "catalog:",
     "@sxzz/prettier-config": "catalog:",

@@ -95,6 +95,25 @@ test('tsgo', async () => {
   validateSourceMap(sourcemap)
 })
 
+// https://github.com/rolldown/tsdown/issues/975
+test('empty dts chunk does not break output sourcemap', async () => {
+  const warnings: string[] = []
+  await rolldownBuild(
+    path.resolve(import.meta.dirname, 'fixtures/empty-chunk/index.ts'),
+    [dts()],
+    {
+      onLog: (level, log) => {
+        if (level === 'warn') {
+          warnings.push(log.code!)
+        }
+      },
+    },
+    { sourcemap: true, preserveModules: true },
+  )
+  expect(warnings).not.toContain('SOURCEMAP_BROKEN')
+  expect(warnings).toHaveLength(0)
+})
+
 test('disable dts source map only', async () => {
   const { chunks } = await rolldownBuild(
     input,
@@ -106,7 +125,7 @@ test('disable dts source map only', async () => {
     [
       "index.d.ts",
       "index.js",
-      "chunk-D7D4PA-g.js",
+      "rolldown-runtime-D7D4PA-g.js",
       "index.js.map",
     ]
   `)

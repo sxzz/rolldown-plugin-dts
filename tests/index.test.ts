@@ -183,7 +183,7 @@ describe('dts input', () => {
       ]),
     )
     expect(warnings.join('\n')).toContain(
-      'rolldown-plugin-dts does not support reliably bundling CommonJS dts input',
+      'rolldown-plugin-dts does not support bundling CommonJS dts input',
     )
   })
 
