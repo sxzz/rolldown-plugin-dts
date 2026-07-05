@@ -73,9 +73,6 @@ catalogs:
       specifier: ^4.4.3
       version: 4.4.3
   prod:
-    birpc:
-      specifier: ^4.0.0
-      version: 4.0.0
     dts-resolver:
       specifier: ^3.0.0
       version: 3.0.0
@@ -105,9 +102,6 @@ importers:
       '@ts-macro/tsc':
         specifier: ^0.3.6
         version: 0.3.7(rollup@4.62.2)
-      birpc:
-        specifier: catalog:prod
-        version: 4.0.0
       dts-resolver:
         specifier: catalog:prod
         version: 3.0.0

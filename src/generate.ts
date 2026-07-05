@@ -1,4 +1,4 @@
-import { fork, type ChildProcess } from 'node:child_process'
+import { fork } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { access, readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -28,8 +28,7 @@ import {
 import { runTsgo, type TsgoContext } from './tsgo.ts'
 import type { OptionsResolved } from './options.ts'
 import type { TscOptions, TscResult } from './tsc/index.ts'
-import type { TscFunctions } from './tsc/worker.ts'
-import type { BirpcReturn } from 'birpc'
+import type { WorkerRequest, WorkerResponse } from './tsc/worker.ts'
 import type { Plugin, SourceMapInput } from 'rolldown'
 
 const debug = createDebug('rolldown-plugin-dts:generate')
@@ -103,8 +102,7 @@ export function createGeneratePlugin({
    */
   const inputAliasMap = new Map<string, string>()
 
-  let childProcess: ChildProcess | undefined
-  let rpc: BirpcReturn<TscFunctions> | undefined
+  let tscWorker: TscWorker | undefined
   let tscModule: typeof import('./tsc/index.ts')
   let tscContext: TscContext | undefined
   let tsgoContext: TsgoContext | undefined
@@ -119,16 +117,7 @@ export function createGeneratePlugin({
       } else if (!oxc) {
         // tsc
         if (parallel) {
-          childProcess = fork(new URL(WORKER_URL, import.meta.url), {
-            stdio: 'inherit',
-          })
-          rpc = (await import('birpc')).createBirpc<TscFunctions>(
-            {},
-            {
-              post: (data) => childProcess!.send(data),
-              on: (fn) => childProcess!.on('message', fn),
-            },
-          )
+          tscWorker = createTscWorker()
         } else {
           tscModule = await import('./tsc/index.ts')
           if (newContext) {
@@ -304,7 +293,7 @@ export function createGeneratePlugin({
           }
           let result: TscResult
           if (parallel) {
-            result = await rpc!.tscEmit(options)
+            result = await tscWorker!.emit(options)
           } else {
             result = tscModule.tscEmit(options)
           }
@@ -370,7 +359,8 @@ export { __json_default_export as default }`
       : undefined,
 
     async buildEnd() {
-      childProcess?.kill()
+      tscWorker?.kill()
+      tscWorker = undefined
       await tsgoContext?.dispose()
       tsgoContext = undefined
       if (newContext) {
@@ -383,6 +373,55 @@ export { __json_default_export as default }`
         invalidateContextFile(tscContext || globalContext, id)
       }
     },
+  }
+}
+
+interface TscWorker {
+  emit: (options: TscOptions) => Promise<TscResult>
+  kill: () => void
+}
+
+function createTscWorker(): TscWorker {
+  const childProcess = fork(new URL(WORKER_URL, import.meta.url), {
+    stdio: 'inherit',
+    serialization: 'advanced',
+  })
+
+  const pending = new Map<
+    number,
+    {
+      resolve: (result: TscResult) => void
+      reject: (error: unknown) => void
+    }
+  >()
+  let nextId = 0
+
+  childProcess.on('message', (response: WorkerResponse) => {
+    const handler = pending.get(response.id)
+    if (!handler) return
+    pending.delete(response.id)
+    if (response.error) {
+      handler.reject(response.error)
+    } else {
+      handler.resolve(response.result!)
+    }
+  })
+
+  childProcess.on('exit', (code) => {
+    for (const handler of pending.values()) {
+      handler.reject(new Error(`tsc worker exited with code ${code}`))
+    }
+    pending.clear()
+  })
+
+  return {
+    emit: (options) =>
+      new Promise((resolve, reject) => {
+        const id = nextId++
+        pending.set(id, { resolve, reject })
+        childProcess.send({ id, options } satisfies WorkerRequest)
+      }),
+    kill: () => childProcess.kill(),
   }
 }
 

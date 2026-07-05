@@ -1,11 +1,26 @@
 import process from 'node:process'
-import { createBirpc } from 'birpc'
-import { tscEmit } from './index.ts'
+import { tscEmit, type TscOptions, type TscResult } from './index.ts'
 
-const functions: { tscEmit: typeof tscEmit } = { tscEmit }
-export type TscFunctions = typeof functions
+export interface WorkerRequest {
+  id: number
+  options: TscOptions
+}
 
-createBirpc(functions, {
-  post: (data) => process.send!(data),
-  on: (fn) => process.on('message', fn),
+export interface WorkerResponse {
+  id: number
+  result?: TscResult
+  error?: unknown
+}
+
+process.on('message', (request: WorkerRequest) => {
+  let response: WorkerResponse
+  try {
+    response = { id: request.id, result: tscEmit(request.options) }
+  } catch (error) {
+    response = {
+      id: request.id,
+      error,
+    }
+  }
+  process.send!(response)
 })

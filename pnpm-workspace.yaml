@@ -28,7 +28,6 @@ catalog:
 
 catalogs:
   prod:
-    birpc: ^4.0.0
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.5
     obug: ^2.1.3
