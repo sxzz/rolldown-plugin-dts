@@ -103,6 +103,7 @@ export { SomeBoolean, SomeClass };"
 
 exports[`declare module 1`] = `
 "// declare-module.d.ts
+import "./rolldown-runtime-ClRpJifh.js";
 //#region tests/fixtures/declare-module.d.ts
 declare module "virtual" {
   const _default: string;
@@ -458,7 +459,7 @@ export { foo };"
 
 exports[`side effects 1`] = `
 "// index.d.ts
-export { };
+import "./mod.js";
 // mod.d.ts
 //#region tests/fixtures/side-effects/mod.d.ts
 declare global {
