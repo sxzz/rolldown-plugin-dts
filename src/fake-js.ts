@@ -84,6 +84,33 @@ type NamespaceMap = Map<
   }
 >
 
+/**
+ * Creates the Rolldown {@linkcode Plugin | plugin} that lets `.d.ts` files be
+ * bundled as if they were JavaScript. Rolldown cannot rename or tree-shake
+ * TypeScript declarations directly, so `transform` rewrites every declaration
+ * in a `.d.ts` module into a placeholder JavaScript binding whose array holds
+ * the declaration's dependencies:
+ *
+ * ```ts
+ * // export declare function x(xx: X): void
+ * var [x] = [0, () => [X]];
+ * ```
+ *
+ * Rolldown then bundles those bindings as ordinary JavaScript, renaming them to
+ * resolve collisions (`x` -> `x$1`). `renderChunk` swaps each binding back for
+ * its original declaration, applying the names Rolldown chose:
+ *
+ * ```ts
+ * export declare function x$1(xx: X$1): void;
+ * ```
+ *
+ * `dts()` always includes this plugin, and passes it options already normalized
+ * by `resolveOptions()`. Reach for it directly only when assembling the
+ * plugin pipeline by hand.
+ *
+ * @returns A Rolldown {@linkcode Plugin | plugin} named `rolldown-plugin-dts:fake-js`.
+ * @throws An {@linkcode Error} during `outputOptions` if the output format is `cjs`, which cannot represent bundled `.d.ts` output.
+ */
 export function createFakeJsPlugin({
   sourcemap,
   cjsDefault,

@@ -46,6 +46,14 @@ export interface TsModule {
 /** dts filename -> ts module */
 export type DtsMap = Map<string, TsModule>
 
+/**
+ * Creates the Rolldown {@linkcode Plugin | plugin} responsible for generating
+ * `.d.ts` declaration files from source modules. Depending on the resolved
+ * options it delegates to Oxc isolated declarations, `tsgo`, or the
+ * TypeScript compiler.
+ *
+ * @returns A Rolldown {@linkcode Plugin | plugin} that registers the `transform` and `load` hooks needed for `.d.ts` generation.
+ */
 export function createGeneratePlugin({
   generator,
   entry,
