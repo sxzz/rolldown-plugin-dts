@@ -188,7 +188,7 @@ guaranteeing that all type definitions are generated from scratch.
 `invalidateContextFile` API can be used to clear invalidated files from the context.
 
 ```ts
-import { globalContext, invalidateContextFile } from 'rolldown-plugin-dts/tsc'
+import { globalContext, invalidateContextFile } from 'rolldown-plugin-dts/tsc-context'
 invalidateContextFile(globalContext, 'src/foo.ts')
 ```
 
