@@ -6,6 +6,7 @@ import {
   type TsconfigJson,
   type TsconfigJsonResolved,
 } from 'get-tsconfig'
+import { isTsgo } from './tsgo.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 //#region General Options
@@ -209,11 +210,15 @@ export interface Options extends GeneralOptions, TscOptions {
   /**
    * **[Experimental]** Enables DTS generation using `tsgo`.
    *
-   * To use this option, make sure `@typescript/native-preview` is installed as a dependency,
-   * or provide a custom path to the `tsgo` binary using the `path` option.
+   * This is automatically enabled when the TypeScript Go compiler (v7+) is
+   * installed as the `typescript` package. Otherwise, make sure
+   * `@typescript/native-preview` is installed as a dependency, or provide a
+   * custom path to the `tsgo` binary using the `path` option.
    *
-   * **Note:** This option is not yet recommended for production environments.
-   * `tsconfigRaw` and `isolatedDeclarations` options will be ignored when this option is enabled.
+   * **Note:** TypeScript 7.0 does not yet have a stable API and is experimental.
+   * This option is not yet recommended for production environments, and some
+   * options (such as `tsconfigRaw` and `isolatedDeclarations`) will be
+   * unavailable when it is enabled.
    *
    *
    * ```ts
@@ -275,9 +280,12 @@ export function resolveOptions({
   emitJs,
 
   oxc,
-  tsgo = false,
+  tsgo,
 }: Options): OptionsResolved {
   // Resolve tsgo option
+  if (tsgo == null) {
+    tsgo = isTsgo() && !vue && !tsMacro && !oxc
+  }
   if (tsgo === true) {
     tsgo = {}
   } else if (typeof tsgo === 'object' && tsgo.enabled === false) {
@@ -354,7 +362,7 @@ export function resolveOptions({
 
   if (tsgo && !warnedTsgo) {
     console.warn(
-      'The `tsgo` option is experimental and may change in the future.',
+      'TypeScript 7.0 does not yet have a stable API and is experimental. Some options will be unavailable.',
     )
     warnedTsgo = true
   }

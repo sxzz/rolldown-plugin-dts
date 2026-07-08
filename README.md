@@ -210,13 +210,13 @@ This option is automatically enabled when `isolatedDeclarations` in `compilerOpt
 ### TypeScript Go
 
 > [!WARNING]
-> This feature is experimental and not yet recommended for production environments.
+> TypeScript 7.0 does not yet have a stable API and is experimental. This feature is not yet recommended for production environments, and some options will be unavailable.
 
 #### `tsgo`
 
 **[Experimental]** Enables DTS generation using [`tsgo`](https://github.com/microsoft/typescript-go).
 
-To use this option, ensure that `@typescript/native-preview` is installed as a dependency.
+This is automatically enabled when the native TypeScript compiler (v7+) is installed as the `typescript` package. Otherwise, ensure that `@typescript/native-preview` is installed as a dependency.
 
 `tsconfigRaw` and `compilerOptions` options will be ignored when this option is enabled.
 

@@ -1,10 +1,27 @@
 import { spawn } from 'node:child_process'
 import { mkdtemp, rm } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createDebug } from 'obug'
 
+const require = createRequire(import.meta.url)
 const debug = createDebug('rolldown-plugin-dts:tsgo')
+
+export function getTypeScriptMajor(): number | undefined {
+  try {
+    const { version } = require('typescript/package.json')
+    const major = +version.split('.', 1)[0]
+    return Number.isNaN(major) ? undefined : major
+  } catch {
+    return
+  }
+}
+
+export function isTsgo(): boolean {
+  const major = getTypeScriptMajor()
+  return major != null && major >= 7
+}
 
 const spawnAsync = (...args: Parameters<typeof spawn>) =>
   new Promise<void>((resolve, reject) => {
@@ -14,7 +31,8 @@ const spawnAsync = (...args: Parameters<typeof spawn>) =>
   })
 
 export async function getTsgoPathFromNodeModules(): Promise<string> {
-  const tsgoPkg = import.meta.resolve('@typescript/native-preview/package.json')
+  const pkgName = isTsgo() ? 'typescript' : '@typescript/native-preview'
+  const tsgoPkg = import.meta.resolve(`${pkgName}/package.json`)
   const { default: getExePath } = await import(
     new URL('lib/getExePath.js', tsgoPkg).href
   )
