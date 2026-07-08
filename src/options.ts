@@ -292,6 +292,12 @@ export function resolveOptions({
     tsgo = false
   }
 
+  if (!tsgo && isTsgo()) {
+    throw new Error(
+      '[rolldown-plugin-dts] TypeScript 7.0 is installed, but the `tsgo` option is disabled. Please enable it to use TypeScript 7.0 features.',
+    )
+  }
+
   let resolvedTsconfig: TsconfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
