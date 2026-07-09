@@ -237,6 +237,24 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
+  test('vue-sfc as entries w/o ts importer', async () => {
+    const root = path.resolve(dirname, 'fixtures/vue-sfc-entries')
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(root, 'Foo.vue'), path.resolve(root, 'Bar.vue')],
+      [
+        dts({
+          emitDtsOnly: true,
+          vue: true,
+          compilerOptions: {
+            isolatedDeclarations: false,
+          },
+        }),
+      ],
+      { external: [/^@vue/] },
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
+
   test('jsdoc', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/jsdoc.ts'),

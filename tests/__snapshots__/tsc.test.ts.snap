@@ -482,6 +482,27 @@ interface Unused {
 export { Unused };"
 `;
 
+exports[`tsc > vue-sfc as entries w/o ts importer 1`] = `
+"// Bar.vue.d.ts
+//#region tests/fixtures/vue-sfc-entries/Bar.vue.d.ts
+type __VLS_Props = {
+  bar: string;
+};
+declare const __VLS_export: import("@vue/runtime-core").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("@vue/runtime-core").ComponentOptionsMixin, import("@vue/runtime-core").ComponentOptionsMixin, {}, string, import("@vue/runtime-core").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("@vue/runtime-core").ComponentProvideOptions, false, {}, any>;
+declare const _default: typeof __VLS_export;
+//#endregion
+export { _default as default };
+// Foo.vue.d.ts
+//#region tests/fixtures/vue-sfc-entries/Foo.vue.d.ts
+type __VLS_Props = {
+  foo: string;
+};
+declare const __VLS_export: import("@vue/runtime-core").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("@vue/runtime-core").ComponentOptionsMixin, import("@vue/runtime-core").ComponentOptionsMixin, {}, string, import("@vue/runtime-core").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("@vue/runtime-core").ComponentProvideOptions, false, {}, any>;
+declare const _default: typeof __VLS_export;
+//#endregion
+export { _default as default };"
+`;
+
 exports[`tsc > vue-sfc w/ ts-compiler 1`] = `
 "// main.d.ts
 //#region tests/fixtures/vue-sfc/App.vue.d.ts
