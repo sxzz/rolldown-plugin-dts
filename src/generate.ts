@@ -47,6 +47,7 @@ export interface TsModule {
 export type DtsMap = Map<string, TsModule>
 
 export function createGeneratePlugin({
+  generator,
   entry,
   tsconfig,
   tsconfigRaw,
@@ -65,6 +66,7 @@ export function createGeneratePlugin({
   sourcemap,
 }: Pick<
   OptionsResolved,
+  | 'generator'
   | 'entry'
   | 'cwd'
   | 'tsconfig'
@@ -112,10 +114,9 @@ export function createGeneratePlugin({
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      if (tsgo) {
+      if (generator === 'tsgo') {
         tsgoContext = await runTsgo(rootDir, tsconfig, sourcemap, tsgo.path)
-      } else if (!oxc) {
-        // tsc
+      } else if (generator === 'tsc') {
         if (parallel) {
           tscWorker = createTscWorker()
         } else {
@@ -234,7 +235,7 @@ export function createGeneratePlugin({
         let map: SourceMapInput | undefined
         debug('generate dts %s from %s', dtsId, id)
 
-        if (tsgo) {
+        if (generator === 'tsgo') {
           if (RE_VUE.test(id))
             throw new Error('tsgo does not support Vue files.')
           const dtsPath = path.resolve(
@@ -258,7 +259,7 @@ export function createGeneratePlugin({
               sources: [id],
             }
           }
-        } else if (oxc && !RE_VUE.test(id)) {
+        } else if (generator === 'oxc' && !RE_VUE.test(id)) {
           const result = isolatedDeclarationSync(id, code, oxc)
           if (result.errors.length) {
             const [error] = result.errors

@@ -56,6 +56,22 @@ Configuration options for the plugin.
 
 ### General Options
 
+#### `generator`
+
+Specifies which generator to use for `.d.ts` generation.
+
+- `'tsc'`: Uses the TypeScript 5.x or 6.x compiler. Compatible with all TypeScript features.
+- `'oxc'`: Uses [Oxc](https://oxc.rs/docs/guide/usage/transformer.html)'s isolated declaration generator, which is significantly faster than the TypeScript compiler. Only compatible with TypeScript features that do not require type checking.
+- `'tsgo'`: **[Experimental]** Uses the TypeScript Go compiler ([`tsgo`](https://github.com/microsoft/typescript-go)). May not support all TypeScript features.
+
+**Default:** `'tsc'`, unless `isolatedDeclarations` is enabled in `compilerOptions`, in which case it defaults to `'oxc'`. If TypeScript 7.0 is installed, it defaults to `'tsgo'`.
+
+```ts
+dts({
+  generator: 'oxc',
+})
+```
+
 #### `entry`
 
 Glob pattern(s) to filter which files get `.d.ts` generation.
@@ -140,7 +156,7 @@ Indicates whether the generated `.d.ts` files have side effects.
 ### `tsc` Options
 
 > [!NOTE]
-> These options are only applicable when `oxc` and `tsgo` are not enabled.
+> These options are only applicable when the `generator` is `'tsc'`.
 
 #### `build`
 
@@ -201,24 +217,37 @@ Enabled by default when `allowJs` in compilerOptions is `true`.
 
 ### Oxc
 
+> [!NOTE]
+> These options are only applicable when the `generator` is `'oxc'`. Set `generator: 'oxc'` to enable the Oxc generator, or leave it unset when `isolatedDeclarations` in `compilerOptions` is `true`.
+
 #### `oxc`
 
-If `true`, the plugin will generate `.d.ts` files using [Oxc](https://oxc.rs/docs/guide/usage/transformer.html), which is significantly faster than the TypeScript compiler.
+Options passed to Oxc's isolated declaration generator.
 
-This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
+See: [IsolatedDeclarationsOptions](https://oxc.rs/docs/guide/usage/transformer.html)
 
 ### TypeScript Go
 
 > [!WARNING]
 > TypeScript 7.0 does not yet have a stable API and is experimental. This feature is not yet recommended for production environments, and some options will be unavailable.
 
+> [!NOTE]
+> These options are only applicable when the `generator` is `'tsgo'`. Set `generator: 'tsgo'` to enable the TypeScript Go generator, or leave it unset — it is used automatically when the native TypeScript compiler (v7+) is installed as the `typescript` package. Otherwise, ensure that `@typescript/native-preview` is installed as a dependency.
+>
+> `tsconfigRaw` and `compilerOptions` options are ignored when this generator is used.
+
 #### `tsgo`
 
-**[Experimental]** Enables DTS generation using [`tsgo`](https://github.com/microsoft/typescript-go).
+**[Experimental]** Options for the [`tsgo`](https://github.com/microsoft/typescript-go) generator.
 
-This is automatically enabled when the native TypeScript compiler (v7+) is installed as the `typescript` package. Otherwise, ensure that `@typescript/native-preview` is installed as a dependency.
+- `path`: Custom path to the `tsgo` binary (e.g., when managed by Nix).
 
-`tsconfigRaw` and `compilerOptions` options will be ignored when this option is enabled.
+```ts
+dts({
+  generator: 'tsgo',
+  tsgo: { path: '/path/to/tsgo' },
+})
+```
 
 ## Code Splitting Support
 

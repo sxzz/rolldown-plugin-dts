@@ -41,7 +41,7 @@ test('oxc', async () => {
     input,
     plugins: [
       dts({
-        oxc: true,
+        generator: 'oxc',
         tsconfig,
         sourcemap: true,
         emitDtsOnly: true,
@@ -61,7 +61,7 @@ test('tsc', async () => {
     input,
     plugins: [
       dts({
-        oxc: false,
+        generator: 'tsc',
         tsconfig,
         sourcemap: true,
         emitDtsOnly: true,
@@ -81,7 +81,7 @@ test('tsgo', async () => {
     input,
     plugins: [
       dts({
-        tsgo: true,
+        generator: 'tsgo',
         tsconfig,
         sourcemap: true,
         emitDtsOnly: true,

@@ -26,7 +26,7 @@ export default defineConfig({
   exports: true,
   plugins: [
     dts({
-      oxc: true,
+      generator: 'oxc',
     }),
     ApiSnapshot(),
     RequireCJS({

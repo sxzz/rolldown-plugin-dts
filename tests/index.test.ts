@@ -28,7 +28,7 @@ test('resolve dependencies', async () => {
     path.resolve(dirname, 'fixtures/resolve-dep.ts'),
     [
       dts({
-        oxc: true,
+        generator: 'oxc',
         emitDtsOnly: true,
       }),
     ],
@@ -118,7 +118,7 @@ test('isolated declaration error', async () => {
     [
       dts({
         emitDtsOnly: true,
-        oxc: true,
+        generator: 'oxc',
       }),
     ],
   ).catch((error: any) => error)

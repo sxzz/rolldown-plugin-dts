@@ -10,7 +10,7 @@ export interface Options extends GeneralOptions, TscOptions {
 
 // #region Functions
 export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
-export declare function createGeneratePlugin({ entry, tsconfig, tsconfigRaw, build, incremental, cwd, oxc, emitDtsOnly, vue, tsMacro, parallel, eager, tsgo, newContext, emitJs, sourcemap }: Pick<OptionsResolved, "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "build" | "incremental" | "oxc" | "emitDtsOnly" | "vue" | "tsMacro" | "parallel" | "eager" | "tsgo" | "newContext" | "emitJs" | "sourcemap">): Plugin;
+export declare function createGeneratePlugin({ generator, entry, tsconfig, tsconfigRaw, build, incremental, cwd, oxc, emitDtsOnly, vue, tsMacro, parallel, eager, tsgo, newContext, emitJs, sourcemap }: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "build" | "incremental" | "oxc" | "emitDtsOnly" | "vue" | "tsMacro" | "parallel" | "eager" | "tsgo" | "newContext" | "emitJs" | "sourcemap">): Plugin;
 export declare function dts(_?: Options): Plugin[];
-export declare function resolveOptions({ entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, build, incremental, vue, tsMacro, parallel, eager, newContext, emitJs, oxc, tsgo }: Options): OptionsResolved;
+export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, build, incremental, vue, tsMacro, parallel, eager, newContext, emitJs, oxc, tsgo }: Options): OptionsResolved;
 // #endregion

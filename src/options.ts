@@ -6,11 +6,37 @@ import {
   type TsconfigJson,
   type TsconfigJsonResolved,
 } from 'get-tsconfig'
-import { isTsgo } from './tsgo.ts'
+import { createDebug } from 'obug'
+import { isTS7Installed } from './tsgo.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
+
+const debug = createDebug('rolldown-plugin-dts:options')
 
 //#region General Options
 export interface GeneralOptions {
+  /**
+   * The generator used to produce `.d.ts` files.
+   *
+   * - `'tsc'`: The TypeScript 5.x/6.x compiler. Supports all TypeScript features.
+   * - `'oxc'`: {@link https://oxc.rs Oxc}'s isolated declaration generator. Much
+   *   faster than `tsc`, but only supports code that satisfies
+   *   [`isolatedDeclarations`](https://www.typescriptlang.org/tsconfig/#isolatedDeclarations).
+   * - `'tsgo'`: **[Experimental]** The TypeScript Go compiler
+   *   ({@link https://github.com/microsoft/typescript-go tsgo}). May not support
+   *   all TypeScript features yet.
+   *
+   * When unset, the generator is inferred:
+   * - `'oxc'` if {@link Options.oxc oxc} options are provided or
+   *   `isolatedDeclarations` is enabled in `compilerOptions`.
+   * - `'tsgo'` if TypeScript 7.0 (or `@typescript/native-preview`) is installed,
+   *   or {@link Options.tsgo tsgo} options are provided.
+   * - `'tsc'` otherwise, and always when {@link TscOptions.vue vue} or
+   *   {@link TscOptions.tsMacro tsMacro} is enabled.
+   *
+   * @default 'tsc'
+   */
+  generator?: 'tsc' | 'oxc' | 'tsgo'
+
   /**
    * Glob pattern(s) to filter which entry files get `.d.ts` generation.
    *
@@ -233,8 +259,6 @@ export interface Options extends GeneralOptions, TscOptions {
 }
 
 export interface TsgoOptions {
-  enabled?: boolean
-
   /**
    * Custom path to the `tsgo` binary.
    */
@@ -248,15 +272,16 @@ export type OptionsResolved = Overwrite<
   {
     entry?: string[]
     tsconfig?: string
-    oxc: IsolatedDeclarationsOptions | false
+    oxc: IsolatedDeclarationsOptions
     tsconfigRaw: TsconfigJson
-    tsgo: Omit<TsgoOptions, 'enabled'> | false
+    tsgo: TsgoOptions
   }
 >
 
 let warnedTsgo = false
 
 export function resolveOptions({
+  generator,
   entry,
   cwd = process.cwd(),
   dtsInput = false,
@@ -310,64 +335,32 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  if (typeof tsgo === 'object' && tsgo.enabled === false) {
-    tsgo = false
+  if (!generator) {
+    if (vue || tsMacro) {
+      // Volar relate
+      generator = 'tsc'
+    } else if (tsgo) {
+      generator = 'tsgo'
+    } else if (oxc || compilerOptions?.isolatedDeclarations) {
+      generator = 'oxc'
+    } else if (isTS7Installed()) {
+      generator = 'tsgo'
+    } else {
+      generator = 'tsc'
+    }
   }
 
-  oxc ??= !!(compilerOptions?.isolatedDeclarations && !vue && !tsgo && !tsMacro)
-  if (oxc === true) {
-    oxc = {}
-  }
+  if (oxc === true || !oxc) oxc = {}
   if (oxc) {
     oxc.stripInternal ??= !!compilerOptions?.stripInternal
     // @ts-expect-error omitted in user options
     oxc.sourcemap = !!compilerOptions.declarationMap
   }
-
-  if (tsgo == null) {
-    tsgo = isTsgo() && !vue && !tsMacro && !oxc
-  }
-  if (tsgo === true) {
-    tsgo = {}
-  }
-
-  if (!tsgo && isTsgo()) {
-    throw new Error(
-      '[rolldown-plugin-dts] TypeScript 7.0 is installed, but the `tsgo` option is disabled. Please enable it to use TypeScript 7.0 features.',
-    )
-  }
+  if (tsgo === true || !tsgo) tsgo = {}
 
   emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
 
-  if (tsgo) {
-    if (vue) {
-      throw new Error(
-        '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `vue` option. Please disable one of them.',
-      )
-    }
-    if (tsMacro) {
-      throw new Error(
-        '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `tsMacro` option. Please disable one of them.',
-      )
-    }
-    if (oxc) {
-      throw new Error(
-        '[rolldown-plugin-dts] The `tsgo` option is not compatible with the `oxc` option. Please disable one of them.',
-      )
-    }
-  }
-  if (oxc && vue) {
-    throw new Error(
-      '[rolldown-plugin-dts] The `oxc` option is not compatible with the `vue` option. Please disable one of them.',
-    )
-  }
-  if (oxc && tsMacro) {
-    throw new Error(
-      '[rolldown-plugin-dts] The `oxc` option is not compatible with the `tsMacro` option. Please disable one of them.',
-    )
-  }
-
-  if (tsgo && !warnedTsgo) {
+  if (generator === 'tsgo' && !warnedTsgo) {
     console.warn(
       'TypeScript 7.0 does not yet have a stable API and is experimental. Some options will be unavailable.',
     )
@@ -380,7 +373,8 @@ export function resolveOptions({
       : [entry]
     : undefined
 
-  return {
+  const resolved = {
+    generator,
     entry: resolvedEntry,
     cwd,
     dtsInput,
@@ -405,4 +399,7 @@ export function resolveOptions({
     oxc,
     tsgo,
   }
+  debug('Resolved Options: %O', resolved)
+
+  return resolved
 }

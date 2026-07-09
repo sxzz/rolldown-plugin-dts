@@ -23,7 +23,7 @@ describe('tsc', () => {
             skipLibCheck: true,
             isolatedDeclarations: false,
           },
-          oxc: false,
+          generator: 'tsc',
         }),
       ],
     )
@@ -240,7 +240,7 @@ describe('tsc', () => {
   test('jsdoc', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/jsdoc.ts'),
-      [dts({ oxc: false })],
+      [dts({ generator: 'tsc' })],
       { external: ['rolldown'] },
     )
     expect(snapshot).toMatchSnapshot()
@@ -323,7 +323,7 @@ describe('tsc', () => {
       const root = path.resolve(dirname, 'fixtures/paths')
       const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
         dts({
-          oxc: true,
+          generator: 'oxc',
           emitDtsOnly: true,
           tsconfig: path.resolve(root, 'tsconfig.json'),
           resolver,
@@ -354,7 +354,7 @@ describe('tsc', () => {
       path.resolve(dirname, 'fixtures/accessor-in-type-literal.ts'),
       [
         dts({
-          oxc: false,
+          generator: 'tsc',
           emitDtsOnly: true,
           compilerOptions: { isolatedDeclarations: false },
         }),

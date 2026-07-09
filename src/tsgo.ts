@@ -18,7 +18,7 @@ export function getTypeScriptMajor(): number | undefined {
   }
 }
 
-export function isTsgo(): boolean {
+export function isTS7Installed(): boolean {
   const major = getTypeScriptMajor()
   return major != null && major >= 7
 }
@@ -31,7 +31,7 @@ const spawnAsync = (...args: Parameters<typeof spawn>) =>
   })
 
 export async function getTsgoPathFromNodeModules(): Promise<string> {
-  const pkgName = isTsgo() ? 'typescript' : '@typescript/native-preview'
+  const pkgName = isTS7Installed() ? 'typescript' : '@typescript/native-preview'
   const tsgoPkg = import.meta.resolve(`${pkgName}/package.json`)
   const { default: getExePath } = await import(
     new URL('lib/getExePath.js', tsgoPkg).href
