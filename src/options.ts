@@ -282,22 +282,6 @@ export function resolveOptions({
   oxc,
   tsgo,
 }: Options): OptionsResolved {
-  // Resolve tsgo option
-  if (tsgo == null) {
-    tsgo = isTsgo() && !vue && !tsMacro && !oxc
-  }
-  if (tsgo === true) {
-    tsgo = {}
-  } else if (typeof tsgo === 'object' && tsgo.enabled === false) {
-    tsgo = false
-  }
-
-  if (!tsgo && isTsgo()) {
-    throw new Error(
-      '[rolldown-plugin-dts] TypeScript 7.0 is installed, but the `tsgo` option is disabled. Please enable it to use TypeScript 7.0 features.',
-    )
-  }
-
   let resolvedTsconfig: TsconfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
@@ -326,6 +310,10 @@ export function resolveOptions({
     compilerOptions,
   }
 
+  if (typeof tsgo === 'object' && tsgo.enabled === false) {
+    tsgo = false
+  }
+
   oxc ??= !!(compilerOptions?.isolatedDeclarations && !vue && !tsgo && !tsMacro)
   if (oxc === true) {
     oxc = {}
@@ -334,6 +322,19 @@ export function resolveOptions({
     oxc.stripInternal ??= !!compilerOptions?.stripInternal
     // @ts-expect-error omitted in user options
     oxc.sourcemap = !!compilerOptions.declarationMap
+  }
+
+  if (tsgo == null) {
+    tsgo = isTsgo() && !vue && !tsMacro && !oxc
+  }
+  if (tsgo === true) {
+    tsgo = {}
+  }
+
+  if (!tsgo && isTsgo()) {
+    throw new Error(
+      '[rolldown-plugin-dts] TypeScript 7.0 is installed, but the `tsgo` option is disabled. Please enable it to use TypeScript 7.0 features.',
+    )
   }
 
   emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
