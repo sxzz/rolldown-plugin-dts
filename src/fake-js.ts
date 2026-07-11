@@ -344,14 +344,11 @@ export function createFakeJsPlugin({
       */
       const runtimeAssignment = b.variableDeclaration('var', [
         b.variableDeclarator(
-          { ...bindings[0], typeAnnotation: null },
+          b.arrayPattern(
+            bindings.map((binding) => ({ ...binding, typeAnnotation: null })),
+          ),
           runtimeArrayNode,
         ),
-        ...bindings
-          .slice(1)
-          .map((binding) =>
-            b.variableDeclarator({ ...binding, typeAnnotation: null }),
-          ),
       ]) as RuntimeBindingVariableDeclration
 
       if (isDefaultExport) {
@@ -436,11 +433,12 @@ export function createFakeJsPlugin({
           return null
         }
 
+        const decl = node.declarations[0]
         const [declarationIdNode, depsFn, children /*, ignore sideEffect */] =
-          node.declarations[0].init.elements
+          decl.init.elements
 
-        const declarationId = declarationIdNode.value as number
-        const declaration = getDeclaration(declarationId)
+        const declarationId = declarationIdNode.value
+        const declaration = getDeclaration(declarationId!)
 
         if (sourcemap) {
           walk(declaration.decl, {
@@ -451,9 +449,9 @@ export function createFakeJsPlugin({
           })
         }
 
-        for (const [i, decl] of node.declarations.entries()) {
+        for (const [i, id] of decl.id.elements.entries()) {
           const transformedBinding = {
-            ...decl.id,
+            ...id,
             typeAnnotation: declaration.bindings[i].typeAnnotation,
           }
           overwriteNode(declaration.bindings[i], transformedBinding)
@@ -1138,7 +1136,10 @@ function isCjsDtsInputSyntax(node: t.ProgramStatement): boolean {
  */
 type RuntimeBindingVariableDeclration = t.VariableDeclaration & {
   declarations: [
-    t.VariableDeclarator & { init: RuntimeBindingArrayExpression },
+    t.VariableDeclarator & {
+      id: t.ArrayPattern
+      init: RuntimeBindingArrayExpression
+    },
     ...t.VariableDeclarator[],
   ]
 }
@@ -1151,8 +1152,9 @@ function isRuntimeBindingVariableDeclaration(
 ): node is RuntimeBindingVariableDeclration {
   return (
     node?.type === 'VariableDeclaration' &&
-    node.declarations.length > 0 &&
+    node.declarations.length === 1 &&
     node.declarations[0].type === 'VariableDeclarator' &&
+    node.declarations[0].id.type === 'ArrayPattern' &&
     isRuntimeBindingArrayExpression(node.declarations[0].init)
   )
 }
@@ -1614,3 +1616,8 @@ function getIdentifierIndex(
   }
   return (identifierMap[name] = 0)
 }
+
+export function typeAssert<T>(
+  // eslint-disable-next-line unused-imports/no-unused-vars
+  value: T,
+): asserts value is Exclude<T, false | null | undefined> {}
