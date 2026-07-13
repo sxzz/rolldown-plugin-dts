@@ -120,7 +120,7 @@ export function createGeneratePlugin({
         tsgoContext = await runTsgo(
           logger,
           rootDir,
-          tsconfig,
+          tsconfig!,
           sourcemap,
           tsgo.path,
         )

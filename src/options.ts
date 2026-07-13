@@ -7,7 +7,7 @@ import {
   type TsconfigJsonResolved,
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
-import { isTS7Installed } from './tsgo.ts'
+import { isTS70Installed } from './tsgo.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = createDebug('rolldown-plugin-dts:options')
@@ -344,18 +344,52 @@ export function resolveOptions({
     compilerOptions,
   }
 
+  // Volar relate
+  if (vue || tsMacro) {
+    if (isTS70Installed()) {
+      throw new Error(
+        'TypeScript 7.0 does not yet have a stable API and is experimental. The `vue` and `tsMacro` options are not yet supported with TypeScript 7.0.',
+      )
+    }
+    if (generator && generator !== 'tsc') {
+      logger.warn(
+        'The `vue` and `tsMacro` options are enabled, which requires the `tsc` generator. The `generator` option is ignored.',
+      )
+    }
+    generator = 'tsc'
+  }
+
   if (!generator) {
-    if (vue || tsMacro) {
-      // Volar relate
-      generator = 'tsc'
-    } else if (tsgo) {
+    if (tsgo) {
       generator = 'tsgo'
     } else if (oxc || compilerOptions?.isolatedDeclarations) {
       generator = 'oxc'
-    } else if (isTS7Installed()) {
+    } else if (isTS70Installed()) {
       generator = 'tsgo'
     } else {
       generator = 'tsc'
+    }
+  }
+
+  if (generator === 'tsc') {
+    try {
+      require.resolve('typescript')
+    } catch {
+      throw new Error(
+        'TypeScript is not installed. You can install `typescript` package, or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.',
+      )
+    }
+  } else if (generator === 'tsgo') {
+    if (!tsconfig) {
+      throw new Error(
+        'tsgo generator requires a tsconfig file to be specified.',
+      )
+    }
+    if (!warnedTsgo) {
+      warnedTsgo = true
+      logger.warn(
+        'TypeScript 7.0 does not yet have a stable API and is experimental. Some options will be unavailable.',
+      )
     }
   }
 
@@ -368,13 +402,6 @@ export function resolveOptions({
   if (tsgo === true || !tsgo) tsgo = {}
 
   emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
-
-  if (generator === 'tsgo' && !warnedTsgo) {
-    logger.warn(
-      'TypeScript 7.0 does not yet have a stable API and is experimental. Some options will be unavailable.',
-    )
-    warnedTsgo = true
-  }
 
   const resolvedEntry = entry
     ? Array.isArray(entry)
