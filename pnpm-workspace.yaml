@@ -20,7 +20,7 @@ catalog:
   rollup-plugin-dts: ^6.4.1
   tsdown: ^0.22.5
   tsnapi: ^1.0.0
-  typescript: ^6.0.3
+  typescript: ^7.0.0
   vitest: ^4.1.10
   vue: ^3.5.39
   vue-tsc: ^3.3.7
