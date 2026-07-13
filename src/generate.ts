@@ -64,6 +64,7 @@ export function createGeneratePlugin({
   newContext,
   emitJs,
   sourcemap,
+  logger,
 }: Pick<
   OptionsResolved,
   | 'generator'
@@ -83,6 +84,7 @@ export function createGeneratePlugin({
   | 'newContext'
   | 'emitJs'
   | 'sourcemap'
+  | 'logger'
 >): Plugin {
   const entryIncludes = entry?.filter((p) => p[0] !== '!')
   const entryIgnores = entry?.filter((p) => p[0] === '!').map((p) => p.slice(1))
@@ -115,7 +117,13 @@ export function createGeneratePlugin({
 
     async buildStart(options) {
       if (generator === 'tsgo') {
-        tsgoContext = await runTsgo(rootDir, tsconfig, sourcemap, tsgo.path)
+        tsgoContext = await runTsgo(
+          logger,
+          rootDir,
+          tsconfig,
+          sourcemap,
+          tsgo.path,
+        )
       } else if (generator === 'tsc') {
         if (parallel) {
           tscWorker = createTscWorker()

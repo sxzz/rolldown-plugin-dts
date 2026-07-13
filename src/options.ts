@@ -12,6 +12,12 @@ import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = createDebug('rolldown-plugin-dts:options')
 
+export interface Logger {
+  info: (...args: any[]) => void
+  warn: (...args: any[]) => void
+  error: (...args: any[]) => void
+}
+
 //#region General Options
 export interface GeneralOptions {
   /**
@@ -129,6 +135,8 @@ export interface GeneralOptions {
    * @default false
    */
   sideEffects?: boolean
+
+  logger?: Logger
 }
 
 //#region tsc Options
@@ -293,6 +301,7 @@ export function resolveOptions({
   resolver = 'oxc',
   cjsDefault = false,
   sideEffects = false,
+  logger = console,
 
   // tsc
   build = false,
@@ -361,7 +370,7 @@ export function resolveOptions({
   emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
 
   if (generator === 'tsgo' && !warnedTsgo) {
-    console.warn(
+    logger.warn(
       'TypeScript 7.0 does not yet have a stable API and is experimental. Some options will be unavailable.',
     )
     warnedTsgo = true
@@ -398,6 +407,7 @@ export function resolveOptions({
 
     oxc,
     tsgo,
+    logger,
   }
   debug('Resolved Options: %O', resolved)
 

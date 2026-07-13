@@ -4,6 +4,8 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createDebug } from 'obug'
+import type { Logger } from './options.ts'
+import { styleText } from 'node:util'
 
 const require = createRequire(import.meta.url)
 const debug = createDebug('rolldown-plugin-dts:tsgo')
@@ -30,13 +32,25 @@ const spawnAsync = (...args: Parameters<typeof spawn>) =>
     child.on('error', (error) => reject(error))
   })
 
-export async function getTsgoPathFromNodeModules(): Promise<string> {
+let tsgoPathCache: string | undefined
+
+export async function getTsgoPathFromNodeModules(
+  logger: Logger,
+): Promise<string> {
+  if (tsgoPathCache) return tsgoPathCache
+
   const pkgName = isTS7Installed() ? 'typescript' : '@typescript/native-preview'
   const tsgoPkg = import.meta.resolve(`${pkgName}/package.json`)
+  const {
+    default: { version },
+  } = await import(tsgoPkg, { with: { type: 'json' } })
+  logger.info(
+    `Emit types with ${styleText('underline', `${pkgName}@${version}`)}`,
+  )
   const { default: getExePath } = await import(
     new URL('lib/getExePath.js', tsgoPkg).href
   )
-  return getExePath()
+  return (tsgoPathCache = getExePath())
 }
 
 export interface TsgoContext {
@@ -45,6 +59,7 @@ export interface TsgoContext {
 }
 
 export async function runTsgo(
+  logger: Logger,
   rootDir: string,
   tsconfig?: string,
   sourcemap?: boolean,
@@ -57,7 +72,7 @@ export async function runTsgo(
     tsgo = tsgoPath
     debug('[tsgo] using custom path', tsgo)
   } else {
-    tsgo = await getTsgoPathFromNodeModules()
+    tsgo = await getTsgoPathFromNodeModules(logger)
     debug('[tsgo] using tsgo from node_modules', tsgo)
   }
 

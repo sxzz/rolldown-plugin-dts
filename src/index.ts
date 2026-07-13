@@ -2,7 +2,7 @@ import { createDebug } from 'obug'
 import { createDtsInputPlugin } from './dts-input.ts'
 import { createFakeJsPlugin } from './fake-js.ts'
 import { createGeneratePlugin } from './generate.ts'
-import { resolveOptions, type Options } from './options.ts'
+import { resolveOptions, type Logger, type Options } from './options.ts'
 import { createDtsResolvePlugin } from './resolver.ts'
 import type { Plugin } from 'rolldown'
 
@@ -27,5 +27,6 @@ export {
   createFakeJsPlugin,
   createGeneratePlugin,
   resolveOptions,
+  type Logger,
   type Options,
 }

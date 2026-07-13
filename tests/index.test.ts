@@ -629,7 +629,11 @@ test('infer false branch', async () => {
 })
 
 test('tsgo with custom path', async () => {
-  const tsgoPath = await getTsgoPathFromNodeModules()
+  const tsgoPath = await getTsgoPathFromNodeModules({
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+  })
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/basic.ts'),
     [
