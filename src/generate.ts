@@ -34,6 +34,7 @@ import type { Plugin, SourceMapInput } from 'rolldown'
 const debug = createDebug('rolldown-plugin-dts:generate')
 
 const WORKER_URL = import.meta.WORKER_URL || './tsc/worker.ts'
+export const EMPTY_STUB = `export {}`
 
 export interface TsModule {
   /** `.ts` source code */
@@ -212,7 +213,7 @@ export function createGeneratePlugin({
 
         if (emitDtsOnly) {
           if (RE_JSON.test(id)) return '{}'
-          return 'export { }'
+          return EMPTY_STUB
         }
       },
     },

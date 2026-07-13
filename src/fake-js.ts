@@ -12,6 +12,7 @@ import {
   replaceTemplateName,
   resolveTemplateFn,
 } from './filename.ts'
+import { EMPTY_STUB } from './generate.ts'
 import type { OptionsResolved } from './options.ts'
 import type {
   Plugin,
@@ -504,7 +505,7 @@ export function createFakeJsPlugin({
       .filter((node) => !!node)
 
     if (program.body.length === 0) {
-      return { code: 'export { };', map: null }
+      return { code: EMPTY_STUB, map: null }
     }
 
     // recover comments
