@@ -1,9 +1,20 @@
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import ts from 'typescript'
+import { requireTS } from './load-tsc.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
+import type {
+  Bundle,
+  CustomTransformers,
+  FormatDiagnosticsHost,
+  Node,
+  SourceFile,
+  TransformationContext,
+  TransformerFactory,
+} from 'typescript'
 
-export const formatHost: ts.FormatDiagnosticsHost = {
+const ts = requireTS()
+
+export const formatHost: FormatDiagnosticsHost = {
   getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
   getNewLine: () => ts.sys.newLine,
   getCanonicalFileName: ts.sys.useCaseSensitiveFileNames
@@ -15,9 +26,7 @@ export const formatHost: ts.FormatDiagnosticsHost = {
 // `#private` marker tsc inlines into type literals) into string-literal names,
 // so the emitted dts stays parseable by downstream tools.
 // See https://github.com/sxzz/rolldown-plugin-dts/issues/77
-const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
-  ctx,
-) => {
+const stripPrivateFields: TransformerFactory<SourceFile | Bundle> = (ctx) => {
   // Recursing with the live `ctx` crashes when a get/set accessor appears in a
   // type literal in a function-like node's return type, e.g.
   // `function makeBox(): { get value(): number }`.
@@ -47,14 +56,14 @@ const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
   // lifecycle methods are no-ops. This is exactly what TypeScript >= 5.4
   // substitutes internally for an undefined context:
   // https://github.com/microsoft/TypeScript/blob/v6.0.3/src/compiler/transformer.ts#L669
-  const recurseCtx: ts.TransformationContext = {
+  const recurseCtx: TransformationContext = {
     ...ctx,
     startLexicalEnvironment: () => {},
     suspendLexicalEnvironment: () => {},
     resumeLexicalEnvironment: () => {},
     endLexicalEnvironment: () => undefined,
   }
-  const visitor = (node: ts.Node) => {
+  const visitor = (node: Node) => {
     if (ts.isPropertySignature(node) && ts.isPrivateIdentifier(node.name)) {
       return ctx.factory.updatePropertySignature(
         node,
@@ -70,7 +79,7 @@ const stripPrivateFields: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (
     ts.visitNode(sourceFile, visitor, ts.isSourceFile) ?? sourceFile
 }
 
-export const customTransformers: ts.CustomTransformers = {
+export const customTransformers: CustomTransformers = {
   afterDeclarations: [stripPrivateFields],
 }
 

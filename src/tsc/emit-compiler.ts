@@ -1,15 +1,22 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
-import * as ts from 'typescript'
 import { globalContext } from './context.ts'
+import { requireTS } from './load-tsc.ts'
 import { createFsSystem } from './system.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import type { TscModule, TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
+import type {
+  CompilerOptions,
+  ParsedCommandLine,
+  ScriptTarget,
+  System,
+} from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-compiler')
+const ts = requireTS()
 
-const defaultCompilerOptions: ts.CompilerOptions = {
+const defaultCompilerOptions: CompilerOptions = {
   declaration: true,
   noEmit: false,
   emitDeclarationOnly: true,
@@ -17,7 +24,7 @@ const defaultCompilerOptions: ts.CompilerOptions = {
   checkJs: false,
   declarationMap: false,
   skipLibCheck: true,
-  target: 99 satisfies ts.ScriptTarget.ESNext,
+  target: 99 satisfies ScriptTarget.ESNext,
   resolveJsonModule: true,
   moduleResolution: ts.ModuleResolutionKind.Bundler,
 }
@@ -86,11 +93,11 @@ function createTsProgramFromParsedConfig({
   entries,
   volarContext,
 }: {
-  parsedConfig: ts.ParsedCommandLine
-  fsSystem: ts.System
+  parsedConfig: ParsedCommandLine
+  fsSystem: System
   baseDir: string
 } & Pick<TscOptions, 'entries' | 'volarContext' | 'id'>): TscModule {
-  const compilerOptions: ts.CompilerOptions = {
+  const compilerOptions: CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
     $configRaw: parsedConfig.raw,

@@ -96,7 +96,6 @@
     "eslint": "catalog:",
     "prettier": "catalog:",
     "rolldown": "catalog:",
-    "rolldown-plugin-require-cjs": "catalog:",
     "rollup-plugin-dts": "catalog:",
     "tsdown": "catalog:",
     "tsnapi": "catalog:",

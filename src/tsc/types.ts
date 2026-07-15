@@ -2,7 +2,7 @@ import type { VolarContext } from '../volar.ts'
 import type { TscContext } from './context.ts'
 import type { TsconfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'
-import type ts from 'typescript'
+import type * as ts from 'typescript'
 
 export interface TscModule {
   program: ts.Program

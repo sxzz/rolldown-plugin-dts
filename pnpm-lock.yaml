@@ -48,9 +48,6 @@ catalogs:
     prettier:
       specifier: ^3.9.5
       version: 3.9.5
-    rolldown-plugin-require-cjs:
-      specifier: ^0.4.1
-      version: 0.4.1
     rollup-plugin-dts:
       specifier: ^6.4.1
       version: 6.4.1
@@ -166,9 +163,6 @@ importers:
       rolldown:
         specifier: ^1.2.0
         version: 1.2.0
-      rolldown-plugin-require-cjs:
-        specifier: 'catalog:'
-        version: 0.4.1(rolldown@1.2.0)
       rollup-plugin-dts:
         specifier: 'catalog:'
         version: 6.4.1(rollup@4.62.2)(typescript@6.0.3)
@@ -1363,9 +1357,6 @@ packages:
     resolution: {integrity: sha512-77PSwercCZU2Fc4sX94eF8k8Pxte6JAwL4/ICZLFjJLqegs7kCuAsqqj/70NQF6TvDpgFjkubQB2FW2ZZddvQg==}
     engines: {node: '>=8'}
 
-  cjs-module-lexer@2.2.0:
-    resolution: {integrity: sha512-4bHTS2YuzUvtoLjdy+98ykbNB5jS0+07EvFNXerqZQJ89F7DI6ET7OQo/HJuW6K0aVsKA9hj9/RVb2kQVOrPDQ==}
-
   commander@8.3.0:
     resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
     engines: {node: '>= 12'}
@@ -1794,9 +1785,6 @@ packages:
     resolution: {integrity: sha512-BAg6QkE8W+TuQLrrw0Ugr7HegXduRuuj8/ti2kSOc+jz1dmx8/WNcjr6XGnq5YpDWxFwwaavqD0+jIUOKelTsw==}
     engines: {node: '>= 4'}
 
-  import-meta-resolve@4.2.0:
-    resolution: {integrity: sha512-Iqv2fzaTQN28s/FwZAoFq0ZSs/7hMAHJVX+w8PZl3cY19Pxk6jFFalxQoIfW2826i/fDLXv8IiEZRIT0lDuWcg==}
-
   import-without-cache@0.4.0:
     resolution: {integrity: sha512-NkJQA7oZ4YHQhd2+H3BoRFKF3d/XNsiKpHZCQEMH9pDX27hQQLsTyOocyRgaIVtf8gHX3Nt3LPkR4e5EdtPAGQ==}
     engines: {node: ^22.18.0 || >=24.0.0}
@@ -1947,10 +1935,6 @@ packages:
 
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
-
-  magic-string-ast@2.0.0:
-    resolution: {integrity: sha512-h16Fs25GTaVkwRMbP2Nhb3cFyOy3Fq9x7fp3DVybuiJQ6pePRmcqK+phvXkDUVUlikTI8qS96l0EWF5zl0NyUw==}
-    engines: {node: ^22.18.0 || >=24.0.0}
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -2245,12 +2229,6 @@ packages:
         optional: true
       vue-tsc:
         optional: true
-
-  rolldown-plugin-require-cjs@0.4.1:
-    resolution: {integrity: sha512-RVOfeIzIjN/HnMtUeH1gohlKhkP9XYPh8GlPr6wi5KWuiABsAL5he8aXuXFD6QG5/J5/vjkYqqr34ZC/pCZ/ig==}
-    engines: {node: ^22.18.0 || >=24.0.0}
-    peerDependencies:
-      rolldown: ^1.2.0
 
   rolldown@1.2.0:
     resolution: {integrity: sha512-u7tgm5l4Yw1iTqUL4EcYOAt7fFvCgQMLeidrnD4GALlC6aOznCjezYajgxeyKw27u0Q5N7fwgCzjVyPIWzwuBA==}
@@ -3573,8 +3551,6 @@ snapshots:
 
   ci-info@4.4.0: {}
 
-  cjs-module-lexer@2.2.0: {}
-
   commander@8.3.0: {}
 
   comment-parser@1.4.7: {}
@@ -3995,8 +3971,6 @@ snapshots:
 
   ignore@7.0.6: {}
 
-  import-meta-resolve@4.2.0: {}
-
   import-without-cache@0.4.0: {}
 
   imurmurhash@0.1.4: {}
@@ -4105,10 +4079,6 @@ snapshots:
       p-locate: 5.0.0
 
   longest-streak@3.1.0: {}
-
-  magic-string-ast@2.0.0:
-    dependencies:
-      magic-string: 0.30.21
 
   magic-string@0.30.21:
     dependencies:
@@ -4621,15 +4591,6 @@ snapshots:
       vue-tsc: 3.3.7(typescript@6.0.3)
     transitivePeerDependencies:
       - oxc-resolver
-
-  rolldown-plugin-require-cjs@0.4.1(rolldown@1.2.0):
-    dependencies:
-      cjs-module-lexer: 2.2.0
-      empathic: 2.0.1
-      import-meta-resolve: 4.2.0
-      magic-string-ast: 2.0.0
-      rolldown: 1.2.0
-      unplugin-utils: 0.3.2
 
   rolldown@1.2.0:
     dependencies:

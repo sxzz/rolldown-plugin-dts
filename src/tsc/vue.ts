@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
+import { createRequire } from 'node:module'
 import { createDebug } from 'obug'
-import { requireTS } from '../utils.ts'
+import { requireTS } from './load-tsc.ts'
 import type { VolarPlugin } from '../volar.ts'
 
+const require = createRequire(import.meta.url)
 const debug = createDebug('rolldown-plugin-dts:vue')
 const RE_VUE = /\.vue$/
 
@@ -76,11 +77,12 @@ function loadVueLanguageTools(): [
       }),
     ) as typeof import('@vue/language-core')
     return [volarTs, vue]
-  } catch (error) {
-    debug('vue language tools not found', error)
+    // eslint-disable-next-line unicorn/catch-error-name
+  } catch (cause) {
+    debug('vue language tools not found', cause)
     throw new Error(
       'Failed to load vue language tools. Please manually install vue-tsc.',
-      { cause: error },
+      { cause },
     )
   }
 }

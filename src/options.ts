@@ -7,9 +7,9 @@ import {
   type TsconfigJsonResolved,
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
+import { requireTS } from './tsc/load-tsc.ts'
 import { getVueVolarPlugin } from './tsc/vue.ts'
 import { isTS70Installed } from './tsgo.ts'
-import { requireTS } from './utils.ts'
 import { VolarContext, type VolarPlugin } from './volar.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
@@ -387,7 +387,7 @@ export function resolveOptions({
 
   if (generator === 'tsc') {
     requireTS(
-      'TypeScript is not installed. You can install `typescript` package, or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.',
+      'Or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.',
     )
   } else if (generator === 'tsgo') {
     if (!tsconfig) {

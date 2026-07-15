@@ -17,7 +17,6 @@ catalog:
   eslint: ^10.7.0
   prettier: ^3.9.5
   rolldown: ^1.2.0
-  rolldown-plugin-require-cjs: ^0.4.1
   rollup-plugin-dts: ^6.4.1
   tsdown: ^0.22.8
   tsnapi: ^1.0.0
