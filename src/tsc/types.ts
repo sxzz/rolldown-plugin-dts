@@ -1,3 +1,4 @@
+import type { VolarContext } from '../volar.ts'
 import type { TscContext } from './context.ts'
 import type { TsconfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'
@@ -17,8 +18,7 @@ export interface TscOptions {
   entries?: string[]
   id: string
   sourcemap: boolean
-  vue?: boolean
-  tsMacro?: boolean
+  volarContext?: VolarContext
   context?: TscContext
 }
 

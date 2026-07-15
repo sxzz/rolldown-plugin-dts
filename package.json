@@ -53,17 +53,16 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "@ts-macro/tsc": "^0.3.6",
     "@typescript/native-preview": "*",
     "rolldown": "^1.0.0",
     "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0",
     "vue-tsc": "~3.2.0 || ~3.3.0"
   },
   "peerDependenciesMeta": {
-    "@ts-macro/tsc": {
+    "@typescript/native-preview": {
       "optional": true
     },
-    "@typescript/native-preview": {
+    "@volar/language-core": {
       "optional": true
     },
     "typescript": {
@@ -88,6 +87,7 @@
     "@sxzz/test-utils": "catalog:",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
+    "@volar/language-core": "catalog:",
     "@volar/typescript": "catalog:",
     "@vue/language-core": "catalog:",
     "arktype": "catalog:",

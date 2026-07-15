@@ -4,7 +4,7 @@
 // #region Functions
 export declare function filename_dts_to(_: string, _: "js" | "ts"): string;
 export declare function filename_js_to_dts(_: string): string;
-export declare function filename_to_dts(_: string): string;
+export declare function filename_to_dts(_: string, _?: VolarPlugin): string;
 export declare function replaceTemplateName(_: string, _: string): string;
 export declare function resolveTemplateFn(_: string | ChunkFileNamesFunction, _: PreRenderedChunk): string;
 // #endregion
@@ -18,7 +18,6 @@ export declare const RE_JSON: RegExp;
 export declare const RE_NODE_MODULES: RegExp;
 export declare const RE_ROLLDOWN_RUNTIME: RegExp;
 export declare const RE_TS: RegExp;
-export declare const RE_VUE: RegExp;
 // #endregion
 
 // #region Other

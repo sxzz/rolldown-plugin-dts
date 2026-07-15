@@ -4,7 +4,7 @@
 // #region Functions
 export function filename_dts_to(_, _) {}
 export function filename_js_to_dts(_) {}
-export function filename_to_dts(_) {}
+export function filename_to_dts(_, _) {}
 export function replaceTemplateName(_, _) {}
 export function resolveTemplateFn(_, _) {}
 // #endregion
@@ -18,7 +18,6 @@ export var RE_JSON /* const */
 export var RE_NODE_MODULES /* const */
 export var RE_ROLLDOWN_RUNTIME /* const */
 export var RE_TS /* const */
-export var RE_VUE /* const */
 // #endregion
 
 // #region Other

@@ -1,10 +1,9 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
-import ts from 'typescript'
+import * as ts from 'typescript'
 import { globalContext } from './context.ts'
 import { createFsSystem } from './system.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
-import { createProgramFactory } from './volar.ts'
 import type { TscModule, TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 
@@ -52,8 +51,7 @@ function createTsProgram({
   id,
   tsconfig,
   tsconfigRaw,
-  vue,
-  tsMacro,
+  volarContext,
   cwd,
   context = globalContext,
 }: TscOptions): TscModule {
@@ -66,15 +64,7 @@ function createTsProgram({
     undefined,
     undefined,
     undefined,
-    vue
-      ? [
-          {
-            extension: 'vue',
-            isMixedContent: true,
-            scriptKind: ts.ScriptKind.Deferred,
-          },
-        ]
-      : undefined,
+    volarContext?.getExtraFileExtensions(),
   )
 
   debug(`creating program for root project: ${baseDir}`)
@@ -84,8 +74,7 @@ function createTsProgram({
     baseDir,
     id,
     entries,
-    vue,
-    tsMacro,
+    volarContext,
   })
 }
 
@@ -95,13 +84,12 @@ function createTsProgramFromParsedConfig({
   baseDir,
   id,
   entries,
-  vue,
-  tsMacro,
+  volarContext,
 }: {
   parsedConfig: ts.ParsedCommandLine
   fsSystem: ts.System
   baseDir: string
-} & Pick<TscOptions, 'entries' | 'vue' | 'tsMacro' | 'id'>): TscModule {
+} & Pick<TscOptions, 'entries' | 'volarContext' | 'id'>): TscModule {
   const compilerOptions: ts.CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
@@ -111,9 +99,9 @@ function createTsProgramFromParsedConfig({
     // this, TypeScript silently drops root files whose extension is not in its
     // built-in supported list, so `program.getSourceFile(id)` returns
     // `undefined` for a `.vue` entry that is not imported by a `.ts` file.
-    // Only relevant when a language plugin (Vue/ts-macro) registers such
+    // Only relevant when a language plugin (Vue/Volar plugin) registers such
     // extensions; module resolution already handles the imported-file case.
-    ...(vue || tsMacro ? { allowNonTsExtensions: true } : undefined),
+    ...(volarContext ? { allowNonTsExtensions: true } : undefined),
   }
 
   const rootNames = [
@@ -125,8 +113,9 @@ function createTsProgramFromParsedConfig({
   ]
 
   const host = ts.createCompilerHost(compilerOptions, true)
-
-  const createProgram = createProgramFactory(ts, { vue, tsMacro })
+  const createProgram = volarContext
+    ? volarContext.plugin.getCreateProgram(ts)
+    : ts.createProgram
   const program = createProgram({
     rootNames,
     options: compilerOptions,

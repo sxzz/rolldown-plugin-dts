@@ -8,6 +8,7 @@ catalog:
   '@sxzz/test-utils': ^0.5.18
   '@types/node': ^26.1.1
   '@typescript/native-preview': 7.0.0-dev.20260707.2
+  '@volar/language-core': ^2.4.28
   '@volar/typescript': ^2.4.28
   '@vue/language-core': ^3.3.7
   arktype: ^2.2.3
@@ -15,10 +16,10 @@ catalog:
   diff: ^9.0.0
   eslint: ^10.7.0
   prettier: ^3.9.5
-  rolldown: ^1.1.5
+  rolldown: ^1.2.0
   rolldown-plugin-require-cjs: ^0.4.1
   rollup-plugin-dts: ^6.4.1
-  tsdown: ^0.22.5
+  tsdown: ^0.22.8
   tsnapi: ^1.0.0
   typescript: ^6.0.3
   vitest: ^4.1.10
@@ -32,8 +33,8 @@ catalogs:
     get-tsconfig: 5.0.0-beta.5
     obug: ^2.1.3
     yuku-ast: ^0.1.7
-    yuku-codegen: ^0.6.1
-    yuku-parser: ^0.6.1
+    yuku-codegen: ^0.6.3
+    yuku-parser: ^0.6.3
 
 minimumReleaseAge: 0
 trustLockfile: true

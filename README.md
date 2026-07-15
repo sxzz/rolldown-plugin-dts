@@ -182,6 +182,21 @@ Enabling this option can speed up builds by caching previous results, which is h
 
 If `true`, the plugin will generate `.d.ts` files using `vue-tsc`.
 
+This is a shortcut that registers the built-in Vue [Volar](https://volarjs.dev/) plugin.
+It cannot be combined with the `volarPlugin` option.
+
+#### `volarPlugin`
+
+> [!WARNING]
+> Experimental. The API may change in future versions.
+
+Registers a custom [Volar](https://volarjs.dev/) language plugin, allowing the
+`tsc` generator to process non-standard file types (such as `.vue`) when
+generating `.d.ts` files.
+
+Enabling this option forces the `tsc` generator and is not supported with
+TypeScript 7.0. The `vue` option is a preconfigured shortcut for the Vue plugin.
+
 #### `parallel`
 
 If `true`, the plugin will launch a separate process for `tsc` or `vue-tsc`, enabling parallel processing of multiple projects.

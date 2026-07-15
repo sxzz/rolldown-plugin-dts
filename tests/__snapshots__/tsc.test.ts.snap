@@ -456,14 +456,6 @@ declare const foo = 42;
 export { foo };"
 `;
 
-exports[`tsc > ts-macro w/ ts-compiler 1`] = `
-"// main.d.ts
-//#region tests/fixtures/ts-macro/main.d.ts
-declare function defineStyle(style: string): string;
-//#endregion
-export { defineStyle as default };"
-`;
-
 exports[`tsc > typescript compiler 1`] = `
 "// entry1.d.ts
 
@@ -927,24 +919,4 @@ declare const __VLS_export: import("vue").DefineComponent<{
 declare const _default: typeof __VLS_export;
 //#endregion
 export { _default as App };"
-`;
-
-exports[`tsc > vue-sfc w/ ts-macro w/ ts-compiler 1`] = `
-"// main.d.ts
-//#region tests/fixtures/vue-sfc-with-ts-macro/App.vue.d.ts
-type __VLS_Props = {
-  foo: string;
-};
-declare global {
-  interface Window {
-    foo: string;
-  }
-}
-declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
-declare const _default: typeof __VLS_export;
-//#endregion
-//#region tests/fixtures/vue-sfc-with-ts-macro/main.d.ts
-declare function defineStyle(style: string): any;
-//#endregion
-export { _default as App, defineStyle };"
 `;

@@ -15,7 +15,6 @@ import {
   RE_NODE_MODULES,
   RE_ROLLDOWN_RUNTIME,
   RE_TS,
-  RE_VUE,
   replaceTemplateName,
   resolveTemplateFn,
 } from './filename.ts'
@@ -57,8 +56,7 @@ export function createGeneratePlugin({
   cwd,
   oxc,
   emitDtsOnly,
-  vue,
-  tsMacro,
+  volarContext,
   parallel,
   eager,
   tsgo,
@@ -77,8 +75,7 @@ export function createGeneratePlugin({
   | 'incremental'
   | 'oxc'
   | 'emitDtsOnly'
-  | 'vue'
-  | 'tsMacro'
+  | 'volarContext'
   | 'parallel'
   | 'eager'
   | 'tsgo'
@@ -185,7 +182,7 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_JS, RE_TS, RE_VUE, RE_JSON],
+          include: [RE_JS, RE_TS, RE_JSON, ...(volarContext?.patterns || [])],
           exclude: [RE_DTS, RE_NODE_MODULES, RE_ROLLDOWN_RUNTIME],
         },
       },
@@ -197,7 +194,7 @@ export function createGeneratePlugin({
           const isEntry = entryMatcher
             ? entryMatcher(path.relative(cwd, id))
             : !!mod?.isEntry
-          const dtsId = filename_to_dts(id)
+          const dtsId = filename_to_dts(id, volarContext?.plugin)
           dtsMap.set(dtsId, { code, id, isEntry, jsFile })
           debug('register dts source: %s', id)
 
@@ -245,11 +242,16 @@ export function createGeneratePlugin({
         debug('generate dts %s from %s', dtsId, id)
 
         if (generator === 'tsgo') {
-          if (RE_VUE.test(id))
-            throw new Error('tsgo does not support Vue files.')
+          if (volarContext?.isVolarFile(id)) {
+            throw new Error(`tsgo does not support .${path.extname(id)} file.`)
+          }
+
           const dtsPath = path.resolve(
             tsgoContext!.path,
-            path.relative(path.resolve(rootDir), filename_to_dts(id)),
+            path.relative(
+              path.resolve(rootDir),
+              filename_to_dts(id, volarContext?.plugin),
+            ),
           )
           if (!existsSync(dtsPath)) {
             debug('[tsgo]', dtsPath, 'is missing')
@@ -268,7 +270,7 @@ export function createGeneratePlugin({
               sources: [id],
             }
           }
-        } else if (generator === 'oxc' && !RE_VUE.test(id)) {
+        } else if (generator === 'oxc' && !volarContext?.isVolarFile(id)) {
           const result = isolatedDeclarationSync(id, code, oxc)
           if (result.errors.length) {
             const [error] = result.errors
@@ -297,8 +299,7 @@ export function createGeneratePlugin({
             entries,
             id,
             sourcemap,
-            vue,
-            tsMacro,
+            volarContext,
             context: tscContext,
           }
           let result: TscResult

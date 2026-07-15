@@ -7,7 +7,10 @@ import {
   type TsconfigJsonResolved,
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
+import { getVueVolarPlugin } from './tsc/vue.ts'
 import { isTS70Installed } from './tsgo.ts'
+import { requireTS } from './utils.ts'
+import { VolarContext, type VolarPlugin } from './volar.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = createDebug('rolldown-plugin-dts:options')
@@ -36,8 +39,7 @@ export interface GeneralOptions {
    *   `isolatedDeclarations` is enabled in `compilerOptions`.
    * - `'tsgo'` if TypeScript 7.0 (or `@typescript/native-preview`) is installed,
    *   or {@link Options.tsgo tsgo} options are provided.
-   * - `'tsc'` otherwise, and always when {@link TscOptions.vue vue} or
-   *   {@link TscOptions.tsMacro tsMacro} is enabled.
+   * - `'tsc'` otherwise, and always when {@link TscOptions.vue vue} is enabled.
    *
    * @default 'tsc'
    */
@@ -188,11 +190,6 @@ export interface TscOptions {
   vue?: boolean
 
   /**
-   * If `true`, the plugin will generate `.d.ts` files using `@ts-macro/tsc`.
-   */
-  tsMacro?: boolean
-
-  /**
    * If `true`, the plugin will launch a separate process for `tsc` or `vue-tsc`.
    * This enables processing multiple projects in parallel.
    */
@@ -264,6 +261,11 @@ export interface Options extends GeneralOptions, TscOptions {
    * ```
    */
   tsgo?: boolean | TsgoOptions
+
+  /**
+   * @experimental Maybe changed in future versions.
+   */
+  volarPlugin?: VolarPlugin
 }
 
 export interface TsgoOptions {
@@ -276,13 +278,14 @@ export interface TsgoOptions {
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 
 export type OptionsResolved = Overwrite<
-  Required<Omit<Options, 'compilerOptions'>>,
+  Required<Omit<Options, 'compilerOptions' | 'vue' | 'volarPlugin'>>,
   {
     entry?: string[]
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions
     tsconfigRaw: TsconfigJson
     tsgo: TsgoOptions
+    volarContext?: VolarContext
   }
 >
 
@@ -302,12 +305,12 @@ export function resolveOptions({
   cjsDefault = false,
   sideEffects = false,
   logger = console,
+  volarPlugin,
 
   // tsc
   build = false,
   incremental = false,
   vue = false,
-  tsMacro = false,
   parallel = false,
   eager = false,
   newContext = false,
@@ -344,20 +347,31 @@ export function resolveOptions({
     compilerOptions,
   }
 
+  if (vue) {
+    if (volarPlugin) {
+      throw new Error(
+        'The `volarPlugin` option is already set. The `vue` option is not compatible with `volarPlugin`.',
+      )
+    }
+    volarPlugin = getVueVolarPlugin()
+  }
+
   // Volar relate
-  if (vue || tsMacro) {
+  if (volarPlugin) {
     if (isTS70Installed()) {
       throw new Error(
-        'TypeScript 7.0 does not yet have a stable API and is experimental. The `vue` and `tsMacro` options are not yet supported with TypeScript 7.0.',
+        'TypeScript 7.0 does not yet have a stable API and is experimental. The `vue` and `volarPlugins` options are not yet supported with TypeScript 7.0.',
       )
     }
     if (generator && generator !== 'tsc') {
       logger.warn(
-        'The `vue` and `tsMacro` options are enabled, which requires the `tsc` generator. The `generator` option is ignored.',
+        'The `vue` and `volarPlugins` options are enabled, which requires the `tsc` generator. The `generator` option is ignored.',
       )
     }
     generator = 'tsc'
   }
+
+  const volarContext = volarPlugin && new VolarContext(volarPlugin)
 
   if (!generator) {
     if (tsgo) {
@@ -372,13 +386,9 @@ export function resolveOptions({
   }
 
   if (generator === 'tsc') {
-    try {
-      require.resolve('typescript')
-    } catch {
-      throw new Error(
-        'TypeScript is not installed. You can install `typescript` package, or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.',
-      )
-    }
+    requireTS(
+      'TypeScript is not installed. You can install `typescript` package, or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.',
+    )
   } else if (generator === 'tsgo') {
     if (!tsconfig) {
       throw new Error(
@@ -425,12 +435,11 @@ export function resolveOptions({
     // tsc
     build,
     incremental,
-    vue,
-    tsMacro,
     parallel,
     eager,
     newContext,
     emitJs,
+    volarContext,
 
     oxc,
     tsgo,
