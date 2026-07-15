@@ -4,36 +4,42 @@ import { defineConfig } from 'tsdown'
 import ApiSnapshot from 'tsnapi/rolldown'
 import { dts } from './src/index.ts'
 
-export default defineConfig({
-  entry: {
-    index: './src/index.ts',
-    internal: './src/internal.ts',
-    tsc: './src/tsc/index.ts',
-    'tsc-context': './src/tsc/context.ts',
-    'tsc-worker': './src/tsc/worker.ts',
-  },
-  platform: 'node',
-  dts: false,
-  define: {
-    'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.mjs'),
-  },
-  deps: {
-    onlyBundle: [],
-  },
-  treeshake: {
-    moduleSideEffects: false,
-  },
-  exports: true,
-  plugins: [
-    dts({
-      generator: 'oxc',
-    }),
-    ApiSnapshot(),
-    RequireCJS({
-      shouldTransform(id) {
-        // perf: TypeScript is large and takes time to detect ESM/CJS.
-        if (id === 'typescript') return true
-      },
-    }),
-  ],
+export default defineConfig((cli) => {
+  const cliDts = { ...(typeof cli.dts === 'object' ? cli.dts : {}) }
+  cli.dts = false
+
+  return {
+    entry: {
+      index: './src/index.ts',
+      internal: './src/internal.ts',
+      tsc: './src/tsc/index.ts',
+      'tsc-context': './src/tsc/context.ts',
+      'tsc-worker': './src/tsc/worker.ts',
+    },
+    platform: 'node',
+    dts: false,
+    define: {
+      'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.mjs'),
+    },
+    deps: {
+      onlyBundle: [],
+    },
+    treeshake: {
+      moduleSideEffects: false,
+    },
+    exports: true,
+    plugins: [
+      dts({
+        generator: 'oxc',
+        ...cliDts,
+      }),
+      ApiSnapshot(),
+      RequireCJS({
+        shouldTransform(id) {
+          // perf: TypeScript is large and takes time to detect ESM/CJS.
+          if (id === 'typescript') return true
+        },
+      }),
+    ],
+  }
 })
