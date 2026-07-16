@@ -1,4 +1,6 @@
-export default {
+import { defineConfig } from 'ts-macro'
+
+export default defineConfig({
   plugins: [
     {
       name: 'define-style',
@@ -7,4 +9,4 @@ export default {
       },
     },
   ],
-}
+})

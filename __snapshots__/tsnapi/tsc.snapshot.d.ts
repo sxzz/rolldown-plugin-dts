@@ -15,7 +15,7 @@ export interface TscOptions {
   entries?: string[];
   id: string;
   sourcemap: boolean;
-  volarContext?: VolarContext;
+  volarContext: VolarContext;
   context?: TscContext;
 }
 export interface TscResult {

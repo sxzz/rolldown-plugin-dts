@@ -18,15 +18,18 @@ catalogs:
     '@sxzz/test-utils':
       specifier: ^0.5.18
       version: 0.5.18
+    '@ts-macro/language-plugin':
+      specifier: ^0.3.7
+      version: 0.3.7
+    '@ts-macro/tsc':
+      specifier: ^0.3.7
+      version: 0.3.7
     '@types/node':
       specifier: ^26.1.1
       version: 26.1.1
     '@typescript/native-preview':
       specifier: 7.0.0-dev.20260707.2
       version: 7.0.0-dev.20260707.2
-    '@volar/language-core':
-      specifier: ^2.4.28
-      version: 2.4.28
     '@volar/typescript':
       specifier: ^2.4.28
       version: 2.4.28
@@ -51,6 +54,9 @@ catalogs:
     rollup-plugin-dts:
       specifier: ^6.4.1
       version: 6.4.1
+    ts-macro:
+      specifier: ^0.3.7
+      version: 0.3.7
     tsdown:
       specifier: ^0.22.8
       version: 0.22.8
@@ -129,16 +135,19 @@ importers:
         version: 2.3.1
       '@sxzz/test-utils':
         specifier: 'catalog:'
-        version: 0.5.18(@volar/typescript@2.4.28)(@vue/language-core@3.3.7)(rolldown@1.2.0)(rollup@4.62.2)(typescript@6.0.3)(vitest@4.1.10(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0)))
+        version: 0.5.18(@ts-macro/language-plugin@0.3.7(rollup@4.62.2))(@volar/typescript@2.4.28)(@vue/language-core@3.3.7)(rolldown@1.2.0)(rollup@4.62.2)(typescript@6.0.3)(vitest@4.1.10(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0)))
+      '@ts-macro/language-plugin':
+        specifier: 'catalog:'
+        version: 0.3.7(rollup@4.62.2)
+      '@ts-macro/tsc':
+        specifier: 'catalog:'
+        version: 0.3.7(rollup@4.62.2)
       '@types/node':
         specifier: 'catalog:'
         version: 26.1.1
       '@typescript/native-preview':
         specifier: 'catalog:'
         version: 7.0.0-dev.20260707.2
-      '@volar/language-core':
-        specifier: 'catalog:'
-        version: 2.4.28
       '@volar/typescript':
         specifier: 'catalog:'
         version: 2.4.28
@@ -166,9 +175,12 @@ importers:
       rollup-plugin-dts:
         specifier: 'catalog:'
         version: 6.4.1(rollup@4.62.2)(typescript@6.0.3)
+      ts-macro:
+        specifier: 'catalog:'
+        version: 0.3.7
       tsdown:
         specifier: 'catalog:'
-        version: 0.22.8(@typescript/native-preview@7.0.0-dev.20260707.2)(typescript@6.0.3)(vue-tsc@3.3.7(typescript@6.0.3))
+        version: 0.22.8(@ts-macro/tsc@0.3.7(rollup@4.62.2))(@typescript/native-preview@7.0.0-dev.20260707.2)(typescript@6.0.3)(vue-tsc@3.3.7(typescript@6.0.3))
       tsnapi:
         specifier: 'catalog:'
         version: 1.0.0(vitest@4.1.10(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0)))
@@ -925,6 +937,13 @@ packages:
         optional: true
       typescript:
         optional: true
+
+  '@ts-macro/language-plugin@0.3.7':
+    resolution: {integrity: sha512-fZBCGoYmM3fm1EE7v2FQ0Ovab1sOqgDaz48Wypw4KkO3yG8pEtYtpa24PxNY43ydCf0yMNwShufdyV5qt5sRmg==}
+
+  '@ts-macro/tsc@0.3.7':
+    resolution: {integrity: sha512-Rt2Ra5Z4+OtymCZ5sWNsBwlG6WpgC5Wm5MC6sFoOYxPFlIM4v4BqwHzCb1sX29QpbdCLiWQITZ89O9qTwZBwzQ==}
+    hasBin: true
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
@@ -2242,6 +2261,15 @@ packages:
       rollup: ^3.29.4 || ^4
       typescript: ^4.5 || ^5.0 || ^6.0
 
+  rollup-utils@0.0.5:
+    resolution: {integrity: sha512-Naai1vGKHGTrvrSuWOX1rSJSKodmJ8aZ3mtF0hHFP64NOtsKvnOGbxD4162fWGePdCWxAckEBNHQ/QX7S81H4g==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
   rollup@4.62.2:
     resolution: {integrity: sha512-RFnrW4lhXA3s3eqHDZvN654g8OTjzRfqpIRJYczCGB6HzphckVAi/Qh4tbPUbRuDi7s1Llv8g/NspLkttY3gTA==}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
@@ -2326,6 +2354,9 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
+
+  ts-macro@0.3.7:
+    resolution: {integrity: sha512-5BinbTKn5WXRslotv5/VWTn3catfK0thWoB4BZI5VNEdxMu6r9AUPFalut4wLEK3nGvxhywA9aAdZnJ+Fnug9A==}
 
   tsdown@0.22.8:
     resolution: {integrity: sha512-6FOLlr1iLcE3LheqQt13hVUWtTduJNwF2akPskPe8Tf1hr+N5UULHzrNZYTMNwL6lr2UyQ8iefVBB6tdqp1PCQ==}
@@ -3113,17 +3144,36 @@ snapshots:
     dependencies:
       '@prettier/plugin-oxc': 0.1.4
 
-  '@sxzz/test-utils@0.5.18(@volar/typescript@2.4.28)(@vue/language-core@3.3.7)(rolldown@1.2.0)(rollup@4.62.2)(typescript@6.0.3)(vitest@4.1.10(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0)))':
+  '@sxzz/test-utils@0.5.18(@ts-macro/language-plugin@0.3.7(rollup@4.62.2))(@volar/typescript@2.4.28)(@vue/language-core@3.3.7)(rolldown@1.2.0)(rollup@4.62.2)(typescript@6.0.3)(vitest@4.1.10(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0)))':
     dependencies:
       tinyglobby: 0.2.17
       unplugin-utils: 0.3.2
       vitest: 4.1.10(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0))
     optionalDependencies:
+      '@ts-macro/language-plugin': 0.3.7(rollup@4.62.2)
       '@volar/typescript': 2.4.28
       '@vue/language-core': 3.3.7
       rolldown: 1.2.0
       rollup: 4.62.2
       typescript: 6.0.3
+
+  '@ts-macro/language-plugin@0.3.7(rollup@4.62.2)':
+    dependencies:
+      '@volar/language-core': 2.4.28
+      '@volar/typescript': 2.4.28
+      jiti: 2.7.0
+      rollup-utils: 0.0.5(rollup@4.62.2)
+      ts-macro: 0.3.7
+      vscode-uri: 3.1.0
+    transitivePeerDependencies:
+      - rollup
+
+  '@ts-macro/tsc@0.3.7(rollup@4.62.2)':
+    dependencies:
+      '@ts-macro/language-plugin': 0.3.7(rollup@4.62.2)
+      '@volar/typescript': 2.4.28
+    transitivePeerDependencies:
+      - rollup
 
   '@tybys/wasm-util@0.10.3':
     dependencies:
@@ -4576,7 +4626,7 @@ snapshots:
 
   resolve-pkg-maps@1.0.0: {}
 
-  rolldown-plugin-dts@0.27.9(@typescript/native-preview@7.0.0-dev.20260707.2)(rolldown@1.2.0)(typescript@6.0.3)(vue-tsc@3.3.7(typescript@6.0.3)):
+  rolldown-plugin-dts@0.27.9(@ts-macro/tsc@0.3.7(rollup@4.62.2))(@typescript/native-preview@7.0.0-dev.20260707.2)(rolldown@1.2.0)(typescript@6.0.3)(vue-tsc@3.3.7(typescript@6.0.3)):
     dependencies:
       dts-resolver: 3.0.0
       get-tsconfig: 5.0.0-beta.5
@@ -4586,6 +4636,7 @@ snapshots:
       yuku-codegen: 0.6.3
       yuku-parser: 0.6.3
     optionalDependencies:
+      '@ts-macro/tsc': 0.3.7(rollup@4.62.2)
       '@typescript/native-preview': 7.0.0-dev.20260707.2
       typescript: 6.0.3
       vue-tsc: 3.3.7(typescript@6.0.3)
@@ -4623,6 +4674,15 @@ snapshots:
       typescript: 6.0.3
     optionalDependencies:
       '@babel/code-frame': 7.29.7
+
+  rollup-utils@0.0.5(rollup@4.62.2):
+    dependencies:
+      '@types/estree': 1.0.9
+      estree-walker: 2.0.2
+      path-browserify: 1.0.1
+      picomatch: 4.0.5
+    optionalDependencies:
+      rollup: 4.62.2
 
   rollup@4.62.2:
     dependencies:
@@ -4716,7 +4776,11 @@ snapshots:
     dependencies:
       typescript: 6.0.3
 
-  tsdown@0.22.8(@typescript/native-preview@7.0.0-dev.20260707.2)(typescript@6.0.3)(vue-tsc@3.3.7(typescript@6.0.3)):
+  ts-macro@0.3.7:
+    dependencies:
+      muggle-string: 0.4.1
+
+  tsdown@0.22.8(@ts-macro/tsc@0.3.7(rollup@4.62.2))(@typescript/native-preview@7.0.0-dev.20260707.2)(typescript@6.0.3)(vue-tsc@3.3.7(typescript@6.0.3)):
     dependencies:
       ansis: 4.3.1
       cac: 7.0.0
@@ -4727,7 +4791,7 @@ snapshots:
       obug: 2.1.3
       picomatch: 4.0.5
       rolldown: 1.2.0
-      rolldown-plugin-dts: 0.27.9(@typescript/native-preview@7.0.0-dev.20260707.2)(rolldown@1.2.0)(typescript@6.0.3)(vue-tsc@3.3.7(typescript@6.0.3))
+      rolldown-plugin-dts: 0.27.9(@ts-macro/tsc@0.3.7(rollup@4.62.2))(@typescript/native-preview@7.0.0-dev.20260707.2)(rolldown@1.2.0)(typescript@6.0.3)(vue-tsc@3.3.7(typescript@6.0.3))
       semver: 7.8.5
       tinyexec: 1.2.4
       tinyglobby: 0.2.17

@@ -71,7 +71,7 @@ function createTsProgram({
     undefined,
     undefined,
     undefined,
-    volarContext?.getExtraFileExtensions(),
+    volarContext.getExtraFileExtensions(),
   )
 
   debug(`creating program for root project: ${baseDir}`)
@@ -108,7 +108,9 @@ function createTsProgramFromParsedConfig({
     // `undefined` for a `.vue` entry that is not imported by a `.ts` file.
     // Only relevant when a language plugin (Vue/Volar plugin) registers such
     // extensions; module resolution already handles the imported-file case.
-    ...(volarContext ? { allowNonTsExtensions: true } : undefined),
+    ...(volarContext.plugins.length
+      ? { allowNonTsExtensions: true }
+      : undefined),
   }
 
   const rootNames = [
@@ -120,9 +122,7 @@ function createTsProgramFromParsedConfig({
   ]
 
   const host = ts.createCompilerHost(compilerOptions, true)
-  const createProgram = volarContext
-    ? volarContext.plugin.getCreateProgram(ts)
-    : ts.createProgram
+  const createProgram = volarContext.getCreateProgram(ts)
   const program = createProgram({
     rootNames,
     options: compilerOptions,

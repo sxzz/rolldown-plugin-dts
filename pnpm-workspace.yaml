@@ -6,9 +6,10 @@ catalog:
   '@sxzz/eslint-config': ^8.2.1
   '@sxzz/prettier-config': ^2.3.1
   '@sxzz/test-utils': ^0.5.18
+  '@ts-macro/language-plugin': ^0.3.7
+  '@ts-macro/tsc': ^0.3.7
   '@types/node': ^26.1.1
   '@typescript/native-preview': 7.0.0-dev.20260707.2
-  '@volar/language-core': ^2.4.28
   '@volar/typescript': ^2.4.28
   '@vue/language-core': ^3.3.7
   arktype: ^2.2.3
@@ -18,6 +19,7 @@ catalog:
   prettier: ^3.9.5
   rolldown: ^1.2.0
   rollup-plugin-dts: ^6.4.1
+  ts-macro: ^0.3.7
   tsdown: ^0.22.8
   tsnapi: ^1.0.0
   typescript: ^6.0.3

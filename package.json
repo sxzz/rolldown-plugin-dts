@@ -54,6 +54,7 @@
   },
   "peerDependencies": {
     "@typescript/native-preview": "*",
+    "@volar/typescript": "~2.4.0",
     "rolldown": "^1.0.0",
     "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0",
     "vue-tsc": "~3.2.0 || ~3.3.0"
@@ -62,7 +63,7 @@
     "@typescript/native-preview": {
       "optional": true
     },
-    "@volar/language-core": {
+    "@volar/typescript": {
       "optional": true
     },
     "typescript": {
@@ -85,9 +86,10 @@
     "@sxzz/eslint-config": "catalog:",
     "@sxzz/prettier-config": "catalog:",
     "@sxzz/test-utils": "catalog:",
+    "@ts-macro/language-plugin": "catalog:",
+    "@ts-macro/tsc": "catalog:",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
-    "@volar/language-core": "catalog:",
     "@volar/typescript": "catalog:",
     "@vue/language-core": "catalog:",
     "arktype": "catalog:",
@@ -97,6 +99,7 @@
     "prettier": "catalog:",
     "rolldown": "catalog:",
     "rollup-plugin-dts": "catalog:",
+    "ts-macro": "catalog:",
     "tsdown": "catalog:",
     "tsnapi": "catalog:",
     "typescript": "catalog:",

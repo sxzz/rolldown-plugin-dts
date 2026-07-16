@@ -263,9 +263,17 @@ export interface Options extends GeneralOptions, TscOptions {
   tsgo?: boolean | TsgoOptions
 
   /**
-   * @experimental Maybe changed in future versions.
+   * Registers custom {@link https://volarjs.dev Volar} language plugins,
+   * allowing the `tsc` generator to process non-standard file types (such as
+   * `.vue`) when generating `.d.ts` files. Multiple plugins can be provided and
+   * are applied together.
+   *
+   * Enabling this option forces the `tsc` generator and is not supported with
+   * TypeScript 7.0.
+   *
+   * @experimental The API may change in future versions.
    */
-  volarPlugin?: VolarPlugin
+  volarPlugins?: VolarPlugin[]
 }
 
 export interface TsgoOptions {
@@ -278,14 +286,14 @@ export interface TsgoOptions {
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 
 export type OptionsResolved = Overwrite<
-  Required<Omit<Options, 'compilerOptions' | 'vue' | 'volarPlugin'>>,
+  Required<Omit<Options, 'compilerOptions' | 'vue' | 'volarPlugins'>>,
   {
     entry?: string[]
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions
     tsconfigRaw: TsconfigJson
     tsgo: TsgoOptions
-    volarContext?: VolarContext
+    volarContext: VolarContext
   }
 >
 
@@ -305,7 +313,7 @@ export function resolveOptions({
   cjsDefault = false,
   sideEffects = false,
   logger = console,
-  volarPlugin,
+  volarPlugins,
 
   // tsc
   build = false,
@@ -347,17 +355,13 @@ export function resolveOptions({
     compilerOptions,
   }
 
+  volarPlugins ||= []
   if (vue) {
-    if (volarPlugin) {
-      throw new Error(
-        'The `volarPlugin` option is already set. The `vue` option is not compatible with `volarPlugin`.',
-      )
-    }
-    volarPlugin = getVueVolarPlugin()
+    volarPlugins.push(getVueVolarPlugin())
   }
 
   // Volar relate
-  if (volarPlugin) {
+  if (volarPlugins.length) {
     if (isTS70Installed()) {
       throw new Error(
         'TypeScript 7.0 does not yet have a stable API and is experimental. The `vue` and `volarPlugins` options are not yet supported with TypeScript 7.0.',
@@ -371,7 +375,7 @@ export function resolveOptions({
     generator = 'tsc'
   }
 
-  const volarContext = volarPlugin && new VolarContext(volarPlugin)
+  const volarContext = new VolarContext(volarPlugins)
 
   if (!generator) {
     if (tsgo) {

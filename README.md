@@ -183,14 +183,13 @@ Enabling this option can speed up builds by caching previous results, which is h
 If `true`, the plugin will generate `.d.ts` files using `vue-tsc`.
 
 This is a shortcut that registers the built-in Vue [Volar](https://volarjs.dev/) plugin.
-It cannot be combined with the `volarPlugin` option.
 
-#### `volarPlugin`
+#### `volarPlugins`
 
 > [!WARNING]
 > Experimental. The API may change in future versions.
 
-Registers a custom [Volar](https://volarjs.dev/) language plugin, allowing the
+Registers custom [Volar](https://volarjs.dev/) language plugins, allowing the
 `tsc` generator to process non-standard file types (such as `.vue`) when
 generating `.d.ts` files.
 
@@ -219,7 +218,10 @@ guaranteeing that all type definitions are generated from scratch.
 `invalidateContextFile` API can be used to clear invalidated files from the context.
 
 ```ts
-import { globalContext, invalidateContextFile } from 'rolldown-plugin-dts/tsc-context'
+import {
+  globalContext,
+  invalidateContextFile,
+} from 'rolldown-plugin-dts/tsc-context'
 invalidateContextFile(globalContext, 'src/foo.ts')
 ```
 

@@ -182,7 +182,7 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_JS, RE_TS, RE_JSON, ...(volarContext?.patterns || [])],
+          include: [RE_JS, RE_TS, RE_JSON, ...volarContext.patterns],
           exclude: [RE_DTS, RE_NODE_MODULES, RE_ROLLDOWN_RUNTIME],
         },
       },
@@ -194,7 +194,7 @@ export function createGeneratePlugin({
           const isEntry = entryMatcher
             ? entryMatcher(path.relative(cwd, id))
             : !!mod?.isEntry
-          const dtsId = filename_to_dts(id, volarContext?.plugin)
+          const dtsId = filename_to_dts(id, volarContext)
           dtsMap.set(dtsId, { code, id, isEntry, jsFile })
           debug('register dts source: %s', id)
 
@@ -242,7 +242,7 @@ export function createGeneratePlugin({
         debug('generate dts %s from %s', dtsId, id)
 
         if (generator === 'tsgo') {
-          if (volarContext?.isVolarFile(id)) {
+          if (volarContext.isVolarFile(id)) {
             throw new Error(`tsgo does not support .${path.extname(id)} file.`)
           }
 
@@ -250,7 +250,7 @@ export function createGeneratePlugin({
             tsgoContext!.path,
             path.relative(
               path.resolve(rootDir),
-              filename_to_dts(id, volarContext?.plugin),
+              filename_to_dts(id, volarContext),
             ),
           )
           if (!existsSync(dtsPath)) {
@@ -270,7 +270,7 @@ export function createGeneratePlugin({
               sources: [id],
             }
           }
-        } else if (generator === 'oxc' && !volarContext?.isVolarFile(id)) {
+        } else if (generator === 'oxc' && !volarContext.isVolarFile(id)) {
           const result = isolatedDeclarationSync(id, code, oxc)
           if (result.errors.length) {
             const [error] = result.errors

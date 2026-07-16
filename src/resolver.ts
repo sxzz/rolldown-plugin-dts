@@ -26,7 +26,7 @@ export function createDtsResolvePlugin({
   | 'volarContext'
 >): Plugin {
   function isSourceFile(id: string) {
-    return RE_TS.test(id) || RE_JSON.test(id) || volarContext?.isVolarFile(id)
+    return RE_TS.test(id) || RE_JSON.test(id) || volarContext.isVolarFile(id)
   }
 
   const baseDtsResolver = createResolver({
@@ -107,7 +107,7 @@ export function createDtsResolvePlugin({
           // then redirect the import to the future .d.ts path
           await this.load({ id: dtsResolution })
           return {
-            id: filename_to_dts(dtsResolution, volarContext?.plugin),
+            id: filename_to_dts(dtsResolution, volarContext),
             moduleSideEffects,
           }
         }

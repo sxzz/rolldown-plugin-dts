@@ -12,7 +12,7 @@ export function getVueVolarPlugin(): VolarPlugin {
     `Vue support requires TypeScript to be installed. Please install \`typescript\` package.`,
   )
 
-  const [{ proxyCreateProgram }, vue] = loadVueLanguageTools()
+  const [volarTypeScript, vue] = loadVueLanguageTools()
 
   const getLanguagePlugin = (
     ts: typeof import('typescript'),
@@ -36,25 +36,20 @@ export function getVueVolarPlugin(): VolarPlugin {
   }
 
   return {
-    extensions: [
+    extensionPatterns: [RE_VUE],
+    tsFileExtensionInfos: [
       {
-        pattern: RE_VUE,
-        tsFileExtensionInfo: {
-          extension: 'vue',
-          isMixedContent: true,
-          scriptKind: ts.ScriptKind.Deferred,
-        },
+        extension: 'vue',
+        isMixedContent: true,
+        scriptKind: ts.ScriptKind.Deferred,
       },
     ],
+    volarTypeScript,
+    create(ts, options) {
+      return [getLanguagePlugin(ts, options)]
+    },
     toTsFilename(id: string): string {
       return id.replace(RE_VUE, '.vue.ts')
-    },
-    getCreateProgram() {
-      return proxyCreateProgram(ts, ts.createProgram, (ts, options) => {
-        return {
-          languagePlugins: [getLanguagePlugin(ts, options)],
-        }
-      })
     },
   }
 }
