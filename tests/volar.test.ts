@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module'
 import path from 'node:path'
+import { getLanguagePlugin } from '@astrojs/ts-plugin/dist/language.js'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
@@ -95,6 +96,18 @@ describe('volar', () => {
       expect(snapshot).toMatchSnapshot()
     })
   })
+
+  test('astro', async () => {
+    const root = path.resolve(dirname, 'fixtures/astro')
+
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
+      dts({
+        emitDtsOnly: true,
+        volarPlugins: [createAstroPlugin()],
+      }),
+    ])
+    expect(snapshot).toMatchSnapshot()
+  })
 })
 
 function createTsMacroPlugin(): VolarPlugin {
@@ -127,6 +140,25 @@ function createTsMacroPlugin(): VolarPlugin {
         getOptions(ts, $rootDir),
       )
       return tsMacroLanguagePlugins
+    },
+  }
+}
+
+function createAstroPlugin(): VolarPlugin {
+  const plugin = getLanguagePlugin()
+  return {
+    extensionPatterns: [/\.astro$/],
+    tsFileExtensionInfos: [...(plugin.typescript?.extraFileExtensions || [])],
+    volarTypeScript: require(
+      require.resolve('@volar/typescript', {
+        paths: [require.resolve('@astrojs/ts-plugin')],
+      }),
+    ),
+    create() {
+      return [plugin]
+    },
+    toTsFilename(id: string) {
+      return id.replace(/\.astro$/, '.astro.ts')
     },
   }
 }

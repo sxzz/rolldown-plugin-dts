@@ -1,5 +1,14 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`volar > astro 1`] = `
+"// main.d.ts
+//#region tests/fixtures/astro/foo.astro.d.ts
+interface Props {
+  name: string;
+}
+declare function Foo(_props: Props): any;"
+`;
+
 exports[`volar > ts-macro > ts-macro w/ ts-compiler 1`] = `
 "// main.d.ts
 //#region tests/fixtures/ts-macro/main.d.ts

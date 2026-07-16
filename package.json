@@ -74,6 +74,7 @@
     }
   },
   "dependencies": {
+    "@astrojs/ts-plugin": "catalog:",
     "dts-resolver": "catalog:prod",
     "get-tsconfig": "catalog:prod",
     "obug": "catalog:prod",

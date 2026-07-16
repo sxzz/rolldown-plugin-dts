@@ -2,6 +2,7 @@ overrides:
   rolldown: 'catalog:'
 
 catalog:
+  '@astrojs/ts-plugin': ^1.10.10
   '@jridgewell/source-map': ^0.3.11
   '@sxzz/eslint-config': ^8.2.1
   '@sxzz/prettier-config': ^2.3.1
