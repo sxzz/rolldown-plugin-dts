@@ -108,9 +108,6 @@ importers:
 
   .:
     dependencies:
-      '@astrojs/ts-plugin':
-        specifier: 'catalog:'
-        version: 1.10.10
       dts-resolver:
         specifier: catalog:prod
         version: 3.0.0
@@ -130,6 +127,9 @@ importers:
         specifier: catalog:prod
         version: 0.6.3
     devDependencies:
+      '@astrojs/ts-plugin':
+        specifier: 'catalog:'
+        version: 1.10.10
       '@jridgewell/source-map':
         specifier: 'catalog:'
         version: 0.3.11

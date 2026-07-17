@@ -74,7 +74,6 @@
     }
   },
   "dependencies": {
-    "@astrojs/ts-plugin": "catalog:",
     "dts-resolver": "catalog:prod",
     "get-tsconfig": "catalog:prod",
     "obug": "catalog:prod",
@@ -83,6 +82,7 @@
     "yuku-parser": "catalog:prod"
   },
   "devDependencies": {
+    "@astrojs/ts-plugin": "catalog:",
     "@jridgewell/source-map": "catalog:",
     "@sxzz/eslint-config": "catalog:",
     "@sxzz/prettier-config": "catalog:",
