@@ -18,10 +18,13 @@
   "keywords": [
     "rolldown",
     "plugin",
+    "rolldown-plugin",
+    "vite-plugin",
     "dts",
     "typescript",
     "vue",
-    "jsdoc"
+    "jsdoc",
+    "volar"
   ],
   "exports": {
     ".": "./dist/index.mjs",
