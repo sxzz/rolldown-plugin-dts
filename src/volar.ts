@@ -21,9 +21,7 @@ export class VolarContext {
   }
 
   isVolarFile(id: string): boolean {
-    return this.plugins.some((plugin) =>
-      plugin.extensionPatterns.some((pattern) => pattern.test(id)),
-    )
+    return this.patterns.some((pattern) => pattern.test(id))
   }
 
   getExtraFileExtensions(): FileExtensionInfo[] | undefined {
