@@ -1,8 +1,6 @@
-import { b, is } from 'yuku-ast'
-import { isIdentifierName } from 'yuku-ast/identifier'
-import { nameOf } from 'yuku-ast/utils'
+import { b, is, isIdentifierName, nameOf, walk } from 'yuku-ast'
 import { print } from 'yuku-codegen'
-import { parse, walk, type ParseResult } from 'yuku-parser'
+import { parse, type ParseResult } from 'yuku-parser'
 import {
   filename_dts_to,
   filename_js_to_dts,
@@ -262,7 +260,9 @@ export function createFakeJsPlugin({
         }
 
         if (sideEffect) {
-          binding = b.identifier(`_${getIdentifierIndex(identifierMap, '')}`)
+          binding = b.Identifier({
+            name: `_${getIdentifierIndex(identifierMap, '')}`,
+          })
         }
 
         if (binding.type !== 'Identifier') {
@@ -271,7 +271,7 @@ export function createFakeJsPlugin({
 
         bindings.push(binding)
       } else {
-        const binding = b.identifier('export_default')
+        const binding = b.Identifier({ name: 'export_default' })
         bindings.push(binding)
         ;(decl as { id?: t.Identifier }).id = binding
       }
@@ -302,24 +302,36 @@ export function createFakeJsPlugin({
         children,
       })
 
-      const declarationIdNode: t.NumericLiteral =
-        b.numericLiteral(declarationId)
-      const depsBody: t.ArrayExpression = b.arrayExpression(deps)
-      const depsNode: t.ArrowFunctionExpression = b.arrowFunctionExpression(
-        params.map(({ name }) => b.identifier(name)),
-        depsBody,
-      )
-      const childrenNode: t.ArrayExpression = b.arrayExpression(
-        children.map((node) => {
-          const placeholder = b.stringLiteral('')
-          placeholder.start = node.start
-          placeholder.end = node.end
-          return placeholder
-        }),
-      )
+      const declarationIdNode = b.Literal({
+        value: declarationId,
+        raw: String(declarationId),
+      }) as t.NumericLiteral
+      const depsBody: t.ArrayExpression = b.ArrayExpression({ elements: deps })
+      const depsNode: t.ArrowFunctionExpression = b.ArrowFunctionExpression({
+        id: null,
+        generator: false,
+        async: false,
+        params: params.map(({ name }) => b.Identifier({ name })),
+        body: depsBody,
+        expression: true,
+      })
+      const childrenNode: t.ArrayExpression = b.ArrayExpression({
+        elements: children.map((node) =>
+          b.Literal({
+            value: '',
+            raw: '""',
+            start: node.start,
+            end: node.end,
+          }),
+        ),
+      })
       const sideEffectNode: t.CallExpression | false =
         sideEffect &&
-        b.callExpression(b.identifier('sideEffect'), [bindings[0]])
+        b.CallExpression({
+          callee: b.Identifier({ name: 'sideEffect' }),
+          arguments: [bindings[0]],
+          optional: false,
+        })
       const runtimeArrayNode = runtimeBindingArrayExpression([
         declarationIdNode,
         depsNode,
@@ -335,21 +347,35 @@ export function createFakeJsPlugin({
         sideEffect()
       ]
       */
-      const runtimeAssignment = b.variableDeclaration('var', [
-        b.variableDeclarator(
-          b.arrayPattern(
-            bindings.map((binding) => ({ ...binding, typeAnnotation: null })),
-          ),
-          runtimeArrayNode,
-        ),
-      ]) as RuntimeBindingVariableDeclration
+      const runtimeAssignment = b.VariableDeclaration({
+        kind: 'var',
+        declarations: [
+          b.VariableDeclarator({
+            id: b.ArrayPattern({
+              elements: bindings.map((binding) => ({
+                ...binding,
+                typeAnnotation: null,
+              })),
+            }),
+            init: runtimeArrayNode,
+          }),
+        ],
+      })
 
       if (isDefaultExport) {
         // export { ${binding} as default }
         appendStmts.push(
-          b.exportNamedDeclaration(null, [
-            b.exportSpecifier(bindings[0], b.identifier('default')),
-          ]),
+          b.ExportNamedDeclaration({
+            declaration: null,
+            specifiers: [
+              b.ExportSpecifier({
+                local: bindings[0],
+                exported: b.Identifier({ name: 'default' }),
+              }),
+            ],
+            source: null,
+            attributes: [],
+          }),
         )
         // replace the whole statement
         setStmt(runtimeAssignment)
@@ -362,7 +388,13 @@ export function createFakeJsPlugin({
     if (sideEffects) {
       // module side effect marker
       appendStmts.push(
-        b.expressionStatement(b.callExpression(b.identifier('sideEffect'), [])),
+        b.ExpressionStatement({
+          expression: b.CallExpression({
+            callee: b.Identifier({ name: 'sideEffect' }),
+            arguments: [],
+            optional: false,
+          }),
+        }),
       )
     }
 
@@ -477,7 +509,7 @@ export function createFakeJsPlugin({
             transformedDep.type === 'UnaryExpression' &&
             transformedDep.operator === 'void'
           ) {
-            const undefinedDep = b.identifier('undefined')
+            const undefinedDep = b.Identifier({ name: 'undefined' })
             undefinedDep.start = transformedDep.start
             undefinedDep.end = transformedDep.end
             transformedDep = undefinedDep
@@ -1017,17 +1049,21 @@ function importNamespace(
       ? source.value
       : `${sourceText}${getIdentifierIndex(identifierMap, sourceText)}`
   }`
-  let local: t.Identifier | t.TSQualifiedName = b.identifier(localName)
+  let local: t.Identifier | t.TSQualifiedName = b.Identifier({
+    name: localName,
+  })
 
   if (namespaceStmts.has(source.value)) {
     local = namespaceStmts.get(source.value)!.local
   } else {
     // prepend: import * as ${local} from ${source}
     namespaceStmts.set(source.value, {
-      stmt: b.importDeclaration(
-        [b.importNamespaceSpecifier(local as t.Identifier)],
+      stmt: b.ImportDeclaration({
+        specifiers: [b.ImportNamespaceSpecifier({ local })],
         source,
-      ),
+        phase: null,
+        attributes: [],
+      }),
       local,
     })
   }
@@ -1040,13 +1076,19 @@ function importNamespace(
     ) {
       throw new Error('Cannot import `this` from module.')
     }
-    overwriteNode(importedLeft, b.tsQualifiedName(local, { ...importedLeft }))
+    overwriteNode(
+      importedLeft,
+      b.TSQualifiedName({ left: local, right: { ...importedLeft } }),
+    )
     local = imported
   }
 
   let replacement: t.Node = node
   if (node.typeArguments) {
-    overwriteNode(node, b.tsTypeReference(local, node.typeArguments))
+    overwriteNode(
+      node,
+      b.TSTypeReference({ typeName: local, typeArguments: node.typeArguments }),
+    )
     replacement = local
   } else {
     overwriteNode(node, local)
@@ -1195,7 +1237,9 @@ function isRuntimeBindingArrayElements(
 function runtimeBindingArrayExpression(
   elements: RuntimeBindingArrayElements,
 ): RuntimeBindingArrayExpression {
-  return b.arrayExpression([...elements]) as RuntimeBindingArrayExpression
+  return b.ArrayExpression({
+    elements: [...elements],
+  }) as RuntimeBindingArrayExpression
 }
 
 type RuntimeBindingArrayElementsBase = [
@@ -1340,8 +1384,10 @@ function patchImportExport(
       node.specifiers[0].type === 'ExportSpecifier' &&
       nameOf(node.specifiers[0].exported) === 'default'
     ) {
-      const defaultExport = node.specifiers[0] as t.ExportSpecifier
-      return b.tsExportAssignment(defaultExport.local as t.Expression)
+      const defaultExport = node.specifiers[0]
+      return b.TSExportAssignment({
+        expression: defaultExport.local,
+      })
     }
   }
 }
@@ -1379,22 +1425,26 @@ function patchTsNamespace(nodes: t.ProgramStatement[]) {
     const [binding, exports] = result
     if (!exports.properties.length) continue
 
-    const namespaceExport = b.exportNamedDeclaration(
-      null,
-      exports.properties
+    const namespaceExport = b.ExportNamedDeclaration({
+      declaration: null,
+      specifiers: exports.properties
         .filter((property) => property.type === 'Property')
         .map((property) => {
           const local = (property.value as t.ArrowFunctionExpression)
             .body as t.Identifier
           const exported = property.key as t.Identifier
-          return b.exportSpecifier(local, exported)
+          return b.ExportSpecifier({ local, exported })
         }),
-    )
-    nodes[i] = b.tsModuleDeclaration(
-      binding,
-      b.tsModuleBlock([namespaceExport]),
-      { kind: 'namespace', declare: true },
-    )
+      source: null,
+      attributes: [],
+    })
+    nodes[i] = b.TSModuleDeclaration({
+      id: binding,
+      body: b.TSModuleBlock({ body: [namespaceExport] }),
+      kind: 'namespace',
+      declare: true,
+      global: false,
+    })
   }
 
   return nodes.filter((node) => !removed.has(node))
@@ -1465,19 +1515,24 @@ function patchReExport(nodes: t.ProgramStatement[]) {
       // type B = [mapping].A
       // TODO how to support value import? currently only type import is supported
 
-      nodes[i] = b.tsTypeAliasDeclaration(
-        b.identifier((node.declarations[0].id as t.Identifier).name),
-        b.tsTypeReference(
-          b.tsQualifiedName(
-            b.identifier(
-              exportsNames.get(node.declarations[0].init.object.name)!,
-            ),
-            b.identifier(
-              (node.declarations[0].init.property as t.Identifier).name,
-            ),
-          ),
-        ),
-      )
+      nodes[i] = b.TSTypeAliasDeclaration({
+        id: b.Identifier({
+          name: (node.declarations[0].id as t.Identifier).name,
+        }),
+        typeParameters: null,
+        typeAnnotation: b.TSTypeReference({
+          typeName: b.TSQualifiedName({
+            left: b.Identifier({
+              name: exportsNames.get(node.declarations[0].init.object.name)!,
+            }),
+            right: b.Identifier({
+              name: (node.declarations[0].init.property as t.Identifier).name,
+            }),
+          }),
+          typeArguments: null,
+        }),
+        declare: false,
+      })
     } else if (
       node.type === 'ExportNamedDeclaration' &&
       node.specifiers.length === 1 &&
@@ -1538,10 +1593,12 @@ function rewriteImportExport(
   } else if (node.type === 'TSImportEqualsDeclaration') {
     if (node.moduleReference.type === 'TSExternalModuleReference') {
       set(
-        b.importDeclaration(
-          [b.importDefaultSpecifier(node.id)],
-          node.moduleReference.expression,
-        ),
+        b.ImportDeclaration({
+          specifiers: [b.ImportDefaultSpecifier({ local: node.id })],
+          source: node.moduleReference.expression,
+          phase: null,
+          attributes: [],
+        }),
       )
     }
     return true
@@ -1550,9 +1607,17 @@ function rewriteImportExport(
     node.expression.type === 'Identifier'
   ) {
     set(
-      b.exportNamedDeclaration(null, [
-        b.exportSpecifier(node.expression, b.identifier('default')),
-      ]),
+      b.ExportNamedDeclaration({
+        declaration: null,
+        specifiers: [
+          b.ExportSpecifier({
+            local: node.expression,
+            exported: b.Identifier({ name: 'default' }),
+          }),
+        ],
+        source: null,
+        attributes: [],
+      }),
     )
     return true
   } else if (
@@ -1560,9 +1625,17 @@ function rewriteImportExport(
     node.declaration.type === 'Identifier'
   ) {
     set(
-      b.exportNamedDeclaration(null, [
-        b.exportSpecifier(node.declaration, b.identifier('default')),
-      ]),
+      b.ExportNamedDeclaration({
+        declaration: null,
+        specifiers: [
+          b.ExportSpecifier({
+            local: node.declaration,
+            exported: b.Identifier({ name: 'default' }),
+          }),
+        ],
+        source: null,
+        attributes: [],
+      }),
     )
     return true
   }
