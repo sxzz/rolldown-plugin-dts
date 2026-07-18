@@ -1,4 +1,4 @@
-import { b, is, isIdentifierName, nameOf, walk } from 'yuku-ast'
+import { b, is, isIdentifierName, nameOf, walk, walkAsync } from 'yuku-ast'
 import { print } from 'yuku-codegen'
 import { parse, type ParseResult } from 'yuku-parser'
 import {
@@ -906,35 +906,20 @@ async function collectDependencies(
   const seen = new Set<t.Node>()
   const preserveImportTypeCache = new Map<string, boolean>()
 
-  const importSources = new Set<string>()
-  walk(node, {
-    TSImportType(node) {
-      importSources.add(node.source.value)
-    },
-  })
-  if (importSources.size) {
-    await Promise.all(
-      Array.from(importSources, async (source) => {
-        const resolved = await context.resolve(source, importer)
-        preserveImportTypeCache.set(source, !resolved || !!resolved.external)
-      }),
-    )
-  }
-
   const inferredStack: string[][] = []
   let currentInferred = new Set<string>()
   function isInferred(node: t.Node): boolean {
     return node.type === 'Identifier' && currentInferred.has(node.name)
   }
 
-  walk(node, {
+  await walkAsync(node, {
     enter(node) {
       if (node.type === 'TSConditionalType') {
         const inferred = collectInferredNames(node.extendsType)
         inferredStack.push(inferred)
       }
     },
-    leave(node, path) {
+    async leave(node, path) {
       const { parent } = path
 
       // handle infer scope
@@ -1001,13 +986,18 @@ async function collectDependencies(
             seen.add(node)
             const { source, qualifier } = node
 
+            const resolved = await context.resolve(source.value, importer)
+            if (!resolved || !!resolved.external) {
+              preserveImportTypeCache.set(source.value, true)
+              break
+            }
+
             const dep = importNamespace(
               node,
               qualifier,
               source,
               namespaceStmts,
               identifierMap,
-              preserveImportTypeCache,
             )
             if (dep) addDependency(dep)
             break
@@ -1035,12 +1025,7 @@ function importNamespace(
   source: t.StringLiteral,
   namespaceStmts: NamespaceMap,
   identifierMap: Record<string, number>,
-  preserveCache: Map<string, boolean>,
 ): Dep | undefined {
-  const preserve = preserveCache.get(source.value) ?? true
-
-  if (preserve) return
-
   const sourceText = source.value.replaceAll(/\W/g, '_')
   // Use original source if it's already a valid identifier,
   // otherwise use formatted text with index.
