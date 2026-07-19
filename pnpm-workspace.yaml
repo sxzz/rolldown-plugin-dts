@@ -21,7 +21,7 @@ catalog:
   rolldown: ^1.2.0
   rollup-plugin-dts: ^6.4.1
   ts-macro: ^0.3.7
-  tsdown: ^0.22.9
+  tsdown: ^0.22.11
   tsnapi: ^1.0.0
   typescript: ^6.0.3
   vitest: ^4.1.10
@@ -34,9 +34,9 @@ catalogs:
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.5
     obug: ^2.1.4
-    yuku-ast: ^0.6.9
-    yuku-codegen: ^0.6.9
-    yuku-parser: ^0.6.9
+    yuku-ast: ^0.7.0
+    yuku-codegen: ^0.7.0
+    yuku-parser: ^0.7.0
 
 minimumReleaseAge: 0
 trustLockfile: true
