@@ -3,9 +3,9 @@ import type { FileExtensionInfo } from 'typescript'
 
 export interface VolarPlugin {
   extensionPatterns: RegExp[]
-  tsFileExtensionInfos: FileExtensionInfo[]
-  volarTypeScript: typeof import('@volar/typescript')
-  create: Parameters<
+  tsFileExtensionInfos?: FileExtensionInfo[]
+  volarTypeScript?: typeof import('@volar/typescript')
+  create?: Parameters<
     (typeof import('@volar/typescript'))['proxyCreateProgram']
   >[2]
   toTsFilename?: (id: string) => string
@@ -26,7 +26,7 @@ export class VolarContext {
 
   getExtraFileExtensions(): FileExtensionInfo[] | undefined {
     if (!this.plugins.length) return
-    return this.plugins.flatMap((plugin) => plugin.tsFileExtensionInfos)
+    return this.plugins.flatMap((plugin) => plugin.tsFileExtensionInfos || [])
   }
 
   getCreateProgram(
@@ -34,12 +34,20 @@ export class VolarContext {
   ): typeof import('typescript').createProgram {
     if (!this.plugins.length) return ts.createProgram
 
-    const { proxyCreateProgram } = this.plugins[0].volarTypeScript
+    const volarTypeScript = this.plugins.find(
+      (plugin) => plugin.volarTypeScript,
+    )?.volarTypeScript
+    if (!volarTypeScript) {
+      return ts.createProgram
+    }
+
+    const { proxyCreateProgram } = volarTypeScript
     return proxyCreateProgram(ts, ts.createProgram, (ts, options) => {
       const setups: ((language: Language<string>) => void)[] = []
       const plugins: LanguagePlugin[] = []
 
       for (const plugin of this.plugins) {
+        if (!plugin.create) continue
         const result = plugin.create(ts, options)
         if (Array.isArray(result)) {
           plugins.push(...result)
