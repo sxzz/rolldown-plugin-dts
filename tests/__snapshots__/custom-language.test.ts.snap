@@ -9,6 +9,34 @@ interface Props {
 declare function Foo(_props: Props): any;"
 `;
 
+exports[`volar > custom without volar (oxc) 1`] = `
+"// main.d.ts
+//#region tests/fixtures/custom-language/foo.custom.d.ts
+declare const foo: string;
+//#endregion
+export { foo };
+// main.js
+//#region tests/fixtures/custom-language/foo.custom
+const foo = "bar";
+//#endregion
+export { foo };
+"
+`;
+
+exports[`volar > custom without volar (tsc) 1`] = `
+"// main.d.ts
+//#region tests/fixtures/custom-language/foo.custom.d.ts
+declare const foo: string;
+//#endregion
+export { foo };
+// main.js
+//#region tests/fixtures/custom-language/foo.custom
+const foo = "bar";
+//#endregion
+export { foo };
+"
+`;
+
 exports[`volar > ts-macro > ts-macro w/ ts-compiler 1`] = `
 "// main.d.ts
 //#region tests/fixtures/ts-macro/main.d.ts

@@ -15,7 +15,7 @@ export function createDtsResolvePlugin({
   tsconfigRaw,
   resolver,
   sideEffects,
-  volarContext,
+  languageContext,
 }: Pick<
   OptionsResolved,
   | 'cwd'
@@ -23,10 +23,14 @@ export function createDtsResolvePlugin({
   | 'tsconfigRaw'
   | 'resolver'
   | 'sideEffects'
-  | 'volarContext'
+  | 'languageContext'
 >): Plugin {
   function isSourceFile(id: string) {
-    return RE_TS.test(id) || RE_JSON.test(id) || volarContext.isVolarFile(id)
+    return (
+      RE_TS.test(id) ||
+      RE_JSON.test(id) ||
+      languageContext.isCustomLanguageFile(id)
+    )
   }
 
   const baseDtsResolver = createResolver({
@@ -103,11 +107,11 @@ export function createDtsResolvePlugin({
 
         if (isSourceFile(dtsResolution)) {
           debug('Resolving dts import to source file:', id)
-          // It's a .ts / volar source file, so we load it to ensure its .d.ts is generated,
+          // It's a .ts / custom language source file, so we load it to ensure its .d.ts is generated,
           // then redirect the import to the future .d.ts path
           await this.load({ id: dtsResolution })
           return {
-            id: filename_to_dts(dtsResolution, volarContext),
+            id: filename_to_dts(dtsResolution, languageContext),
             moduleSideEffects,
           }
         }

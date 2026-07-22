@@ -30,3 +30,4 @@ export {
   type Logger,
   type Options,
 }
+export type { CustomLanguage } from './custom-language.ts'

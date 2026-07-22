@@ -4,7 +4,7 @@ import { getLanguagePlugin } from '@astrojs/ts-plugin/dist/language.js'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
-import type { VolarPlugin } from '../src/volar.ts'
+import type { CustomLanguage } from '../src/custom-language.ts'
 
 const { dirname } = import.meta
 const require = createRequire(import.meta.url)
@@ -65,7 +65,7 @@ describe('volar', () => {
   })
 
   describe('ts-macro', () => {
-    const tsMacro = createTsMacroPlugin()
+    const tsMacro = createTsMacroLanguage()
 
     test('ts-macro w/ ts-compiler', async () => {
       const root = path.resolve(dirname, 'fixtures/ts-macro')
@@ -73,7 +73,7 @@ describe('volar', () => {
         dts({
           emitDtsOnly: true,
           tsconfig: path.resolve(root, 'tsconfig.json'),
-          volarPlugins: [tsMacro],
+          customLanguages: [tsMacro],
         }),
       ])
       expect(snapshot).toMatchSnapshot()
@@ -88,7 +88,7 @@ describe('volar', () => {
             emitDtsOnly: true,
             tsconfig: path.resolve(root, 'tsconfig.json'),
             vue: true,
-            volarPlugins: [tsMacro],
+            customLanguages: [tsMacro],
           }),
         ],
         { external: ['vue'] },
@@ -103,14 +103,54 @@ describe('volar', () => {
     const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
       dts({
         emitDtsOnly: true,
-        volarPlugins: [createAstroPlugin()],
+        customLanguages: [createAstroLanguage()],
       }),
     ])
     expect(snapshot).toMatchSnapshot()
   })
+
+  test.each(['oxc', 'tsc'] as const)(
+    'custom without volar (%s)',
+    async (generator) => {
+      const root = path.resolve(dirname, 'fixtures/custom-language')
+
+      const RE_CUSTOM = /\.custom$/
+      const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
+        {
+          name: 'convert-custom-to-ts',
+          transform: {
+            order: 'pre',
+            filter: { id: RE_CUSTOM },
+            handler: (code) => ({
+              code: code.replace('<script>', '').replace('</script>', ''),
+              moduleType: 'ts',
+            }),
+          },
+        },
+        dts({
+          generator,
+          customLanguages: [
+            {
+              extensionPatterns: [RE_CUSTOM],
+              tsFileExtensionInfos: [
+                {
+                  extension: 'custom',
+                  isMixedContent: true,
+                  scriptKind: 7 /* Deferred */,
+                },
+              ],
+              toTsFilename: (id: string): string =>
+                id.replace(RE_CUSTOM, '.custom.ts'),
+            },
+          ],
+        }),
+      ])
+      expect(snapshot).toMatchSnapshot()
+    },
+  )
 })
 
-function createTsMacroPlugin(): VolarPlugin {
+function createTsMacroLanguage(): CustomLanguage {
   const tsMacroPath = require.resolve('@ts-macro/tsc')
   const volarTypeScript: typeof import('@volar/typescript') = require(
     require.resolve('@volar/typescript', {
@@ -132,7 +172,7 @@ function createTsMacroPlugin(): VolarPlugin {
     extensionPatterns: [],
     tsFileExtensionInfos: [],
     volarTypeScript,
-    create(ts, options) {
+    createVolarPlugins(ts, options) {
       const $rootDir = options.options.$rootDir as string
       const tsMacroLanguagePlugins = tsMacro.getLanguagePlugins(
         ts as any,
@@ -144,7 +184,7 @@ function createTsMacroPlugin(): VolarPlugin {
   }
 }
 
-function createAstroPlugin(): VolarPlugin {
+function createAstroLanguage(): CustomLanguage {
   const plugin = getLanguagePlugin()
   return {
     extensionPatterns: [/\.astro$/],
@@ -154,7 +194,7 @@ function createAstroPlugin(): VolarPlugin {
         paths: [require.resolve('@astrojs/ts-plugin')],
       }),
     ),
-    create() {
+    createVolarPlugins() {
       return [plugin]
     },
     toTsFilename(id: string) {

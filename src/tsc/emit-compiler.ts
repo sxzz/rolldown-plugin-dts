@@ -58,7 +58,7 @@ function createTsProgram({
   id,
   tsconfig,
   tsconfigRaw,
-  volarContext,
+  languageContext,
   cwd,
   context = globalContext,
 }: TscOptions): TscModule {
@@ -71,7 +71,7 @@ function createTsProgram({
     undefined,
     undefined,
     undefined,
-    volarContext.getExtraFileExtensions(),
+    languageContext.getExtraFileExtensions(),
   )
 
   debug(`creating program for root project: ${baseDir}`)
@@ -81,7 +81,7 @@ function createTsProgram({
     baseDir,
     id,
     entries,
-    volarContext,
+    languageContext,
   })
 }
 
@@ -91,12 +91,12 @@ function createTsProgramFromParsedConfig({
   baseDir,
   id,
   entries,
-  volarContext,
+  languageContext,
 }: {
   parsedConfig: ParsedCommandLine
   fsSystem: System
   baseDir: string
-} & Pick<TscOptions, 'entries' | 'volarContext' | 'id'>): TscModule {
+} & Pick<TscOptions, 'entries' | 'languageContext' | 'id'>): TscModule {
   const compilerOptions: CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
@@ -106,9 +106,9 @@ function createTsProgramFromParsedConfig({
     // this, TypeScript silently drops root files whose extension is not in its
     // built-in supported list, so `program.getSourceFile(id)` returns
     // `undefined` for a `.vue` entry that is not imported by a `.ts` file.
-    // Only relevant when a language plugin (Vue/Volar plugin) registers such
+    // Only relevant when a custom language (e.g. Vue) registers such
     // extensions; module resolution already handles the imported-file case.
-    ...(volarContext.plugins.length
+    ...(languageContext.languages.length
       ? { allowNonTsExtensions: true }
       : undefined),
   }
@@ -122,7 +122,7 @@ function createTsProgramFromParsedConfig({
   ]
 
   const host = ts.createCompilerHost(compilerOptions, true)
-  const createProgram = volarContext.getCreateProgram(ts)
+  const createProgram = languageContext.getCreateProgram(ts)
   const program = createProgram({
     rootNames,
     options: compilerOptions,

@@ -7,10 +7,10 @@ import {
   type TsconfigJsonResolved,
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
+import { LanguageContext, type CustomLanguage } from './custom-language.ts'
 import { requireTS } from './tsc/load-tsc.ts'
-import { getVueVolarPlugin } from './tsc/vue.ts'
+import { createVueLanguage } from './tsc/vue.ts'
 import { isTS70Installed } from './tsgo.ts'
-import { VolarContext, type VolarPlugin } from './volar.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = createDebug('rolldown-plugin-dts:options')
@@ -38,8 +38,11 @@ export interface GeneralOptions {
    * - `'oxc'` if {@link Options.oxc oxc} options are provided or
    *   `isolatedDeclarations` is enabled in `compilerOptions`.
    * - `'tsgo'` if TypeScript 7.0 (or `@typescript/native-preview`) is installed,
-   *   or {@link Options.tsgo tsgo} options are provided.
-   * - `'tsc'` otherwise, and always when {@link TscOptions.vue vue} is enabled.
+   *   or {@link Options.tsgo tsgo} options are provided. `tsgo` is never
+   *   inferred when custom languages are registered, as it does not support
+   *   them.
+   * - `'tsc'` otherwise, and always when Volar-based custom languages
+   *   (including {@link TscOptions.vue vue}) are enabled.
    *
    * @default 'tsc'
    */
@@ -263,17 +266,21 @@ export interface Options extends GeneralOptions, TscOptions {
   tsgo?: boolean | TsgoOptions
 
   /**
-   * Registers custom {@link https://volarjs.dev Volar} language plugins,
-   * allowing the `tsc` generator to process non-standard file types (such as
-   * `.vue`) when generating `.d.ts` files. Multiple plugins can be provided and
-   * are applied together.
+   * Registers custom languages, allowing the `tsc` generator to process
+   * non-standard file types (such as `.vue`) when generating `.d.ts` files.
+   * Multiple languages can be provided and are applied together.
    *
-   * Enabling this option forces the `tsc` generator and is not supported with
-   * TypeScript 7.0.
+   * If a language is supported via {@link https://volarjs.dev Volar},
+   * `volarTypeScript` and `createVolarPlugins` must both be provided.
+   *
+   * Languages that use Volar force the `tsc` generator and are not supported
+   * with TypeScript 7.0. If no registered language uses Volar, the `oxc`
+   * generator remains available. The `tsgo` generator does not support custom
+   * languages.
    *
    * @experimental The API may change in future versions.
    */
-  volarPlugins?: VolarPlugin[]
+  customLanguages?: CustomLanguage[]
 }
 
 export interface TsgoOptions {
@@ -286,14 +293,14 @@ export interface TsgoOptions {
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 
 export type OptionsResolved = Overwrite<
-  Required<Omit<Options, 'compilerOptions' | 'vue' | 'volarPlugins'>>,
+  Required<Omit<Options, 'compilerOptions' | 'vue' | 'customLanguages'>>,
   {
     entry?: string[]
     tsconfig?: string
     oxc: IsolatedDeclarationsOptions
     tsconfigRaw: TsconfigJson
     tsgo: TsgoOptions
-    volarContext: VolarContext
+    languageContext: LanguageContext
   }
 >
 
@@ -313,7 +320,7 @@ export function resolveOptions({
   cjsDefault = false,
   sideEffects = false,
   logger = console,
-  volarPlugins,
+  customLanguages,
 
   // tsc
   build = false,
@@ -355,34 +362,51 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  volarPlugins ||= []
+  customLanguages ||= []
   if (vue) {
-    volarPlugins.push(getVueVolarPlugin())
+    customLanguages.push(createVueLanguage())
   }
 
-  // Volar relate
-  if (volarPlugins.length) {
-    if (isTS70Installed()) {
-      throw new Error(
-        'TypeScript 7.0 does not yet have a stable API and is experimental. The `vue` and `volarPlugins` options are not yet supported with TypeScript 7.0.',
-      )
-    }
-    if (generator && generator !== 'tsc') {
+  const languageContext = new LanguageContext(customLanguages)
+  if (customLanguages.length) {
+    // Custom languages that rely on Volar can only be handled by the `tsc`
+    // generator; Volar-free languages also work with `oxc`, but `tsgo` does not
+    // support custom languages at all.
+    if (languageContext.isUsingVolar()) {
+      if (isTS70Installed()) {
+        throw new Error(
+          'TypeScript 7.0 does not yet have a stable API and is experimental. Volar-based custom languages (including the `vue` option) are not yet supported with TypeScript 7.0.',
+        )
+      }
+      if (generator && generator !== 'tsc') {
+        logger.warn(
+          'Volar-based custom languages (including the `vue` option) require the `tsc` generator. The `generator` option is ignored.',
+        )
+      }
+      generator = 'tsc'
+    } else if (generator === 'tsgo') {
       logger.warn(
-        'The `vue` and `volarPlugins` options are enabled, which requires the `tsc` generator. The `generator` option is ignored.',
+        'The `tsgo` generator does not support custom languages. The `generator` option is ignored.',
+      )
+      generator = undefined
+    } else if (!generator && tsgo) {
+      logger.warn(
+        'The `tsgo` generator does not support custom languages. The `tsgo` option is ignored.',
       )
     }
-    generator = 'tsc'
   }
-
-  const volarContext = new VolarContext(volarPlugins)
 
   if (!generator) {
-    if (tsgo) {
+    if (tsgo && !customLanguages.length) {
       generator = 'tsgo'
     } else if (oxc || compilerOptions?.isolatedDeclarations) {
       generator = 'oxc'
     } else if (isTS70Installed()) {
+      if (customLanguages.length) {
+        throw new Error(
+          'Custom languages are not supported with TypeScript 7.0.',
+        )
+      }
       generator = 'tsgo'
     } else {
       generator = 'tsc'
@@ -443,7 +467,7 @@ export function resolveOptions({
     eager,
     newContext,
     emitJs,
-    volarContext,
+    languageContext,
 
     oxc,
     tsgo,

@@ -4,7 +4,7 @@ import {
   type PreRenderedChunk,
 } from 'rolldown'
 import { exactRegex } from 'rolldown/filter'
-import type { VolarContext } from './volar.ts'
+import type { LanguageContext } from './custom-language.ts'
 
 export const RE_JS: RegExp = /\.([cm]?)jsx?$/
 export const RE_TS: RegExp = /\.([cm]?)tsx?$/
@@ -20,9 +20,9 @@ export function filename_js_to_dts(id: string): string {
 }
 export function filename_to_dts(
   id: string,
-  volarContext?: VolarContext,
+  languageContext?: LanguageContext,
 ): string {
-  id = volarContext?.toTsFilename?.(id) ?? id
+  id = languageContext?.toTsFilename?.(id) ?? id
   return id
     .replace(RE_TS, '.d.$1ts')
     .replace(RE_JS, '.d.$1ts')

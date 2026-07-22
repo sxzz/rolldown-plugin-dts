@@ -56,7 +56,7 @@ export function createGeneratePlugin({
   cwd,
   oxc,
   emitDtsOnly,
-  volarContext,
+  languageContext,
   parallel,
   eager,
   tsgo,
@@ -75,7 +75,7 @@ export function createGeneratePlugin({
   | 'incremental'
   | 'oxc'
   | 'emitDtsOnly'
-  | 'volarContext'
+  | 'languageContext'
   | 'parallel'
   | 'eager'
   | 'tsgo'
@@ -182,7 +182,7 @@ export function createGeneratePlugin({
       order: 'pre',
       filter: {
         id: {
-          include: [RE_JS, RE_TS, RE_JSON, ...volarContext.patterns],
+          include: [RE_JS, RE_TS, RE_JSON, ...languageContext.patterns],
           exclude: [RE_DTS, RE_NODE_MODULES, RE_ROLLDOWN_RUNTIME],
         },
       },
@@ -194,7 +194,7 @@ export function createGeneratePlugin({
           const isEntry = entryMatcher
             ? entryMatcher(path.relative(cwd, id))
             : !!mod?.isEntry
-          const dtsId = filename_to_dts(id, volarContext)
+          const dtsId = filename_to_dts(id, languageContext)
           dtsMap.set(dtsId, { code, id, isEntry, jsFile })
           debug('register dts source: %s', id)
 
@@ -242,7 +242,7 @@ export function createGeneratePlugin({
         debug('generate dts %s from %s', dtsId, id)
 
         if (generator === 'tsgo') {
-          if (volarContext.isVolarFile(id)) {
+          if (languageContext.isCustomLanguageFile(id)) {
             throw new Error(`tsgo does not support .${path.extname(id)} file.`)
           }
 
@@ -250,7 +250,7 @@ export function createGeneratePlugin({
             tsgoContext!.path,
             path.relative(
               path.resolve(rootDir),
-              filename_to_dts(id, volarContext),
+              filename_to_dts(id, languageContext),
             ),
           )
           if (!existsSync(dtsPath)) {
@@ -270,8 +270,15 @@ export function createGeneratePlugin({
               sources: [id],
             }
           }
-        } else if (generator === 'oxc' && !volarContext.isVolarFile(id)) {
-          const result = isolatedDeclarationSync(id, code, oxc)
+        } else if (generator === 'oxc') {
+          // Volar-based custom languages force the `tsc` generator, so any
+          // custom language file reaching here is plain TS with a custom
+          // extension; map the filename so oxc parses it as TS.
+          const result = isolatedDeclarationSync(
+            languageContext.toTsFilename(id),
+            code,
+            oxc,
+          )
           if (result.errors.length) {
             const [error] = result.errors
             return this.error({
@@ -282,6 +289,8 @@ export function createGeneratePlugin({
           dtsCode = result.code
           if (result.map) {
             map = result.map
+            // point back to the original file, not the mapped TS filename
+            map.sources = [id]
             map.sourcesContent = undefined
           }
         } else {
@@ -299,7 +308,7 @@ export function createGeneratePlugin({
             entries,
             id,
             sourcemap,
-            volarContext,
+            languageContext,
             context: tscContext,
           }
           let result: TscResult

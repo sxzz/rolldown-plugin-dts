@@ -182,19 +182,24 @@ Enabling this option can speed up builds by caching previous results, which is h
 
 If `true`, the plugin will generate `.d.ts` files using `vue-tsc`.
 
-This is a shortcut that registers the built-in Vue [Volar](https://volarjs.dev/) plugin.
+This is a shortcut that registers the built-in Vue custom language.
 
-#### `volarPlugins`
+#### `customLanguages`
 
 > [!WARNING]
 > Experimental. The API may change in future versions.
 
-Registers custom [Volar](https://volarjs.dev/) language plugins, allowing the
-`tsc` generator to process non-standard file types (such as `.vue`) when
-generating `.d.ts` files.
+Registers custom languages, allowing the `tsc` generator to process
+non-standard file types (such as `.vue`) when generating `.d.ts` files.
 
-Enabling this option forces the `tsc` generator and is not supported with
-TypeScript 7.0. The `vue` option is a preconfigured shortcut for the Vue plugin.
+If a language is supported via [Volar](https://volarjs.dev/), the
+`volarTypeScript` and `createVolarPlugins` fields must both be provided, where
+`volarTypeScript` is the contents of the `@volar/typescript` package.
+
+Languages that use Volar force the `tsc` generator and are not supported with
+TypeScript 7.0. If no registered language uses Volar, the `oxc` generator
+remains available. The `tsgo` generator does not support custom languages.
+The `vue` option is a preconfigured shortcut for the Vue language.
 
 #### `parallel`
 

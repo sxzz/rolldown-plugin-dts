@@ -1,13 +1,13 @@
 import { createRequire } from 'node:module'
 import { createDebug } from 'obug'
 import { requireTS } from './load-tsc.ts'
-import type { VolarPlugin } from '../volar.ts'
+import type { CustomLanguage } from '../custom-language.ts'
 
 const require = createRequire(import.meta.url)
 const debug = createDebug('rolldown-plugin-dts:vue')
 const RE_VUE = /\.vue$/
 
-export function getVueVolarPlugin(): VolarPlugin {
+export function createVueLanguage(): CustomLanguage {
   const ts = requireTS(
     `Vue support requires TypeScript to be installed. Please install \`typescript\` package.`,
   )
@@ -45,7 +45,7 @@ export function getVueVolarPlugin(): VolarPlugin {
       },
     ],
     volarTypeScript,
-    create(ts, options) {
+    createVolarPlugins(ts, options) {
       return [getLanguagePlugin(ts, options)]
     },
     toTsFilename(id: string): string {
