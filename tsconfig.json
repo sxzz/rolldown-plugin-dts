@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["es2024"],
+    "lib": ["es2024", "ES2025.Iterator"],
     "moduleDetection": "force",
     "module": "NodeNext",
     "moduleResolution": "nodenext",

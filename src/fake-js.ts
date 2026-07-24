@@ -399,7 +399,7 @@ export function createFakeJsPlugin({
     }
 
     program.body = [
-      ...Array.from(namespaceStmts.values()).map(({ stmt }) => stmt),
+      ...Array.from(namespaceStmts.values(), ({ stmt }) => stmt),
       ...program.body,
       ...appendStmts,
     ]
@@ -552,15 +552,12 @@ export function createFakeJsPlugin({
     if (comments.size) {
       program.body[0].comments ||= []
       program.body[0].comments.unshift(
-        ...Array.from(
-          comments,
-          (c): t.AttachedComment => ({
-            type: c.type,
-            value: c.value,
-            position: 'before',
-            sameLine: false,
-          }),
-        ),
+        ...Array.from(comments, (c): t.AttachedComment => ({
+          type: c.type,
+          value: c.value,
+          position: 'before',
+          sameLine: false,
+        })),
       )
     }
 
@@ -888,7 +885,7 @@ function collectParams(node: t.Node): TypeParams {
     }
   }
 
-  return Array.from(paramMap.entries()).map(([name, typeParams]) => ({
+  return Array.from(paramMap, ([name, typeParams]) => ({
     name,
     typeParams,
   }))
@@ -914,10 +911,10 @@ async function collectDependencies(
 
   await walkAsync(node, {
     enter(node) {
-      if (node.type === 'TSConditionalType') {
-        const inferred = collectInferredNames(node.extendsType)
-        inferredStack.push(inferred)
-      }
+      if (node.type !== 'TSConditionalType') return
+
+      const inferred = collectInferredNames(node.extendsType)
+      inferredStack.push(inferred)
     },
     async leave(node, path) {
       const { parent } = path
@@ -1550,9 +1547,7 @@ function rewriteImportExport(
   node: t.Node,
   set: (node: t.ProgramStatement) => void,
 ): node is
-  | t.ImportDeclaration
-  | t.ExportAllDeclaration
-  | t.TSImportEqualsDeclaration {
+  t.ImportDeclaration | t.ExportAllDeclaration | t.TSImportEqualsDeclaration {
   if (
     node.type === 'ImportDeclaration' ||
     (node.type === 'ExportNamedDeclaration' && !node.declaration)

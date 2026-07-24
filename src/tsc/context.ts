@@ -34,9 +34,9 @@ export function invalidateContextFile(context: TscContext, file: string): void {
   debug(`invalidating context file: ${file}`)
   context.files.delete(file)
   context.programs = context.programs.filter((program) => {
-    return !program
+    return program
       .getSourceFiles()
-      .some((sourceFile) => sourceFile.fileName === file)
+      .every((sourceFile) => sourceFile.fileName !== file)
   })
   context.projects.clear()
 }

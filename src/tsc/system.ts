@@ -30,7 +30,7 @@ export function createFsSystem(files: Map<string, string>): System {
     // Copied from
     // https://github.com/microsoft/TypeScript-Website/blob/b0e9a5c0/packages/typescript-vfs/src/index.ts#L532C1-L534C8
     directoryExists(directory) {
-      if (Array.from(files.keys()).some((path) => path.startsWith(directory))) {
+      if (files.keys().some((path) => path.startsWith(directory))) {
         return true
       }
       return ts.sys.directoryExists(directory)

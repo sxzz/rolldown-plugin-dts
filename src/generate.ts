@@ -89,7 +89,7 @@ export function createGeneratePlugin({
   const entryMatcher = entry
     ? (file: string) =>
         entryIncludes!.some((p) => path.matchesGlob(file, p)) &&
-        !entryIgnores!.some((p) => path.matchesGlob(file, p))
+        entryIgnores!.every((p) => !path.matchesGlob(file, p))
     : undefined
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -172,10 +172,10 @@ export function createGeneratePlugin({
     },
 
     resolveId(id) {
-      if (dtsMap.has(id)) {
-        debug('resolve dts id %s', id)
-        return { id }
-      }
+      if (!dtsMap.has(id)) return
+
+      debug('resolve dts id %s', id)
+      return { id }
     },
 
     transform: {
@@ -346,11 +346,9 @@ export function createGeneratePlugin({
               const exportMap = collectJsonExportMap(dtsCode)
               dtsCode += `
 declare namespace __json_default_export {
-  export { ${Array.from(exportMap.entries())
-    .map(([exported, local]) =>
-      exported === local ? exported : `${local} as ${exported}`,
-    )
-    .join(', ')} }
+  export { ${Array.from(exportMap.entries(), ([exported, local]) =>
+    exported === local ? exported : `${local} as ${exported}`,
+  ).join(', ')} }
 }
 export { __json_default_export as default }`
             }
