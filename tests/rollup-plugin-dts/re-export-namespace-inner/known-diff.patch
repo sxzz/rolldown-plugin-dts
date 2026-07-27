@@ -2,20 +2,19 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,12 +1,9 @@
+@@ -1,11 +1,10 @@
  // index.d.ts
 +declare namespace mod_d_exports {
 +  export { inner }
 +}
  declare namespace inner {
-   type Ty = number
+   type Ty =
+     number
    const num: number
  }
 -import mod_d_inner = inner
 -declare namespace mod_d {
--  export {
--    mod_d_inner as inner
--  }
+-  export { mod_d_inner as inner }
 -}
 -export { mod_d as outer }
 +export { mod_d_exports as outer }

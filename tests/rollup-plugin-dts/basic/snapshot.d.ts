@@ -19,4 +19,4 @@ declare class Cls {
   fn(e: Enum): void;
 }
 //#endregion
-export { Cls, bar, fn, foo };
+export { type Cls, bar, type fn, type foo };

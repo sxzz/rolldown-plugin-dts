@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -9,5 +9,5 @@
+       | SetT
+       | boolean,
+   )
+ }
+-export type { Thing }
++export { Thing }

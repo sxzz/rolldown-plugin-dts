@@ -1,5 +1,4 @@
 import { createDebug } from 'obug'
-import ts from 'typescript'
 import { RE_DTS, RE_DTS_MAP } from '../filename.ts'
 import {
   globalContext,
@@ -7,11 +6,21 @@ import {
   type SourceFileToProjectMap,
   type TscContext,
 } from './context.ts'
+import { requireTS } from './load-tsc.ts'
 import { createFsSystem, createMemorySystem } from './system.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import type { TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
+import type {
+  CompilerOptions,
+  CreateProgram,
+  Diagnostic,
+  EmitAndSemanticDiagnosticsBuilderProgram,
+  ParsedCommandLine,
+  System,
+} from 'typescript'
 
+const ts = requireTS()
 const debug = createDebug('rolldown-plugin-dts:tsc-build')
 
 // Emit file using `tsc --build` mode.
@@ -127,7 +136,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
 
 function getOrBuildProjects(
   context: TscContext,
-  fsSystem: ts.System,
+  fsSystem: System,
   tsconfig: string,
   force: boolean,
   sourcemap: boolean,
@@ -147,7 +156,7 @@ function getOrBuildProjects(
  * Use TypeScript compiler to build all projects referenced
  */
 function buildProjects(
-  fsSystem: ts.System,
+  fsSystem: System,
   tsconfig: string,
   force: boolean,
   sourcemap: boolean,
@@ -200,7 +209,7 @@ function buildProjects(
  */
 function collectProjectGraph(
   rootTsconfigPath: string,
-  fsSystem: ts.System,
+  fsSystem: System,
   force: boolean,
   sourcemap: boolean,
 ): ParsedProject[] {
@@ -234,9 +243,9 @@ function collectProjectGraph(
 
 function parseTsconfig(
   tsconfigPath: string,
-  fsSystem: ts.System,
-): ts.ParsedCommandLine | undefined {
-  const diagnostics: ts.Diagnostic[] = []
+  fsSystem: System,
+): ParsedCommandLine | undefined {
+  const diagnostics: Diagnostic[] = []
 
   const parsedConfig = ts.getParsedCommandLineOfConfigFile(
     tsconfigPath,
@@ -264,13 +273,13 @@ function parseTsconfig(
 // tsconfig files in the first place. Therefore, we print some warnings if the
 // values are not set correctly.
 function patchCompilerOptions(
-  options: ts.CompilerOptions,
+  options: CompilerOptions,
   extraOptions: {
     tsconfigPath: string
     force: boolean
     sourcemap: boolean
   } | null,
-): ts.CompilerOptions {
+): CompilerOptions {
   const noEmit: boolean = options.noEmit ?? false
   const declaration: boolean =
     options.declaration ?? (options.composite ? true : false)
@@ -306,8 +315,8 @@ function patchCompilerOptions(
   return options
 }
 
-const createProgramWithPatchedCompilerOptions: ts.CreateProgram<
-  ts.EmitAndSemanticDiagnosticsBuilderProgram
+const createProgramWithPatchedCompilerOptions: CreateProgram<
+  EmitAndSemanticDiagnosticsBuilderProgram
 > = (rootNames, options, ...args) => {
   return ts.createEmitAndSemanticDiagnosticsBuilderProgram(
     rootNames,

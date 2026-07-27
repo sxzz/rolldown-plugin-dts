@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { rolldownBuild } from '@sxzz/test-utils'
+import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 import { getTsgoPathFromNodeModules } from '../src/tsgo.ts'
@@ -28,13 +28,13 @@ test('resolve dependencies', async () => {
     path.resolve(dirname, 'fixtures/resolve-dep.ts'),
     [
       dts({
-        oxc: true,
+        generator: 'oxc',
         emitDtsOnly: true,
       }),
     ],
     { external: ['rolldown'] },
   )
-  expect(snapshot).contain('type TsConfigResult')
+  expect(snapshot).contain('type TsconfigResult')
   expect(snapshot).not.contain('node_modules/rolldown')
 })
 
@@ -118,7 +118,7 @@ test('isolated declaration error', async () => {
     [
       dts({
         emitDtsOnly: true,
-        oxc: true,
+        generator: 'oxc',
       }),
     ],
   ).catch((error: any) => error)
@@ -155,6 +155,79 @@ describe('dts input', () => {
     )
     expect(chunks[0].fileName).toBe('dts-input.d.ts')
     expect(snapshot).toMatchSnapshot()
+  })
+
+  test('warns for CommonJS dts input syntax', async () => {
+    const warnings: string[] = []
+
+    await rolldownBuild(
+      [
+        path.resolve(
+          dirname,
+          'rollup-plugin-dts/issue-89-import-equals/index.d.ts',
+        ),
+      ],
+      [dts({ dtsInput: true })],
+      {
+        onwarn(warning) {
+          warnings.push(warning.message)
+        },
+      },
+    )
+
+    expect(warnings).toHaveLength(2)
+    expect(warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('index.d.ts uses CommonJS dts syntax'),
+        expect.stringContaining('bar.d.ts uses CommonJS dts syntax'),
+      ]),
+    )
+    expect(warnings.join('\n')).toContain(
+      'rolldown-plugin-dts does not support bundling CommonJS dts input',
+    )
+  })
+
+  test('warns to externalize CommonJS dts dependencies', async () => {
+    const root = path.resolve(dirname, 'fixtures/cjs-dts-dep-warning')
+    const warnings: string[] = []
+
+    await rolldownBuild(
+      [path.join(root, 'index.d.ts')],
+      [dts({ dtsInput: true })],
+      {
+        cwd: root,
+        onwarn(warning) {
+          warnings.push(warning.message)
+        },
+      },
+    )
+
+    const cjsWarning =
+      warnings.find((warning) =>
+        normalizePath(warning).includes('node_modules/cjs-dts-dep/index.d.ts'),
+      ) ?? ''
+
+    expect(cjsWarning).toContain('uses CommonJS dts syntax')
+    expect(cjsWarning).toContain('Please mark this module as external')
+  })
+
+  test('preserves external CommonJS dts import types', async () => {
+    const root = path.resolve(dirname, 'fixtures/cjs-dts-dep-external')
+
+    const { chunks } = await rolldownBuild(
+      [path.join(root, 'index.d.ts')],
+      [dts({ dtsInput: true })],
+      {
+        cwd: root,
+        external: 'cjs-dts-dep',
+        onwarn(warning) {
+          expect.unreachable(warning.message)
+        },
+      },
+    )
+    expect(chunks[0].code).toContain(
+      "declare const useDep: (dep: import('cjs-dts-dep')) => void",
+    )
   })
 
   test('input object', async () => {
@@ -254,7 +327,7 @@ describe('dts input', () => {
       [
         "input1.d.mts",
         "input2.d.mts",
-        "types-B0jSiKC_.d.ts",
+        "types-D2aRkv2b.d.ts",
       ]
     `)
 
@@ -277,7 +350,7 @@ describe('dts input', () => {
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toMatchInlineSnapshot(`
       [
-        "chunks/BCXvBysl-types.d.ts",
+        "chunks/D2aRkv2b-types.d.ts",
         "input1.d.ts",
         "input2.d.ts",
       ]
@@ -395,7 +468,7 @@ describe('entryFileNames', () => {
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toMatchInlineSnapshot(`
       [
-        "chunks/BCXvBysl-types.d.ts",
+        "chunks/D2aRkv2b-types.d.ts",
         "input1.d.ts",
         "input2.d.ts",
       ]
@@ -556,7 +629,11 @@ test('infer false branch', async () => {
 })
 
 test('tsgo with custom path', async () => {
-  const tsgoPath = await getTsgoPathFromNodeModules()
+  const tsgoPath = await getTsgoPathFromNodeModules({
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+  })
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/basic.ts'),
     [
@@ -628,9 +705,8 @@ test('deterministic namespace import index', async () => {
   // All results should be identical
   expect(results[0]).toBe(results[1])
   expect(results[1]).toBe(results[2])
-  // Valid identifiers (stub_lib) don't need index suffix
-  expect(results[0]).toContain('import * as _$stub_lib from "stub_lib"')
-  // Should not have stub_lib0 since each file is independent
+  expect(results[0]).toContain("import('stub_lib').LibType")
+  expect(results[0]).not.toContain('import * as _$stub_lib from "stub_lib"')
   expect(results[0]).not.toContain('stub_lib0')
 })
 
@@ -639,5 +715,13 @@ test('decorators', async () => {
     path.resolve(dirname, 'fixtures/decorator.ts'),
     [dts({ emitDtsOnly: true })],
   )
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('method signature', async () => {
+  const root = path.resolve(dirname, 'fixtures/method-signature')
+  const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+    dts({ emitDtsOnly: true }),
+  ])
   expect(snapshot).toMatchSnapshot()
 })

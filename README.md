@@ -8,7 +8,7 @@ A Rolldown plugin to generate and bundle dts files.
 
 ## Install
 
-Requires **`rolldown@1.0.0-rc.12`** or later.
+Requires Rolldown 1.0.0 or later.
 
 ```bash
 npm i -D rolldown-plugin-dts
@@ -34,11 +34,43 @@ export default {
 
 You can find an example in [here](./rolldown.config.ts).
 
+### Vite
+
+When using this plugin with Vite, exclude declaration files from Oxc
+transformation to avoid processing generated outputs. Since `oxc.exclude`
+overrides the default exclude list, include JavaScript files as well:
+
+```ts
+// vite.config.ts
+
+export default defineConfig({
+  oxc: {
+    exclude: [/\.js$/, /\.d\.[cm]?ts$/],
+  },
+})
+```
+
 ## Options
 
 Configuration options for the plugin.
 
 ### General Options
+
+#### `generator`
+
+Specifies which generator to use for `.d.ts` generation.
+
+- `'tsc'`: Uses the TypeScript 5.x or 6.x compiler. Compatible with all TypeScript features.
+- `'oxc'`: Uses [Oxc](https://oxc.rs/docs/guide/usage/transformer.html)'s isolated declaration generator, which is significantly faster than the TypeScript compiler. Only compatible with TypeScript features that do not require type checking.
+- `'tsgo'`: **[Experimental]** Uses the TypeScript Go compiler ([`tsgo`](https://github.com/microsoft/typescript-go)). May not support all TypeScript features.
+
+**Default:** `'tsc'`, unless `isolatedDeclarations` is enabled in `compilerOptions`, in which case it defaults to `'oxc'`. If TypeScript 7.0 is installed, it defaults to `'tsgo'`.
+
+```ts
+dts({
+  generator: 'oxc',
+})
+```
 
 #### `entry`
 
@@ -109,6 +141,8 @@ Determines how the default export is emitted.
 If set to `true`, and you are only exporting a single item using `export default ...`,
 the output will use `export = ...` instead of the standard ES module syntax.
 This is useful for compatibility with CommonJS.
+This option only controls the output format and does not enable support for
+CommonJS-style `.d.ts` input.
 
 #### `sideEffects`
 
@@ -122,7 +156,7 @@ Indicates whether the generated `.d.ts` files have side effects.
 ### `tsc` Options
 
 > [!NOTE]
-> These options are only applicable when `oxc` and `tsgo` are not enabled.
+> These options are only applicable when the `generator` is `'tsc'`.
 
 #### `build`
 
@@ -148,6 +182,25 @@ Enabling this option can speed up builds by caching previous results, which is h
 
 If `true`, the plugin will generate `.d.ts` files using `vue-tsc`.
 
+This is a shortcut that registers the built-in Vue custom language.
+
+#### `customLanguages`
+
+> [!WARNING]
+> Experimental. The API may change in future versions.
+
+Registers custom languages, allowing the `tsc` generator to process
+non-standard file types (such as `.vue`) when generating `.d.ts` files.
+
+If a language is supported via [Volar](https://volarjs.dev/), the
+`volarTypeScript` and `createVolarPlugins` fields must both be provided, where
+`volarTypeScript` is the contents of the `@volar/typescript` package.
+
+Languages that use Volar force the `tsc` generator and are not supported with
+TypeScript 7.0. If no registered language uses Volar, the `oxc` generator
+remains available. The `tsgo` generator does not support custom languages.
+The `vue` option is a preconfigured shortcut for the Vue language.
+
 #### `parallel`
 
 If `true`, the plugin will launch a separate process for `tsc` or `vue-tsc`, enabling parallel processing of multiple projects.
@@ -170,7 +223,10 @@ guaranteeing that all type definitions are generated from scratch.
 `invalidateContextFile` API can be used to clear invalidated files from the context.
 
 ```ts
-import { globalContext, invalidateContextFile } from 'rolldown-plugin-dts/tsc'
+import {
+  globalContext,
+  invalidateContextFile,
+} from 'rolldown-plugin-dts/tsc-context'
 invalidateContextFile(globalContext, 'src/foo.ts')
 ```
 
@@ -183,24 +239,37 @@ Enabled by default when `allowJs` in compilerOptions is `true`.
 
 ### Oxc
 
+> [!NOTE]
+> These options are only applicable when the `generator` is `'oxc'`. Set `generator: 'oxc'` to enable the Oxc generator, or leave it unset when `isolatedDeclarations` in `compilerOptions` is `true`.
+
 #### `oxc`
 
-If `true`, the plugin will generate `.d.ts` files using [Oxc](https://oxc.rs/docs/guide/usage/transformer.html), which is significantly faster than the TypeScript compiler.
+Options passed to Oxc's isolated declaration generator.
 
-This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
+See: [IsolatedDeclarationsOptions](https://oxc.rs/docs/guide/usage/transformer.html)
 
 ### TypeScript Go
 
 > [!WARNING]
-> This feature is experimental and not yet recommended for production environments.
+> TypeScript 7.0 does not yet have a stable API and is experimental. This feature is not yet recommended for production environments, and some options will be unavailable.
+
+> [!NOTE]
+> These options are only applicable when the `generator` is `'tsgo'`. Set `generator: 'tsgo'` to enable the TypeScript Go generator, or leave it unset — it is used automatically when the native TypeScript compiler (v7+) is installed as the `typescript` package. Otherwise, ensure that `@typescript/native-preview` is installed as a dependency.
+>
+> `tsconfigRaw` and `compilerOptions` options are ignored when this generator is used.
 
 #### `tsgo`
 
-**[Experimental]** Enables DTS generation using [`tsgo`](https://github.com/microsoft/typescript-go).
+**[Experimental]** Options for the [`tsgo`](https://github.com/microsoft/typescript-go) generator.
 
-To use this option, ensure that `@typescript/native-preview` is installed as a dependency.
+- `path`: Custom path to the `tsgo` binary (e.g., when managed by Nix).
 
-`tsconfigRaw` and `compilerOptions` options will be ignored when this option is enabled.
+```ts
+dts({
+  generator: 'tsgo',
+  tsgo: { path: '/path/to/tsgo' },
+})
+```
 
 ## Code Splitting Support
 
@@ -235,6 +304,11 @@ However, this functionality is limited to ESM output format. Consequently,
 **two** distinct build processes are required for CommonJS source code (`.cjs`)
 and its corresponding type definition files (`.d.cts`).
 In such cases, the `emitDtsOnly` option can be particularly helpful.
+
+The plugin expects ESM-style `.d.ts` input. CommonJS-style declaration syntax
+such as `export =` or `import x = require("x")` will produce a warning and is
+not guaranteed to bundle correctly. If this syntax comes from a dependency in
+`node_modules`, mark that dependency as external in your Rolldown config.
 
 ## Credits
 

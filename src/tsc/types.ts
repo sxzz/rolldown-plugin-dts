@@ -1,7 +1,8 @@
+import type { LanguageContext } from '../custom-language.ts'
 import type { TscContext } from './context.ts'
-import type { TsConfigJson } from 'get-tsconfig'
+import type { TsconfigJson } from 'get-tsconfig'
 import type { SourceMapInput } from 'rolldown'
-import type ts from 'typescript'
+import type * as ts from 'typescript'
 
 export interface TscModule {
   program: ts.Program
@@ -10,15 +11,14 @@ export interface TscModule {
 
 export interface TscOptions {
   tsconfig?: string
-  tsconfigRaw: TsConfigJson
+  tsconfigRaw: TsconfigJson
   cwd: string
   build: boolean
   incremental: boolean
   entries?: string[]
   id: string
   sourcemap: boolean
-  vue?: boolean
-  tsMacro?: boolean
+  languageContext: LanguageContext
   context?: TscContext
 }
 

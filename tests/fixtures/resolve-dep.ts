@@ -1,2 +1,2 @@
-export { TsConfigResult } from 'get-tsconfig'
+export { TsconfigResult } from 'get-tsconfig'
 export { build } from 'rolldown'

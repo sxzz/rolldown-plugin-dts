@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -3,5 +3,5 @@
+   [
+     Date?,
+     Date?,
+   ]
+-export type { DateRange }
++export { DateRange }

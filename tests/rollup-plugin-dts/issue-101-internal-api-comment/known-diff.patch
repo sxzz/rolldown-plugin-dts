@@ -1,0 +1,12 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -9,6 +9,6 @@
+   number
+ export {
+   public_api_with_jsdoc,
+   public_api_without_jsdoc,
++  public_type,
+ }
+-export type { public_type }

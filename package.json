@@ -1,8 +1,8 @@
 {
   "name": "rolldown-plugin-dts",
   "type": "module",
-  "version": "0.23.2",
-  "packageManager": "pnpm@10.33.0",
+  "version": "0.27.14",
+  "packageManager": "pnpm@11.17.0",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
   "license": "MIT",
@@ -18,10 +18,13 @@
   "keywords": [
     "rolldown",
     "plugin",
+    "rolldown-plugin",
+    "vite-plugin",
     "dts",
     "typescript",
     "vue",
-    "jsdoc"
+    "jsdoc",
+    "volar"
   ],
   "exports": {
     ".": "./dist/index.mjs",
@@ -39,7 +42,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": "^22.18.0 || >=24.11.0"
   },
   "scripts": {
     "lint": "eslint --cache .",
@@ -53,17 +56,17 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "@ts-macro/tsc": "^0.3.6",
-    "@typescript/native-preview": ">=7.0.0-dev.20260325.1",
-    "rolldown": "^1.0.0-rc.12",
-    "typescript": "^5.0.0 || ^6.0.0",
-    "vue-tsc": "~3.2.0"
+    "@typescript/native-preview": "*",
+    "@volar/typescript": "~2.4.0",
+    "rolldown": "^1.0.0",
+    "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0",
+    "vue-tsc": "~3.2.0 || ~3.3.0"
   },
   "peerDependenciesMeta": {
-    "@ts-macro/tsc": {
+    "@typescript/native-preview": {
       "optional": true
     },
-    "@typescript/native-preview": {
+    "@volar/typescript": {
       "optional": true
     },
     "typescript": {
@@ -74,46 +77,40 @@
     }
   },
   "dependencies": {
-    "@babel/generator": "8.0.0-rc.3",
-    "@babel/helper-validator-identifier": "8.0.0-rc.3",
-    "@babel/parser": "8.0.0-rc.3",
-    "@babel/types": "8.0.0-rc.3",
-    "ast-kit": "^3.0.0-beta.1",
-    "birpc": "^4.0.0",
-    "dts-resolver": "^2.1.3",
-    "get-tsconfig": "^4.13.7",
-    "obug": "^2.1.1",
-    "picomatch": "^4.0.4"
+    "dts-resolver": "catalog:prod",
+    "get-tsconfig": "catalog:prod",
+    "obug": "catalog:prod",
+    "yuku-ast": "catalog:prod",
+    "yuku-codegen": "catalog:prod",
+    "yuku-parser": "catalog:prod"
   },
   "devDependencies": {
-    "@jridgewell/source-map": "^0.3.11",
-    "@sxzz/eslint-config": "^7.8.4",
-    "@sxzz/prettier-config": "^2.3.1",
-    "@sxzz/test-utils": "^0.5.16",
-    "@types/node": "^25.5.0",
-    "@types/picomatch": "^4.0.2",
-    "@typescript/native-preview": "7.0.0-dev.20260328.1",
-    "@volar/typescript": "^2.4.28",
-    "@vue/language-core": "^3.2.6",
-    "arktype": "^2.2.0",
-    "bumpp": "^11.0.1",
-    "diff": "^8.0.4",
-    "eslint": "^10.1.0",
-    "prettier": "^3.8.1",
-    "rolldown": "^1.0.0-rc.12",
-    "rolldown-plugin-dts-snapshot": "^0.4.0",
-    "rolldown-plugin-require-cjs": "^0.4.0",
-    "rollup-plugin-dts": "^6.4.1",
-    "tinyglobby": "^0.2.15",
-    "tsdown": "^0.21.6",
-    "typescript": "^6.0.2",
-    "vitest": "^4.1.2",
-    "vue": "^3.5.31",
-    "vue-tsc": "^3.2.6",
-    "zod": "^4.3.6"
-  },
-  "resolutions": {
-    "rolldown": "^1.0.0-rc.12"
+    "@astrojs/ts-plugin": "catalog:",
+    "@jridgewell/source-map": "catalog:",
+    "@sxzz/eslint-config": "catalog:",
+    "@sxzz/prettier-config": "catalog:",
+    "@sxzz/test-utils": "catalog:",
+    "@ts-macro/language-plugin": "catalog:",
+    "@ts-macro/tsc": "catalog:",
+    "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "@volar/typescript": "catalog:",
+    "@vue/language-core": "catalog:",
+    "arktype": "catalog:",
+    "bumpp": "catalog:",
+    "diff": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "rolldown": "catalog:",
+    "rollup-plugin-dts": "catalog:",
+    "ts-macro": "catalog:",
+    "tsdown": "catalog:",
+    "tsnapi": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "vue": "catalog:",
+    "vue-tsc": "catalog:",
+    "zod": "catalog:"
   },
   "prettier": "@sxzz/prettier-config"
 }

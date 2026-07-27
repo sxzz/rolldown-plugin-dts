@@ -1,11 +1,11 @@
-import { fork, type ChildProcess } from 'node:child_process'
+import { fork } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { readFile, rm } from 'node:fs/promises'
+import { access, readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { parse } from '@babel/parser'
 import { createDebug } from 'obug'
-import picomatch from 'picomatch'
 import { isolatedDeclarationSync } from 'rolldown/experimental'
+import { is } from 'yuku-ast'
+import { parse, type TSPropertySignature } from 'yuku-parser'
 import {
   filename_to_dts,
   RE_DTS,
@@ -15,7 +15,6 @@ import {
   RE_NODE_MODULES,
   RE_ROLLDOWN_RUNTIME,
   RE_TS,
-  RE_VUE,
   replaceTemplateName,
   resolveTemplateFn,
 } from './filename.ts'
@@ -25,17 +24,16 @@ import {
   invalidateContextFile,
   type TscContext,
 } from './tsc/context.ts'
-import { runTsgo } from './tsgo.ts'
+import { runTsgo, type TsgoContext } from './tsgo.ts'
 import type { OptionsResolved } from './options.ts'
 import type { TscOptions, TscResult } from './tsc/index.ts'
-import type { TscFunctions } from './tsc/worker.ts'
-import type { TSPropertySignature } from '@babel/types'
-import type { BirpcReturn } from 'birpc'
+import type { WorkerRequest, WorkerResponse } from './tsc/worker.ts'
 import type { Plugin, SourceMapInput } from 'rolldown'
 
 const debug = createDebug('rolldown-plugin-dts:generate')
 
 const WORKER_URL = import.meta.WORKER_URL || './tsc/worker.ts'
+export const EMPTY_STUB = `export {}`
 
 export interface TsModule {
   /** `.ts` source code */
@@ -43,11 +41,13 @@ export interface TsModule {
   /** `.ts` file name */
   id: string
   isEntry: boolean
+  jsFile: boolean
 }
 /** dts filename -> ts module */
 export type DtsMap = Map<string, TsModule>
 
 export function createGeneratePlugin({
+  generator,
   entry,
   tsconfig,
   tsconfigRaw,
@@ -56,16 +56,17 @@ export function createGeneratePlugin({
   cwd,
   oxc,
   emitDtsOnly,
-  vue,
-  tsMacro,
+  languageContext,
   parallel,
   eager,
   tsgo,
   newContext,
   emitJs,
   sourcemap,
+  logger,
 }: Pick<
   OptionsResolved,
+  | 'generator'
   | 'entry'
   | 'cwd'
   | 'tsconfig'
@@ -74,21 +75,21 @@ export function createGeneratePlugin({
   | 'incremental'
   | 'oxc'
   | 'emitDtsOnly'
-  | 'vue'
-  | 'tsMacro'
+  | 'languageContext'
   | 'parallel'
   | 'eager'
   | 'tsgo'
   | 'newContext'
   | 'emitJs'
   | 'sourcemap'
+  | 'logger'
 >): Plugin {
+  const entryIncludes = entry?.filter((p) => p[0] !== '!')
+  const entryIgnores = entry?.filter((p) => p[0] === '!').map((p) => p.slice(1))
   const entryMatcher = entry
-    ? picomatch(entry, {
-        ignore: entry
-          .filter((p: string) => p.startsWith('!'))
-          .map((p: string) => p.slice(1)),
-      })
+    ? (file: string) =>
+        entryIncludes!.some((p) => path.matchesGlob(file, p)) &&
+        entryIgnores!.every((p) => !path.matchesGlob(file, p))
     : undefined
   const dtsMap: DtsMap = new Map<string, TsModule>()
 
@@ -103,32 +104,27 @@ export function createGeneratePlugin({
    */
   const inputAliasMap = new Map<string, string>()
 
-  let childProcess: ChildProcess | undefined
-  let rpc: BirpcReturn<TscFunctions> | undefined
+  let tscWorker: TscWorker | undefined
   let tscModule: typeof import('./tsc/index.ts')
   let tscContext: TscContext | undefined
-  let tsgoDist: string | undefined
+  let tsgoContext: TsgoContext | undefined
   const rootDir = tsconfig ? path.dirname(tsconfig) : cwd
 
   return {
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
-      if (tsgo) {
-        tsgoDist = await runTsgo(rootDir, tsconfig, sourcemap, tsgo.path)
-      } else if (!oxc) {
-        // tsc
+      if (generator === 'tsgo') {
+        tsgoContext = await runTsgo(
+          logger,
+          rootDir,
+          tsconfig!,
+          sourcemap,
+          tsgo.path,
+        )
+      } else if (generator === 'tsc') {
         if (parallel) {
-          childProcess = fork(new URL(WORKER_URL, import.meta.url), {
-            stdio: 'inherit',
-          })
-          rpc = (await import('birpc')).createBirpc<TscFunctions>(
-            {},
-            {
-              post: (data) => childProcess!.send(data),
-              on: (fn) => childProcess!.on('message', fn),
-            },
-          )
+          tscWorker = createTscWorker()
         } else {
           tscModule = await import('./tsc/index.ts')
           if (newContext) {
@@ -176,30 +172,30 @@ export function createGeneratePlugin({
     },
 
     resolveId(id) {
-      if (dtsMap.has(id)) {
-        debug('resolve dts id %s', id)
-        return { id }
-      }
+      if (!dtsMap.has(id)) return
+
+      debug('resolve dts id %s', id)
+      return { id }
     },
 
     transform: {
       order: 'pre',
       filter: {
         id: {
-          include: [RE_JS, RE_TS, RE_VUE, RE_JSON],
+          include: [RE_JS, RE_TS, RE_JSON, ...languageContext.patterns],
           exclude: [RE_DTS, RE_NODE_MODULES, RE_ROLLDOWN_RUNTIME],
         },
       },
       handler(code, id) {
-        const shouldEmit = !RE_JS.test(id) || emitJs
+        const jsFile = RE_JS.test(id)
 
-        if (shouldEmit) {
+        if (!jsFile || emitJs) {
           const mod = this.getModuleInfo(id)
           const isEntry = entryMatcher
             ? entryMatcher(path.relative(cwd, id))
             : !!mod?.isEntry
-          const dtsId = filename_to_dts(id)
-          dtsMap.set(dtsId, { code, id, isEntry })
+          const dtsId = filename_to_dts(id, languageContext)
+          dtsMap.set(dtsId, { code, id, isEntry, jsFile })
           debug('register dts source: %s', id)
 
           if (isEntry) {
@@ -214,7 +210,7 @@ export function createGeneratePlugin({
 
         if (emitDtsOnly) {
           if (RE_JSON.test(id)) return '{}'
-          return 'export { }'
+          return EMPTY_STUB
         }
       },
     },
@@ -227,19 +223,35 @@ export function createGeneratePlugin({
         },
       },
       async handler(dtsId) {
-        if (!dtsMap.has(dtsId)) return
+        const module = dtsMap.get(dtsId)
+        if (!module) return
 
-        const { code, id } = dtsMap.get(dtsId)!
+        const { code, id, jsFile } = module
+        if (
+          jsFile &&
+          (await access(dtsId)
+            .then(() => true)
+            .catch(() => false))
+        ) {
+          debug('dts file already exists for %s, skipping generation', id)
+          return
+        }
+
         let dtsCode: string | undefined
         let map: SourceMapInput | undefined
         debug('generate dts %s from %s', dtsId, id)
 
-        if (tsgo) {
-          if (RE_VUE.test(id))
-            throw new Error('tsgo does not support Vue files.')
+        if (generator === 'tsgo') {
+          if (languageContext.isCustomLanguageFile(id)) {
+            throw new Error(`tsgo does not support .${path.extname(id)} file.`)
+          }
+
           const dtsPath = path.resolve(
-            tsgoDist!,
-            path.relative(path.resolve(rootDir), filename_to_dts(id)),
+            tsgoContext!.path,
+            path.relative(
+              path.resolve(rootDir),
+              filename_to_dts(id, languageContext),
+            ),
           )
           if (!existsSync(dtsPath)) {
             debug('[tsgo]', dtsPath, 'is missing')
@@ -258,8 +270,15 @@ export function createGeneratePlugin({
               sources: [id],
             }
           }
-        } else if (oxc && !RE_VUE.test(id)) {
-          const result = isolatedDeclarationSync(id, code, oxc)
+        } else if (generator === 'oxc') {
+          // Volar-based custom languages force the `tsc` generator, so any
+          // custom language file reaching here is plain TS with a custom
+          // extension; map the filename so oxc parses it as TS.
+          const result = isolatedDeclarationSync(
+            languageContext.toTsFilename(id),
+            code,
+            oxc,
+          )
           if (result.errors.length) {
             const [error] = result.errors
             return this.error({
@@ -270,6 +289,8 @@ export function createGeneratePlugin({
           dtsCode = result.code
           if (result.map) {
             map = result.map
+            // point back to the original file, not the mapped TS filename
+            map.sources = [id]
             map.sourcesContent = undefined
           }
         } else {
@@ -287,13 +308,12 @@ export function createGeneratePlugin({
             entries,
             id,
             sourcemap,
-            vue,
-            tsMacro,
+            languageContext,
             context: tscContext,
           }
           let result: TscResult
           if (parallel) {
-            result = await rpc!.tscEmit(options)
+            result = await tscWorker!.emit(options)
           } else {
             result = tscModule.tscEmit(options)
           }
@@ -326,11 +346,9 @@ export function createGeneratePlugin({
               const exportMap = collectJsonExportMap(dtsCode)
               dtsCode += `
 declare namespace __json_default_export {
-  export { ${Array.from(exportMap.entries())
-    .map(([exported, local]) =>
-      exported === local ? exported : `${local} as ${exported}`,
-    )
-    .join(', ')} }
+  export { ${Array.from(exportMap.entries(), ([exported, local]) =>
+    exported === local ? exported : `${local} as ${exported}`,
+  ).join(', ')} }
 }
 export { __json_default_export as default }`
             }
@@ -359,11 +377,10 @@ export { __json_default_export as default }`
       : undefined,
 
     async buildEnd() {
-      childProcess?.kill()
-      if (!debug.enabled && tsgoDist) {
-        await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
-      }
-      tsgoDist = undefined
+      tscWorker?.kill()
+      tscWorker = undefined
+      await tsgoContext?.dispose()
+      tsgoContext = undefined
       if (newContext) {
         tscContext = undefined
       }
@@ -377,13 +394,58 @@ export { __json_default_export as default }`
   }
 }
 
+interface TscWorker {
+  emit: (options: TscOptions) => Promise<TscResult>
+  kill: () => void
+}
+
+function createTscWorker(): TscWorker {
+  const childProcess = fork(new URL(WORKER_URL, import.meta.url), {
+    stdio: 'inherit',
+    serialization: 'advanced',
+  })
+
+  const pending = new Map<
+    number,
+    {
+      resolve: (result: TscResult) => void
+      reject: (error: unknown) => void
+    }
+  >()
+  let nextId = 0
+
+  childProcess.on('message', (response: WorkerResponse) => {
+    const handler = pending.get(response.id)
+    if (!handler) return
+    pending.delete(response.id)
+    if (response.error) {
+      handler.reject(response.error)
+    } else {
+      handler.resolve(response.result!)
+    }
+  })
+
+  childProcess.on('exit', (code) => {
+    for (const handler of pending.values()) {
+      handler.reject(new Error(`tsc worker exited with code ${code}`))
+    }
+    pending.clear()
+  })
+
+  return {
+    emit: (options) =>
+      new Promise((resolve, reject) => {
+        const id = nextId++
+        pending.set(id, { resolve, reject })
+        childProcess.send({ id, options } satisfies WorkerRequest)
+      }),
+    kill: () => childProcess.kill(),
+  }
+}
+
 function collectJsonExportMap(code: string): Map<string, string> {
   const exportMap = new Map<string, string>()
-  const { program } = parse(code, {
-    sourceType: 'module',
-    plugins: [['typescript', { dts: true }]],
-    errorRecovery: true,
-  })
+  const { program } = parse(code, { sourceType: 'module', lang: 'dts' })
 
   for (const decl of program.body) {
     if (decl.type === 'ExportNamedDeclaration') {
@@ -427,17 +489,14 @@ function collectJsonExportMap(code: string): Map<string, string> {
 /** `declare const _exports` mode */
 function collectJsonExports(code: string) {
   const exports: string[] = []
-  const { program } = parse(code, {
-    sourceType: 'module',
-    plugins: [['typescript', { dts: true }]],
-  })
+  const { program } = parse(code, { sourceType: 'module', lang: 'dts' })
   const members = (program.body as any)[0].declarations[0].id.typeAnnotation
     .typeAnnotation.members as TSPropertySignature[]
 
   for (const member of members) {
     if (member.key.type === 'Identifier') {
       exports.push(member.key.name)
-    } else if (member.key.type === 'StringLiteral') {
+    } else if (is.StringLiteral(member.key)) {
       exports.push(member.key.value)
     }
   }

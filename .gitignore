@@ -1,4 +1,5 @@
 node_modules
+!tests/fixtures/cjs-dts-dep-warning/node_modules
 dist
 
 *.log

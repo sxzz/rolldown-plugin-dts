@@ -1,16 +1,22 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
-import ts from 'typescript'
 import { globalContext } from './context.ts'
+import { requireTS } from './load-tsc.ts'
 import { createFsSystem } from './system.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
-import { createProgramFactory } from './volar.ts'
 import type { TscModule, TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
+import type {
+  CompilerOptions,
+  ParsedCommandLine,
+  ScriptTarget,
+  System,
+} from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-compiler')
+const ts = requireTS()
 
-const defaultCompilerOptions: ts.CompilerOptions = {
+const defaultCompilerOptions: CompilerOptions = {
   declaration: true,
   noEmit: false,
   emitDeclarationOnly: true,
@@ -18,7 +24,7 @@ const defaultCompilerOptions: ts.CompilerOptions = {
   checkJs: false,
   declarationMap: false,
   skipLibCheck: true,
-  target: 99 satisfies ts.ScriptTarget.ESNext,
+  target: 99 satisfies ScriptTarget.ESNext,
   resolveJsonModule: true,
   moduleResolution: ts.ModuleResolutionKind.Bundler,
 }
@@ -52,8 +58,7 @@ function createTsProgram({
   id,
   tsconfig,
   tsconfigRaw,
-  vue,
-  tsMacro,
+  languageContext,
   cwd,
   context = globalContext,
 }: TscOptions): TscModule {
@@ -66,15 +71,7 @@ function createTsProgram({
     undefined,
     undefined,
     undefined,
-    vue
-      ? [
-          {
-            extension: 'vue',
-            isMixedContent: true,
-            scriptKind: ts.ScriptKind.Deferred,
-          },
-        ]
-      : undefined,
+    languageContext.getExtraFileExtensions(),
   )
 
   debug(`creating program for root project: ${baseDir}`)
@@ -84,8 +81,7 @@ function createTsProgram({
     baseDir,
     id,
     entries,
-    vue,
-    tsMacro,
+    languageContext,
   })
 }
 
@@ -95,18 +91,26 @@ function createTsProgramFromParsedConfig({
   baseDir,
   id,
   entries,
-  vue,
-  tsMacro,
+  languageContext,
 }: {
-  parsedConfig: ts.ParsedCommandLine
-  fsSystem: ts.System
+  parsedConfig: ParsedCommandLine
+  fsSystem: System
   baseDir: string
-} & Pick<TscOptions, 'entries' | 'vue' | 'tsMacro' | 'id'>): TscModule {
-  const compilerOptions: ts.CompilerOptions = {
+} & Pick<TscOptions, 'entries' | 'languageContext' | 'id'>): TscModule {
+  const compilerOptions: CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
     $configRaw: parsedConfig.raw,
     $rootDir: baseDir,
+    // Allow non-TS extensions (e.g. `.vue`) to be used as root files. Without
+    // this, TypeScript silently drops root files whose extension is not in its
+    // built-in supported list, so `program.getSourceFile(id)` returns
+    // `undefined` for a `.vue` entry that is not imported by a `.ts` file.
+    // Only relevant when a custom language (e.g. Vue) registers such
+    // extensions; module resolution already handles the imported-file case.
+    ...(languageContext.languages.length
+      ? { allowNonTsExtensions: true }
+      : undefined),
   }
 
   const rootNames = [
@@ -118,8 +122,7 @@ function createTsProgramFromParsedConfig({
   ]
 
   const host = ts.createCompilerHost(compilerOptions, true)
-
-  const createProgram = createProgramFactory(ts, { vue, tsMacro })
+  const createProgram = languageContext.getCreateProgram(ts)
   const program = createProgram({
     rootNames,
     options: compilerOptions,

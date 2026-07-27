@@ -1,13 +1,15 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
-import { glob } from 'tinyglobby'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
 import { findSourceMapChunk } from './utils.ts'
 
-const dirname = path.dirname(fileURLToPath(import.meta.url))
+const { dirname } = import.meta
+
+function slash(path: string) {
+  return path.replaceAll('\\', '/')
+}
 
 describe('tsc', () => {
   test('typescript compiler', async () => {
@@ -21,7 +23,7 @@ describe('tsc', () => {
             skipLibCheck: true,
             isolatedDeclarations: false,
           },
-          oxc: false,
+          generator: 'tsc',
         }),
       ],
     )
@@ -155,10 +157,11 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
 
     // Ensure .tsbuildinfo files are not created after the test
-    const tsBuildInfoFiles = await glob('**/*.tsbuildinfo', {
-      cwd: tempDir,
-      absolute: false,
-    })
+    const tsBuildInfoFiles = await Array.fromAsync(
+      fs.glob('**/*.tsbuildinfo', {
+        cwd: tempDir,
+      }),
+    )
     expect(tsBuildInfoFiles).toHaveLength(0)
   })
 
@@ -187,11 +190,12 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
 
     // Ensure .tsbuildinfo files are created after the test
-    const tsBuildInfoFiles = await glob('**/*.tsbuildinfo', {
-      cwd: tempDir,
-      absolute: false,
-    })
-    expect(tsBuildInfoFiles.toSorted()).toMatchInlineSnapshot(`
+    const tsBuildInfoFiles = await Array.fromAsync(
+      fs.glob('**/*.tsbuildinfo', {
+        cwd: tempDir,
+      }),
+    )
+    expect(tsBuildInfoFiles.map(slash).toSorted()).toMatchInlineSnapshot(`
       [
         "dir1/tsconfig.1.tsbuildinfo",
         "dir2/tsconfig.2.tsbuildinfo",
@@ -199,44 +203,10 @@ describe('tsc', () => {
     `)
   })
 
-  test('vue-sfc w/ ts-compiler', async () => {
-    const root = path.resolve(dirname, 'fixtures/vue-sfc')
-    const { snapshot } = await rolldownBuild(
-      path.resolve(root, 'main.ts'),
-      [
-        dts({
-          emitDtsOnly: true,
-          vue: true,
-          compilerOptions: {
-            isolatedDeclarations: false,
-          },
-        }),
-      ],
-      { external: [/^@vue/] },
-    )
-    expect(snapshot).toMatchSnapshot()
-  })
-
-  test('vue-sfc w/ ts-compiler w/ vueCompilerOptions in tsconfig', async () => {
-    const root = path.resolve(dirname, 'fixtures/vue-sfc-fallthrough')
-    const { snapshot } = await rolldownBuild(
-      path.resolve(root, 'main.ts'),
-      [
-        dts({
-          tsconfig: path.resolve(root, 'tsconfig.json'),
-          emitDtsOnly: true,
-          vue: true,
-        }),
-      ],
-      { external: ['vue'] },
-    )
-    expect(snapshot).toMatchSnapshot()
-  })
-
   test('jsdoc', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/jsdoc.ts'),
-      [dts({ oxc: false })],
+      [dts({ generator: 'tsc' })],
       { external: ['rolldown'] },
     )
     expect(snapshot).toMatchSnapshot()
@@ -258,35 +228,6 @@ describe('tsc', () => {
         emitDtsOnly: true,
       }),
     ])
-    expect(snapshot).toMatchSnapshot()
-  })
-
-  test('ts-macro w/ ts-compiler', async () => {
-    const root = path.resolve(dirname, 'fixtures/ts-macro')
-    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
-      dts({
-        emitDtsOnly: true,
-        tsconfig: path.resolve(root, 'tsconfig.json'),
-        tsMacro: true,
-      }),
-    ])
-    expect(snapshot).toMatchSnapshot()
-  })
-
-  test('vue-sfc w/ ts-macro w/ ts-compiler', async () => {
-    const root = path.resolve(dirname, 'fixtures/vue-sfc-with-ts-macro')
-    const { snapshot } = await rolldownBuild(
-      path.resolve(root, 'main.ts'),
-      [
-        dts({
-          emitDtsOnly: true,
-          tsconfig: path.resolve(root, 'tsconfig.json'),
-          vue: true,
-          tsMacro: true,
-        }),
-      ],
-      { external: ['vue'] },
-    )
     expect(snapshot).toMatchSnapshot()
   })
 
@@ -327,7 +268,7 @@ describe('tsc', () => {
       const root = path.resolve(dirname, 'fixtures/paths')
       const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
         dts({
-          oxc: true,
+          generator: 'oxc',
           emitDtsOnly: true,
           tsconfig: path.resolve(root, 'tsconfig.json'),
           resolver,
@@ -349,6 +290,20 @@ describe('tsc', () => {
         }),
       ],
       { external: ['zod'] },
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test('accessor in type literal', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/accessor-in-type-literal.ts'),
+      [
+        dts({
+          generator: 'tsc',
+          emitDtsOnly: true,
+          compilerOptions: { isolatedDeclarations: false },
+        }),
+      ],
     )
     expect(snapshot).toMatchSnapshot()
   })

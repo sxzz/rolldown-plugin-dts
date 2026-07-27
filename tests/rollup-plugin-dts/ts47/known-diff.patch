@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -17,8 +17,8 @@
+   set: (
+     value: T,
+   ) => void
+ }
+-export type {
++export {
+   FirstHammer,
+   State,
+ }

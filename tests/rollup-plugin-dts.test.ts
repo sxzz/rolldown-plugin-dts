@@ -1,10 +1,12 @@
-import { access, readFile, unlink } from 'node:fs/promises'
+/// <reference lib="esnext.array" />
+
+import { access, glob, readFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { rolldownBuild, rollupBuild, testFixtures } from '@sxzz/test-utils'
 import { createPatch } from 'diff'
+import { format, type Options } from 'prettier'
 import { dts as rollupDts } from 'rollup-plugin-dts'
-import { glob } from 'tinyglobby'
 import { expect } from 'vitest'
 import { dts } from '../src/index.ts'
 
@@ -19,7 +21,11 @@ await testFixtures(
 
     let entries = [id]
     if (id.endsWith('main-a.d.ts')) {
-      entries = await glob('main-*.d.ts', { cwd: dirname, absolute: true })
+      entries = (
+        await Array.fromAsync(
+          glob('main-*.d.ts', { cwd: dirname, withFileTypes: true }),
+        )
+      ).map((dirent) => path.resolve(dirname, dirent.name))
     }
 
     let error: any
@@ -54,8 +60,17 @@ await testFixtures(
       path.resolve(dirname, 'snapshot.d.ts'),
     )
 
-    rollupSnapshot = cleanupCode(rollupSnapshot)
-    rolldownSnapshot = cleanupCode(rolldownSnapshot)
+    const prettierOptions: Options = {
+      semi: false,
+      parser: 'babel-ts',
+      singleQuote: true,
+      printWidth: 1,
+    }
+    rollupSnapshot = await format(cleanupCode(rollupSnapshot), prettierOptions)
+    rolldownSnapshot = await format(
+      cleanupCode(rolldownSnapshot),
+      prettierOptions,
+    )
     const diffPath = path.resolve(dirname, 'diff.patch')
     const knownDiffPath = path.resolve(dirname, 'known-diff.patch')
     const diff = createPatch(
@@ -98,12 +113,7 @@ function cleanupCode(text: string) {
   return `${text
     .replaceAll(/\/\/#region .*\n/g, '')
     .replaceAll('//#endregion', '')
-    .replaceAll(/from "(.*)"/g, "from '$1'")
-    .replaceAll('export type', 'export') // FIXME
-    .replaceAll(/,$/gm, '')
     .split('\n')
     .filter((line) => line.trim() !== '')
-    .join('\n')
-    .replaceAll(/;$/gm, '')
-    .trim()}\n`
+    .join('\n')}\n`
 }

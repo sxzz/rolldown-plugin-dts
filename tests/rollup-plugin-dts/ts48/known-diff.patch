@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -4,5 +4,5 @@
+ type SomeNum =
+   '100' extends `${infer U extends MyNum}`
+     ? U
+     : never
+-export type { SomeNum }
++export { SomeNum }

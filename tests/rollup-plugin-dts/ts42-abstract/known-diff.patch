@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -12,5 +12,5 @@
+ > =
+   abstract new (
+     ...args: any[]
+   ) => T
+-export type { AbstractConstructor }
++export { AbstractConstructor }

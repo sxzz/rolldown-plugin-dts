@@ -41,7 +41,7 @@ test('oxc', async () => {
     input,
     plugins: [
       dts({
-        oxc: true,
+        generator: 'oxc',
         tsconfig,
         sourcemap: true,
         emitDtsOnly: true,
@@ -61,7 +61,7 @@ test('tsc', async () => {
     input,
     plugins: [
       dts({
-        oxc: false,
+        generator: 'tsc',
         tsconfig,
         sourcemap: true,
         emitDtsOnly: true,
@@ -81,7 +81,7 @@ test('tsgo', async () => {
     input,
     plugins: [
       dts({
-        tsgo: true,
+        generator: 'tsgo',
         tsconfig,
         sourcemap: true,
         emitDtsOnly: true,
@@ -95,6 +95,25 @@ test('tsgo', async () => {
   validateSourceMap(sourcemap)
 })
 
+// https://github.com/rolldown/tsdown/issues/975
+test('empty dts chunk does not break output sourcemap', async () => {
+  const warnings: string[] = []
+  await rolldownBuild(
+    path.resolve(import.meta.dirname, 'fixtures/empty-chunk/index.ts'),
+    [dts()],
+    {
+      onLog: (level, log) => {
+        if (level === 'warn') {
+          warnings.push(log.code!)
+        }
+      },
+    },
+    { sourcemap: true, preserveModules: true },
+  )
+  expect(warnings).not.toContain('SOURCEMAP_BROKEN')
+  expect(warnings).toHaveLength(0)
+})
+
 test('disable dts source map only', async () => {
   const { chunks } = await rolldownBuild(
     input,
@@ -106,7 +125,7 @@ test('disable dts source map only', async () => {
     [
       "index.d.ts",
       "index.js",
-      "chunk-pbuEa-1d.js",
+      "rolldown-runtime-D7D4PA-g.js",
       "index.js.map",
     ]
   `)
