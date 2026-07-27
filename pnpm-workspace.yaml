@@ -4,7 +4,7 @@ overrides:
 catalog:
   '@astrojs/ts-plugin': ^1.10.10
   '@jridgewell/source-map': ^0.3.11
-  '@sxzz/eslint-config': ^8.3.1
+  '@sxzz/eslint-config': ^8.3.2
   '@sxzz/prettier-config': ^2.3.2
   '@sxzz/test-utils': ^0.5.18
   '@ts-macro/language-plugin': ^0.3.7
@@ -16,7 +16,7 @@ catalog:
   arktype: ^2.2.3
   bumpp: ^12.0.0
   diff: ^9.0.0
-  eslint: ^10.7.0
+  eslint: ^10.8.0
   prettier: ^3.9.6
   rolldown: ^1.2.0
   rollup-plugin-dts: ^6.4.1
@@ -41,4 +41,4 @@ catalogs:
 minimumReleaseAge: 0
 trustLockfile: true
 trustPolicy: no-downgrade
-trustPolicyIgnoreAfter: 604800 # 7 days
+trustPolicyIgnoreAfter: 10080 # 7 days
