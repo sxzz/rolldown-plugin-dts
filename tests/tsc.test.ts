@@ -215,7 +215,7 @@ describe('tsc', () => {
   test('jsdoc members', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/jsdoc-members.ts'),
-      [dts({ oxc: false })],
+      [dts({ generator: 'tsc' })],
     )
     expect(snapshot).toMatchSnapshot()
   })
