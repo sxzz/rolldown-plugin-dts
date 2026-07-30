@@ -19,6 +19,7 @@ export default defineConfig((cli) => {
     dts: false,
     define: {
       'import.meta.WORKER_URL': JSON.stringify('./tsc-worker.mjs'),
+      'import.meta.TEST': 'false',
     },
     deps: {
       onlyBundle: [],

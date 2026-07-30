@@ -1,9 +1,9 @@
 import { createDebug } from 'obug'
-import { requireTS } from './load-tsc.ts'
+import { requireTSApi } from '../require.ts'
 import type { System } from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-system')
-const ts = requireTS()
+const ts = requireTSApi()
 
 /**
  * A system that writes files to both memory and disk. It will try read files

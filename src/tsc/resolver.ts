@@ -1,10 +1,10 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
-import { requireTS } from './load-tsc.ts'
+import { requireTSApi } from '../require.ts'
 import type { ResolvedProjectReference } from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-resolver')
-const ts = requireTS()
+const ts = requireTSApi()
 
 export function tscResolve(
   id: string,

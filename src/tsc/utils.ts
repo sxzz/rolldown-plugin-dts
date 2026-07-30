@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { requireTS } from './load-tsc.ts'
+import { requireTSApi } from '../require.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 import type {
   Bundle,
@@ -12,7 +12,7 @@ import type {
   TransformerFactory,
 } from 'typescript'
 
-const ts = requireTS()
+const ts = requireTSApi()
 
 export const formatHost: FormatDiagnosticsHost = {
   getCurrentDirectory: () => ts.sys.getCurrentDirectory(),

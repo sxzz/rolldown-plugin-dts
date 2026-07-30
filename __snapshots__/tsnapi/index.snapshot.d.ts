@@ -15,15 +15,15 @@ export interface Logger {
   error: (..._: any[]) => void;
 }
 export interface Options extends GeneralOptions, TscOptions {
-  oxc?: boolean | Omit<IsolatedDeclarationsOptions, "sourcemap">;
-  tsgo?: boolean | TsgoOptions;
+  oxc?: Omit<IsolatedDeclarationsOptions, "sourcemap">;
+  tsgo?: TsgoOptions;
   customLanguages?: CustomLanguage[];
 }
 // #endregion
 
 // #region Functions
 export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
-export declare function createGeneratePlugin({ generator, entry, tsconfig, tsconfigRaw, build, incremental, cwd, oxc, emitDtsOnly, languageContext, parallel, eager, tsgo, newContext, emitJs, sourcemap, logger }: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "build" | "incremental" | "oxc" | "emitDtsOnly" | "languageContext" | "parallel" | "eager" | "tsgo" | "newContext" | "emitJs" | "sourcemap" | "logger">): Plugin;
+export declare function createGeneratePlugin({ generator, entry, tsconfig, tsconfigRaw, build, incremental, cwd, oxc, emitDtsOnly, languageContext, parallel, eager, tsgo, newContext, emitJs, sourcemap }: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "build" | "incremental" | "oxc" | "emitDtsOnly" | "languageContext" | "parallel" | "eager" | "tsgo" | "newContext" | "emitJs" | "sourcemap">): Plugin;
 export declare function dts(_?: Options): Plugin[];
 export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, build, incremental, vue, parallel, eager, newContext, emitJs, oxc, tsgo }: Options): OptionsResolved;
 // #endregion

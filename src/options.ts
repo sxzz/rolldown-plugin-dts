@@ -8,9 +8,9 @@ import {
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
-import { requireTS } from './tsc/load-tsc.ts'
+import { isTS70Installed, requireTSApi } from './require.ts'
 import { createVueLanguage } from './tsc/vue.ts'
-import { isTS70Installed } from './tsgo.ts'
+import { resolveTsgoPath } from './tsgo.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = createDebug('rolldown-plugin-dts:options')
@@ -35,12 +35,10 @@ export interface GeneralOptions {
    *   all TypeScript features yet.
    *
    * When unset, the generator is inferred:
-   * - `'oxc'` if {@link Options.oxc oxc} options are provided or
-   *   `isolatedDeclarations` is enabled in `compilerOptions`.
-   * - `'tsgo'` if TypeScript 7.0 (or `@typescript/native-preview`) is installed,
-   *   or {@link Options.tsgo tsgo} options are provided. `tsgo` is never
-   *   inferred when custom languages are registered, as it does not support
-   *   them.
+   * - `'oxc'` if `isolatedDeclarations` is enabled in `compilerOptions`.
+   * - `'tsgo'` if TypeScript 7.0 is installed as the `typescript` package.
+   *   `tsgo` is never inferred when custom languages are registered, as it
+   *   does not support them.
    * - `'tsc'` otherwise, and always when Volar-based custom languages
    *   (including {@link TscOptions.vue vue}) are enabled.
    *
@@ -182,8 +180,7 @@ export interface TscOptions {
    * [`tsBuildInfoFile`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile)
    * enabled.
    *
-   * This option is only used when {@link Options.oxc} is
-   * `false`.
+   * This option is only used by the `tsc` generator.
    */
   incremental?: boolean
 
@@ -222,8 +219,7 @@ export interface TscOptions {
    * This is useful when you want to generate type definitions for JavaScript files with JSDoc comments.
    *
    * Enabled by default when `allowJs` in compilerOptions is `true`.
-   * This option is only used when {@link Options.oxc} is
-   * `false`.
+   * This option is only used by the `tsc` generator.
    */
   emitJs?: boolean
 }
@@ -232,38 +228,37 @@ export interface Options extends GeneralOptions, TscOptions {
   //#region Oxc
 
   /**
-   * If `true`, the plugin will generate `.d.ts` files using Oxc,
-   * which is significantly faster than the TypeScript compiler.
+   * Options for the `oxc` generator.
    *
-   * This option is automatically enabled when `isolatedDeclarations` in `compilerOptions` is set to `true`.
+   * These take effect when the generator is `'oxc'`, either set explicitly via
+   * {@link GeneralOptions.generator generator} or inferred from
+   * `isolatedDeclarations` in `compilerOptions`.
    */
-  oxc?: boolean | Omit<IsolatedDeclarationsOptions, 'sourcemap'>
+  oxc?: Omit<IsolatedDeclarationsOptions, 'sourcemap'>
 
   //#region TypeScript Go
 
   /**
-   * **[Experimental]** Enables DTS generation using `tsgo`.
+   * **[Experimental]** Options for the `tsgo` generator.
    *
-   * This is automatically enabled when the TypeScript Go compiler (v7+) is
-   * installed as the `typescript` package. Otherwise, make sure
+   * These take effect when the generator is `'tsgo'`, either set explicitly
+   * via {@link GeneralOptions.generator generator} or inferred when the
+   * TypeScript Go compiler (v7+) is installed as the `typescript` package.
+   * Unless TypeScript 7.0 is installed, make sure
    * `@typescript/native-preview` is installed as a dependency, or provide a
    * custom path to the `tsgo` binary using the `path` option.
    *
    * **Note:** TypeScript 7.0 does not yet have a stable API and is experimental.
-   * This option is not yet recommended for production environments, and some
-   * options (such as `tsconfigRaw` and `isolatedDeclarations`) will be
-   * unavailable when it is enabled.
-   *
+   * The `tsgo` generator is not yet recommended for production environments,
+   * and some options (such as `tsconfigRaw` and `isolatedDeclarations`) will
+   * be unavailable when it is enabled.
    *
    * ```ts
-   * // Use tsgo from `@typescript/native-preview` dependency
-   * tsgo: true
-   *
    * // Use custom tsgo path (e.g., managed by Nix)
    * tsgo: { path: '/path/to/tsgo' }
    * ```
    */
-  tsgo?: boolean | TsgoOptions
+  tsgo?: TsgoOptions
 
   /**
    * Registers custom languages, allowing the `tsc` generator to process
@@ -273,10 +268,10 @@ export interface Options extends GeneralOptions, TscOptions {
    * If a language is supported via {@link https://volarjs.dev Volar},
    * `volarTypeScript` and `createVolarPlugins` must both be provided.
    *
-   * Languages that use Volar force the `tsc` generator and are not supported
-   * with TypeScript 7.0. If no registered language uses Volar, the `oxc`
-   * generator remains available. The `tsgo` generator does not support custom
-   * languages.
+   * Languages that use Volar require the `tsc` generator (specifying any
+   * other generator is an error) and are not supported with TypeScript 7.0.
+   * If no registered language uses Volar, the `oxc` generator remains
+   * available. The `tsgo` generator does not support custom languages.
    *
    * @experimental The API may change in future versions.
    */
@@ -373,38 +368,29 @@ export function resolveOptions({
     // generator; Volar-free languages also work with `oxc`, but `tsgo` does not
     // support custom languages at all.
     if (languageContext.isUsingVolar()) {
-      if (isTS70Installed()) {
-        throw new Error(
-          'TypeScript 7.0 does not yet have a stable API and is experimental. Volar-based custom languages (including the `vue` option) are not yet supported with TypeScript 7.0.',
-        )
-      }
+      requireTSApi(
+        'custom languages',
+        '. Custom languages (including the `vue` option) require the TypeScript API.',
+      )
+
       if (generator && generator !== 'tsc') {
-        logger.warn(
-          'Volar-based custom languages (including the `vue` option) require the `tsc` generator. The `generator` option is ignored.',
+        throw new Error(
+          'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
         )
       }
       generator = 'tsc'
     } else if (generator === 'tsgo') {
-      logger.warn(
-        'The `tsgo` generator does not support custom languages. The `generator` option is ignored.',
-      )
-      generator = undefined
-    } else if (!generator && tsgo) {
-      logger.warn(
-        'The `tsgo` generator does not support custom languages. The `tsgo` option is ignored.',
-      )
+      throw new Error('The `tsgo` generator does not support custom languages.')
     }
   }
 
   if (!generator) {
-    if (tsgo && !customLanguages.length) {
-      generator = 'tsgo'
-    } else if (oxc || compilerOptions?.isolatedDeclarations) {
+    if (compilerOptions.isolatedDeclarations) {
       generator = 'oxc'
     } else if (isTS70Installed()) {
       if (customLanguages.length) {
         throw new Error(
-          'Custom languages are not supported with TypeScript 7.0.',
+          "TypeScript 7.0 is installed, but the `tsgo` generator does not support custom languages. Enable `isolatedDeclarations` or set `generator: 'oxc'` to use Oxc instead, or install TypeScript 6.0 or below.",
         )
       }
       generator = 'tsgo'
@@ -413,14 +399,18 @@ export function resolveOptions({
     }
   }
 
+  oxc ||= {}
+  tsgo ||= {}
+
   if (generator === 'tsc') {
-    requireTS(
-      'Or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.',
+    requireTSApi(
+      'tsc',
+      ', or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.',
     )
   } else if (generator === 'tsgo') {
     if (!tsconfig) {
       throw new Error(
-        'tsgo generator requires a tsconfig file to be specified.',
+        'The `tsgo` generator requires a tsconfig file to be specified.',
       )
     }
     if (!warnedTsgo) {
@@ -429,15 +419,11 @@ export function resolveOptions({
         'TypeScript 7.0 does not yet have a stable API and is experimental. Some options will be unavailable.',
       )
     }
+    tsgo.path ??= resolveTsgoPath(logger)
   }
-
-  if (oxc === true || !oxc) oxc = {}
-  if (oxc) {
-    oxc.stripInternal ??= !!compilerOptions?.stripInternal
-    // @ts-expect-error omitted in user options
-    oxc.sourcemap = !!compilerOptions.declarationMap
-  }
-  if (tsgo === true || !tsgo) tsgo = {}
+  oxc.stripInternal ??= !!compilerOptions.stripInternal
+  // @ts-expect-error omitted in user options
+  oxc.sourcemap = !!compilerOptions.declarationMap
 
   emitJs ??= !!(compilerOptions.checkJs || compilerOptions.allowJs)
 

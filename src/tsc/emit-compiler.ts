@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
+import { requireTSApi } from '../require.ts'
 import { globalContext } from './context.ts'
-import { requireTS } from './load-tsc.ts'
 import { createFsSystem } from './system.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import type { TscModule, TscOptions, TscResult } from './types.ts'
@@ -14,7 +14,7 @@ import type {
 } from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-compiler')
-const ts = requireTS()
+const ts = requireTSApi()
 
 const defaultCompilerOptions: CompilerOptions = {
   declaration: true,

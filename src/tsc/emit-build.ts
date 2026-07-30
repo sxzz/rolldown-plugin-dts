@@ -1,12 +1,12 @@
 import { createDebug } from 'obug'
 import { RE_DTS, RE_DTS_MAP } from '../filename.ts'
+import { requireTSApi } from '../require.ts'
 import {
   globalContext,
   type ParsedProject,
   type SourceFileToProjectMap,
   type TscContext,
 } from './context.ts'
-import { requireTS } from './load-tsc.ts'
 import { createFsSystem, createMemorySystem } from './system.ts'
 import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
 import type { TscOptions, TscResult } from './types.ts'
@@ -20,7 +20,7 @@ import type {
   System,
 } from 'typescript'
 
-const ts = requireTS()
+const ts = requireTSApi()
 const debug = createDebug('rolldown-plugin-dts:tsc-build')
 
 // Emit file using `tsc --build` mode.

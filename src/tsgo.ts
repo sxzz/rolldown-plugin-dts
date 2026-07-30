@@ -1,22 +1,13 @@
 import { spawn } from 'node:child_process'
 import { mkdtemp, rm } from 'node:fs/promises'
-import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { styleText } from 'node:util'
 import { createDebug } from 'obug'
+import { isTS70Installed, require, tryResolve } from './require.ts'
 import type { Logger } from './options.ts'
 
-const require = createRequire(import.meta.url)
 const debug = createDebug('rolldown-plugin-dts:tsgo')
-
-export function isTS70Installed(): boolean {
-  try {
-    const { versionMajorMinor } = require('typescript')
-    return versionMajorMinor === '7.0'
-  } catch {}
-  return false
-}
 
 const spawnAsync = (...args: Parameters<typeof spawn>) =>
   new Promise<void>((resolve, reject) => {
@@ -27,25 +18,35 @@ const spawnAsync = (...args: Parameters<typeof spawn>) =>
 
 let tsgoPathCache: string | undefined
 
-export async function getTsgoPathFromNodeModules(
-  logger: Logger,
-): Promise<string> {
+export function resolveTsgoPath(logger: Logger): string {
   if (tsgoPathCache) return tsgoPathCache
 
   const pkgName = isTS70Installed()
     ? 'typescript'
     : '@typescript/native-preview'
-  const tsgoPkg = import.meta.resolve(`${pkgName}/package.json`)
-  const {
-    default: { version },
-  } = await import(tsgoPkg, { with: { type: 'json' } })
+
+  const pkgJsonPath = tryResolve(`${pkgName}/package.json`)
+  if (!pkgJsonPath) {
+    throw new Error(
+      'TypeScript Go is not installed. Please install the `typescript@7.0` or `@typescript/native-preview` package to use the `tsgo` generator.',
+    )
+  }
+
+  const { version } = require(pkgJsonPath) as { version: string }
   logger.info(
     `Emit types with ${styleText('underline', `${pkgName}@${version}`)}`,
   )
-  const { default: getExePath } = await import(
-    new URL('lib/getExePath.js', tsgoPkg).href
+
+  const getExePath: any = require(
+    path.join(path.dirname(pkgJsonPath), 'lib/getExePath.js'),
   )
-  return (tsgoPathCache = getExePath())
+  const tsgoPath = (
+    typeof getExePath === 'function' ? getExePath : getExePath.default
+  )()
+  if (import.meta.TEST) {
+    return tsgoPath
+  }
+  return (tsgoPathCache = tsgoPath)
 }
 
 export interface TsgoContext {
@@ -54,22 +55,13 @@ export interface TsgoContext {
 }
 
 export async function runTsgo(
-  logger: Logger,
+  tsgoPath: string,
   rootDir: string,
   tsconfig: string,
   sourcemap?: boolean,
-  tsgoPath?: string,
 ): Promise<TsgoContext> {
   debug('[tsgo] rootDir', rootDir)
-
-  let tsgo: string
-  if (tsgoPath) {
-    tsgo = tsgoPath
-    debug('[tsgo] using custom path', tsgo)
-  } else {
-    tsgo = await getTsgoPathFromNodeModules(logger)
-    debug('[tsgo] using tsgo from node_modules', tsgo)
-  }
+  debug('[tsgo] using tsgo binary', tsgoPath)
 
   const tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
   debug('[tsgo] tsgoDist', tsgoDist)
@@ -90,7 +82,7 @@ export async function runTsgo(
   ]
   debug('[tsgo] args %o', args)
 
-  await spawnAsync(tsgo, args, { stdio: 'inherit' })
+  await spawnAsync(tsgoPath, args, { stdio: 'inherit' })
 
   return {
     path: tsgoDist,

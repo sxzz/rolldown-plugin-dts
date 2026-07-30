@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
-import { getTsgoPathFromNodeModules } from '../src/tsgo.ts'
+import { resolveTsgoPath } from '../src/tsgo.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -629,7 +629,7 @@ test('infer false branch', async () => {
 })
 
 test('tsgo with custom path', async () => {
-  const tsgoPath = await getTsgoPathFromNodeModules({
+  const tsgoPath = resolveTsgoPath({
     info: () => {},
     warn: () => {},
     error: () => {},
@@ -638,6 +638,7 @@ test('tsgo with custom path', async () => {
     path.resolve(dirname, 'fixtures/basic.ts'),
     [
       dts({
+        generator: 'tsgo',
         tsgo: { path: tsgoPath },
         tsconfig: path.resolve(dirname, 'fixtures/basic.tsconfig.json'),
       }),

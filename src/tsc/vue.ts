@@ -1,16 +1,13 @@
-import { createRequire } from 'node:module'
 import { createDebug } from 'obug'
-import { requireTS } from './load-tsc.ts'
+import { require, requireTSApi } from '../require.ts'
 import type { CustomLanguage } from '../custom-language.ts'
+import type * as ts from 'typescript'
 
-const require = createRequire(import.meta.url)
 const debug = createDebug('rolldown-plugin-dts:vue')
 const RE_VUE = /\.vue$/
 
 export function createVueLanguage(): CustomLanguage {
-  const ts = requireTS(
-    `Vue support requires TypeScript to be installed. Please install \`typescript\` package.`,
-  )
+  requireTSApi('Vue')
 
   const [volarTypeScript, vue] = loadVueLanguageTools()
 
@@ -41,7 +38,7 @@ export function createVueLanguage(): CustomLanguage {
       {
         extension: 'vue',
         isMixedContent: true,
-        scriptKind: ts.ScriptKind.Deferred,
+        scriptKind: 7 satisfies ts.ScriptKind.Deferred,
       },
     ],
     volarTypeScript,
@@ -76,7 +73,7 @@ function loadVueLanguageTools(): [
   } catch (cause) {
     debug('vue language tools not found', cause)
     throw new Error(
-      'Failed to load vue language tools. Please manually install vue-tsc.',
+      'Failed to load Vue language tools. Please install `vue-tsc` manually.',
       { cause },
     )
   }
