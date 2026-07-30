@@ -12,7 +12,10 @@ const TSGO_PKGS = ['typescript', '@typescript/native-preview']
 type Installed = [ts: 6 | 7 | false, tsgo: boolean]
 
 function mockInstalled([ts, tsgo]: Installed) {
-  const fake = ((id: string) => {
+  const fake = ((rawId: string) => {
+    // On Windows, `path.join` in `resolveTsgoPath` turns the fake `/mock/...`
+    // paths into backslash form; normalize for comparison only.
+    const id = rawId.replaceAll('\\', '/')
     switch (id) {
       case 'typescript': {
         if (!ts) throw new Error(`Cannot find module 'typescript'`)
@@ -33,7 +36,7 @@ function mockInstalled([ts, tsgo]: Installed) {
       return { default: () => MOCK_TSGO_BIN }
     }
     // vue / Volar related modules are loaded for real
-    return realRequire(id)
+    return realRequire(rawId)
   }) as NodeJS.Require
   fake.resolve = ((id: string, options?: { paths?: string[] }) => {
     if (TSGO_PKGS.some((pkg) => id === `${pkg}/package.json`)) {
