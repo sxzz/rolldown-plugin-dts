@@ -22,6 +22,7 @@ export interface TscContext {
   projects: Map<string, SourceFileToProjectMap>
 }
 
+/** Creates an empty, isolated TypeScript compiler context. */
 export function createContext(): TscContext {
   const programs: Program[] = []
   const files = new Map<string, string>()
@@ -29,6 +30,13 @@ export function createContext(): TscContext {
   return { programs, files, projects }
 }
 
+/**
+ * Removes a file and any dependent compiler state from a context.
+ *
+ * @param context - Context to invalidate.
+ * @param file - File path to remove. Relative paths resolve from the process
+ * working directory.
+ */
 export function invalidateContextFile(context: TscContext, file: string): void {
   file = path.resolve(file).replaceAll('\\', '/')
   debug(`invalidating context file: ${file}`)
@@ -41,4 +49,5 @@ export function invalidateContextFile(context: TscContext, file: string): void {
   context.projects.clear()
 }
 
+/** Shared compiler context used when no explicit context is provided. */
 export const globalContext: TscContext = createContext()

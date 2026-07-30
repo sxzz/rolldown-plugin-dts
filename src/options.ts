@@ -24,215 +24,178 @@ export interface Logger {
 //#region General Options
 export interface GeneralOptions {
   /**
-   * The generator used to produce `.d.ts` files.
+   * The generator used to produce declaration files.
    *
-   * - `'tsc'`: The TypeScript 5.x/6.x compiler. Supports all TypeScript features.
-   * - `'oxc'`: {@link https://oxc.rs Oxc}'s isolated declaration generator. Much
-   *   faster than `tsc`, but only supports code that satisfies
+   * - `'tsc'` supports the full TypeScript type system.
+   * - `'oxc'` is faster but requires code compatible with
    *   [`isolatedDeclarations`](https://www.typescriptlang.org/tsconfig/#isolatedDeclarations).
-   * - `'tsgo'`: **[Experimental]** The TypeScript Go compiler
-   *   ({@link https://github.com/microsoft/typescript-go tsgo}). May not support
-   *   all TypeScript features yet.
+   * - `'tsgo'` uses the experimental TypeScript Go compiler.
    *
-   * When unset, the generator is inferred:
-   * - `'oxc'` if `isolatedDeclarations` is enabled in `compilerOptions`.
-   * - `'tsgo'` if TypeScript 7.0 is installed as the `typescript` package.
-   *   `tsgo` is never inferred when custom languages are registered, as it
-   *   does not support them.
-   * - `'tsc'` otherwise, and always when Volar-based custom languages
-   *   (including {@link TscOptions.vue vue}) are enabled.
+   * When omitted, the plugin selects `'oxc'` for `isolatedDeclarations`,
+   * `'tsgo'` for TypeScript 7, and `'tsc'` otherwise. Volar-based custom
+   * languages require `'tsc'`.
    *
-   * @default 'tsc'
+   * @default Inferred from the TypeScript configuration and installed compiler.
    */
   generator?: 'tsc' | 'oxc' | 'tsgo'
 
   /**
-   * Glob pattern(s) to filter which entry files get `.d.ts` generation.
+   * Glob pattern(s) that select source files for declaration generation.
    *
-   * When specified, only entry files matching these patterns will emit `.d.ts` chunks.
-   * When not specified, all entries get `.d.ts` generation.
-   *
-   * Supports negation patterns (e.g., `['**', '!src/icons/**']`) for exclusion.
-   * Patterns are matched against file paths relative to `cwd`.
+   * Patterns are relative to {@link cwd} and may be negated with `!`. Matching
+   * files are emitted even when they are not Rolldown entry points.
    *
    * @example
-   * entry: 'src/index.ts'
+   * ```ts
    * entry: ['src/*.ts', '!src/internal/**']
+   * ```
    */
   entry?: string | string[]
 
   /**
-   * The directory in which the plugin will search for the `tsconfig.json` file.
+   * Base directory for config discovery, glob matching, and relative paths.
+   *
+   * @default process.cwd()
    */
   cwd?: string
 
   /**
-   * Set to `true` if your entry files are `.d.ts` files instead of `.ts` files.
+   * Treats entry files as existing declarations instead of source files.
    *
-   * When enabled, the plugin will skip generating a `.d.ts` file for the entry point.
+   * @default false
    */
   dtsInput?: boolean
 
   /**
-   * If `true`, the plugin will emit only `.d.ts` files and remove all other output chunks.
+   * Removes non-declaration chunks from the output.
    *
-   * This is especially useful when generating `.d.ts` files for the CommonJS format as part of a separate build step.
+   * @default false
    */
   emitDtsOnly?: boolean
 
   /**
-   * The path to the `tsconfig.json` file.
+   * A `tsconfig.json` path, resolved relative to {@link cwd}.
    *
-   * If set to `false`, the plugin will ignore any `tsconfig.json` file.
-   * You can still specify `compilerOptions` directly in the options.
-   *
-   * @default 'tsconfig.json'
+   * When omitted or `true`, the nearest config is discovered from {@link cwd}.
+   * Set to `false` to disable config loading.
    */
   tsconfig?: string | boolean
 
-  /**
-   * Pass a raw `tsconfig.json` object directly to the plugin.
-   *
-   * @see https://www.typescriptlang.org/tsconfig
-   */
+  /** Raw `tsconfig.json` values merged over the loaded config. */
   tsconfigRaw?: Omit<TsconfigJson, 'compilerOptions'>
 
   /**
-   * Override the `compilerOptions` specified in `tsconfig.json`.
-   *
-   * @see https://www.typescriptlang.org/tsconfig/#compilerOptions
+   * Compiler options merged over those loaded from `tsconfig.json`.
    */
   compilerOptions?: TsconfigJson.CompilerOptions
 
   /**
-   * If `true`, the plugin will generate declaration maps (`.d.ts.map`) for `.d.ts` files.
+   * Emits declaration maps (`.d.ts.map`).
+   *
+   * @default The value of `compilerOptions.declarationMap`.
    */
   sourcemap?: boolean
 
   /**
-   * Specifies a resolver to resolve type definitions, especially for `node_modules`.
+   * Resolver used for declaration imports, including packages in `node_modules`.
    *
-   * - `'oxc'`: Uses Oxc's module resolution, which is faster and more efficient.
-   * - `'tsc'`: Uses TypeScript's native module resolution, which may be more compatible with complex setups, but slower.
+   * Use `'tsc'` when a project depends on TypeScript-specific resolution
+   * behavior; otherwise `'oxc'` is faster.
    *
    * @default 'oxc'
    */
   resolver?: 'oxc' | 'tsc'
 
   /**
-   * Determines how the default export is emitted.
+   * Converts a single default export to `export =` for CommonJS consumers.
+   * This does not add support for CommonJS-style declaration input.
    *
-   * If set to `true`, and you are only exporting a single item using `export default ...`,
-   * the output will use `export = ...` instead of the standard ES module syntax.
-   * This is useful for compatibility with CommonJS.
-   * This only controls the output format and does not enable support for
-   * CommonJS-style `.d.ts` input.
+   * @default false
    */
   cjsDefault?: boolean
 
   /**
-   * Indicates whether the generated `.d.ts` files have side effects.
-   * - If set to `true`, Rolldown will treat the `.d.ts` files as having side effects during tree-shaking.
-   * - If set to `false`, Rolldown may consider the `.d.ts` files as side-effect-free, potentially removing them if they are not imported.
+   * Marks declaration modules as having side effects during tree-shaking.
    *
    * @default false
    */
   sideEffects?: boolean
 
+  /**
+   * Logger used for plugin messages.
+   *
+   * @default console
+   */
   logger?: Logger
 }
 
 //#region tsc Options
 export interface TscOptions {
   /**
-   * Build mode for the TypeScript compiler:
-   *
-   * - If `true`, the plugin will use [`tsc -b`](https://www.typescriptlang.org/docs/handbook/project-references.html#build-mode-for-typescript) to build the project and all referenced projects before emitting `.d.ts` files.
-   * - If `false`, the plugin will use [`tsc`](https://www.typescriptlang.org/docs/handbook/compiler-options.html) to emit `.d.ts` files without building referenced projects.
+   * Uses TypeScript build mode (`tsc -b`) and follows project references.
    *
    * @default false
    */
   build?: boolean
 
   /**
-   * If your tsconfig.json has
-   * [`references`](https://www.typescriptlang.org/tsconfig/#references) option,
-   * `rolldown-plugin-dts` will use [`tsc
-   * -b`](https://www.typescriptlang.org/docs/handbook/project-references.html#build-mode-for-typescript)
-   * to build the project and all referenced projects before emitting `.d.ts`
-   * files.
+   * Persists build-mode outputs, including `.tsbuildinfo`, to disk for reuse.
+   * When disabled, build outputs stay in memory.
    *
-   * In such case, if this option is `true`, `rolldown-plugin-dts` will write
-   * down all built files into your disk, including
-   * [`.tsbuildinfo`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile)
-   * and other built files. This is equivalent to running `tsc -b` in your
-   * project.
-   *
-   * Otherwise, if this option is `false`, `rolldown-plugin-dts` will write
-   * built files only into memory and leave a small footprint in your disk.
-   *
-   * Enabling this option will decrease the build time by caching previous build
-   * results. This is helpful when you have a large project with multiple
-   * referenced projects.
-   *
-   * By default, `incremental` is `true` if your tsconfig has
-   * [`incremental`](https://www.typescriptlang.org/tsconfig/#incremental) or
-   * [`tsBuildInfoFile`](https://www.typescriptlang.org/tsconfig/#tsBuildInfoFile)
-   * enabled.
-   *
-   * This option is only used by the `tsc` generator.
+   * @default Enabled when the config sets `incremental` or `tsBuildInfoFile`.
    */
   incremental?: boolean
 
   /**
-   * If `true`, the plugin will generate `.d.ts` files using `vue-tsc`.
+   * Registers the built-in Vue language integration using `vue-tsc`.
+   *
+   * This is a shortcut for a preconfigured {@link Options.customLanguages}
+   * entry and requires the `tsc` generator.
+   *
+   * @default false
    */
   vue?: boolean
 
   /**
-   * If `true`, the plugin will launch a separate process for `tsc` or `vue-tsc`.
-   * This enables processing multiple projects in parallel.
+   * Runs `tsc` or `vue-tsc` in a separate process.
+   *
+   * @default false
    */
   parallel?: boolean
 
   /**
-   * If `true`, the plugin will prepare all files listed in `tsconfig.json` for `tsc` or `vue-tsc`.
+   * Loads every file listed by `tsconfig.json` into the TypeScript program.
    *
-   * This is especially useful when you have a single `tsconfig.json` for multiple projects in a monorepo.
+   * Useful when one config covers multiple packages or entry points.
+   *
+   * @default false
    */
   eager?: boolean
 
   /**
-   * If `true`, the plugin will create a new isolated context for each build,
-   * ensuring that previously generated `.d.ts` code and caches are not reused.
-   *
-   * By default, the plugin may reuse internal caches or incremental build artifacts
-   * to speed up repeated builds. Enabling this option forces a clean context,
-   * guaranteeing that all type definitions are generated from scratch.
+   * Uses an isolated TypeScript cache instead of the shared global context.
    *
    * @default false
    */
   newContext?: boolean
 
   /**
-   * If `true`, the plugin will emit `.d.ts` files for `.js` files as well.
-   * This is useful when you want to generate type definitions for JavaScript files with JSDoc comments.
+   * Generates declarations for JavaScript files with JSDoc types.
    *
-   * Enabled by default when `allowJs` in compilerOptions is `true`.
-   * This option is only used by the `tsc` generator.
+   * @default Enabled when `allowJs` or `checkJs` is set.
    */
   emitJs?: boolean
 }
 
+/** Configuration accepted by {@link dts}. */
 export interface Options extends GeneralOptions, TscOptions {
   //#region Oxc
 
   /**
    * Options for the `oxc` generator.
    *
-   * These take effect when the generator is `'oxc'`, either set explicitly via
-   * {@link GeneralOptions.generator generator} or inferred from
-   * `isolatedDeclarations` in `compilerOptions`.
+   * The top-level {@link GeneralOptions.sourcemap sourcemap} option controls
+   * declaration maps.
    */
   oxc?: Omit<IsolatedDeclarationsOptions, 'sourcemap'>
 
@@ -241,47 +204,26 @@ export interface Options extends GeneralOptions, TscOptions {
   /**
    * **[Experimental]** Options for the `tsgo` generator.
    *
-   * These take effect when the generator is `'tsgo'`, either set explicitly
-   * via {@link GeneralOptions.generator generator} or inferred when the
-   * TypeScript Go compiler (v7+) is installed as the `typescript` package.
-   * Unless TypeScript 7.0 is installed, make sure
-   * `@typescript/native-preview` is installed as a dependency, or provide a
-   * custom path to the `tsgo` binary using the `path` option.
-   *
-   * **Note:** TypeScript 7.0 does not yet have a stable API and is experimental.
-   * The `tsgo` generator is not yet recommended for production environments,
-   * and some options (such as `tsconfigRaw` and `isolatedDeclarations`) will
-   * be unavailable when it is enabled.
-   *
-   * ```ts
-   * // Use custom tsgo path (e.g., managed by Nix)
-   * tsgo: { path: '/path/to/tsgo' }
-   * ```
+   * Used when {@link GeneralOptions.generator generator} is `'tsgo'` or
+   * TypeScript 7 is detected.
    */
   tsgo?: TsgoOptions
 
   /**
-   * Registers custom languages, allowing the `tsc` generator to process
-   * non-standard file types (such as `.vue`) when generating `.d.ts` files.
-   * Multiple languages can be provided and are applied together.
+   * Registers non-standard source languages such as Vue or Astro.
    *
    * If a language is supported via {@link https://volarjs.dev Volar},
-   * `volarTypeScript` and `createVolarPlugins` must both be provided.
+   * {@link CustomLanguage.volarTypeScript} and
+   * {@link CustomLanguage.createVolarPlugins} are both required. Volar
+   * languages require `tsc`; `tsgo` does not support custom languages.
    *
-   * Languages that use Volar require the `tsc` generator (specifying any
-   * other generator is an error) and are not supported with TypeScript 7.0.
-   * If no registered language uses Volar, the `oxc` generator remains
-   * available. The `tsgo` generator does not support custom languages.
-   *
-   * @experimental The API may change in future versions.
+   * @experimental
    */
   customLanguages?: CustomLanguage[]
 }
 
 export interface TsgoOptions {
-  /**
-   * Custom path to the `tsgo` binary.
-   */
+  /** Path to a custom `tsgo` executable. */
   path?: string
 }
 

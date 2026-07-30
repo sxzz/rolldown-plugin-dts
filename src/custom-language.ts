@@ -2,30 +2,23 @@ import type { Language, LanguagePlugin } from '@vue/language-core'
 import type { FileExtensionInfo } from 'typescript'
 
 /**
- * A custom language (such as Vue or Astro) that allows the `tsc` generator to
- * process non-standard file types when generating `.d.ts` files.
+ * Describes a non-standard source language, such as Vue or Astro.
  *
  * If the language is supported via Volar, {@linkcode volarTypeScript} and
  * {@linkcode createVolarPlugins} must both be provided.
  */
 export interface CustomLanguage {
+  /** Patterns that identify files written in this language. */
   extensionPatterns: RegExp[]
+
+  /** Extra file extensions passed to the TypeScript compiler. */
   tsFileExtensionInfos?: FileExtensionInfo[]
+
+  /** Maps a source filename to the TypeScript filename used for declarations. */
   toTsFilename?: (id: string) => string
 
-  /**
-   * The contents of the `@volar/typescript` package.
-   *
-   * If the language is supported via Volar, this must be provided together
-   * with {@linkcode createVolarPlugins}.
-   */
   volarTypeScript?: typeof import('@volar/typescript')
-  /**
-   * Creates the Volar language plugins for this language.
-   *
-   * If the language is supported via Volar, this must be provided together
-   * with {@linkcode volarTypeScript}.
-   */
+
   createVolarPlugins?: Parameters<
     (typeof import('@volar/typescript'))['proxyCreateProgram']
   >[2]
