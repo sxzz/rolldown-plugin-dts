@@ -1,5 +1,5 @@
 import { b, is, isIdentifierName, nameOf, walk, walkAsync } from 'yuku-ast'
-import { print } from 'yuku-codegen'
+import { generate } from 'yuku-codegen'
 import { parse, type ParseResult } from 'yuku-parser'
 import {
   filename_dts_to,
@@ -404,7 +404,7 @@ export function createFakeJsPlugin({
       ...appendStmts,
     ]
 
-    const result = print(program, {
+    const result = generate(program, {
       comments: false,
       ...(sourcemap && {
         sourceMaps: { source: code, sourceFileName: id },
@@ -561,7 +561,7 @@ export function createFakeJsPlugin({
       )
     }
 
-    const result = print(program, {
+    const result = generate(program, {
       comments: true,
       ...(sourcemap && {
         sourceMaps: {
