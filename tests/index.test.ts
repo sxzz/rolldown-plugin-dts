@@ -711,6 +711,86 @@ test('deterministic namespace import index', async () => {
   expect(results[0]).not.toContain('stub_lib0')
 })
 
+describe('array input with fixed entryFileNames', () => {
+  test('array input produces correct .d.ts filenames', async () => {
+    const { chunks } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [dts()],
+      {},
+      { entryFileNames: '[name].mjs' },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
+    expect(chunkNames).toStrictEqual(['basic.d.mts', 'basic.mjs'])
+  })
+
+  test('fixed-string entryFileNames (Vite lib mode)', async () => {
+    const { chunks } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [dts()],
+      {},
+      { entryFileNames: () => 'index.mjs' },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
+    expect(chunkNames).toContain('index.d.mts')
+    expect(chunkNames).toContain('index.mjs')
+  })
+
+  test('fixed-string entryFileNames .cjs', async () => {
+    const { chunks } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [dts()],
+      {},
+      { entryFileNames: () => 'index.cjs' },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
+    expect(chunkNames).toContain('index.d.cts')
+    expect(chunkNames).toContain('index.cjs')
+  })
+
+  test('fixed-string entryFileNames .js', async () => {
+    const { chunks } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/basic.ts')],
+      [dts()],
+      {},
+      { entryFileNames: () => 'index.js' },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
+    expect(chunkNames).toContain('index.d.ts')
+    expect(chunkNames).toContain('index.js')
+  })
+
+  test('input alias with fixed-string entryFileNames', async () => {
+    const root = path.resolve(dirname, 'fixtures/alias')
+    const { chunks } = await rolldownBuild(
+      { index: 'input1.ts' },
+      [dts({ emitDtsOnly: true })],
+      { cwd: root },
+      { entryFileNames: () => 'lib.mjs' },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
+    expect(chunkNames).toContain('lib.d.mts')
+  })
+
+  test('array input + fixed-string entryFileNames (Vite 8 lib mode)', async () => {
+    const root = path.resolve(dirname, 'fixtures/alias')
+    const { chunks, snapshot } = await rolldownBuild(
+      ['input1.ts'],
+      [dts({ emitDtsOnly: true })],
+      { cwd: root },
+      { entryFileNames: () => 'index.mjs' },
+    )
+
+    const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
+    expect(chunkNames).toContain('index.d.mts')
+    expect(snapshot).not.toMatch(/\[\d+,\s*\(\)/)
+  })
+})
+
 test('decorators', async () => {
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/decorator.ts'),
