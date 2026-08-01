@@ -132,6 +132,28 @@ describe('tsc', () => {
     expect(sourcemap.sourcesContent).toBeOneOf([undefined, []])
   })
 
+  test('build sourcemap sources point to .ts not .d.ts #255', async () => {
+    const root = path.resolve(dirname, 'fixtures/build-sourcemap-refs')
+
+    const { chunks } = await rolldownBuild(
+      [path.resolve(root, 'src/index.ts')],
+      [
+        dts({
+          tsconfig: path.resolve(root, 'tsconfig.json'),
+          build: true,
+          sourcemap: true,
+          emitDtsOnly: true,
+        }),
+      ],
+      {},
+      { dir: path.resolve(root, 'dist') },
+    )
+
+    const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
+    const sources = (sourcemap.sources || []).toSorted()
+    expect(sources).toEqual(['../src/index.ts', '../src/math.ts'])
+  })
+
   test('composite references no incremental', async () => {
     const root = path.resolve(dirname, 'fixtures/composite-refs-no-incremental')
 
