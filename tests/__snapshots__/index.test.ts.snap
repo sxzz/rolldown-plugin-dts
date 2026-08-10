@@ -301,6 +301,22 @@ import { n as input2, t as Input2 } from "./chunks/CR4BIi8r.js";
 export { Input2, input2 };"
 `;
 
+exports[`import = syntax 1`] = `
+"// import-equals.d.ts
+import * as zodModule from "external-zod";
+import * as vue from "external-vue";
+declare namespace simple_d_exports {
+  export { foo };
+}
+declare const foo: number;
+//#endregion
+//#region tests/fixtures/import-equals.d.ts
+import a = zodModule.foo.a;
+import b = zodModule.foo.b;
+//#endregion
+export { a, b, simple_d_exports as simple, simple_d_exports as simple2, vue };"
+`;
+
 exports[`infer false branch 1`] = `
 "// index.d.ts
 //#region tests/fixtures/infer-false-branch/mod.d.ts

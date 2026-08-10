@@ -726,3 +726,11 @@ test('method signature', async () => {
   ])
   expect(snapshot).toMatchSnapshot()
 })
+
+test.only('import = syntax', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/import-equals.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})

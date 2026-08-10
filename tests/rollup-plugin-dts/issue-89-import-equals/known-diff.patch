@@ -2,8 +2,11 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,3 +1,3 @@
+@@ -1,3 +1,6 @@
  // index.d.ts
++declare namespace bar_d_exports {
++  export { Foo as default }
++}
  interface Foo {}
 -export type { Foo }
-+export { Foo }
++export { bar_d_exports as Foo }

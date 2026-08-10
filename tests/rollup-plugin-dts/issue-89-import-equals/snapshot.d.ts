@@ -1,5 +1,7 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/issue-89-import-equals/bar.d.ts
+declare namespace bar_d_exports {
+  export { Foo as default };
+}
 interface Foo {}
 //#endregion
-export { Foo };
+export { bar_d_exports as Foo };

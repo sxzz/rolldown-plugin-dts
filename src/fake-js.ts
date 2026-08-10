@@ -203,7 +203,7 @@ export function createFakeJsPlugin({
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.ProgramStatement) => (program.body[i] = stmt)
-      if (rewriteImportExport(stmt, setStmt)) continue
+      if (rewriteImportExport(stmt, setStmt, appendStmts)) continue
 
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
@@ -971,6 +971,10 @@ async function collectDependencies(
             addDependency(TSEntityNameToRuntime(node.typeName))
             break
           }
+          case 'TSQualifiedName': {
+            addDependency(getIdFromTSEntityName(node.left))
+            break
+          }
           case 'TSTypeQuery': {
             if (seen.has(node.exprName)) return
             if (node.exprName.type === 'TSImportType') break
@@ -1546,6 +1550,7 @@ function patchReExport(nodes: t.ProgramStatement[]) {
 function rewriteImportExport(
   node: t.Node,
   set: (node: t.ProgramStatement) => void,
+  appendStmts: t.ProgramStatement[],
 ): node is
   t.ImportDeclaration | t.ExportAllDeclaration | t.TSImportEqualsDeclaration {
   if (
@@ -1570,18 +1575,39 @@ function rewriteImportExport(
   } else if (node.type === 'ExportAllDeclaration') {
     node.exportKind = 'value'
     return true
-  } else if (node.type === 'TSImportEqualsDeclaration') {
-    if (node.moduleReference.type === 'TSExternalModuleReference') {
+  } else if (
+    node.type === 'TSImportEqualsDeclaration' ||
+    (node.type === 'ExportNamedDeclaration' &&
+      node.declaration?.type === 'TSImportEqualsDeclaration')
+  ) {
+    const decl =
+      node.type === 'ExportNamedDeclaration'
+        ? (node.declaration as t.TSImportEqualsDeclaration)
+        : node
+
+    if (decl.moduleReference.type === 'TSExternalModuleReference') {
       set(
         b.ImportDeclaration({
-          specifiers: [b.ImportDefaultSpecifier({ local: node.id })],
-          source: node.moduleReference.expression,
+          specifiers: [b.ImportNamespaceSpecifier({ local: decl.id })],
+          source: decl.moduleReference.expression,
           phase: null,
           attributes: [],
         }),
       )
+      if (node.type === 'ExportNamedDeclaration') {
+        appendStmts.push(
+          b.ExportNamedDeclaration({
+            declaration: null,
+            specifiers: [
+              b.ExportSpecifier({ local: decl.id, exported: decl.id }),
+            ],
+            source: null,
+            attributes: [],
+          }),
+        )
+      }
+      return true
     }
-    return true
   } else if (
     node.type === 'TSExportAssignment' &&
     node.expression.type === 'Identifier'
