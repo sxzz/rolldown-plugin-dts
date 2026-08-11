@@ -12,7 +12,12 @@ const debug = createDebug('rolldown-plugin-dts:tsgo')
 const spawnAsync = (...args: Parameters<typeof spawn>) =>
   new Promise<void>((resolve, reject) => {
     const child = spawn(...args)
-    child.on('close', () => resolve())
+    child.on('close', (code, signal) => {
+      if (code === 0) resolve()
+      else if (signal)
+        reject(new Error(`tsgo process terminated by signal ${signal}`))
+      else reject(new Error(`tsgo process exited with code ${code}`))
+    })
     child.on('error', (error) => reject(error))
   })
 
