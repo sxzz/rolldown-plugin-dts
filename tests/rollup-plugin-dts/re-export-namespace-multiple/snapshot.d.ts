@@ -19,8 +19,8 @@ declare namespace only_one_d_exports {
 }
 //#endregion
 //#region tests/rollup-plugin-dts/re-export-namespace-multiple/index.d.ts
-interface WithA {
+export interface WithA {
   a: A;
 }
 //#endregion
-export { WithA, deep_d_exports as deep, defs_d_exports as ns, only_one_d_exports as onlyOne };
+export { deep_d_exports as deep, defs_d_exports as ns, only_one_d_exports as onlyOne };

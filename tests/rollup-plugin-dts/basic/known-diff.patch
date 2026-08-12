@@ -2,25 +2,28 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,5 +1,8 @@
+@@ -1,8 +1,11 @@
  // index.d.ts
 +declare namespace mod_d_exports {
 +  export { a }
 +}
  declare const a: string
  declare const foo: number
- declare const bar: typeof a
+-declare const bar: typeof a
++export declare const bar: typeof a
  type SomeType<
-@@ -24,9 +27,9 @@
+   T,
+ > =
+   T
+@@ -23,10 +26,9 @@
+   fn(
      e: Enum,
    ): void
  }
- export {
--  Cls,
-+  type Cls,
-   bar,
--  fn,
--  foo,
-+  type fn,
-+  type foo,
+-export {
++export type {
+   Cls,
+-  bar,
+   fn,
+   foo,
  }

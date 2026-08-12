@@ -1,0 +1,18 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,6 +1,6 @@
+ // index.d.ts
+-declare class Test {
++export declare class Test {
+   functionOne(
+     foo: string,
+     bar: number,
+   ): void
+@@ -9,5 +9,4 @@
+       typeof this.functionOne
+     >
+   ): void
+ }
+-export { Test }

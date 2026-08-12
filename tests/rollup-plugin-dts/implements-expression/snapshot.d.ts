@@ -11,9 +11,8 @@ declare namespace ns {
 //#endregion
 //#region tests/rollup-plugin-dts/implements-expression/index.d.ts
 interface G {}
-interface MyComponentProps extends ns.Props<G> {
+export interface MyComponentProps extends ns.Props<G> {
   bar: string;
 }
-declare class MyComponent extends ns.Component<MyComponentProps> {}
+export declare class MyComponent extends ns.Component<MyComponentProps> {}
 //#endregion
-export { MyComponent, MyComponentProps };

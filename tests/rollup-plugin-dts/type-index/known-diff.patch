@@ -2,10 +2,14 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -5,5 +5,5 @@
+@@ -1,9 +1,8 @@
+ // index.d.ts
+ interface A {}
+-declare type Foo =
++export declare type Foo =
+   {
      [
        k: string
      ]: A
    }
 -export type { Foo }
-+export { Foo }

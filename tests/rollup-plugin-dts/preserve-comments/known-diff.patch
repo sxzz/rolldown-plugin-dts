@@ -1,0 +1,26 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,18 +1,13 @@
+ // index.d.ts
+ /**
+  * A function with doc-comment that is imported first
+  */
+-declare function first(): void
++export declare function first(): void
+ /**
+  * A function with doc-comment that is imported second
+  */
+-declare function second(): void
++export declare function second(): void
+ /**
+  * A function with doc-comment in the main file
+  */
+-declare function main(): void
+-export {
+-  first,
+-  main,
+-  second,
+-}
++export declare function main(): void

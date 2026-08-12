@@ -2,10 +2,13 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -4,5 +4,5 @@
+@@ -1,8 +1,7 @@
+ // index.d.ts
+-type Foo =
++export type Foo =
+   [
      first: number,
      second?: string,
      ...rest: any[],
    ]
 -export type { Foo }
-+export { Foo }

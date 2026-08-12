@@ -2,7 +2,7 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,9 +1,9 @@
+@@ -1,23 +1,19 @@
  // index.d.ts
  import {
 +  ComponentPropsWithRef,
@@ -10,16 +10,22 @@ Index: diff.patch
    ForwardRefExoticComponent,
 -  ComponentPropsWithRef,
  } from 'react'
- type AnimatedProps<
+-type AnimatedProps<
++export type AnimatedProps<
    T,
  > =
-@@ -16,8 +16,8 @@
+   T
+-type AnimatedComponent<
++export type AnimatedComponent<
+   T extends
+     ElementType,
+ > =
+   ForwardRefExoticComponent<
      AnimatedProps<
        ComponentPropsWithRef<T>
      >
    >
 -export type {
-+export {
-   AnimatedComponent,
-   AnimatedProps,
- }
+-  AnimatedComponent,
+-  AnimatedProps,
+-}

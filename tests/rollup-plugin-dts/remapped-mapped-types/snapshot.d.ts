@@ -9,12 +9,11 @@ interface Person {
   age: number;
   location: string;
 }
-type LazyPerson = Getters<Person>;
+export type LazyPerson = Getters<Person>;
 type RemoveKindField<T> = { [K in keyof T as MyExclude<K, "kind">]: T[K]; };
 interface Circle {
   kind: "circle";
   radius: number;
 }
-type KindlessCircle = RemoveKindField<Circle>;
+export type KindlessCircle = RemoveKindField<Circle>;
 //#endregion
-export { KindlessCircle, LazyPerson };

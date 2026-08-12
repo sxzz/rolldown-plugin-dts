@@ -2,10 +2,12 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -3,5 +3,5 @@
+@@ -1,7 +1,6 @@
+ // index.d.ts
+-declare type DateRange =
++export declare type DateRange =
    [
      Date?,
      Date?,
    ]
 -export type { DateRange }
-+export { DateRange }

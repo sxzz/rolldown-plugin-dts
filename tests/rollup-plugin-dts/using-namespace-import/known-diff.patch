@@ -2,14 +2,14 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,6 +1,9 @@
+@@ -1,6 +1,8 @@
  // index.d.ts
 +declare namespace namespace_d_exports {
 +  export { Bar }
 +}
  interface Bar {}
- interface Foo {
+-interface Foo {
++export interface Foo {
    bar: Bar
  }
 -export type { Foo }
-+export { Foo }

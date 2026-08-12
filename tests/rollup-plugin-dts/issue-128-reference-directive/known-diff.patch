@@ -2,7 +2,7 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,17 +1,21 @@
+@@ -1,17 +1,20 @@
 -// main-a.ts
 +// common-DdSWU8yq.d.ts
 +/// <reference types="node" />
@@ -12,13 +12,14 @@ Index: diff.patch
  /// <reference types="jest" />
  /// <reference types="react" />
 -export { B } from './main-b.ts'
+-declare const A = 2
 +import { t as B } from './common-DdSWU8yq.js'
- declare const A = 2
++export declare const A = 2
  declare type JSXElements =
    keyof JSX.IntrinsicElements
  declare const a: JSXElements[]
  export {
-   A,
+-  A,
 +  B,
 +  JSXElements,
    a,

@@ -5,8 +5,7 @@ declare namespace namespace_d_exports {
 interface Bar {}
 //#endregion
 //#region tests/rollup-plugin-dts/using-namespace-import/index.d.ts
-interface Foo {
+export interface Foo {
   bar: Bar;
 }
 //#endregion
-export { Foo };

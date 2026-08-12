@@ -2,17 +2,41 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -22,12 +22,10 @@
+@@ -1,33 +1,24 @@
+ // index.d.ts
+-declare type In =
++export declare type In =
+   {
+     a: string
+   }
+-declare type Out =
++export declare type Out =
+   {
+     b: number
+   }
+-declare const config: {
++export declare const config: {
+   normalize: (
      inVar: In,
    ) => Out
  }
- export {
-+  In,
-+  Out,
-   config,
-   options,
-   params,
+-declare const options: {
++export declare const options: {
+   normalize: (
+     inVar: In,
+   ) => Out
  }
+-declare const params: {
++export declare const params: {
+   normalize: (
+     inVar: In,
+   ) => Out
+ }
+-export {
+-  config,
+-  options,
+-  params,
+-}
 -export type {
 -  In,
 -  Out,

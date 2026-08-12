@@ -6,11 +6,10 @@ interface A {}
 interface B {}
 interface C {}
 interface D {}
-type Klass = {
+export type Klass = {
   [Aprop]?: A[];
   ["B"]: B;
   [0]: C;
   [Dprop]: D;
 };
 //#endregion
-export { Klass };

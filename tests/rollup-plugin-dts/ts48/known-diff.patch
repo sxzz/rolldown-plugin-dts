@@ -2,10 +2,13 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -4,5 +4,5 @@
- type SomeNum =
+@@ -1,8 +1,7 @@
+ // index.d.ts
+ type MyNum =
+   number
+-type SomeNum =
++export type SomeNum =
    '100' extends `${infer U extends MyNum}`
      ? U
      : never
 -export type { SomeNum }
-+export { SomeNum }

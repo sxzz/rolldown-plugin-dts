@@ -47,6 +47,10 @@ interface DeclarationInfo {
   params: TypeParams
   deps: Dep[]
   children: t.Node[]
+  /** How the declaration was exported in the source file, if it was */
+  exportType?: InlineExportKind
+  /** The comments attached to the declaration, as parsed */
+  comments?: t.AttachedComment[]
 }
 
 interface ModuleExports {
@@ -70,8 +74,15 @@ interface ExportAllInfo {
 }
 
 interface ChunkExportInfo {
+  /** Names the chunk exports as types only, `export type { x }` */
   typeOnlyNames: Set<string>
   typeOnlyExportAllSources: Set<string>
+  /**
+   * Names the chunk exports as values. Only those may be attached back to
+   * their declaration as an inline `export`, a type only export has to stay a
+   * specifier to keep the `type` modifier.
+   */
+  inlineNames: Set<string>
 }
 
 type NamespaceMap = Map<
@@ -300,6 +311,12 @@ export function createFakeJsPlugin({
         bindings,
         params,
         children,
+        exportType: isDefaultExport
+          ? 'default'
+          : isExportDecl
+            ? 'named'
+            : undefined,
+        comments: decl.comments && [...decl.comments],
       })
 
       const declarationIdNode = b.Literal({
@@ -442,91 +459,148 @@ export function createFakeJsPlugin({
     program.body = patchTsNamespace(program.body)
     program.body = patchReExport(program.body)
 
-    program.body = program.body
-      .map((node) => {
-        if (isHelperImport(node)) return null
-        if (node.type === 'ExpressionStatement') return null
+    const inlineExports = planInlineExports(
+      program.body,
+      exportInfo,
+      getDeclaration,
+      cjsDefault,
+    )
 
-        const newNode = patchImportExport(node, exportInfo, cjsDefault)
-        if (newNode || newNode === false) {
-          return newNode
+    function renderStatement(
+      node: t.ProgramStatement,
+    ): t.ProgramStatement | null | false {
+      if (isHelperImport(node)) return null
+      if (node.type === 'ExpressionStatement') return null
+
+      const newNode = patchImportExport(
+        node,
+        exportInfo,
+        cjsDefault && inlineExports.allowExportAssignment,
+      )
+      if (newNode || newNode === false) {
+        return newNode
+      }
+
+      if (node.type !== 'VariableDeclaration') return node
+
+      if (!isRuntimeBindingVariableDeclaration(node)) {
+        return null
+      }
+
+      const decl = node.declarations[0]
+      const [declarationIdNode, depsFn, children /*, ignore sideEffect */] =
+        decl.init.elements
+
+      const declarationId = declarationIdNode.value
+      const declaration = getDeclaration(declarationId!)
+
+      // `renderChunk` may run again for the same declaration, e.g. in watch
+      // mode, so always start from the comments the declaration was parsed with
+      declaration.decl.comments = declaration.comments && [
+        ...declaration.comments,
+      ]
+
+      if (sourcemap) {
+        walk(declaration.decl, {
+          enter(node) {
+            node.start = undefined as never
+            node.end = undefined as never
+          },
+        })
+      }
+
+      for (const [i, id] of decl.id.elements.entries()) {
+        const transformedBinding = {
+          ...id,
+          typeAnnotation: declaration.bindings[i].typeAnnotation,
         }
+        overwriteNode(declaration.bindings[i], transformedBinding)
+      }
 
-        if (node.type !== 'VariableDeclaration') return node
-
-        if (!isRuntimeBindingVariableDeclaration(node)) {
-          return null
-        }
-
-        const decl = node.declarations[0]
-        const [declarationIdNode, depsFn, children /*, ignore sideEffect */] =
-          decl.init.elements
-
-        const declarationId = declarationIdNode.value
-        const declaration = getDeclaration(declarationId!)
-
-        if (sourcemap) {
-          walk(declaration.decl, {
-            enter(node) {
-              node.start = undefined as never
-              node.end = undefined as never
-            },
+      if (sourcemap) {
+        for (const [i, child] of (
+          children.elements as t.StringLiteral[]
+        ).entries()) {
+          Object.assign(declaration.children[i], {
+            start: child.start,
+            end: child.end,
           })
         }
+      }
 
-        for (const [i, id] of decl.id.elements.entries()) {
-          const transformedBinding = {
-            ...id,
-            typeAnnotation: declaration.bindings[i].typeAnnotation,
-          }
-          overwriteNode(declaration.bindings[i], transformedBinding)
+      const transformedParams = depsFn.params as t.Identifier[]
+      for (const [i, transformedParam] of transformedParams.entries()) {
+        const transformedName = transformedParam.name
+        for (const originalTypeParam of declaration.params[i].typeParams) {
+          originalTypeParam.name = transformedName
+        }
+      }
+
+      const transformedDeps = (depsFn.body as t.ArrayExpression)
+        .elements as t.Expression[]
+      for (const [i, originalDep] of declaration.deps.entries()) {
+        let transformedDep = transformedDeps[i]
+        if (
+          transformedDep.type === 'UnaryExpression' &&
+          transformedDep.operator === 'void'
+        ) {
+          const undefinedDep = b.Identifier({ name: 'undefined' })
+          undefinedDep.start = transformedDep.start
+          undefinedDep.end = transformedDep.end
+          transformedDep = undefinedDep
+        } else if (isInfer(transformedDep)) {
+          transformedDep.name = '__Infer'
         }
 
-        if (sourcemap) {
-          for (const [i, child] of (
-            children.elements as t.StringLiteral[]
-          ).entries()) {
-            Object.assign(declaration.children[i], {
-              start: child.start,
-              end: child.end,
-            })
-          }
+        if (originalDep.replace) {
+          originalDep.replace(transformedDep)
+        } else {
+          Object.assign(originalDep, transformedDep)
         }
+      }
 
-        const transformedParams = depsFn.params as t.Identifier[]
-        for (const [i, transformedParam] of transformedParams.entries()) {
-          const transformedName = transformedParam.name
-          for (const originalTypeParam of declaration.params[i].typeParams) {
-            originalTypeParam.name = transformedName
-          }
-        }
+      const kind = inlineExports.kinds.get(declarationId!)
+      const rendered = kind
+        ? inlineExportDeclaration(declaration.decl, kind)
+        : declaration.decl
 
-        const transformedDeps = (depsFn.body as t.ArrayExpression)
-          .elements as t.Expression[]
-        for (const [i, originalDep] of declaration.deps.entries()) {
-          let transformedDep = transformedDeps[i]
-          if (
-            transformedDep.type === 'UnaryExpression' &&
-            transformedDep.operator === 'void'
-          ) {
-            const undefinedDep = b.Identifier({ name: 'undefined' })
-            undefinedDep.start = transformedDep.start
-            undefinedDep.end = transformedDep.end
-            transformedDep = undefinedDep
-          } else if (isInfer(transformedDep)) {
-            transformedDep.name = '__Infer'
-          }
+      return inheritNodeComments(node, rendered)
+    }
 
-          if (originalDep.replace) {
-            originalDep.replace(transformedDep)
-          } else {
-            Object.assign(originalDep, transformedDep)
-          }
-        }
+    const body: t.ProgramStatement[] = []
+    // comments of dropped statements, e.g. the `//#endregion` in front of an
+    // `export { ... }` that became empty because it was inlined
+    let danglingComments: t.AttachedComment[] = []
 
-        return inheritNodeComments(node, declaration.decl)
-      })
-      .filter((node) => !!node)
+    for (const node of program.body) {
+      const rendered = renderStatement(node)
+
+      if (rendered === false) {
+        danglingComments.push(...pragmaComments(node))
+        continue
+      }
+      if (!rendered) continue
+
+      if (danglingComments.length) {
+        rendered.comments = [...danglingComments, ...(rendered.comments || [])]
+        danglingComments = []
+      }
+      body.push(rendered)
+    }
+
+    const lastNode = body.at(-1)
+    if (danglingComments.length && lastNode) {
+      lastNode.comments = [
+        ...(lastNode.comments || []),
+        ...danglingComments.map((comment) => ({
+          ...comment,
+          position: 'after' as const,
+          sameLine: false,
+        })),
+      ]
+    }
+
+    program.body = body
 
     if (program.body.length === 0) {
       return { code: EMPTY_STUB, map: null }
@@ -572,7 +646,10 @@ export function createFakeJsPlugin({
     })
 
     return {
-      code: result.code,
+      // a chunk ending with a comment, e.g. `//#endregion`, is generated with a
+      // trailing newline, which rolldown would separate from the sourcemap
+      // pragma it appends by a blank line
+      code: result.code.trimEnd(),
       map: (result.map ?? null) as SourceMapInput | null,
     }
   }
@@ -587,6 +664,240 @@ export function createFakeJsPlugin({
     return declarationMap.get(declarationId)!
   }
 }
+
+//#region Inline export
+
+type InlineExportKind = 'named' | 'default'
+
+interface InlineExportPlan {
+  /** Declaration id to the `export` form the declaration gets back */
+  kinds: Map<number, InlineExportKind>
+  /** Whether `export = x` may still be emitted for the `cjsDefault` option */
+  allowExportAssignment: boolean
+}
+
+interface LocalExport {
+  local: string
+  typeOnly: boolean
+  specifier: t.ExportSpecifier
+}
+
+/**
+ * Collects the `export { local as exported }` statements of a chunk, i.e. the
+ * exports that could be attached back to their declaration. Re-exports
+ * (`export { x } from '...'`) are not local and therefore skipped.
+ */
+function getLocalExportsMap(
+  nodes: t.ProgramStatement[],
+): Map<string /* exported */, LocalExport> {
+  const exportsMap = new Map<string, LocalExport>()
+
+  for (const node of nodes) {
+    if (
+      node.type !== 'ExportNamedDeclaration' ||
+      node.declaration ||
+      node.source
+    ) {
+      continue
+    }
+
+    for (const specifier of node.specifiers) {
+      if (specifier.type !== 'ExportSpecifier') continue
+
+      exportsMap.set(nameOf(specifier.exported), {
+        local: nameOf(specifier.local),
+        typeOnly: node.exportKind === 'type' || specifier.exportKind === 'type',
+        specifier,
+      })
+    }
+  }
+
+  return exportsMap
+}
+
+/**
+ * Decides which declarations get their `export` keyword back, so that a
+ * declaration written as `export declare const x` is emitted as
+ * `export declare const x` instead of `declare const x` + `export { x }`.
+ *
+ * A declaration qualifies only if it was exported inline in its own source
+ * file, the chunk exports it as a value under its own name, and every
+ * declaration it merges with qualifies as well. The specifiers of the
+ * re-attached exports are removed here, before `patchImportExport` runs, so
+ * that both stay in sync.
+ */
+function planInlineExports(
+  nodes: t.ProgramStatement[],
+  exportInfo: ChunkExportInfo,
+  getDeclaration: (declarationId: number) => DeclarationInfo,
+  cjsDefault: boolean,
+): InlineExportPlan {
+  const exportsMap = getLocalExportsMap(nodes)
+  const allowExportAssignment = hasOnlyDefaultExport(nodes)
+  const kinds = new Map<number, InlineExportKind>()
+  const removed = new Set<t.ExportSpecifier>()
+
+  // declarations of the chunk, and the names they bind after bundling
+  const declNames = new Map<number /* declaration id */, string[]>()
+  const nameDecls = new Map<string, number[] /* declaration ids */>()
+  for (const node of nodes) {
+    if (!isRuntimeBindingVariableDeclaration(node)) continue
+
+    const { id, init } = node.declarations[0]
+    const declarationId = init.elements[0].value as number
+    const names = (id.elements as t.Identifier[]).map(({ name }) => name)
+
+    declNames.set(declarationId, names)
+    for (const name of names) {
+      const decls = nameDecls.get(name)
+      if (decls) decls.push(declarationId)
+      else nameDecls.set(name, [declarationId])
+    }
+  }
+
+  const named = new Set<number>()
+  for (const [declarationId, names] of declNames) {
+    if (getDeclaration(declarationId).exportType !== 'named') continue
+    if (names.every(isInlinableName)) named.add(declarationId)
+  }
+
+  // Merged declarations — overloads, `function` + `namespace`, ... — share a
+  // name and a single export specifier. TypeScript requires all of them to be
+  // exported or all of them to be local, so keep a group only if every
+  // declaration of it qualifies.
+  let changed = true
+  while (changed) {
+    changed = false
+
+    for (const declarationId of named) {
+      const complete = declNames
+        .get(declarationId)!
+        .every((name) => nameDecls.get(name)!.every((id) => named.has(id)))
+      if (!complete) {
+        named.delete(declarationId)
+        changed = true
+      }
+    }
+  }
+
+  for (const declarationId of named) {
+    kinds.set(declarationId, 'named')
+    for (const name of declNames.get(declarationId)!) {
+      removed.add(exportsMap.get(name)!.specifier)
+    }
+  }
+
+  const defaultExport = exportsMap.get('default')
+  if (
+    defaultExport &&
+    !defaultExport.typeOnly &&
+    exportInfo.inlineNames.has('default') &&
+    // `export = x` wins over `export default x`
+    (!cjsDefault || !allowExportAssignment)
+  ) {
+    for (const [declarationId, names] of declNames) {
+      const declaration = getDeclaration(declarationId)
+      if (
+        declaration.exportType !== 'default' ||
+        names.length !== 1 ||
+        names[0] !== defaultExport.local ||
+        // a merged declaration cannot be exported as `export default`
+        nameDecls.get(names[0])!.length !== 1 ||
+        !isInlinableDefaultDeclaration(declaration.decl)
+      ) {
+        continue
+      }
+
+      kinds.set(declarationId, 'default')
+      removed.add(defaultExport.specifier)
+      break
+    }
+  }
+
+  if (removed.size) {
+    for (const node of nodes) {
+      if (node.type !== 'ExportNamedDeclaration') continue
+
+      node.specifiers = node.specifiers.filter(
+        (specifier) => !removed.has(specifier),
+      )
+    }
+  }
+
+  return { kinds, allowExportAssignment }
+
+  function isInlinableName(name: string): boolean {
+    if (!exportInfo.inlineNames.has(name)) return false
+
+    // the declaration has to be exported under its own name, an alias such as
+    // `export { x as y }` has to stay a specifier
+    const exported = exportsMap.get(name)
+    return !!exported && exported.local === name && !exported.typeOnly
+  }
+}
+
+/** Whether `default` is the only name the chunk exports */
+function hasOnlyDefaultExport(nodes: t.ProgramStatement[]): boolean {
+  let hasDefault = false
+
+  for (const node of nodes) {
+    if (node.type === 'ExportAllDeclaration') return false
+    if (node.type === 'ExportDefaultDeclaration') {
+      hasDefault = true
+      continue
+    }
+    if (node.type !== 'ExportNamedDeclaration') continue
+    if (node.declaration) return false
+
+    for (const specifier of node.specifiers) {
+      if (nameOf(specifier.exported) !== 'default') return false
+      hasDefault = true
+    }
+  }
+
+  return hasDefault
+}
+
+/** `export default` only accepts a class, function or interface declaration */
+function isInlinableDefaultDeclaration(node: t.Node): boolean {
+  return is.oneOf(node, [
+    'ClassDeclaration',
+    'FunctionDeclaration',
+    'TSDeclareFunction',
+    'TSInterfaceDeclaration',
+  ])
+}
+
+function inlineExportDeclaration(
+  decl: t.Declaration,
+  kind: InlineExportKind,
+): t.ProgramStatement {
+  if (kind === 'default' && 'declare' in decl) {
+    // `export default declare class X {}` is invalid
+    decl.declare = false
+  }
+
+  const exported: t.ProgramStatement =
+    kind === 'default'
+      ? b.ExportDefaultDeclaration({
+          declaration: decl as t.ExportDefaultDeclarationKind,
+        })
+      : b.ExportNamedDeclaration({
+          declaration: decl,
+          specifiers: [],
+          source: null,
+          attributes: [],
+        })
+
+  // the comments have to lead the `export` keyword, TypeScript ignores a doc
+  // comment sitting between `export` and the declaration
+  exported.comments = decl.comments
+  decl.comments = undefined
+
+  return exported
+}
+
+// #endregion
 
 //#region Export metadata
 
@@ -775,11 +1086,13 @@ function collectChunkExportInfo(
   }
 
   const typeOnlyNames = new Set<string>()
+  const inlineNames = new Set<string>()
   for (const [name, typeOnly] of mergedExports) {
     if (typeOnly) typeOnlyNames.add(name)
+    else inlineNames.add(name)
   }
 
-  return { typeOnlyNames, typeOnlyExportAllSources }
+  return { typeOnlyNames, typeOnlyExportAllSources, inlineNames }
 }
 
 function resolveAllModuleExports(
@@ -1658,18 +1971,24 @@ function overwriteNode<T>(node: t.Node, newNode: T): T {
   return node as T
 }
 
+/**
+ * Region markers and alike, the comments worth keeping when their node is
+ * replaced or dropped
+ */
+function pragmaComments(node: t.Node): t.AttachedComment[] {
+  return (
+    node.comments?.filter(
+      (comment) =>
+        comment.position === 'before' &&
+        comment.value.startsWith('#') &&
+        !isSourceMapPragma(comment),
+    ) || []
+  )
+}
+
 function inheritNodeComments<T extends t.Node>(oldNode: t.Node, newNode: T): T {
   newNode.comments ||= []
-
-  const pragmas = oldNode.comments?.filter(
-    (comment) =>
-      comment.position === 'before' &&
-      comment.value.startsWith('#') &&
-      !isSourceMapPragma(comment),
-  )
-  if (pragmas) {
-    newNode.comments.unshift(...pragmas)
-  }
+  newNode.comments.unshift(...pragmaComments(oldNode))
 
   newNode.comments = newNode.comments.filter(
     (comment) =>

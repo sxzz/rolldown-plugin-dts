@@ -1,0 +1,19 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,7 +1,7 @@
+ // index.d.ts
+ interface StaticT {}
+-declare class Foo {
++export declare class Foo {
+   static hello: string
+   static world: number
+   static [
+     propName: string
+@@ -9,5 +9,4 @@
+     | string
+     | number
+     | StaticT
+ }
+-export { Foo }

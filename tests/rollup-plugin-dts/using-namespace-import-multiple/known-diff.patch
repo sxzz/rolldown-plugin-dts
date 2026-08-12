@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,8 +1,7 @@
+ // index.d.ts
+ interface Iface {}
+ declare abstract class Base {}
+-declare class Klass
++export declare class Klass
+   extends Base
+   implements
+     Iface {}
+-export { Klass }

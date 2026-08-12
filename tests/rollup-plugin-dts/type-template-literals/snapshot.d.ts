@@ -6,7 +6,6 @@ type VerticalAlignment = "top" | "middle" | "bottom";
 type HorizontalAlignment = "left" | "center" | "right";
 //#endregion
 //#region tests/rollup-plugin-dts/type-template-literals/index.d.ts
-type SeussFish = `${Quantity | Color} fish`;
-declare function setAlignment(value: `${VerticalAlignment}-${HorizontalAlignment}`): void;
+export type SeussFish = `${Quantity | Color} fish`;
+export declare function setAlignment(value: `${VerticalAlignment}-${HorizontalAlignment}`): void;
 //#endregion
-export { SeussFish, setAlignment };

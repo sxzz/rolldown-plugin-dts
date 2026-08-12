@@ -2,13 +2,26 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -37,8 +37,8 @@
+@@ -18,9 +18,9 @@
+   name: string
+   age: number
+   location: string
+ }
+-type LazyPerson =
++export type LazyPerson =
+   Getters<Person>
+ type RemoveKindField<
+   T,
+ > =
+@@ -35,10 +35,6 @@
+ interface Circle {
+   kind: 'circle'
    radius: number
  }
- type KindlessCircle =
+-type KindlessCircle =
++export type KindlessCircle =
    RemoveKindField<Circle>
 -export type {
-+export {
-   KindlessCircle,
-   LazyPerson,
- }
+-  KindlessCircle,
+-  LazyPerson,
+-}

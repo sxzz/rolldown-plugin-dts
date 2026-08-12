@@ -2,6 +2,5 @@
 //#region tests/rollup-plugin-dts/type-typeof/index.d.ts
 interface A {}
 declare const a: A;
-declare function typeQuery(): typeof a;
+export declare function typeQuery(): typeof a;
 //#endregion
-export { typeQuery };

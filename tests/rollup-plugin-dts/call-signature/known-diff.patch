@@ -2,14 +2,21 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -10,6 +10,8 @@
+@@ -1,15 +1,13 @@
+ // index.d.ts
+-interface I {
++export interface I {
+   (
+     arg: string,
+   ): string
+   staticProp: string
+ }
+-declare const fn: {
++export declare const fn: {
+   (
      arg: string,
    ): string
    staticProp: string
  }
 -export { fn }
 -export type { I }
-+export {
-+  I,
-+  fn,
-+}

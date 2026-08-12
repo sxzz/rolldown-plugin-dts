@@ -2,10 +2,17 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -11,5 +11,5 @@
+@@ -4,12 +4,11 @@
+ interface A {}
+ interface B {}
+ interface C {}
+ interface D {}
+-type Klass =
++export type Klass =
+   {
+     [Aprop]?: A[]
      ['B']: B
      [0]: C
      [Dprop]: D
    }
 -export type { Klass }
-+export { Klass }

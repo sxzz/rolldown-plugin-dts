@@ -1,0 +1,14 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -7,8 +7,7 @@
+     [
+       Prop in keyof ParamObj
+     ]?: any
+   }
+-declare class CalendarDataManager {
++export declare class CalendarDataManager {
+   emitter: ObjectWithParam<SimpleInterface>
+ }
+-export { CalendarDataManager }

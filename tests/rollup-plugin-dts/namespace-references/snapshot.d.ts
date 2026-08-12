@@ -6,7 +6,7 @@ interface Shadowed3 {}
 interface Shadowed4 {}
 interface Referenced1 {}
 interface Referenced2 {}
-declare namespace ns {
+export declare namespace ns {
   class Shadowed1 {}
   enum Shadowed2 {}
   type Shadowed3 = undefined;
@@ -23,4 +23,3 @@ declare namespace ns {
   }
 }
 //#endregion
-export { ns };

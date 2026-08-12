@@ -2,7 +2,7 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,5 +1,9 @@
+@@ -1,8 +1,12 @@
  // index.d.ts
 +interface Shadowed1 {}
 +interface Shadowed2 {}
@@ -10,9 +10,13 @@ Index: diff.patch
 +interface Shadowed4 {}
  interface Referenced1 {}
  interface Referenced2 {}
- declare namespace ns {
+-declare namespace ns {
++export declare namespace ns {
    class Shadowed1 {}
-@@ -14,8 +18,8 @@
+   enum Shadowed2 {}
+   type Shadowed3 =
+     undefined
+@@ -14,8 +18,7 @@
      d: Shadowed3
      e: typeof Shadowed4
    }
@@ -21,4 +25,4 @@ Index: diff.patch
 +    export { Referenced2 as ref }
    }
  }
- export { ns }
+-export { ns }

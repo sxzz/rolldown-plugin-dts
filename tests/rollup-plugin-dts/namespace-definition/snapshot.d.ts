@@ -1,8 +1,7 @@
 // index.d.ts
 //#region tests/rollup-plugin-dts/namespace-definition/index.d.ts
-declare function fn(arg: string): string;
-declare namespace fn {
+export declare function fn(arg: string): string;
+export declare namespace fn {
   var staticProp: string;
 }
 //#endregion
-export { fn };

@@ -2,7 +2,7 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,51 +1,60 @@
+@@ -1,51 +1,59 @@
  // index.d.ts
 -export { default as A } from 'a'
 -export { default as D } from 'd'
@@ -58,8 +58,9 @@ Index: diff.patch
 +export type * from 'n'
 +interface Foo {}
  declare class BarType {}
- declare class BarValue {}
+-declare class BarValue {}
 -interface O {}
++export declare class BarValue {}
 +interface O$1 {}
  declare class X {}
 -interface Foo {
@@ -68,13 +69,13 @@ Index: diff.patch
  }
  export {
 -  BarType,
+-  BarValue,
+-  X,
 +  A,
 +  type B,
 +  type B1 as B2,
 +  type B1 as B3,
 +  type BarType,
-   BarValue,
--  X,
 +  C,
 +  C as C1,
 +  type D,

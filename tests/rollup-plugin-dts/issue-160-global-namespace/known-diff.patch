@@ -2,8 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -2,17 +2,17 @@
- interface A {}
+@@ -1,18 +1,17 @@
+ // index.d.ts
+-interface A {}
++export interface A {}
  interface B {}
  declare global {
    namespace Named.Core {
@@ -22,4 +24,3 @@ Index: diff.patch
    }
  }
 -export type { A }
-+export { A }

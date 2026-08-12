@@ -2,9 +2,9 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,4 +1,4 @@
+@@ -1,4 +1,3 @@
  // index.d.ts
  /// <reference path="/some/absolute/path" />
- interface Hello {}
+-interface Hello {}
 -export type { Hello }
-+export { Hello }
++export interface Hello {}

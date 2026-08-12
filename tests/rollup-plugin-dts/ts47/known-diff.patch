@@ -2,13 +2,30 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -17,8 +17,8 @@
+@@ -1,7 +1,7 @@
+ // index.d.ts
+ interface Hammer {}
+-type FirstHammer<
++export type FirstHammer<
+   T,
+ > =
+   T extends [
+     infer H extends
+@@ -9,16 +9,12 @@
+     ...unknown[],
+   ]
+     ? H
+     : never
+-interface State<
++export interface State<
+   in out T,
+ > {
+   get: () => T
    set: (
      value: T,
    ) => void
  }
 -export type {
-+export {
-   FirstHammer,
-   State,
- }
+-  FirstHammer,
+-  State,
+-}

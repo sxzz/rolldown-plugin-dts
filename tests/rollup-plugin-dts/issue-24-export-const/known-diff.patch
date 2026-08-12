@@ -1,0 +1,17 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,9 +1,4 @@
+ // index.d.ts
+-declare const C = 123
+-declare let L: number
+-declare var V: number
+-export {
+-  C,
+-  L,
+-  V,
+-}
++export declare const C = 123
++export declare let L: number
++export declare var V: number

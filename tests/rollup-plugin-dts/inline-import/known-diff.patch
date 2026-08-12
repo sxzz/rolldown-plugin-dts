@@ -2,10 +2,13 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -4,5 +4,5 @@
- interface Foo {
+@@ -1,8 +1,7 @@
+ // index.d.ts
+ interface Bar {}
+ declare const Baz = 123
+-interface Foo {
++export interface Foo {
    bar: Bar
    baz: typeof Baz
  }
 -export type { Foo }
-+export { Foo }

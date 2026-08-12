@@ -2,14 +2,13 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,7 +1,7 @@
+@@ -1,7 +1,4 @@
  // index.d.ts
--declare class Foo$1 {}
- declare class Foo {}
-+declare class Foo$1 {}
- export {
++export default class Foo {}
+ declare class Foo$1 {}
+-declare class Foo {}
+-export {
 -  Foo$1 as default,
 -  Foo as default2,
-+  Foo as default,
-+  Foo$1 as default2,
- }
+-}
++export { Foo$1 as default2 }

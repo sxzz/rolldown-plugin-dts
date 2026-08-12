@@ -6,7 +6,7 @@ declare const a: string;
 //#endregion
 //#region tests/rollup-plugin-dts/basic/foo.d.ts
 declare const foo: number;
-declare const bar: typeof a;
+export declare const bar: typeof a;
 type SomeType<T> = T;
 type FooType = string;
 interface Interface {}
@@ -21,4 +21,4 @@ declare class Cls {
   fn(e: Enum): void;
 }
 //#endregion
-export { type Cls, bar, type fn, type foo };
+export type { Cls, fn, foo };

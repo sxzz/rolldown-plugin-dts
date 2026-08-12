@@ -1,0 +1,55 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -14,43 +14,34 @@
+ interface M {}
+ interface N {}
+ interface O {}
+ interface P {}
+-declare function parenthesized(
++export declare function parenthesized(
+   a: A,
+ ): B
+-declare function union(
++export declare function union(
+   a:
+     | C
+     | D,
+ ):
+   | E
+   | F
+-declare function intersection(
++export declare function intersection(
+   a: G &
+     H,
+ ): I &
+   J
+-declare function operator(
++export declare function operator(
+   a: keyof K,
+ ): void
+-declare function arrayAndTuple(
++export declare function arrayAndTuple(
+   a: [
+     L,
+     M,
+   ],
+ ): N[]
+-declare function predicate(
++export declare function predicate(
+   a: any,
+ ): a is O
+-declare function assertion(
++export declare function assertion(
+   a: any,
+ ): asserts a is P
+-export {
+-  arrayAndTuple,
+-  assertion,
+-  intersection,
+-  operator,
+-  parenthesized,
+-  predicate,
+-  union,
+-}

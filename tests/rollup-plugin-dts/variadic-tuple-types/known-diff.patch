@@ -2,14 +2,30 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -28,6 +28,8 @@
+@@ -8,17 +8,17 @@
+   [
+     number,
+     number,
+   ]
+-type StrStrNumNumBool =
++export type StrStrNumNumBool =
+   [
+     ...Strings,
+     ...Numbers,
+     boolean,
+   ]
+ type Arr =
+   readonly any[]
+-declare function concat<
++export declare function concat<
+   T extends
+     Arr,
+   U extends
+     Arr,
+@@ -28,6 +28,4 @@
  ): [
    ...T,
    ...U,
  ]
 -export { concat }
 -export type { StrStrNumNumBool }
-+export {
-+  StrStrNumNumBool,
-+  concat,
-+}

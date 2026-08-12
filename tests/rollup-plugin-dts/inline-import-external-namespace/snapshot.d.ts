@@ -1,6 +1,6 @@
 // index.d.ts
 //#region tests/rollup-plugin-dts/inline-import-external-namespace/index.d.ts
-interface Foo {
+export interface Foo {
   ns1: import("foo");
   ns2: typeof import("foo");
   ns3: import('foo_bar').T;
@@ -9,4 +9,3 @@ interface Foo {
   ns6: import('foo/bar').T;
 }
 //#endregion
-export { Foo };

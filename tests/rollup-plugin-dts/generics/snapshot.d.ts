@@ -16,21 +16,20 @@ interface N {}
 interface O {}
 interface P {}
 declare type Gen<T> = T;
-interface I1<T = A> {
+export interface I1<T = A> {
   a: T;
   b: Gen<B>;
 }
-declare type Ty<T = C> = {
+export declare type Ty<T = C> = {
   c: T;
   d: Gen<D>;
 };
-declare class Cl<T = E> {
+export declare class Cl<T = E> {
   e: T;
   f: Gen<F>;
 }
-declare function fn<T = G>(g: T, h: Gen<H>): void;
-declare type TyFn = <T = J>(j: T, k: Gen<K>) => L;
-declare type TyCtor = new <T = M>(m: T, n: Gen<N>) => O;
-interface I2 extends Gen<P> {}
+export declare function fn<T = G>(g: T, h: Gen<H>): void;
+export declare type TyFn = <T = J>(j: T, k: Gen<K>) => L;
+export declare type TyCtor = new <T = M>(m: T, n: Gen<N>) => O;
+export interface I2 extends Gen<P> {}
 //#endregion
-export { Cl, I1, I2, Ty, TyCtor, TyFn, fn };

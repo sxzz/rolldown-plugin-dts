@@ -1,0 +1,9 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,3 +1,2 @@
+ // index.d.ts
+-declare class Foo {}
+-export { Foo }
++export declare class Foo {}

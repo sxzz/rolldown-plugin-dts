@@ -1,0 +1,11 @@
+Index: diff.patch
+===================================================================
+--- diff.patch
++++ diff.patch
+@@ -1,5 +1,4 @@
+ // index.d.ts
+-declare const depth: {
++export declare const depth: {
+   [-24]: string
+ }
+-export { depth }

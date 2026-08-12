@@ -504,6 +504,25 @@ test('cjs exports', async () => {
     )
     expect(snapshot).toMatchSnapshot()
   }
+
+  // `export =` wins over an inline `export default`
+  {
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/cjs-default-decl.ts')],
+      [dts({ emitDtsOnly: true, cjsDefault: true })],
+    )
+    expect(snapshot).toContain('export = Foo;')
+  }
+
+  // `export =` is invalid once the module exports anything else
+  {
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/cjs-default-mixed.ts')],
+      [dts({ emitDtsOnly: true, cjsDefault: true })],
+    )
+    expect(snapshot).not.toContain('export =')
+    expect(snapshot).toMatchSnapshot()
+  }
 })
 
 test('declare module', async () => {
@@ -730,6 +749,14 @@ test('method signature', async () => {
 test('import = syntax', async () => {
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/import-equals.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('declaration with export', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/export-decl.ts'),
     [dts({ emitDtsOnly: true })],
   )
   expect(snapshot).toMatchSnapshot()

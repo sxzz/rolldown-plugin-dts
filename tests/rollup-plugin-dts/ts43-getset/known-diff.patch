@@ -2,10 +2,18 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -9,5 +9,5 @@
+@@ -1,13 +1,12 @@
+ // index.d.ts
+ interface GetT {}
+ interface SetT {}
+-interface Thing {
++export interface Thing {
+   get size(): GetT
+   set size(
+     value:
+       | GetT
        | SetT
        | boolean,
    )
  }
 -export type { Thing }
-+export { Thing }

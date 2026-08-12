@@ -2,10 +2,17 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -12,5 +12,5 @@
+@@ -5,12 +5,11 @@
+   abstract someMethod(): AbstractReturnValue
+   badda(): void
+   member: AbstractMember
+ }
+-type AbstractConstructor<
++export type AbstractConstructor<
+   T extends
+     AbstractClass,
  > =
    abstract new (
      ...args: any[]
    ) => T
 -export type { AbstractConstructor }
-+export { AbstractConstructor }

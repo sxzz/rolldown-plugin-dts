@@ -18,7 +18,7 @@ Index: diff.patch
  declare function B(): void
  declare class C {}
  declare enum D {
-@@ -8,45 +18,19 @@
+@@ -8,45 +18,18 @@
  }
  declare const E: string
  declare type F =
@@ -59,14 +59,14 @@ Index: diff.patch
 -declare namespace onlyOne_d {
 -  export type { onlyOne_d_A as A }
 -}
- interface WithA {
+-interface WithA {
++export interface WithA {
    a: A
  }
  export {
 -  deep_d as deep,
 -  defs_d as ns,
 -  onlyOne_d as onlyOne,
-+  WithA,
 +  deep_d_exports as deep,
 +  defs_d_exports as ns,
 +  only_one_d_exports as onlyOne,

@@ -2,10 +2,10 @@ Index: diff.patch
 ===================================================================
 --- diff.patch
 +++ diff.patch
-@@ -1,5 +1,5 @@
+@@ -1,5 +1,4 @@
  // index.d.ts
- interface Connection {
+-interface Connection {
++export interface Connection {
    uri: string
  }
 -export type { Connection }
-+export { Connection }
