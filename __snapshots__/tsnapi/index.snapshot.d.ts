@@ -27,3 +27,41 @@ export declare function createGeneratePlugin({ generator, entry, tsconfig, tscon
 export declare function dts(_?: Options): Plugin[];
 export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, build, incremental, vue, parallel, eager, newContext, emitJs, oxc, tsgo }: Options): OptionsResolved;
 // #endregion
+
+// #region Referenced (internal)
+interface GeneralOptions {
+  generator?: "tsc" | "oxc" | "tsgo";
+  entry?: string | string[];
+  cwd?: string;
+  dtsInput?: boolean;
+  emitDtsOnly?: boolean;
+  tsconfig?: string | boolean;
+  tsconfigRaw?: Omit<TsconfigJson, "compilerOptions">;
+  compilerOptions?: TsconfigJson.CompilerOptions;
+  sourcemap?: boolean;
+  resolver?: "oxc" | "tsc";
+  cjsDefault?: boolean;
+  sideEffects?: boolean;
+  logger?: Logger;
+}
+type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "vue" | "customLanguages">>, {
+  entry?: string[];
+  tsconfig?: string;
+  oxc: IsolatedDeclarationsOptions;
+  tsconfigRaw: TsconfigJson;
+  tsgo: TsgoOptions;
+  languageContext: LanguageContext;
+}>;
+interface TscOptions {
+  build?: boolean;
+  incremental?: boolean;
+  vue?: boolean;
+  parallel?: boolean;
+  eager?: boolean;
+  newContext?: boolean;
+  emitJs?: boolean;
+}
+interface TsgoOptions {
+  path?: string;
+}
+// #endregion

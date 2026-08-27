@@ -2,29 +2,29 @@ overrides:
   rolldown: 'catalog:'
 
 catalog:
-  '@astrojs/ts-plugin': ^1.10.10
+  '@astrojs/ts-plugin': ^1.10.11
   '@jridgewell/source-map': ^0.3.11
   '@sxzz/eslint-config': ^8.5.0
   '@sxzz/prettier-config': ^2.3.2
   '@sxzz/test-utils': ^0.5.18
   '@ts-macro/language-plugin': ^0.3.7
   '@ts-macro/tsc': ^0.3.7
-  '@types/node': ^26.2.0
+  '@types/node': ^26.4.0
   '@typescript/native-preview': 7.0.0-dev.20260707.2
   '@volar/typescript': ^2.4.28
-  '@vue/language-core': ^3.3.9
+  '@vue/language-core': ^3.3.11
   arktype: ^2.2.3
-  bumpp: ^12.2.0
-  eslint: ^10.8.1
+  bumpp: ^12.2.2
+  eslint: ^10.9.1
   prettier: ^3.9.6
-  rolldown: ^1.2.3
+  rolldown: ^1.2.6
   ts-macro: ^0.3.7
   tsdown: ^0.22.14
-  tsnapi: ^1.2.0
+  tsnapi: ^1.4.0
   typescript: ^6.0.3
-  vitest: ^4.1.10
-  vue: ^3.5.41
-  vue-tsc: ^3.3.9
+  vitest: ^4.1.11
+  vue: ^3.5.42
+  vue-tsc: ^3.3.11
   zod: ^4.4.3
 
 catalogs:
@@ -32,11 +32,12 @@ catalogs:
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.6
     obug: ^2.1.4
-    yuku-ast: ^0.9.0
-    yuku-codegen: ^0.9.0
-    yuku-parser: ^0.9.0
+    yuku-ast: ^0.9.3
+    yuku-codegen: ^0.9.3
+    yuku-parser: ^0.9.3
 
 minimumReleaseAge: 0
 trustLockfile: true
 trustPolicy: no-downgrade
 trustPolicyIgnoreAfter: 10080 # 7 days
+virtualStoreType: global
