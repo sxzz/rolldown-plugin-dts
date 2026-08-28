@@ -9,6 +9,8 @@ import type { CustomLanguage } from '../src/custom-language.ts'
 const { dirname } = import.meta
 const require = createRequire(import.meta.url)
 
+const external = ['vue', /^@vue/]
+
 describe('volar', () => {
   describe('vue', () => {
     test('vue-sfc w/ ts-compiler', async () => {
@@ -24,7 +26,7 @@ describe('volar', () => {
             },
           }),
         ],
-        { external: [/^@vue/] },
+        { external },
       )
       expect(snapshot).toMatchSnapshot()
     })
@@ -40,7 +42,7 @@ describe('volar', () => {
             vue: true,
           }),
         ],
-        { external: ['vue'] },
+        { external },
       )
       expect(snapshot).toMatchSnapshot()
     })
@@ -58,7 +60,7 @@ describe('volar', () => {
             },
           }),
         ],
-        { external: [/^@vue/] },
+        { external },
       )
       expect(snapshot).toMatchSnapshot()
     })
@@ -91,7 +93,7 @@ describe('volar', () => {
             customLanguages: [tsMacro],
           }),
         ],
-        { external: ['vue'] },
+        { external },
       )
       expect(snapshot).toMatchSnapshot()
     })

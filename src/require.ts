@@ -49,7 +49,6 @@ export function requireTSApi(
   let ts: typeof import('typescript')
   try {
     ts = require('typescript')
-    // eslint-disable-next-line unicorn/catch-error-name
   } catch (cause) {
     throw new Error(
       `TypeScript is not installed. Please install the \`typescript\` package (v7.0 is not yet supported)${

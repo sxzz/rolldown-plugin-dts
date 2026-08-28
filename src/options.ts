@@ -9,7 +9,7 @@ import {
 import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
 import { isTS70Installed, requireTSApi } from './require.ts'
-import { createVueLanguage } from './tsc/vue.ts'
+import { createVueLanguage, type VueLanguageOptions } from './tsc/vue.ts'
 import { resolveTsgoPath } from './tsgo.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
@@ -154,7 +154,7 @@ export interface TscOptions {
    *
    * @default false
    */
-  vue?: boolean
+  vue?: boolean | VueLanguageOptions
 
   /**
    * Runs `tsc` or `vue-tsc` in a separate process.
@@ -301,7 +301,7 @@ export function resolveOptions({
 
   customLanguages ||= []
   if (vue) {
-    customLanguages.push(createVueLanguage())
+    customLanguages.push(createVueLanguage(typeof vue === 'object' ? vue : {}))
   }
 
   const languageContext = new LanguageContext(customLanguages)

@@ -55,7 +55,7 @@ type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "vue
 interface TscOptions {
   build?: boolean;
   incremental?: boolean;
-  vue?: boolean;
+  vue?: boolean | VueLanguageOptions;
   parallel?: boolean;
   eager?: boolean;
   newContext?: boolean;

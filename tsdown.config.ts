@@ -1,10 +1,11 @@
 // import { dts } from './dist/index.js' // to test built version
 import { defineConfig } from 'tsdown'
 import ApiSnapshot from 'tsnapi/rolldown'
-import { dts } from './src/index.ts'
+import { dts, type Options } from './src/index.ts'
 
 export default defineConfig((cli) => {
-  const cliDts = { ...(typeof cli.dts === 'object' ? cli.dts : {}) }
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const cliDts = { ...(typeof cli.dts === 'object' ? cli.dts : {}) } as Options
   cli.dts = false
 
   return {
@@ -22,6 +23,7 @@ export default defineConfig((cli) => {
       'import.meta.TEST': 'false',
     },
     deps: {
+      neverBundle: ['@vue/language-core'],
       onlyBundle: [],
     },
     treeshake: {

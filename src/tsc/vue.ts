@@ -1,12 +1,19 @@
 import { createDebug } from 'obug'
 import { require, requireTSApi } from '../require.ts'
 import type { CustomLanguage } from '../custom-language.ts'
+import type { VueCompilerOptions } from '@vue/language-core'
 import type * as ts from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:vue')
 const RE_VUE = /\.vue$/
 
-export function createVueLanguage(): CustomLanguage {
+export interface VueLanguageOptions {
+  vueCompilerOptions?: Partial<VueCompilerOptions>
+}
+
+export function createVueLanguage(
+  userOptions: VueLanguageOptions = {},
+): CustomLanguage {
   requireTSApi('Vue')
 
   const [volarTypeScript, vue] = loadVueLanguageTools()
@@ -21,7 +28,11 @@ export function createVueLanguage(): CustomLanguage {
       | undefined
 
     const resolver = new vue.CompilerOptionsResolver(ts, ts.sys.readFile)
-    resolver.addConfig($configRaw?.vueCompilerOptions ?? {}, $rootDir)
+    const rawOptions = {
+      ...$configRaw?.vueCompilerOptions,
+      ...userOptions?.vueCompilerOptions,
+    }
+    resolver.addConfig(rawOptions, $rootDir)
     const vueOptions = resolver.build()
 
     return vue.createVueLanguagePlugin<string>(
@@ -69,7 +80,6 @@ function loadVueLanguageTools(): [
       }),
     ) as typeof import('@vue/language-core')
     return [volarTs, vue]
-    // eslint-disable-next-line unicorn/catch-error-name
   } catch (cause) {
     debug('vue language tools not found', cause)
     throw new Error(
