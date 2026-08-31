@@ -1,5 +1,7 @@
 import type { Language, LanguagePlugin } from '@vue/language-core'
-import type { FileExtensionInfo } from 'typescript'
+
+/** @ts-ignore - TS 7 mismatch */
+type FileExtensionInfo = import('typescript').FileExtensionInfo
 
 /**
  * Describes a non-standard source language, such as Vue or Astro.
@@ -53,6 +55,7 @@ export class LanguageContext {
     )
   }
 
+  /** @internal */
   getCreateProgram(
     ts: typeof import('typescript'),
   ): typeof import('typescript').createProgram {
