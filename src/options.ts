@@ -8,9 +8,9 @@ import {
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
+import { resolveTsgoPath } from './generator/tsgo.ts'
 import { isTS70Installed, requireTSApi } from './require.ts'
 import { createVueLanguage, type VueLanguageOptions } from './tsc/vue.ts'
-import { resolveTsgoPath } from './tsgo.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = createDebug('rolldown-plugin-dts:options')

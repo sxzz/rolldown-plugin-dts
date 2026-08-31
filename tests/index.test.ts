@@ -2,8 +2,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
+import { resolveTsgoPath } from '../src/generator/tsgo.ts'
 import { dts } from '../src/index.ts'
-import { resolveTsgoPath } from '../src/tsgo.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 

@@ -1,11 +1,16 @@
 import { spawn } from 'node:child_process'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { styleText } from 'node:util'
 import { createDebug } from 'obug'
-import { isTS70Installed, require, tryResolve } from './require.ts'
-import type { Logger } from './options.ts'
+import { filename_to_dts } from '../filename.ts'
+import { isTS70Installed, require, tryResolve } from '../require.ts'
+import type { LanguageContext } from '../custom-language.ts'
+import type { Logger } from '../options.ts'
+import type { Generator, GeneratorResult } from './index.ts'
+import type { SourceMapInput } from 'rolldown'
 
 const debug = createDebug('rolldown-plugin-dts:tsgo')
 
@@ -57,6 +62,72 @@ export function resolveTsgoPath(logger: Logger): string {
 export interface TsgoContext {
   path: string
   dispose: () => Promise<void>
+}
+
+export interface TsgoGeneratorOptions {
+  tsgoPath: string
+  rootDir: string
+  tsconfig: string
+  sourcemap?: boolean
+  languageContext: LanguageContext
+}
+
+export class TsgoGenerator implements Generator {
+  private options: TsgoGeneratorOptions
+  private context?: TsgoContext
+
+  constructor(options: TsgoGeneratorOptions) {
+    this.options = options
+  }
+
+  async init(): Promise<void> {
+    const { tsgoPath, rootDir, tsconfig, sourcemap } = this.options
+    this.context = await runTsgo(tsgoPath, rootDir, tsconfig, sourcemap)
+  }
+
+  async emit(_code: string, fileName: string): Promise<GeneratorResult> {
+    const { rootDir, languageContext } = this.options
+    if (languageContext.isCustomLanguageFile(fileName)) {
+      return {
+        error: `tsgo does not support ${path.extname(fileName)} files.`,
+      }
+    }
+    if (!this.context) {
+      throw new Error('TsgoGenerator has not been initialized.')
+    }
+
+    const dtsPath = path.resolve(
+      this.context.path,
+      path.relative(
+        path.resolve(rootDir),
+        filename_to_dts(fileName, languageContext),
+      ),
+    )
+    if (!existsSync(dtsPath)) {
+      debug('[tsgo]', dtsPath, 'is missing')
+      return {
+        error: `tsgo did not generate dts file for ${fileName}, please check your tsconfig.`,
+      }
+    }
+
+    const code = await readFile(dtsPath, 'utf8')
+    let map: SourceMapInput | undefined
+    const mapPath = `${dtsPath}.map`
+    if (existsSync(mapPath)) {
+      const mapRaw = await readFile(mapPath, 'utf8')
+      map = {
+        ...JSON.parse(mapRaw),
+        sources: [fileName],
+      }
+    }
+
+    return { code, map }
+  }
+
+  async dispose(): Promise<void> {
+    await this.context?.dispose()
+    this.context = undefined
+  }
 }
 
 export async function runTsgo(

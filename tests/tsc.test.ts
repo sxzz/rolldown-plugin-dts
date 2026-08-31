@@ -30,6 +30,14 @@ describe('tsc', () => {
     expect(snapshot.replaceAll(/\/\/#region.*/g, '')).toMatchSnapshot()
   })
 
+  test('parallel', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/basic.ts'),
+      [dts({ generator: 'tsc', parallel: true })],
+    )
+    expect(snapshot).toContain('export declare const foo: number;')
+  })
+
   test('multi declarations', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/multi-decls/index.ts'),

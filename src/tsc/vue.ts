@@ -1,14 +1,14 @@
 import { createDebug } from 'obug'
 import { require, requireTSApi } from '../require.ts'
 import type { CustomLanguage } from '../custom-language.ts'
-import type { VueCompilerOptions } from '@vue/language-core'
 import type * as ts from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:vue')
 const RE_VUE = /\.vue$/
 
 export interface VueLanguageOptions {
-  vueCompilerOptions?: Partial<VueCompilerOptions>
+  /** @ts-ignore - optional dep */
+  vueCompilerOptions?: Partial<import('@vue/language-core').VueCompilerOptions>
 }
 
 export function createVueLanguage(

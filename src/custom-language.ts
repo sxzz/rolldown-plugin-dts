@@ -17,9 +17,12 @@ export interface CustomLanguage {
   /** Maps a source filename to the TypeScript filename used for declarations. */
   toTsFilename?: (id: string) => string
 
+  /** @ts-ignore - optional dep */
   volarTypeScript?: typeof import('@volar/typescript')
 
+  /** @ts-ignore - optional dep */
   createVolarPlugins?: Parameters<
+    // @ts-ignore
     (typeof import('@volar/typescript'))['proxyCreateProgram']
   >[2]
 }
