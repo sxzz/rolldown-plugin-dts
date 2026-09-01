@@ -60,6 +60,9 @@ When `generator` is omitted, the plugin selects:
 Automatic selection only inspects `typescript`. When `tsgo` is selected
 explicitly, a module without `getDeclarationEmit` reports an error.
 
+`generator` also accepts an object implementing the exported `Generator`
+interface.
+
 ```ts
 dts({
   generator: 'oxc',
@@ -72,7 +75,7 @@ dts({
 
 | Option            | Description                                                                               | Default                 |
 | ----------------- | ----------------------------------------------------------------------------------------- | ----------------------- |
-| `generator`       | Declaration generator: `tsc`, `oxc`, or `tsgo`.                                           | Inferred                |
+| `generator`       | Built-in generator name or a custom `Generator` implementation.                           | Inferred                |
 | `entry`           | Glob or globs selecting files to emit. Supports `!` negation and paths relative to `cwd`. | Rolldown entries        |
 | `cwd`             | Base directory for config discovery, globs, and relative paths.                           | `process.cwd()`         |
 | `dtsInput`        | Treat entry files as existing declarations.                                               | `false`                 |

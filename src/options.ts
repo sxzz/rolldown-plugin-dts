@@ -15,6 +15,7 @@ import {
   getTsgoPackageInfo,
   loadTsgoApi,
 } from './tsgo.ts'
+import type { Generator } from './generator/index.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = createDebug('rolldown-plugin-dts:options')
@@ -34,6 +35,7 @@ export interface GeneralOptions {
    * - `'oxc'` is faster but requires code compatible with
    *   [`isolatedDeclarations`](https://www.typescriptlang.org/tsconfig/#isolatedDeclarations).
    * - `'tsgo'` uses the experimental TypeScript Go API.
+   * - A custom {@link Generator} implementation can be provided directly.
    *
    * When omitted, the plugin selects `'oxc'` for `isolatedDeclarations`,
    * `'tsgo'` when TypeScript exposes the declaration emit API, and `'tsc'`
@@ -41,7 +43,7 @@ export interface GeneralOptions {
    *
    * @default Inferred from the TypeScript configuration and installed compiler.
    */
-  generator?: 'tsc' | 'oxc' | 'tsgo'
+  generator?: 'tsc' | 'oxc' | 'tsgo' | Generator
 
   /**
    * Glob pattern(s) that select source files for declaration generation.

@@ -5,6 +5,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { resolveOptions, type Options } from '../src/options.ts'
 import { mockRequire } from '../src/require.ts'
 import type { CustomLanguage } from '../src/custom-language.ts'
+import type { Generator } from '../src/index.ts'
 
 const realRequire = createRequire(import.meta.url)
 
@@ -165,6 +166,17 @@ function formatTitle(fixture: Fixture): string {
 }
 
 describe('resolve generator', () => {
+  test('preserves a custom generator without compiler inference', () => {
+    mockInstalled([false, false])
+    const generator: Generator = {
+      emit: () => ({ code: '' }),
+    }
+
+    expect(resolveOptions({ generator, tsconfig: false }).generator).toBe(
+      generator,
+    )
+  })
+
   const fixtures: Fixture[] = [
     //#region inference (no custom language)
     { expected: 'tsc' }, // TS 6 installed by default

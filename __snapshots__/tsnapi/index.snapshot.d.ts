@@ -9,6 +9,18 @@ export interface CustomLanguage {
   volarTypeScript?: typeof import("@volar/typescript");
   createVolarPlugins?: Parameters<(typeof import("@volar/typescript"))["proxyCreateProgram"]>[2];
 }
+export interface Generator {
+  init?: () => void | Promise<void>;
+  addFile?: (_: string, _: string) => void;
+  emit: (_: string, _: string) => GeneratorResult | Promise<GeneratorResult>;
+  dispose?: () => void | Promise<void>;
+  invalidate?: (_: string) => void;
+}
+export interface GeneratorResult {
+  code?: string;
+  map?: SourceMapInput;
+  error?: RollupError | string;
+}
 export interface Logger {
   info: (..._: any[]) => void;
   warn: (..._: any[]) => void;
@@ -30,7 +42,7 @@ export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDt
 
 // #region Referenced (internal)
 interface GeneralOptions {
-  generator?: "tsc" | "oxc" | "tsgo";
+  generator?: "tsc" | "oxc" | "tsgo" | Generator;
   entry?: string | string[];
   cwd?: string;
   dtsInput?: boolean;

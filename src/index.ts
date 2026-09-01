@@ -31,3 +31,4 @@ export {
   type Options,
 }
 export type { CustomLanguage } from './custom-language.ts'
+export type { Generator, GeneratorResult } from './generator/index.ts'
