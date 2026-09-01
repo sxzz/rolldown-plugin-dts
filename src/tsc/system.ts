@@ -1,13 +1,15 @@
 import { createDebug } from 'obug'
-import ts from 'typescript'
+import { requireTSApi } from '../require.ts'
+import type { System } from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-system')
+const ts = requireTSApi()
 
 /**
  * A system that writes files to both memory and disk. It will try read files
  * from memory firstly and fallback to disk if not found.
  */
-export function createFsSystem(files: Map<string, string>): ts.System {
+export function createFsSystem(files: Map<string, string>): System {
   return {
     ...ts.sys,
 
@@ -28,7 +30,7 @@ export function createFsSystem(files: Map<string, string>): ts.System {
     // Copied from
     // https://github.com/microsoft/TypeScript-Website/blob/b0e9a5c0/packages/typescript-vfs/src/index.ts#L532C1-L534C8
     directoryExists(directory) {
-      if (Array.from(files.keys()).some((path) => path.startsWith(directory))) {
+      if (files.keys().some((path) => path.startsWith(directory))) {
         return true
       }
       return ts.sys.directoryExists(directory)
@@ -62,7 +64,7 @@ export function createFsSystem(files: Map<string, string>): ts.System {
 
 // A system that only writes files to memory. It will read files from both
 // memory and disk.
-export function createMemorySystem(files: Map<string, string>): ts.System {
+export function createMemorySystem(files: Map<string, string>): System {
   return {
     ...createFsSystem(files),
 

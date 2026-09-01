@@ -3,22 +3,11 @@ import { createResolver } from 'dts-resolver'
 import { createDebug } from 'obug'
 import { ResolverFactory } from 'rolldown/experimental'
 import { importerId, include } from 'rolldown/filter'
-import {
-  filename_to_dts,
-  RE_CSS,
-  RE_DTS,
-  RE_JSON,
-  RE_TS,
-  RE_VUE,
-} from './filename.ts'
+import { filename_to_dts, RE_CSS, RE_DTS, RE_JSON, RE_TS } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
 import type { Plugin, ResolvedId } from 'rolldown'
 
 const debug = createDebug('rolldown-plugin-dts:resolver')
-
-function isSourceFile(id: string) {
-  return RE_TS.test(id) || RE_VUE.test(id) || RE_JSON.test(id)
-}
 
 export function createDtsResolvePlugin({
   cwd,
@@ -26,10 +15,24 @@ export function createDtsResolvePlugin({
   tsconfigRaw,
   resolver,
   sideEffects,
+  languageContext,
 }: Pick<
   OptionsResolved,
-  'cwd' | 'tsconfig' | 'tsconfigRaw' | 'resolver' | 'sideEffects'
+  | 'cwd'
+  | 'tsconfig'
+  | 'tsconfigRaw'
+  | 'resolver'
+  | 'sideEffects'
+  | 'languageContext'
 >): Plugin {
+  function isSourceFile(id: string) {
+    return (
+      RE_TS.test(id) ||
+      RE_JSON.test(id) ||
+      languageContext.isCustomLanguageFile(id)
+    )
+  }
+
   const baseDtsResolver = createResolver({
     tsconfig,
     resolveNodeModules: true,
@@ -104,11 +107,11 @@ export function createDtsResolvePlugin({
 
         if (isSourceFile(dtsResolution)) {
           debug('Resolving dts import to source file:', id)
-          // It's a .ts/.vue source file, so we load it to ensure its .d.ts is generated,
+          // It's a .ts / custom language source file, so we load it to ensure its .d.ts is generated,
           // then redirect the import to the future .d.ts path
           await this.load({ id: dtsResolution })
           return {
-            id: filename_to_dts(dtsResolution),
+            id: filename_to_dts(dtsResolution, languageContext),
             moduleSideEffects,
           }
         }

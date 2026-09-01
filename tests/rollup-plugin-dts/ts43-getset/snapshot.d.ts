@@ -4,9 +4,8 @@ interface GetT {}
 interface SetT {}
 //#endregion
 //#region tests/rollup-plugin-dts/ts43-getset/index.d.ts
-interface Thing {
+export interface Thing {
   get size(): GetT;
   set size(value: GetT | SetT | boolean);
 }
 //#endregion
-export { Thing };

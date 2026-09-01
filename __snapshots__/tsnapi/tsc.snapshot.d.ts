@@ -15,8 +15,7 @@ export interface TscOptions {
   entries?: string[];
   id: string;
   sourcemap: boolean;
-  vue?: boolean;
-  tsMacro?: boolean;
+  languageContext: LanguageContext;
   context?: TscContext;
 }
 export interface TscResult {

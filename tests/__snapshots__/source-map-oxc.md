@@ -7,18 +7,18 @@ declare namespace mod_d_exports {
 declare const foo: number;
 //#endregion
 //#region tests/fixtures/source-map/index.d.ts
-declare const a: string;
-declare const b: string;
+export declare const a: string;
+export declare const b: string;
 type Str = string;
-declare function fn(param: Str): string;
-interface Obj {
+export declare function fn(param: Str): string;
+export interface Obj {
   nested: {
     key: string;
   };
   method(): void;
   "foo-bar": number;
 }
-declare namespace Ns {
+export declare namespace Ns {
   type Str = string;
   type Foo<T> = T;
   type Obj = {
@@ -26,12 +26,12 @@ declare namespace Ns {
   };
 }
 //#endregion
-export { mod_d_exports as Mod, Ns, Obj, a, b, fn };
+export { mod_d_exports as Mod };
 //# sourceMappingURL=index.d.ts.map
 ```
 
 ## index.d.ts.map
 
 ```map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../../fixtures/source-map/mod.ts","../../fixtures/source-map/index.ts"],"mappings":";;;cAAa,GAAA;;;cCAA,CAAA;AAAA,cAEA,CAAA;AAAA,KAIR,GAAA;AAAA,iBACW,EAAA,CAAG,KAAO,EAAA,GAAA;AAAA,UAIT,GAAA;EACf,MAAA;IACE,GAAA;EAAA;EAEF,MAAA;EACA,SAAA;AAAA;AAAA,kBAGe,EAAA;EAAA,KACH,GAAA;EAAA,KACA,GAAA,MAAS,CAAA;EAAA,KACT,GAAA;IACV,EAAA;EAAA;AAAA"}
+{"version":3,"file":"index.d.ts","names":[],"sources":["../../fixtures/source-map/mod.ts","../../fixtures/source-map/index.ts"],"mappings":";;;cAAa;;;qBCAA;qBAEA;KAIR;wBACW,GAAG,OAAO;iBAIT;EACf;IACE;;EAEF;EACA;;yBAGe;OACH;OACA,IAAI,KAAK;OACT;IACV"}
 ```

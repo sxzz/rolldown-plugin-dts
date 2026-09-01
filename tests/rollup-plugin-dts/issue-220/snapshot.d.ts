@@ -4,8 +4,7 @@ declare enum Alphabet {
   a = "a",
   b = "b"
 }
-declare class Test {
+export declare class Test {
   readonly letter = Alphabet.a;
 }
 //#endregion
-export { Test };

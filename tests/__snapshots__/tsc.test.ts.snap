@@ -1,24 +1,31 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`tsc > accessor in type literal 1`] = `
+"// accessor-in-type-literal.d.ts
+//#region tests/fixtures/accessor-in-type-literal.d.ts
+export declare function makeBox(): {
+  get value(): number;
+};
+//#endregion"
+`;
+
 exports[`tsc > arktype 1`] = `
 "// arktype.d.ts
 //#region tests/fixtures/arktype.d.ts
-declare const test: import("arktype/internal/variants/object.ts").ObjectType<{
+export declare const test: import("arktype/internal/variants/object.ts").ObjectType<{
   test: string;
 }, {}>;
-//#endregion
-export { test };"
+//#endregion"
 `;
 
 exports[`tsc > compiler project sourcemap (build: false) 2`] = `
 "// index.d.ts
 //#region tests/fixtures/deep-source-map/src/index.d.ts
-declare const a = 1;
+export declare const a = 1;
 //#endregion
-export { a };
 //# sourceMappingURL=index.d.ts.map
 // index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":";cAAa,CAAA"}
+{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":";qBAAa"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
@@ -33,12 +40,11 @@ export { a };
 exports[`tsc > compiler project sourcemap (build: true) 2`] = `
 "// index.d.ts
 //#region tests/fixtures/deep-source-map/src/index.d.ts
-declare const a = 1;
+export declare const a = 1;
 //#endregion
-export { a };
 //# sourceMappingURL=index.d.ts.map
 // index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":";cAAa,CAAA"}
+{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":";qBAAa"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
@@ -53,9 +59,8 @@ export { a };
 exports[`tsc > composite references incremental 1`] = `
 "// input1.d.ts
 //#region tests/fixtures/composite-refs-incremental/dir1/input1.d.ts
-declare const input1 = "input1";
+export declare const input1 = "input1";
 //#endregion
-export { input1 };
 // input1.js
 //#region tests/fixtures/composite-refs-incremental/dir1/input1.ts
 const input1 = "input1";
@@ -64,9 +69,8 @@ export { input1 };
 
 // input2.d.ts
 //#region tests/fixtures/composite-refs-incremental/dir2/input2.d.ts
-declare const input2 = "input2";
+export declare const input2 = "input2";
 //#endregion
-export { input2 };
 // input2.js
 //#region tests/fixtures/composite-refs-incremental/dir2/input2.ts
 const input2 = "input2";
@@ -78,9 +82,8 @@ export { input2 };
 exports[`tsc > composite references no incremental 1`] = `
 "// input1.d.ts
 //#region tests/fixtures/composite-refs-no-incremental/dir1/input1.d.ts
-declare const input1 = "input1";
+export declare const input1 = "input1";
 //#endregion
-export { input1 };
 // input1.js
 //#region tests/fixtures/composite-refs-no-incremental/dir1/input1.ts
 const input1 = "input1";
@@ -89,9 +92,8 @@ export { input1 };
 
 // input2.d.ts
 //#region tests/fixtures/composite-refs-no-incremental/dir2/input2.d.ts
-declare const input2 = "input2";
+export declare const input2 = "input2";
 //#endregion
-export { input2 };
 // input2.js
 //#region tests/fixtures/composite-refs-no-incremental/dir2/input2.ts
 const input2 = "input2";
@@ -105,8 +107,8 @@ exports[`tsc > import JSON 1`] = `
 declare namespace foo_json_d_exports {
   export { age, __json_default_export as default, name };
 }
-declare let name: string;
-declare let age: number;
+export declare let name: string;
+export declare let age: number;
 declare namespace __json_default_export {
   export { name, age };
 }
@@ -341,26 +343,25 @@ declare const _exports: {
   key: string;
 }[];
 //#endregion
-export { age, _exports as arrayOfObjects, _exports$1 as bar, bar_json_d_exports as barNs, __json_default_export as foo, foo_json_d_exports as fooNs, invalid_json_d_exports as invalidNs, name, __json_default_export$1 as nested };"
+export { _exports as arrayOfObjects, _exports$1 as bar, bar_json_d_exports as barNs, __json_default_export as foo, foo_json_d_exports as fooNs, invalid_json_d_exports as invalidNs, __json_default_export$1 as nested };"
 `;
 
 exports[`tsc > jsdoc 1`] = `
 "// jsdoc.d.ts
 import { Plugin } from "rolldown";
-
 //#region tests/fixtures/jsdoc.d.ts
 /**
  * with imports
  */
-interface RollupMdiFontminOptions extends Plugin {}
+export interface RollupMdiFontminOptions extends Plugin {}
 /**
  * named export
  */
-declare function fn(): number;
+export declare function fn(): number;
 /**
  * options
  */
-interface Options {
+export interface Options {
   /**
    * interface member
    */
@@ -369,13 +370,13 @@ interface Options {
 /**
  * type alias
  */
-type Foo = string;
+export type Foo = string;
 /**
  * default export
  */
 declare const _default: number;
 //#endregion
-export { Foo, Options, RollupMdiFontminOptions, _default as default, fn };
+export { _default as default };
 // jsdoc.js
 //#region tests/fixtures/jsdoc.ts
 /**
@@ -393,24 +394,53 @@ export { jsdoc_default as default, fn };
 "
 `;
 
+exports[`tsc > jsdoc members 1`] = `
+"// jsdoc-members.d.ts
+//#region tests/fixtures/jsdoc-members.d.ts
+export declare const foo: string;
+export interface A {
+  /** Comment A1 */
+  AA?: string;
+  /** Comment A2 */
+  AB?: string;
+  /** Comment A3 */
+  AC?: string;
+}
+export type B = {
+  /** Comment B1 */
+  BA?: string;
+  /** Comment B2 */
+  BB?: string;
+  /** Comment B3 */
+  BC?: string;
+};
+export declare function fn(): void;
+//#endregion
+// jsdoc-members.js
+//#region tests/fixtures/jsdoc-members.ts
+const foo = "foo";
+function fn() {}
+//#endregion
+export { fn, foo };
+"
+`;
+
 exports[`tsc > multi declarations 1`] = `
 "// index.d.ts
 //#region tests/fixtures/multi-decls/mod.d.ts
-declare const a: 1, b: 2;
+export declare const a: 1, b: 2;
 //#endregion
 //#region tests/fixtures/multi-decls/index.d.ts
-declare const a$1 = 3,
-  b$1 = 3;
+declare const a$1 = 3, b$1 = 3;
 //#endregion
-export { a, b, a$1 as c, b$1 as d };"
+export { a$1 as c, b$1 as d };"
 `;
 
 exports[`tsc > references 1`] = `
 "// index.d.ts
 //#region tests/fixtures/refs/src/index.d.ts
-declare const a = 1;
+export declare const a = 1;
 //#endregion
-export { a };
 // index.js
 //#region tests/fixtures/refs/src/index.ts
 const a = 1;
@@ -422,105 +452,41 @@ export { a };
 exports[`tsc > rename infer 1`] = `
 "// infer-renaming.d.ts
 import { infer as __Infer, z } from "zod";
-
 //#region tests/fixtures/infer-renaming.d.ts
-declare const productSchema: z.ZodObject<{
+export declare const productSchema: z.ZodObject<{
   id: z.ZodString;
   price: z.ZodNumber;
 }, z.core.$strip>;
-declare const product: __Infer<typeof productSchema>;
-//#endregion
-export { product, productSchema };"
+export declare const product: __Infer<typeof productSchema>;
+//#endregion"
 `;
 
 exports[`tsc > resolve paths > resolver: oxc 1`] = `
 "// index.d.ts
 //#region tests/fixtures/paths/mod.d.ts
-declare const foo = 42;
-//#endregion
-export { foo };"
+export declare const foo = 42;
+//#endregion"
 `;
 
 exports[`tsc > resolve paths > resolver: tsc 1`] = `
 "// index.d.ts
 //#region tests/fixtures/paths/mod.d.ts
-declare const foo = 42;
-//#endregion
-export { foo };"
-`;
-
-exports[`tsc > ts-macro w/ ts-compiler 1`] = `
-"// main.d.ts
-//#region tests/fixtures/ts-macro/main.d.ts
-declare function defineStyle(style: string): string;
-//#endregion
-export { defineStyle as default };"
+export declare const foo = 42;
+//#endregion"
 `;
 
 exports[`tsc > typescript compiler 1`] = `
 "// entry1.d.ts
 
-declare const str = "foo";
-declare const num = 42;
-declare const bool = true;
-declare function fn(arg: typeof str): "foo" | 1;
+export declare const str = "foo";
+export declare const num = 42;
+export declare const bool = true;
+export declare function fn(arg: typeof str): "foo" | 1;
 //#endregion
-export { bool, fn, num, str };
 // entry2.d.ts
 
-interface Unused {
+export interface Unused {
   foo: string;
 }
-//#endregion
-export { Unused };"
-`;
-
-exports[`tsc > vue-sfc w/ ts-compiler 1`] = `
-"// main.d.ts
-//#region tests/fixtures/vue-sfc/App.vue.d.ts
-type __VLS_Props = {
-  foo: string;
-};
-declare global {
-  interface Window {
-    foo: string;
-  }
-}
-declare const __VLS_export: import("@vue/runtime-core").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("@vue/runtime-core").ComponentOptionsMixin, import("@vue/runtime-core").ComponentOptionsMixin, {}, string, import("@vue/runtime-core").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("@vue/runtime-core").ComponentProvideOptions, false, {}, any>;
-declare const _default: typeof __VLS_export;
-//#endregion
-export { _default as App };"
-`;
-
-exports[`tsc > vue-sfc w/ ts-compiler w/ vueCompilerOptions in tsconfig 1`] = `
-"// main.d.ts
-//#region tests/fixtures/vue-sfc-fallthrough/App.vue.d.ts
-declare const __VLS_export: import("vue").DefineComponent<{
-  foo: string;
-}, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<{
-  foo: string;
-}> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
-declare const _default: typeof __VLS_export;
-//#endregion
-export { _default as App };"
-`;
-
-exports[`tsc > vue-sfc w/ ts-macro w/ ts-compiler 1`] = `
-"// main.d.ts
-//#region tests/fixtures/vue-sfc-with-ts-macro/App.vue.d.ts
-type __VLS_Props = {
-  foo: string;
-};
-declare global {
-  interface Window {
-    foo: string;
-  }
-}
-declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
-declare const _default: typeof __VLS_export;
-//#endregion
-//#region tests/fixtures/vue-sfc-with-ts-macro/main.d.ts
-declare function defineStyle(style: string): any;
-//#endregion
-export { _default as App, defineStyle };"
+//#endregion"
 `;

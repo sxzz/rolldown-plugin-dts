@@ -2,8 +2,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
+import { resolveTsgoPath } from '../src/generator/tsgo.ts'
 import { dts } from '../src/index.ts'
-import { getTsgoPathFromNodeModules } from '../src/tsgo.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -28,7 +28,7 @@ test('resolve dependencies', async () => {
     path.resolve(dirname, 'fixtures/resolve-dep.ts'),
     [
       dts({
-        oxc: true,
+        generator: 'oxc',
         emitDtsOnly: true,
       }),
     ],
@@ -118,7 +118,7 @@ test('isolated declaration error', async () => {
     [
       dts({
         emitDtsOnly: true,
-        oxc: true,
+        generator: 'oxc',
       }),
     ],
   ).catch((error: any) => error)
@@ -183,7 +183,7 @@ describe('dts input', () => {
       ]),
     )
     expect(warnings.join('\n')).toContain(
-      'rolldown-plugin-dts does not support reliably bundling CommonJS dts input',
+      'rolldown-plugin-dts does not support bundling CommonJS dts input',
     )
   })
 
@@ -504,6 +504,25 @@ test('cjs exports', async () => {
     )
     expect(snapshot).toMatchSnapshot()
   }
+
+  // `export =` wins over an inline `export default`
+  {
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/cjs-default-decl.ts')],
+      [dts({ emitDtsOnly: true, cjsDefault: true })],
+    )
+    expect(snapshot).toContain('export = Foo;')
+  }
+
+  // `export =` is invalid once the module exports anything else
+  {
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/cjs-default-mixed.ts')],
+      [dts({ emitDtsOnly: true, cjsDefault: true })],
+    )
+    expect(snapshot).not.toContain('export =')
+    expect(snapshot).toMatchSnapshot()
+  }
 })
 
 test('declare module', async () => {
@@ -629,11 +648,16 @@ test('infer false branch', async () => {
 })
 
 test('tsgo with custom path', async () => {
-  const tsgoPath = await getTsgoPathFromNodeModules()
+  const tsgoPath = resolveTsgoPath({
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+  })
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/basic.ts'),
     [
       dts({
+        generator: 'tsgo',
         tsgo: { path: tsgoPath },
         tsconfig: path.resolve(dirname, 'fixtures/basic.tsconfig.json'),
       }),
@@ -719,5 +743,21 @@ test('method signature', async () => {
   const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
     dts({ emitDtsOnly: true }),
   ])
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('import = syntax', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/import-equals.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('declaration with export', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/export-decl.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
   expect(snapshot).toMatchSnapshot()
 })

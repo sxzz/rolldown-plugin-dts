@@ -8,15 +8,14 @@ export { B as t };
 /// <reference types="jest" />
 /// <reference types="react" />
 import { t as B } from "./common-DdSWU8yq.js";
-
 //#region tests/rollup-plugin-dts/issue-128-reference-directive/ref-from-a.d.ts
-declare const A = 2;
+export declare const A = 2;
 //#endregion
 //#region tests/rollup-plugin-dts/issue-128-reference-directive/main-a.d.ts
 declare type JSXElements = keyof JSX.IntrinsicElements;
 declare const a: JSXElements[];
 //#endregion
-export { A, B, JSXElements, a };
+export { B, JSXElements, a };
 // main-b.d.ts
 import { t as B } from "./common-DdSWU8yq.js";
 export { B };

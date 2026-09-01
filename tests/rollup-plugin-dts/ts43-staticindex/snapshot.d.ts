@@ -3,10 +3,9 @@
 interface StaticT {}
 //#endregion
 //#region tests/rollup-plugin-dts/ts43-staticindex/index.d.ts
-declare class Foo {
+export declare class Foo {
   static hello: string;
   static world: number;
   static [propName: string]: string | number | StaticT;
 }
 //#endregion
-export { Foo };

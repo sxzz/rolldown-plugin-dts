@@ -18,13 +18,12 @@ import * as I from "i";
 import * as O from "o";
 export * from "i1";
 export type * from "n";
-
 //#region tests/rollup-plugin-dts/type-only-import-export/foo.d.ts
 interface Foo {}
 //#endregion
 //#region tests/rollup-plugin-dts/type-only-import-export/bar.d.ts
 declare class BarType {}
-declare class BarValue {}
+export declare class BarValue {}
 //#endregion
 //#region tests/rollup-plugin-dts/type-only-import-export/index.d.ts
 interface O$1 {}
@@ -33,4 +32,4 @@ interface Foo$1 {
   inline: string;
 }
 //#endregion
-export { A, type B, type B1 as B2, type B1 as B3, type BarType, BarValue, C, C as C1, type D, type E3 as E2, type E3, type E4, type F, type Foo, type Foo$1 as FooInlne, G, type G1, H1, I, type J, type K1, type L, type M1, type O, O$1 as O1, type X, E as default };
+export { A, type B, type B1 as B2, type B1 as B3, type BarType, C, C as C1, type D, type E3 as E2, type E3, type E4, type F, type Foo, type Foo$1 as FooInlne, G, type G1, H1, I, type J, type K1, type L, type M1, type O, O$1 as O1, type X, E as default };

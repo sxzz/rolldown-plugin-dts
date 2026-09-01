@@ -1,8 +1,8 @@
 {
   "name": "rolldown-plugin-dts",
   "type": "module",
-  "version": "0.25.2",
-  "packageManager": "pnpm@11.5.2",
+  "version": "0.28.4",
+  "packageManager": "pnpm@12.1.0",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
   "license": "MIT",
@@ -18,10 +18,13 @@
   "keywords": [
     "rolldown",
     "plugin",
+    "rolldown-plugin",
+    "vite-plugin",
     "dts",
     "typescript",
     "vue",
-    "jsdoc"
+    "jsdoc",
+    "volar"
   ],
   "exports": {
     ".": "./dist/index.mjs",
@@ -31,7 +34,6 @@
     "./tsc-worker": "./dist/tsc-worker.mjs",
     "./package.json": "./package.json"
   },
-  "types": "./dist/index.d.mts",
   "files": [
     "dist"
   ],
@@ -39,7 +41,7 @@
     "access": "public"
   },
   "engines": {
-    "node": "^22.18.0 || >=24.0.0"
+    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
   },
   "scripts": {
     "lint": "eslint --cache .",
@@ -47,23 +49,23 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "test": "vitest",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --cache --write .",
     "release": "bumpp",
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "@ts-macro/tsc": "^0.3.6",
-    "@typescript/native-preview": ">=7.0.0-dev.20260325.1",
-    "rolldown": "^1.0.0",
-    "typescript": "^5.0.0 || ^6.0.0",
+    "@typescript/native-preview": "*",
+    "@volar/typescript": "~2.4.0",
+    "rolldown": "^1.2.0",
+    "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0",
     "vue-tsc": "~3.2.0 || ~3.3.0"
   },
   "peerDependenciesMeta": {
-    "@ts-macro/tsc": {
+    "@typescript/native-preview": {
       "optional": true
     },
-    "@typescript/native-preview": {
+    "@volar/typescript": {
       "optional": true
     },
     "typescript": {
@@ -74,33 +76,31 @@
     }
   },
   "dependencies": {
-    "@babel/generator": "catalog:prod",
-    "@babel/helper-validator-identifier": "catalog:prod",
-    "@babel/parser": "catalog:prod",
-    "ast-kit": "catalog:prod",
-    "birpc": "catalog:prod",
     "dts-resolver": "catalog:prod",
     "get-tsconfig": "catalog:prod",
-    "obug": "catalog:prod"
+    "obug": "catalog:prod",
+    "yuku-ast": "catalog:prod",
+    "yuku-codegen": "catalog:prod",
+    "yuku-parser": "catalog:prod"
   },
   "devDependencies": {
-    "@babel/types": "catalog:",
+    "@astrojs/ts-plugin": "catalog:",
     "@jridgewell/source-map": "catalog:",
     "@sxzz/eslint-config": "catalog:",
     "@sxzz/prettier-config": "catalog:",
     "@sxzz/test-utils": "catalog:",
+    "@ts-macro/language-plugin": "catalog:",
+    "@ts-macro/tsc": "catalog:",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "@volar/typescript": "catalog:",
     "@vue/language-core": "catalog:",
     "arktype": "catalog:",
     "bumpp": "catalog:",
-    "diff": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "rolldown": "catalog:",
-    "rolldown-plugin-require-cjs": "catalog:",
-    "rollup-plugin-dts": "catalog:",
+    "ts-macro": "catalog:",
     "tsdown": "catalog:",
     "tsnapi": "catalog:",
     "typescript": "catalog:",
