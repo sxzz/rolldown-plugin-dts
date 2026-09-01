@@ -11,9 +11,9 @@ import { LanguageContext, type CustomLanguage } from './custom-language.ts'
 import { requireTSApi } from './require.ts'
 import { createVueLanguage, type VueLanguageOptions } from './tsc/vue.ts'
 import {
-  getDefaultTsgoGenerator,
   getDefaultTsgoModuleUrl,
-  resolveTsgoApiPackage,
+  getTsgoPackageInfo,
+  loadTsgoApi,
 } from './tsgo.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
@@ -337,7 +337,8 @@ export function resolveOptions({
 
   oxc ||= {}
   tsgo ||= {}
-  tsgo.moduleUrl ??= getDefaultTsgoModuleUrl()
+  const defaultTsgoModuleUrl = getDefaultTsgoModuleUrl()
+  tsgo.moduleUrl ??= defaultTsgoModuleUrl
   tsgo.vfs ??= false
 
   if (isUsingVolar) {
@@ -357,7 +358,12 @@ export function resolveOptions({
     if (compilerOptions.isolatedDeclarations) {
       generator = 'oxc'
     } else {
-      generator = getDefaultTsgoGenerator() ?? 'tsc'
+      const pkg = getTsgoPackageInfo(defaultTsgoModuleUrl)
+      generator =
+        pkg &&
+        (pkg.api?.Program?.prototype.getDeclarationEmit || !pkg.hasClassicApi)
+          ? 'tsgo'
+          : 'tsc'
     }
   }
 
@@ -389,7 +395,7 @@ export function resolveOptions({
         'TypeScript Go is experimental. Some options will be unavailable.',
       )
     }
-    resolveTsgoApiPackage(logger, tsgo.moduleUrl)
+    loadTsgoApi(tsgo.moduleUrl, logger)
   }
   oxc.stripInternal ??= !!compilerOptions.stripInternal
   // @ts-expect-error omitted in user options

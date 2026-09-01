@@ -5,7 +5,6 @@ import { tryRequire, tryResolve } from './require.ts'
 import type { Logger } from './options.ts'
 
 export interface TsgoPackageInfo {
-  moduleUrl: string
   api?: TsgoApiModule
   hasClassicApi: boolean
 }
@@ -23,60 +22,37 @@ export function getDefaultTsgoModuleUrl(): string | undefined {
   } catch {}
 }
 
-function getModulePath(moduleUrl: string): string {
-  return moduleUrl.startsWith('file:') ? fileURLToPath(moduleUrl) : moduleUrl
-}
-
 export function getTsgoPackageInfo(
   moduleUrl: string | undefined,
 ): TsgoPackageInfo | undefined {
   if (!moduleUrl) return
 
-  let modulePath: string
+  let modulePath = moduleUrl
   try {
-    modulePath = getModulePath(moduleUrl)
+    if (moduleUrl.startsWith('file:')) modulePath = fileURLToPath(moduleUrl)
   } catch {
-    return { moduleUrl, hasClassicApi: false }
+    return
   }
 
-  const rootModule = tryRequire<TsgoApiModule & typeof import('typescript')>(
-    modulePath,
-  )
+  const ts = tryRequire<TsgoApiModule & typeof import('typescript')>(modulePath)
   const apiPath = tryResolve('typescript/unstable/async', {
     paths: [path.dirname(modulePath)],
   })
-  const api = rootModule?.Program?.prototype.getDeclarationEmit
-    ? rootModule
+  const api = ts?.Program?.prototype.getDeclarationEmit
+    ? ts
     : apiPath
       ? tryRequire<TsgoApiModule>(apiPath)
       : undefined
   return {
-    moduleUrl,
     api,
-    hasClassicApi: typeof rootModule?.createProgram === 'function',
+    hasClassicApi: typeof ts?.createProgram === 'function',
   }
 }
 
-export function getDefaultTsgoGenerator(): 'tsgo' | undefined {
-  const pkg = getTsgoPackageInfo(getDefaultTsgoModuleUrl())
-  if (
-    pkg?.api?.Program?.prototype.getDeclarationEmit ||
-    (pkg && !pkg.hasClassicApi)
-  ) {
-    return 'tsgo'
-  }
-}
-
-function logPackage(logger: Logger, pkg: TsgoPackageInfo): void {
-  logger.info(
-    `Emit types with TypeScript Go from ${styleText('underline', pkg.moduleUrl)}`,
-  )
-}
-
-export function resolveTsgoApiPackage(
-  logger?: Logger,
+export function loadTsgoApi(
   moduleUrl: string | undefined = getDefaultTsgoModuleUrl(),
-): TsgoPackageInfo {
+  logger?: Logger,
+): TsgoApiModule {
   const pkg = getTsgoPackageInfo(moduleUrl)
   if (!pkg?.api?.Program?.prototype.getDeclarationEmit) {
     throw new Error(
@@ -84,13 +60,10 @@ export function resolveTsgoApiPackage(
     )
   }
 
-  if (logger) logPackage(logger, pkg)
-  return pkg
-}
-
-export function loadTsgoApi(
-  moduleUrl: string | undefined = getDefaultTsgoModuleUrl(),
-): TsgoApiModule {
-  const pkg = resolveTsgoApiPackage(undefined, moduleUrl)
-  return pkg.api!
+  if (logger && moduleUrl) {
+    logger.info(
+      `Emit types with TypeScript Go from ${styleText('underline', moduleUrl)}`,
+    )
+  }
+  return pkg.api
 }
