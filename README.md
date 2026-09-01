@@ -54,11 +54,11 @@ See [rolldown.config.ts](./rolldown.config.ts) for the project's own setup.
 When `generator` is omitted, the plugin selects:
 
 1. `oxc` when `compilerOptions.isolatedDeclarations` is enabled.
-2. `tsgo` for a native `typescript` package.
+2. `tsgo` when `typescript` exposes `Program.prototype.getDeclarationEmit`.
 3. `tsc` otherwise.
 
-Automatic selection only inspects `typescript`. A native package without
-`getDeclarationEmit` reports an error instead of falling back.
+Automatic selection only inspects `typescript`. When `tsgo` is selected
+explicitly, a module without `getDeclarationEmit` reports an error.
 
 ```ts
 dts({

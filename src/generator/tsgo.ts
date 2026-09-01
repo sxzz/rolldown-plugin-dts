@@ -1,10 +1,11 @@
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { createDebug } from 'obug'
-import { loadTsgoApi, type TsgoApiModule } from '../tsgo.ts'
+import { loadTsgoApi } from '../tsgo.ts'
 import type { LanguageContext } from '../custom-language.ts'
 import type { Generator, GeneratorResult } from './index.ts'
 import type { SourceMapInput } from 'rolldown'
+import type * as TsgoApiModule from 'typescript-next/unstable/async'
 import type { API, Snapshot } from 'typescript-next/unstable/async'
 import type { FileSystem } from 'typescript-next/unstable/fs'
 
@@ -21,7 +22,7 @@ export interface TsgoGeneratorOptions {
 
 export class TsgoGenerator implements Generator {
   private options: TsgoGeneratorOptions
-  private apiModule?: TsgoApiModule
+  private apiModule?: typeof TsgoApiModule
   private api?: API
   private snapshot?: Snapshot
   private activeFiles = new Map<string, string>()

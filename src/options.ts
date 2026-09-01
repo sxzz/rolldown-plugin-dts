@@ -36,9 +36,8 @@ export interface GeneralOptions {
    * - `'tsgo'` uses the experimental TypeScript Go API.
    *
    * When omitted, the plugin selects `'oxc'` for `isolatedDeclarations`,
-   * `'tsgo'` for native TypeScript versions, and `'tsc'` otherwise. Native
-   * TypeScript installations without the declaration emit API are rejected.
-   * Volar-based custom languages require `'tsc'`.
+   * `'tsgo'` when TypeScript exposes the declaration emit API, and `'tsc'`
+   * otherwise. Volar-based custom languages require `'tsc'`.
    *
    * @default Inferred from the TypeScript configuration and installed compiler.
    */
@@ -359,11 +358,7 @@ export function resolveOptions({
       generator = 'oxc'
     } else {
       const pkg = getTsgoPackageInfo(defaultTsgoModuleUrl)
-      generator =
-        pkg &&
-        (pkg.api?.Program?.prototype.getDeclarationEmit || !pkg.hasClassicApi)
-          ? 'tsgo'
-          : 'tsc'
+      generator = pkg?.hasTsgoApi ? 'tsgo' : 'tsc'
     }
   }
 
