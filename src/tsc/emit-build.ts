@@ -174,7 +174,11 @@ function buildProjects(
 
   const host = ts.createSolutionBuilderHost(
     fsSystem,
-    createProgramWithPatchedCompilerOptions(sourcemap),
+    createProgramWithPatchedCompilerOptions({
+      force,
+      sourcemap,
+      tsconfigPath: tsconfig,
+    }),
   )
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
     force,
@@ -267,6 +271,12 @@ function parseTsconfig(
   return parsedConfig
 }
 
+interface CompilerPatchOptions {
+  tsconfigPath: string
+  force: boolean
+  sourcemap: boolean
+}
+
 // To ensure we can get `.d.ts` and `.d.ts.map` files from `tsc --build` mode,
 // we need to enforce certain compiler options. Notice that changing compiler
 // options will invalidate the cache, so it's better to set the correct value in
@@ -274,11 +284,7 @@ function parseTsconfig(
 // values are not set correctly.
 function patchCompilerOptions(
   options: CompilerOptions,
-  extraOptions: {
-    tsconfigPath: string
-    force: boolean
-    sourcemap: boolean
-  } | null,
+  extraOptions: CompilerPatchOptions,
 ): CompilerOptions {
   const noEmit: boolean = options.noEmit ?? false
   const declaration: boolean =
@@ -316,16 +322,12 @@ function patchCompilerOptions(
 }
 
 function createProgramWithPatchedCompilerOptions(
-  sourcemap: boolean,
+  patchOptions: CompilerPatchOptions,
 ): CreateProgram<EmitAndSemanticDiagnosticsBuilderProgram> {
   return (rootNames, options, ...args) => {
     return ts.createEmitAndSemanticDiagnosticsBuilderProgram(
       rootNames,
-      patchCompilerOptions(options ?? {}, {
-        tsconfigPath: '',
-        force: true,
-        sourcemap,
-      }),
+      patchCompilerOptions(options ?? {}, patchOptions),
       ...args,
     )
   }
