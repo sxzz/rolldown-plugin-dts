@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
-import { dts } from '../src/index.ts'
+import { dts, type Generator } from '../src/index.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const require = createRequire(import.meta.url)
@@ -15,6 +15,38 @@ test('basic', async () => {
     [dts()],
   )
   expect(snapshot).toMatchSnapshot()
+})
+
+test('custom generator', async () => {
+  const calls: string[] = []
+  const generator: Generator = {
+    init() {
+      calls.push('init')
+    },
+    addFile(_code, fileName) {
+      calls.push(`addFile:${path.basename(fileName)}`)
+    },
+    emit(_code, fileName) {
+      calls.push(`emit:${path.basename(fileName)}`)
+      return { code: 'export declare const custom: true' }
+    },
+    dispose() {
+      calls.push('dispose')
+    },
+  }
+
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/basic.ts'),
+    [dts({ generator, tsconfig: false, emitDtsOnly: true })],
+  )
+
+  expect(snapshot).toContain('declare const custom: true')
+  expect(calls).toStrictEqual([
+    'init',
+    'addFile:basic.ts',
+    'emit:basic.ts',
+    'dispose',
+  ])
 })
 
 test('tsx', async () => {
