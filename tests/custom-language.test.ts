@@ -32,6 +32,27 @@ describe('volar', () => {
       expect(snapshot).toMatchSnapshot()
     })
 
+    test('vue-sfc w/ parallel ts-compiler', async () => {
+      const root = path.resolve(dirname, 'fixtures/vue-sfc')
+      const { snapshot } = await rolldownBuild(
+        path.resolve(root, 'main.ts'),
+        [
+          dts({
+            emitDtsOnly: true,
+            vue: {
+              vueCompilerOptions: { fallthroughAttributes: false },
+            },
+            parallel: true,
+            compilerOptions: {
+              isolatedDeclarations: false,
+            },
+          }),
+        ],
+        { external },
+      )
+      expect(snapshot).toMatchSnapshot()
+    })
+
     test('vue-sfc w/ ts-compiler w/ vueCompilerOptions in tsconfig', async () => {
       const root = path.resolve(dirname, 'fixtures/vue-sfc-fallthrough')
       const { snapshot } = await rolldownBuild(

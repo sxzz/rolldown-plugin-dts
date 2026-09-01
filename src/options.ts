@@ -9,7 +9,11 @@ import {
 import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
 import { requireTSApi } from './require.ts'
-import { createVueLanguage, type VueLanguageOptions } from './tsc/vue.ts'
+import {
+  createVueLanguage,
+  createVueLanguageMetadata,
+  type VueLanguageOptions,
+} from './tsc/vue.ts'
 import {
   getDefaultTsgoModuleUrl,
   getTsgoPackageInfo,
@@ -164,6 +168,8 @@ export interface TscOptions {
 
   /**
    * Runs `tsc` or `vue-tsc` in a separate process.
+   * Custom languages supplied through {@link Options.customLanguages} are not
+   * supported in the worker process.
    *
    * @default false
    */
@@ -262,6 +268,7 @@ export type OptionsResolved = Overwrite<
     tsconfigRaw: TsconfigJson
     tsgo: TsgoOptions
     languageContext: LanguageContext
+    vue: false | VueLanguageOptions
   }
 >
 
@@ -323,18 +330,26 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  customLanguages ||= []
-  if (vue) {
+  const hasCustomLanguages = !!customLanguages?.length
+  customLanguages = [...(customLanguages || [])]
+  const vueOptions: false | VueLanguageOptions = vue
+    ? typeof vue === 'object'
+      ? vue
+      : {}
+    : false
+  if (vueOptions) {
     if (generator && generator !== 'tsc') {
       throw new Error(
         'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
       )
     }
-    customLanguages.push(createVueLanguage(typeof vue === 'object' ? vue : {}))
+    customLanguages.push(
+      parallel ? createVueLanguageMetadata() : createVueLanguage(vueOptions),
+    )
   }
 
   const languageContext = new LanguageContext(customLanguages)
-  const isUsingVolar = languageContext.isUsingVolar()
+  const isUsingVolar = !!vueOptions || languageContext.isUsingVolar()
 
   oxc ||= {}
   tsgo ||= {}
@@ -348,10 +363,6 @@ export function resolveOptions({
         'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
       )
     }
-    requireTSApi(
-      'custom languages',
-      '. Custom languages require the TypeScript API.',
-    )
     generator = 'tsc'
   }
 
@@ -362,6 +373,19 @@ export function resolveOptions({
       const pkg = getTsgoPackageInfo(defaultTsgoModuleUrl)
       generator = pkg?.hasTsgoApi ? 'tsgo' : 'tsc'
     }
+  }
+
+  if (generator === 'tsc' && parallel && hasCustomLanguages) {
+    throw new Error(
+      'The `parallel` option does not support `customLanguages`. Disable `parallel` or use the built-in `vue` option for Vue.',
+    )
+  }
+
+  if (isUsingVolar) {
+    requireTSApi(
+      vueOptions ? 'Vue' : 'custom languages',
+      vueOptions ? '.' : '. Custom languages require the TypeScript API.',
+    )
   }
 
   if (
@@ -422,6 +446,7 @@ export function resolveOptions({
     // tsc
     build,
     incremental,
+    vue: vueOptions,
     parallel,
     eager,
     newContext,
