@@ -43,7 +43,6 @@ test('vfs accumulates files, applies changes, and resets between builds', async 
   expect(changed.code).toContain('valueB: "changed-b"')
 
   await generator.dispose()
-  generator = createGenerator()
   await generator.init()
 
   const rebuilt = await generator.emit(aCode, a)

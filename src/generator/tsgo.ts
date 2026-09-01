@@ -44,8 +44,8 @@ export class TsgoGenerator implements Generator {
     const fs = vfs ? this.createFileSystem() : undefined
     this.api = new this.apiModule.API({
       cwd,
-      ...(tsgoPath ? { tsserverPath: tsgoPath } : undefined),
-      ...(fs ? { fs } : undefined),
+      tsserverPath: tsgoPath,
+      fs,
     })
     this.snapshot = await this.api.updateSnapshot({
       openProjects: [tsconfig],
@@ -76,19 +76,8 @@ export class TsgoGenerator implements Generator {
 
   async dispose(): Promise<void> {
     await this.emitQueue
-    const snapshot = this.snapshot
-    const api = this.api
-    this.apiModule = undefined
-    this.api = undefined
-    this.snapshot = undefined
-    try {
-      await snapshot?.dispose()
-    } finally {
-      await api?.close()
-    }
-    this.activeFiles.clear()
-    this.pendingFiles.clear()
-    this.openedFiles.clear()
+    await this.api?.close()
+    this.api = this.snapshot = undefined
   }
 
   private createFileSystem(): FileSystem {
