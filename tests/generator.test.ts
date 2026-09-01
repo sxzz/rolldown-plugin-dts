@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module'
+import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { resolveOptions, type Options } from '../src/options.ts'
@@ -7,10 +8,27 @@ import type { CustomLanguage } from '../src/custom-language.ts'
 
 const realRequire = createRequire(import.meta.url)
 
-const TYPESCRIPT_MODULE_PATH = '/mock/typescript/lib/typescript.js'
+const MOCK_ROOT = path.join(path.parse(import.meta.dirname).root, 'mock')
+const TYPESCRIPT_MODULE_PATH = path.join(
+  MOCK_ROOT,
+  'typescript/lib/typescript.js',
+)
 const TYPESCRIPT_MODULE_URL = pathToFileURL(TYPESCRIPT_MODULE_PATH).href
-const CUSTOM_MODULE_PATH = '/mock/xxx/lib/index.js'
+const TYPESCRIPT_PACKAGE_JSON_PATH = path.join(
+  MOCK_ROOT,
+  'typescript/package.json',
+)
+const TYPESCRIPT_API_PATH = path.join(
+  MOCK_ROOT,
+  'typescript/dist/api/async/api.js',
+)
+const CUSTOM_MODULE_PATH = path.join(MOCK_ROOT, 'xxx/lib/index.js')
 const CUSTOM_MODULE_URL = pathToFileURL(CUSTOM_MODULE_PATH).href
+const CUSTOM_API_PATH = path.join(MOCK_ROOT, 'xxx/dist/api/async/api.js')
+
+function normalizePath(fileName: string): string {
+  return fileName.replaceAll('\\', '/')
+}
 
 type PackageVersion = 6 | 7 | 'api' | 'next' | false
 type Installed = [ts: PackageVersion, custom: PackageVersion]
@@ -24,27 +42,30 @@ function getVersion(version: Exclude<PackageVersion, false>): string {
 
 function mockInstalled([ts, custom]: Installed) {
   const fake = ((rawId: string) => {
-    const id = rawId.replaceAll('\\', '/')
+    const id = normalizePath(rawId)
     switch (id) {
       case 'typescript': {
         if (!ts) throw new Error(`Cannot find module 'typescript'`)
         return ts === 6 || ts === 'api' ? { createProgram() {} } : {}
       }
-      case TYPESCRIPT_MODULE_PATH:
+      case normalizePath(TYPESCRIPT_MODULE_PATH):
         if (!ts) throw new Error(`Cannot find module '${id}'`)
         return ts === 6 || ts === 'api' ? { createProgram() {} } : {}
-      case CUSTOM_MODULE_PATH:
+      case normalizePath(CUSTOM_MODULE_PATH):
         if (!custom) throw new Error(`Cannot find module '${id}'`)
         return custom === 6 || custom === 'api' ? { createProgram() {} } : {}
       case 'typescript/package.json':
-      case '/mock/typescript/package.json': {
+      case normalizePath(TYPESCRIPT_PACKAGE_JSON_PATH): {
         if (!ts) throw new Error(`Cannot find module '${id}'`)
         return { version: getVersion(ts) }
       }
     }
-    const apiSource = ['typescript', 'xxx'].find(
-      (source) => id === `/mock/${source}/dist/api/async/api.js`,
-    )
+    const apiSource =
+      id === normalizePath(TYPESCRIPT_API_PATH)
+        ? 'typescript'
+        : id === normalizePath(CUSTOM_API_PATH)
+          ? 'xxx'
+          : undefined
     if (apiSource) {
       const installed = apiSource === 'typescript' ? ts : custom
       return {
@@ -67,17 +88,21 @@ function mockInstalled([ts, custom]: Installed) {
     }
     if (id === 'typescript/package.json') {
       if (!ts) throw new Error(`Cannot find module '${id}'`)
-      return '/mock/typescript/package.json'
+      return TYPESCRIPT_PACKAGE_JSON_PATH
     }
     if (id === 'typescript/unstable/async') {
-      const isCustom = options?.paths?.some((value) =>
-        value.replaceAll('\\', '/').startsWith('/mock/xxx/'),
-      )
+      const customRoot = normalizePath(path.join(MOCK_ROOT, 'xxx'))
+      const isCustom = options?.paths?.some((value) => {
+        const normalized = normalizePath(value)
+        return (
+          normalized === customRoot || normalized.startsWith(`${customRoot}/`)
+        )
+      })
       const installed = isCustom ? custom : ts
       if (!installed || installed === 6) {
         throw new Error(`Cannot find module '${id}'`)
       }
-      return `/mock/${isCustom ? 'xxx' : 'typescript'}/dist/api/async/api.js`
+      return isCustom ? CUSTOM_API_PATH : TYPESCRIPT_API_PATH
     }
     return realRequire.resolve(id, options)
   }) as NodeJS.RequireResolve
