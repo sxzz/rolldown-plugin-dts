@@ -30,8 +30,7 @@ export interface Logger {
   error: (...args: any[]) => void
 }
 
-//#region General Options
-export interface GeneralOptions {
+export interface Options {
   /**
    * The generator used to produce declaration files.
    *
@@ -137,9 +136,54 @@ export interface GeneralOptions {
    * @default console
    */
   logger?: Logger
+
+  /**
+   * Registers the built-in Vue language integration using `vue-tsc`.
+   *
+   * This is a shortcut for a preconfigured {@link Options.customLanguages}
+   * entry and requires the `tsc` generator.
+   *
+   * @default false
+   */
+  vue?: boolean | VueLanguageOptions
+
+  /**
+   * Generates declarations for JavaScript files with JSDoc types.
+   *
+   * @default Enabled when `allowJs` or `checkJs` is set.
+   */
+  emitJs?: boolean
+
+  /** Options for the built-in `tsc` generator. */
+  tsc?: TscOptions
+
+  /**
+   * Options for the `oxc` generator.
+   *
+   * The top-level {@link Options.sourcemap sourcemap} option controls
+   * declaration maps.
+   */
+  oxc?: Omit<IsolatedDeclarationsOptions, 'sourcemap'>
+
+  /**
+   * **[Experimental]** Options for the TypeScript Go generator.
+   */
+  tsgo?: TsgoOptions
+
+  /**
+   * Registers non-standard source languages such as Vue or Astro.
+   *
+   * If a language is supported via {@link https://volarjs.dev Volar},
+   * {@link CustomLanguage.volarTypeScript} and
+   * {@link CustomLanguage.createVolarPlugins} are both required. Volar
+   * languages require `tsc`. Non-Volar languages can use `tsgo` together
+   * with {@link TsgoOptions.vfs `tsgo.vfs`}.
+   *
+   * @experimental
+   */
+  customLanguages?: CustomLanguage[]
 }
 
-//#region tsc Options
 export interface TscOptions {
   /**
    * Uses TypeScript build mode (`tsc -b`) and follows project references.
@@ -155,16 +199,6 @@ export interface TscOptions {
    * @default Enabled when the config sets `incremental` or `tsBuildInfoFile`.
    */
   incremental?: boolean
-
-  /**
-   * Registers the built-in Vue language integration using `vue-tsc`.
-   *
-   * This is a shortcut for a preconfigured {@link Options.customLanguages}
-   * entry and requires the `tsc` generator.
-   *
-   * @default false
-   */
-  vue?: boolean | VueLanguageOptions
 
   /**
    * Runs `tsc` or `vue-tsc` in a separate process.
@@ -190,46 +224,6 @@ export interface TscOptions {
    * @default false
    */
   newContext?: boolean
-
-  /**
-   * Generates declarations for JavaScript files with JSDoc types.
-   *
-   * @default Enabled when `allowJs` or `checkJs` is set.
-   */
-  emitJs?: boolean
-}
-
-/** Configuration accepted by {@link dts}. */
-export interface Options extends GeneralOptions, TscOptions {
-  //#region Oxc
-
-  /**
-   * Options for the `oxc` generator.
-   *
-   * The top-level {@link GeneralOptions.sourcemap sourcemap} option controls
-   * declaration maps.
-   */
-  oxc?: Omit<IsolatedDeclarationsOptions, 'sourcemap'>
-
-  //#region TypeScript Go
-
-  /**
-   * **[Experimental]** Options for the TypeScript Go generator.
-   */
-  tsgo?: TsgoOptions
-
-  /**
-   * Registers non-standard source languages such as Vue or Astro.
-   *
-   * If a language is supported via {@link https://volarjs.dev Volar},
-   * {@link CustomLanguage.volarTypeScript} and
-   * {@link CustomLanguage.createVolarPlugins} are both required. Volar
-   * languages require `tsc`. Non-Volar languages can use `tsgo` together
-   * with {@link TsgoOptions.vfs `tsgo.vfs`}.
-   *
-   * @experimental
-   */
-  customLanguages?: CustomLanguage[]
 }
 
 export interface TsgoOptions {
@@ -260,7 +254,9 @@ export interface TsgoOptions {
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 
 export type OptionsResolved = Overwrite<
-  Required<Omit<Options, 'compilerOptions' | 'vue' | 'customLanguages'>>,
+  Required<
+    Omit<Options, 'compilerOptions' | 'vue' | 'customLanguages' | 'tsc'>
+  >,
   {
     entry?: string[]
     tsconfig?: string
@@ -269,6 +265,7 @@ export type OptionsResolved = Overwrite<
     tsgo: TsgoOptions
     languageContext: LanguageContext
     vue: false | VueLanguageOptions
+    tsc: Required<TscOptions>
   }
 >
 
@@ -289,14 +286,9 @@ export function resolveOptions({
   sideEffects = false,
   logger = console,
   customLanguages,
+  tsc,
 
-  // tsc
-  build = false,
-  incremental = false,
   vue = false,
-  parallel = false,
-  eager = false,
-  newContext = false,
   emitJs,
 
   oxc,
@@ -319,8 +311,6 @@ export function resolveOptions({
     ...compilerOptions,
   }
 
-  incremental ||=
-    compilerOptions.incremental || !!compilerOptions.tsBuildInfoFile
   sourcemap ??= !!compilerOptions.declarationMap
   compilerOptions.declarationMap = sourcemap
 
@@ -328,6 +318,16 @@ export function resolveOptions({
     ...resolvedTsconfig,
     ...overriddenTsconfigRaw,
     compilerOptions,
+  }
+
+  const tscOptions: Required<TscOptions> = {
+    build: tsc?.build ?? false,
+    incremental:
+      tsc?.incremental ??
+      !!(compilerOptions.incremental || compilerOptions.tsBuildInfoFile),
+    parallel: tsc?.parallel ?? false,
+    eager: tsc?.eager ?? false,
+    newContext: tsc?.newContext ?? false,
   }
 
   const hasCustomLanguages = !!customLanguages?.length
@@ -344,7 +344,9 @@ export function resolveOptions({
       )
     }
     customLanguages.push(
-      parallel ? createVueLanguageMetadata() : createVueLanguage(vueOptions),
+      tscOptions.parallel
+        ? createVueLanguageMetadata()
+        : createVueLanguage(vueOptions),
     )
   }
 
@@ -375,9 +377,9 @@ export function resolveOptions({
     }
   }
 
-  if (generator === 'tsc' && parallel && hasCustomLanguages) {
+  if (generator === 'tsc' && tscOptions.parallel && hasCustomLanguages) {
     throw new Error(
-      'The `parallel` option does not support `customLanguages`. Disable `parallel` or use the built-in `vue` option for Vue.',
+      'The `tsc.parallel` option does not support `customLanguages`. Disable `tsc.parallel` or use the built-in `vue` option for Vue.',
     )
   }
 
@@ -443,13 +445,8 @@ export function resolveOptions({
     cjsDefault,
     sideEffects,
 
-    // tsc
-    build,
-    incremental,
     vue: vueOptions,
-    parallel,
-    eager,
-    newContext,
+    tsc: tscOptions,
     emitJs,
     languageContext,
 

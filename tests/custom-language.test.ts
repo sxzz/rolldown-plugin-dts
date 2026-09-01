@@ -42,7 +42,7 @@ describe('volar', () => {
             vue: {
               vueCompilerOptions: { fallthroughAttributes: false },
             },
-            parallel: true,
+            tsc: { parallel: true },
             compilerOptions: {
               isolatedDeclarations: false,
             },

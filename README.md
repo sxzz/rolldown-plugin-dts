@@ -76,6 +76,7 @@ dts({
 | Option            | Description                                                                               | Default                 |
 | ----------------- | ----------------------------------------------------------------------------------------- | ----------------------- |
 | `generator`       | Built-in generator name or a custom `Generator` implementation.                           | Inferred                |
+| `tsc`             | Options for the built-in `tsc` generator.                                                 | `{}`                    |
 | `entry`           | Glob or globs selecting files to emit. Supports `!` negation and paths relative to `cwd`. | Rolldown entries        |
 | `cwd`             | Base directory for config discovery, globs, and relative paths.                           | `process.cwd()`         |
 | `dtsInput`        | Treat entry files as existing declarations.                                               | `false`                 |
@@ -102,17 +103,17 @@ CommonJS-style declaration input.
 
 ### TypeScript (`tsc`)
 
-| Option        | Description                                                   | Default                                  |
-| ------------- | ------------------------------------------------------------- | ---------------------------------------- |
-| `build`       | Use TypeScript build mode and follow project references.      | `false`                                  |
-| `incremental` | Persist build outputs, including `.tsbuildinfo`, to disk.     | Enabled by the matching tsconfig options |
-| `vue`         | Register the built-in Vue integration using `vue-tsc`.        | `false`                                  |
-| `parallel`    | Run `tsc` or `vue-tsc` in a separate process.                 | `false`                                  |
-| `eager`       | Load every file listed by `tsconfig.json`.                    | `false`                                  |
-| `newContext`  | Use an isolated compiler cache instead of the shared context. | `false`                                  |
-| `emitJs`      | Generate declarations for JavaScript files with JSDoc types.  | `allowJs` or `checkJs`                   |
+| Option            | Description                                                   | Default                                  |
+| ----------------- | ------------------------------------------------------------- | ---------------------------------------- |
+| `tsc.build`       | Use TypeScript build mode and follow project references.      | `false`                                  |
+| `tsc.incremental` | Persist build outputs, including `.tsbuildinfo`, to disk.     | Enabled by the matching tsconfig options |
+| `vue`             | Register the built-in Vue integration using `vue-tsc`.        | `false`                                  |
+| `tsc.parallel`    | Run `tsc` or `vue-tsc` in a separate process.                 | `false`                                  |
+| `tsc.eager`       | Load every file listed by `tsconfig.json`.                    | `false`                                  |
+| `tsc.newContext`  | Use an isolated compiler cache instead of the shared context. | `false`                                  |
+| `emitJs`          | Generate declarations for JavaScript files with JSDoc types.  | `allowJs` or `checkJs`                   |
 
-`incremental` applies to build mode. When disabled, build outputs stay in
+`tsc.incremental` applies to build mode. When disabled, build outputs stay in
 memory.
 
 To invalidate a file in the shared compiler cache:
