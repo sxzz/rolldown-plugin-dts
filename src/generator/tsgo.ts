@@ -19,10 +19,6 @@ export interface TsgoGeneratorOptions {
   languageContext: LanguageContext
 }
 
-function normalizeFileName(fileName: string): string {
-  return path.resolve(fileName)
-}
-
 export class TsgoGenerator implements Generator {
   private options: TsgoGeneratorOptions
   private apiModule?: TsgoApiModule
@@ -97,13 +93,13 @@ export class TsgoGenerator implements Generator {
 
   private createFileSystem(): FileSystem {
     return {
-      readFile: (fileName) => this.activeFiles.get(normalizeFileName(fileName)),
+      readFile: (fileName) => this.activeFiles.get(path.resolve(fileName)),
       fileExists: (fileName) =>
-        this.activeFiles.has(normalizeFileName(fileName)) ? true : undefined,
+        this.activeFiles.has(path.resolve(fileName)) ? true : undefined,
       directoryExists: (directoryName) =>
         this.hasVirtualDirectory(directoryName) ? true : undefined,
       realpath: (fileName) => {
-        const normalized = normalizeFileName(fileName)
+        const normalized = path.resolve(fileName)
         if (
           this.activeFiles.has(normalized) ||
           this.hasVirtualDirectory(normalized)
@@ -115,7 +111,7 @@ export class TsgoGenerator implements Generator {
   }
 
   private hasVirtualDirectory(directoryName: string): boolean {
-    const normalized = normalizeFileName(directoryName)
+    const normalized = path.resolve(directoryName)
     const prefix = normalized.endsWith(path.sep)
       ? normalized
       : `${normalized}${path.sep}`
@@ -125,9 +121,7 @@ export class TsgoGenerator implements Generator {
   }
 
   private toTsFilename(fileName: string): string {
-    return normalizeFileName(
-      this.options.languageContext.toTsFilename(fileName),
-    )
+    return path.resolve(this.options.languageContext.toTsFilename(fileName))
   }
 
   private async flushPendingFiles(): Promise<void> {
@@ -223,7 +217,7 @@ export class TsgoGenerator implements Generator {
     for (const [outputFileName, outputFile] of output.outputFiles) {
       if (
         outputFile.sourceFileName &&
-        normalizeFileName(outputFile.sourceFileName) !== tsFileName
+        path.resolve(outputFile.sourceFileName) !== tsFileName
       ) {
         continue
       }
