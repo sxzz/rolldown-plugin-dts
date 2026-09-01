@@ -35,30 +35,24 @@ export function createGenerator(
     generator,
     tsconfig,
     tsconfigRaw,
-    build,
-    incremental,
     cwd,
     oxc,
     languageContext,
     vue,
-    parallel,
+    tsc,
     tsgo,
-    newContext,
     sourcemap,
   }: Pick<
     OptionsResolved,
     | 'generator'
     | 'tsconfig'
     | 'tsconfigRaw'
-    | 'build'
-    | 'incremental'
     | 'cwd'
     | 'oxc'
     | 'languageContext'
     | 'vue'
-    | 'parallel'
+    | 'tsc'
     | 'tsgo'
-    | 'newContext'
     | 'sourcemap'
   >,
   getEntries: () => string[] | undefined,
@@ -83,14 +77,14 @@ export function createGenerator(
   return new TscGenerator({
     tsconfig,
     tsconfigRaw,
-    build,
-    incremental,
+    build: tsc.build,
+    incremental: tsc.incremental,
     cwd,
     sourcemap,
     languageContext,
     vue,
-    parallel,
-    newContext,
+    parallel: tsc.parallel,
+    newContext: tsc.newContext,
     getEntries,
   })
 }

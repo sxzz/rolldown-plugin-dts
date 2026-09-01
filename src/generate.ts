@@ -40,21 +40,17 @@ export function createGeneratePlugin(
     | 'cwd'
     | 'tsconfig'
     | 'tsconfigRaw'
-    | 'build'
-    | 'incremental'
     | 'oxc'
     | 'emitDtsOnly'
     | 'languageContext'
     | 'vue'
-    | 'parallel'
-    | 'eager'
+    | 'tsc'
     | 'tsgo'
-    | 'newContext'
     | 'emitJs'
     | 'sourcemap'
   >,
 ): Plugin {
-  const { entry, cwd, emitDtsOnly, languageContext, eager, emitJs } = options
+  const { entry, cwd, emitDtsOnly, languageContext, tsc, emitJs } = options
   const entryIncludes = entry?.filter((p) => p[0] !== '!')
   const entryIgnores = entry?.filter((p) => p[0] === '!').map((p) => p.slice(1))
   const entryMatcher = entry
@@ -76,7 +72,7 @@ export function createGeneratePlugin(
   const inputAliasMap = new Map<string, string>()
 
   const declarationGenerator = createGenerator(options, () =>
-    eager
+    tsc.eager
       ? undefined
       : Array.from(dtsMap.values())
           .filter((module) => module.isEntry)

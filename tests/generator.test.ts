@@ -128,7 +128,7 @@ interface Fixture {
   isolatedDecl?: boolean
   oxc?: Options['oxc']
   vue?: boolean
-  parallel?: boolean
+  tsc?: Options['tsc']
   customLanguages?: Options['customLanguages']
   tsgo?: Options['tsgo']
   generator?: Options['generator']
@@ -149,7 +149,8 @@ function formatTitle(fixture: Fixture): string {
   if (fixture.oxc !== undefined)
     parts.push(`oxc=${JSON.stringify(fixture.oxc)}`)
   if (fixture.vue) parts.push('vue')
-  if (fixture.parallel) parts.push('parallel')
+  if (fixture.tsc !== undefined)
+    parts.push(`tsc=${JSON.stringify(fixture.tsc)}`)
   if (fixture.customLanguages)
     parts.push(
       `langs=[${fixture.customLanguages
@@ -177,6 +178,23 @@ describe('resolve generator', () => {
     expect(resolveOptions({ generator, tsconfig: false }).generator).toBe(
       generator,
     )
+  })
+
+  test('resolves tsc.incremental from compiler options and allows overrides', () => {
+    mockInstalled([6, false])
+    expect(
+      resolveOptions({
+        tsconfig: false,
+        compilerOptions: { incremental: true },
+      }).tsc.incremental,
+    ).toBe(true)
+    expect(
+      resolveOptions({
+        tsconfig: false,
+        compilerOptions: { incremental: true },
+        tsc: { incremental: false },
+      }).tsc.incremental,
+    ).toBe(false)
   })
 
   const fixtures: Fixture[] = [
@@ -230,7 +248,7 @@ describe('resolve generator', () => {
     { installed: ['next', 'next'], isolatedDecl: true, expected: 'oxc' },
     //#endregion
 
-    //#region oxc / tsgo settings do not select the generator
+    //#region generator settings do not select the generator
     { oxc: {}, expected: 'tsc' },
     { oxc: { stripInternal: true }, expected: 'tsc' },
     { tsgo: {}, expected: 'tsc' },
@@ -240,6 +258,12 @@ describe('resolve generator', () => {
       installed: [6, 'next'],
       tsgo: { moduleUrl: CUSTOM_MODULE_URL },
       expected: 'tsc',
+    },
+    {
+      installed: ['next', false],
+      tsc: { parallel: true },
+      tsconfig: TSCONFIG,
+      expected: 'tsgo',
     },
     { oxc: {}, isolatedDecl: true, expected: 'oxc' },
     // Native compiler inference still applies with tsgo settings present.
@@ -267,6 +291,16 @@ describe('resolve generator', () => {
     },
     // explicit generator takes priority over inference
     { generator: 'tsc', isolatedDecl: true, expected: 'tsc' },
+    {
+      generator: 'tsc',
+      tsc: {
+        build: true,
+        incremental: true,
+        eager: true,
+        newContext: true,
+      },
+      expected: 'tsc',
+    },
     { installed: [false, false], generator: 'oxc', expected: 'oxc' },
     { generator: 'oxc', expected: 'oxc' },
     { installed: [7, 'next'], generator: 'oxc', expected: 'oxc' },
@@ -383,7 +417,7 @@ describe('resolve generator', () => {
       isThrow: true,
     },
     { vue: true, generator: 'tsc', expected: 'tsc' },
-    { vue: true, parallel: true, expected: 'tsc' },
+    { vue: true, tsc: { parallel: true }, expected: 'tsc' },
     { vue: true, isolatedDecl: true, expected: 'tsc' },
     // tsgo settings are ignored when tsc is selected
     { installed: [6, 'next'], vue: true, tsgo: {}, expected: 'tsc' },
@@ -418,7 +452,7 @@ describe('resolve generator', () => {
     },
     {
       customLanguages: [volarLanguage],
-      parallel: true,
+      tsc: { parallel: true },
       expected: 'does not support `customLanguages`',
       isThrow: true,
     },
@@ -464,7 +498,7 @@ describe('resolve generator', () => {
     {
       customLanguages: [plainLanguage],
       generator: 'tsc',
-      parallel: true,
+      tsc: { parallel: true },
       expected: 'does not support `customLanguages`',
       isThrow: true,
     },
@@ -499,7 +533,7 @@ describe('resolve generator', () => {
         isolatedDecl,
         oxc,
         vue,
-        parallel,
+        tsc,
         customLanguages,
         tsgo,
         generator,
@@ -518,7 +552,7 @@ describe('resolve generator', () => {
         },
         oxc,
         vue,
-        parallel,
+        tsc: tsc && { ...tsc },
         // resolveOptions may push into the array (e.g. vue), so avoid
         // sharing the same array between fixtures
         customLanguages: customLanguages && [...customLanguages],
@@ -539,6 +573,13 @@ describe('resolve generator', () => {
         tsgo?.moduleUrl ?? (installed[0] ? TYPESCRIPT_MODULE_URL : undefined),
       )
       expect(resolved.tsgo.vfs).toBe(tsgo?.vfs ?? false)
+      expect(resolved.tsc).toStrictEqual({
+        build: tsc?.build ?? false,
+        incremental: tsc?.incremental ?? false,
+        parallel: tsc?.parallel ?? false,
+        eager: tsc?.eager ?? false,
+        newContext: tsc?.newContext ?? false,
+      })
       if (selectedPackage) {
         expect(logger.info.mock.calls.flat().join(' ')).toContain(
           selectedPackage,
