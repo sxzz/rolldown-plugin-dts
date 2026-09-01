@@ -3,13 +3,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { styleText } from 'node:util'
 import { tryRequire, tryResolve } from './require.ts'
 import type { Logger } from './options.ts'
+import type * as TsgoApiModule from 'typescript-next/unstable/async'
 
 export interface TsgoPackageInfo {
-  api?: TsgoApiModule
-  hasClassicApi: boolean
+  api?: typeof TsgoApiModule
+  hasTsgoApi: boolean
 }
-
-export type TsgoApiModule = typeof import('typescript-next/unstable/async')
 
 export function getDefaultTsgoModuleUrl(): string | undefined {
   try {
@@ -34,27 +33,27 @@ export function getTsgoPackageInfo(
     return
   }
 
-  const ts = tryRequire<TsgoApiModule & typeof import('typescript')>(modulePath)
+  const ts = tryRequire<typeof TsgoApiModule>(modulePath)
   const apiPath = tryResolve('typescript/unstable/async', {
     paths: [path.dirname(modulePath)],
   })
   const api = ts?.Program?.prototype.getDeclarationEmit
     ? ts
     : apiPath
-      ? tryRequire<TsgoApiModule>(apiPath)
+      ? tryRequire<typeof TsgoApiModule>(apiPath)
       : undefined
   return {
     api,
-    hasClassicApi: typeof ts?.createProgram === 'function',
+    hasTsgoApi: !!api?.Program?.prototype.getDeclarationEmit,
   }
 }
 
 export function loadTsgoApi(
   moduleUrl: string | undefined = getDefaultTsgoModuleUrl(),
   logger?: Logger,
-): TsgoApiModule {
+): typeof TsgoApiModule {
   const pkg = getTsgoPackageInfo(moduleUrl)
-  if (!pkg?.api?.Program?.prototype.getDeclarationEmit) {
+  if (!pkg?.hasTsgoApi) {
     throw new Error(
       `The TypeScript module${moduleUrl ? ` at ${moduleUrl}` : ''} does not provide the tsgo \`getDeclarationEmit\` API. Please install \`typescript@next\` or set \`tsgo.moduleUrl\` to a compatible module, for example \`import.meta.resolve('typescript-next')\`.`,
     )
@@ -65,5 +64,5 @@ export function loadTsgoApi(
       `Emit types with TypeScript Go from ${styleText('underline', moduleUrl)}`,
     )
   }
-  return pkg.api
+  return pkg.api!
 }

@@ -184,14 +184,14 @@ describe('resolve generator', () => {
     {
       installed: [7, false],
       tsconfig: TSCONFIG,
-      expected: 'does not provide the tsgo `getDeclarationEmit` API',
+      expected: 'classic TypeScript API required by tsc',
       isThrow: true,
     },
     {
       // A custom module is only used when configured through moduleUrl.
       installed: [7, 'next'],
       tsconfig: TSCONFIG,
-      expected: 'does not provide the tsgo `getDeclarationEmit` API',
+      expected: 'classic TypeScript API required by tsc',
       isThrow: true,
     },
     { installed: ['next', false], tsconfig: TSCONFIG, expected: 'tsgo' },
@@ -199,7 +199,7 @@ describe('resolve generator', () => {
     { installed: ['api', false], tsconfig: TSCONFIG, expected: 'tsgo' },
     {
       installed: [7, false],
-      expected: 'The `tsgo` generator requires a tsconfig file',
+      expected: 'classic TypeScript API required by tsc',
       isThrow: true,
     },
     {
@@ -422,7 +422,7 @@ describe('resolve generator', () => {
       installed: [7, false],
       customLanguages: [plainLanguage],
       tsconfig: TSCONFIG,
-      expected: 'requires `tsgo.vfs: true`',
+      expected: 'classic TypeScript API required by tsc',
       isThrow: true,
     },
     {
