@@ -174,7 +174,7 @@ function buildProjects(
 
   const host = ts.createSolutionBuilderHost(
     fsSystem,
-    createProgramWithPatchedCompilerOptions,
+    createProgramWithPatchedCompilerOptions(sourcemap),
   )
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
     force,
@@ -315,12 +315,18 @@ function patchCompilerOptions(
   return options
 }
 
-const createProgramWithPatchedCompilerOptions: CreateProgram<
-  EmitAndSemanticDiagnosticsBuilderProgram
-> = (rootNames, options, ...args) => {
-  return ts.createEmitAndSemanticDiagnosticsBuilderProgram(
-    rootNames,
-    patchCompilerOptions(options ?? {}, null),
-    ...args,
-  )
+function createProgramWithPatchedCompilerOptions(
+  sourcemap: boolean,
+): CreateProgram<EmitAndSemanticDiagnosticsBuilderProgram> {
+  return (rootNames, options, ...args) => {
+    return ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+      rootNames,
+      patchCompilerOptions(options ?? {}, {
+        tsconfigPath: '',
+        force: true,
+        sourcemap,
+      }),
+      ...args,
+    )
+  }
 }

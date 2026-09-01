@@ -110,7 +110,7 @@ describe('tsc', () => {
     expect(sourcemap.sourceRoot).toBeFalsy()
     expect(sourcemap.sources).toMatchInlineSnapshot(`
       [
-        "../src/index.d.ts",
+        "../src/index.ts",
       ]
     `)
     expect(snapshot).toMatchSnapshot()
@@ -159,7 +159,7 @@ describe('tsc', () => {
 
     const sourcemap = findSourceMapChunk(chunks, 'index.d.ts.map')
     const sources = (sourcemap.sources || []).toSorted()
-    expect(sources).toEqual(['../src/index.ts', '../src/math.ts'])
+    expect(sources).toEqual(['../src/math.ts'])
   })
 
   test('composite references no incremental', async () => {
