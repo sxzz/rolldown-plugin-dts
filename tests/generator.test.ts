@@ -128,6 +128,7 @@ interface Fixture {
   isolatedDecl?: boolean
   oxc?: Options['oxc']
   vue?: boolean
+  parallel?: boolean
   customLanguages?: Options['customLanguages']
   tsgo?: Options['tsgo']
   generator?: Options['generator']
@@ -148,6 +149,7 @@ function formatTitle(fixture: Fixture): string {
   if (fixture.oxc !== undefined)
     parts.push(`oxc=${JSON.stringify(fixture.oxc)}`)
   if (fixture.vue) parts.push('vue')
+  if (fixture.parallel) parts.push('parallel')
   if (fixture.customLanguages)
     parts.push(
       `langs=[${fixture.customLanguages
@@ -381,6 +383,7 @@ describe('resolve generator', () => {
       isThrow: true,
     },
     { vue: true, generator: 'tsc', expected: 'tsc' },
+    { vue: true, parallel: true, expected: 'tsc' },
     { vue: true, isolatedDecl: true, expected: 'tsc' },
     // tsgo settings are ignored when tsc is selected
     { installed: [6, 'next'], vue: true, tsgo: {}, expected: 'tsc' },
@@ -411,6 +414,12 @@ describe('resolve generator', () => {
       customLanguages: [volarLanguage],
       generator: 'tsgo',
       expected: 'require the `tsc` generator',
+      isThrow: true,
+    },
+    {
+      customLanguages: [volarLanguage],
+      parallel: true,
+      expected: 'does not support `customLanguages`',
       isThrow: true,
     },
     { customLanguages: [volarLanguage], isolatedDecl: true, expected: 'tsc' },
@@ -452,6 +461,13 @@ describe('resolve generator', () => {
       expected: 'tsgo',
     },
     { customLanguages: [plainLanguage], generator: 'tsc', expected: 'tsc' },
+    {
+      customLanguages: [plainLanguage],
+      generator: 'tsc',
+      parallel: true,
+      expected: 'does not support `customLanguages`',
+      isThrow: true,
+    },
     { customLanguages: [plainLanguage], generator: 'oxc', expected: 'oxc' },
     {
       customLanguages: [plainLanguage],
@@ -483,6 +499,7 @@ describe('resolve generator', () => {
         isolatedDecl,
         oxc,
         vue,
+        parallel,
         customLanguages,
         tsgo,
         generator,
@@ -501,6 +518,7 @@ describe('resolve generator', () => {
         },
         oxc,
         vue,
+        parallel,
         // resolveOptions may push into the array (e.g. vue), so avoid
         // sharing the same array between fixtures
         customLanguages: customLanguages && [...customLanguages],

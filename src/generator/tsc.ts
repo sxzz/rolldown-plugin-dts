@@ -9,19 +9,27 @@ import {
   type TscContext,
 } from '../tsc/context.ts'
 import type { TscOptions, TscResult } from '../tsc/index.ts'
-import type { WorkerRequest, WorkerResponse } from '../tsc/worker.ts'
+import type { VueLanguageOptions } from '../tsc/vue.ts'
+import type {
+  WorkerRequest,
+  WorkerResponse,
+  WorkerTscOptions,
+} from '../tsc/worker.ts'
 import type { Generator } from './index.ts'
 
 const WORKER_URL = import.meta.WORKER_URL || '../tsc/worker.ts'
 
 type TscGeneratorOptions = Omit<TscOptions, 'id' | 'entries' | 'context'> & {
+  vue: false | VueLanguageOptions
   parallel: boolean
   newContext: boolean
   getEntries: () => string[] | undefined
 }
 
 export class TscGenerator implements Generator {
-  private options: Omit<TscOptions, 'id' | 'entries' | 'context'>
+  private options: Omit<WorkerTscOptions, 'id' | 'entries'>
+  private languageContext: TscOptions['languageContext']
+  private vue: false | VueLanguageOptions
   private parallel: boolean
   private newContext: boolean
   private getEntries: () => string[] | undefined
@@ -33,9 +41,13 @@ export class TscGenerator implements Generator {
     parallel,
     newContext,
     getEntries,
+    languageContext,
+    vue,
     ...options
   }: TscGeneratorOptions) {
     this.options = options
+    this.languageContext = languageContext
+    this.vue = vue
     this.parallel = parallel
     this.newContext = newContext
     this.getEntries = getEntries
@@ -43,7 +55,7 @@ export class TscGenerator implements Generator {
 
   async init(): Promise<void> {
     if (this.parallel) {
-      this.worker = createTscWorker()
+      this.worker = createTscWorker(this.vue)
       return
     }
 
@@ -54,11 +66,10 @@ export class TscGenerator implements Generator {
   }
 
   async emit(_code: string, fileName: string): Promise<TscResult> {
-    const options: TscOptions = {
+    const options: WorkerTscOptions = {
       ...this.options,
       entries: this.getEntries(),
       id: fileName,
-      context: this.context,
     }
 
     let result: TscResult
@@ -71,7 +82,11 @@ export class TscGenerator implements Generator {
       if (!this.tscModule) {
         throw new Error('TscGenerator has not been initialized.')
       }
-      result = this.tscModule.tscEmit(options)
+      result = this.tscModule.tscEmit({
+        ...options,
+        languageContext: this.languageContext,
+        context: this.context,
+      })
     }
 
     if (result.code && RE_JSON.test(fileName)) {
@@ -104,11 +119,11 @@ export class TscGenerator implements Generator {
 }
 
 interface TscWorker {
-  emit: (options: TscOptions) => Promise<TscResult>
+  emit: (options: WorkerTscOptions) => Promise<TscResult>
   kill: () => void
 }
 
-function createTscWorker(): TscWorker {
+function createTscWorker(vue: false | VueLanguageOptions): TscWorker {
   const childProcess = fork(new URL(WORKER_URL, import.meta.url), {
     stdio: 'inherit',
     serialization: 'advanced',
@@ -146,7 +161,11 @@ function createTscWorker(): TscWorker {
       new Promise((resolve, reject) => {
         const id = nextId++
         pending.set(id, { resolve, reject })
-        childProcess.send({ id, options } satisfies WorkerRequest)
+        childProcess.send({
+          id,
+          options,
+          ...(vue ? { vue } : undefined),
+        } satisfies WorkerRequest)
       }),
     kill: () => childProcess.kill(),
   }

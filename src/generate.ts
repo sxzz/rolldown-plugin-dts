@@ -45,6 +45,7 @@ export function createGeneratePlugin(
     | 'oxc'
     | 'emitDtsOnly'
     | 'languageContext'
+    | 'vue'
     | 'parallel'
     | 'eager'
     | 'tsgo'

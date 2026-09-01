@@ -1,10 +1,14 @@
 import process from 'node:process'
 import { LanguageContext } from '../custom-language.ts'
+import { createVueLanguage, type VueLanguageOptions } from './vue.ts'
 import { tscEmit, type TscOptions, type TscResult } from './index.ts'
+
+export type WorkerTscOptions = Omit<TscOptions, 'context' | 'languageContext'>
 
 export interface WorkerRequest {
   id: number
-  options: TscOptions
+  options: WorkerTscOptions
+  vue?: VueLanguageOptions
 }
 
 export interface WorkerResponse {
@@ -13,15 +17,17 @@ export interface WorkerResponse {
   error?: unknown
 }
 
+let languageContext: LanguageContext | undefined
+
 process.on('message', (request: WorkerRequest) => {
   let response: WorkerResponse
   try {
+    languageContext ||= new LanguageContext(
+      request.vue ? [createVueLanguage(request.vue)] : [],
+    )
     const options: TscOptions = {
       ...request.options,
-      // Structured clone preserves the data but not the class prototype.
-      languageContext: new LanguageContext(
-        request.options.languageContext.languages,
-      ),
+      languageContext,
     }
     response = { id: request.id, result: tscEmit(options) }
   } catch (error) {

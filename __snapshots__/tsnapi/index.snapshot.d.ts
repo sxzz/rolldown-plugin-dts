@@ -35,7 +35,7 @@ export interface Options extends GeneralOptions, TscOptions {
 
 // #region Functions
 export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
-export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "build" | "incremental" | "oxc" | "emitDtsOnly" | "languageContext" | "parallel" | "eager" | "tsgo" | "newContext" | "emitJs" | "sourcemap">): Plugin;
+export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "build" | "incremental" | "oxc" | "emitDtsOnly" | "languageContext" | "vue" | "parallel" | "eager" | "tsgo" | "newContext" | "emitJs" | "sourcemap">): Plugin;
 export declare function dts(_?: Options): Plugin[];
 export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, build, incremental, vue, parallel, eager, newContext, emitJs, oxc, tsgo }: Options): OptionsResolved;
 // #endregion
@@ -63,6 +63,7 @@ type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "vue
   tsconfigRaw: TsconfigJson;
   tsgo: TsgoOptions;
   languageContext: LanguageContext;
+  vue: false | VueLanguageOptions;
 }>;
 interface TscOptions {
   build?: boolean;
