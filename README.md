@@ -45,11 +45,11 @@ See [rolldown.config.ts](./rolldown.config.ts) for the project's own setup.
 
 ## Generators
 
-| Generator | Use it for                                        | Requirement                                     |
-| --------- | ------------------------------------------------- | ----------------------------------------------- |
-| `tsc`     | Full TypeScript compatibility                     | TypeScript 5.x or 6.x                           |
-| `oxc`     | Fast generation for isolated declarations         | Code compatible with `isolatedDeclarations`     |
-| `tsgo`    | TypeScript Go's asynchronous declaration emit API | A package that exposes the declaration emit API |
+| Generator | Use it for                                        | Requirement                                 |
+| --------- | ------------------------------------------------- | ------------------------------------------- |
+| `tsc`     | Full TypeScript compatibility                     | TypeScript 5.x or 6.x                       |
+| `oxc`     | Fast generation for isolated declarations         | Code compatible with `isolatedDeclarations` |
+| `tsgo`    | TypeScript Go's asynchronous declaration emit API | TypeScript 7.1 or later                     |
 
 When `generator` is omitted, the plugin selects:
 
@@ -150,8 +150,6 @@ dts({
 ### TypeScript Go
 
 The TypeScript Go generator is experimental and requires a `tsconfig.json`.
-It reads compiler options from that file, so `tsconfigRaw` and
-`compilerOptions` are ignored.
 
 `tsgo.moduleUrl` defaults to `import.meta.resolve('typescript')`. It can point
 to an npm alias or another compatible TypeScript module. The selected module
