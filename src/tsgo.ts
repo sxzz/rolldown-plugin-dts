@@ -33,15 +33,10 @@ export function getTsgoPackageInfo(
     return
   }
 
-  const ts = tryRequire<typeof TsgoApiModule>(modulePath)
   const apiPath = tryResolve('typescript/unstable/async', {
     paths: [path.dirname(modulePath)],
   })
-  const api = ts?.Program?.prototype.getDeclarationEmit
-    ? ts
-    : apiPath
-      ? tryRequire<typeof TsgoApiModule>(apiPath)
-      : undefined
+  const api = apiPath ? tryRequire<typeof TsgoApiModule>(apiPath) : undefined
   return {
     api,
     hasTsgoApi: !!api?.Program?.prototype.getDeclarationEmit,
