@@ -39,7 +39,7 @@ export class TsgoGenerator implements Generator {
     this.openedFiles.clear()
     this.emitQueue = Promise.resolve()
 
-    this.apiModule = await loadTsgoApi(this.options.moduleUrl)
+    this.apiModule = loadTsgoApi(this.options.moduleUrl)
     const { tsgoPath, cwd, tsconfig, vfs } = this.options
     const fs = vfs ? this.createFileSystem() : undefined
     this.api = new this.apiModule.API({
