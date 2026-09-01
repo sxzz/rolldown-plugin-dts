@@ -18,8 +18,8 @@ npm i -D rolldown-plugin-dts
 Install the compiler required by your generator:
 
 ```bash
-npm i -D typescript@^6              # tsc
-npm i -D @typescript/native-preview # tsgo, unless TypeScript 7 is installed
+npm i -D typescript@^6    # tsc
+npm i -D typescript@next  # tsgo API
 ```
 
 Oxc is provided by Rolldown and needs no additional dependency.
@@ -45,20 +45,20 @@ See [rolldown.config.ts](./rolldown.config.ts) for the project's own setup.
 
 ## Generators
 
-| Generator | Use it for                                              | Requirement                                  |
-| --------- | ------------------------------------------------------- | -------------------------------------------- |
-| `tsc`     | Full TypeScript compatibility, Vue, and Volar languages | TypeScript 5.x or 6.x                        |
-| `oxc`     | Fast generation for isolated declarations               | Code compatible with `isolatedDeclarations`  |
-| `tsgo`    | Experimental TypeScript 7 builds                        | TypeScript 7 or `@typescript/native-preview` |
+| Generator | Use it for                                        | Requirement                                     |
+| --------- | ------------------------------------------------- | ----------------------------------------------- |
+| `tsc`     | Full TypeScript compatibility                     | TypeScript 5.x or 6.x                           |
+| `oxc`     | Fast generation for isolated declarations         | Code compatible with `isolatedDeclarations`     |
+| `tsgo`    | TypeScript Go's asynchronous declaration emit API | A package that exposes the declaration emit API |
 
 When `generator` is omitted, the plugin selects:
 
 1. `oxc` when `compilerOptions.isolatedDeclarations` is enabled.
-2. `tsgo` when TypeScript 7 is installed as `typescript`.
+2. `tsgo` for a native `typescript` package.
 3. `tsc` otherwise.
 
-Volar-based custom languages always require `tsc`. The `tsgo` generator does
-not support custom languages.
+Automatic selection only inspects `typescript`. A native package without
+`getDeclarationEmit` reports an error instead of falling back.
 
 ```ts
 dts({
@@ -149,17 +149,34 @@ dts({
 
 ### TypeScript Go
 
-`tsgo` is experimental and requires a `tsconfig.json`. It reads compiler
-options from that file, so `tsconfigRaw` and `compilerOptions` are ignored.
+The TypeScript Go generator is experimental and requires a `tsconfig.json`.
+It reads compiler options from that file, so `tsconfigRaw` and
+`compilerOptions` are ignored.
+
+`tsgo.moduleUrl` defaults to `import.meta.resolve('typescript')`. It can point
+to an npm alias or another compatible TypeScript module. The selected module
+must expose `Program.prototype.getDeclarationEmit`; there is no package-name
+fallback.
+
+`tsgo.vfs` defaults to `false` and only affects `tsgo`.
 
 ```ts
 dts({
   generator: 'tsgo',
   tsgo: {
-    path: '/path/to/tsgo',
+    moduleUrl: import.meta.resolve('typescript'),
+    path: '/path/to/tsserver',
+    vfs: true,
   },
 })
 ```
+
+For example, a separately installed npm alias can be selected with
+`moduleUrl: import.meta.resolve('typescript-next')`.
+
+With VFS enabled, `tsgo` receives the transformed code observed by the dts
+transform hook instead of rereading source files from disk. Source-transforming
+plugins must appear before `dts()` for their output to be included.
 
 ## Vite
 

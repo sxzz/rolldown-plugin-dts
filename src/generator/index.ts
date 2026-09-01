@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { OxcGenerator } from './oxc.ts'
 import { TscGenerator } from './tsc.ts'
 import { TsgoGenerator } from './tsgo.ts'
@@ -13,6 +12,7 @@ export interface GeneratorResult {
 
 export interface Generator {
   init?: () => void | Promise<void>
+  addFile?: (code: string, fileName: string) => void
   emit: (
     code: string,
     fileName: string,
@@ -58,10 +58,11 @@ export function createGenerator(
 
   if (generator === 'tsgo') {
     return new TsgoGenerator({
-      tsgoPath: tsgo.path!,
-      rootDir: tsconfig ? path.dirname(tsconfig) : cwd,
+      moduleUrl: tsgo.moduleUrl,
+      tsgoPath: tsgo.path,
+      cwd,
       tsconfig: tsconfig!,
-      sourcemap,
+      vfs: !!tsgo.vfs,
       languageContext,
     })
   }

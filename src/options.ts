@@ -8,9 +8,13 @@ import {
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
-import { resolveTsgoPath } from './generator/tsgo.ts'
-import { isTS70Installed, requireTSApi } from './require.ts'
+import { requireTSApi } from './require.ts'
 import { createVueLanguage, type VueLanguageOptions } from './tsc/vue.ts'
+import {
+  getDefaultTsgoGenerator,
+  getDefaultTsgoModuleUrl,
+  resolveTsgoApiPackage,
+} from './tsgo.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = createDebug('rolldown-plugin-dts:options')
@@ -29,11 +33,12 @@ export interface GeneralOptions {
    * - `'tsc'` supports the full TypeScript type system.
    * - `'oxc'` is faster but requires code compatible with
    *   [`isolatedDeclarations`](https://www.typescriptlang.org/tsconfig/#isolatedDeclarations).
-   * - `'tsgo'` uses the experimental TypeScript Go compiler.
+   * - `'tsgo'` uses the experimental TypeScript Go API.
    *
    * When omitted, the plugin selects `'oxc'` for `isolatedDeclarations`,
-   * `'tsgo'` for TypeScript 7, and `'tsc'` otherwise. Volar-based custom
-   * languages require `'tsc'`.
+   * `'tsgo'` for native TypeScript versions, and `'tsc'` otherwise. Native
+   * TypeScript installations without the declaration emit API are rejected.
+   * Volar-based custom languages require `'tsc'`.
    *
    * @default Inferred from the TypeScript configuration and installed compiler.
    */
@@ -202,10 +207,7 @@ export interface Options extends GeneralOptions, TscOptions {
   //#region TypeScript Go
 
   /**
-   * **[Experimental]** Options for the `tsgo` generator.
-   *
-   * Used when {@link GeneralOptions.generator generator} is `'tsgo'` or
-   * TypeScript 7 is detected.
+   * **[Experimental]** Options for the TypeScript Go generator.
    */
   tsgo?: TsgoOptions
 
@@ -215,7 +217,8 @@ export interface Options extends GeneralOptions, TscOptions {
    * If a language is supported via {@link https://volarjs.dev Volar},
    * {@link CustomLanguage.volarTypeScript} and
    * {@link CustomLanguage.createVolarPlugins} are both required. Volar
-   * languages require `tsc`; `tsgo` does not support custom languages.
+   * languages require `tsc`. Non-Volar languages can use `tsgo` together
+   * with {@link TsgoOptions.vfs `tsgo.vfs`}.
    *
    * @experimental
    */
@@ -223,8 +226,28 @@ export interface Options extends GeneralOptions, TscOptions {
 }
 
 export interface TsgoOptions {
-  /** Path to a custom `tsgo` executable. */
+  /**
+   * URL of the TypeScript module that provides the TypeScript Go API.
+   *
+   * Use `import.meta.resolve()` to select an npm alias or another compatible
+   * TypeScript module.
+   *
+   * @default import.meta.resolve('typescript')
+   */
+  moduleUrl?: string
+
+  /**
+   * Path passed to the TypeScript Go API as `tsserverPath`.
+   */
   path?: string
+
+  /**
+   * Supplies Rolldown-transformed source code to the `tsgo` API through a
+   * virtual filesystem.
+   *
+   * @default false
+   */
+  vfs?: boolean
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
@@ -301,48 +324,53 @@ export function resolveOptions({
 
   customLanguages ||= []
   if (vue) {
+    if (generator && generator !== 'tsc') {
+      throw new Error(
+        'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
+      )
+    }
     customLanguages.push(createVueLanguage(typeof vue === 'object' ? vue : {}))
   }
 
   const languageContext = new LanguageContext(customLanguages)
-  if (customLanguages.length) {
-    // Custom languages that rely on Volar can only be handled by the `tsc`
-    // generator; Volar-free languages also work with `oxc`, but `tsgo` does not
-    // support custom languages at all.
-    if (languageContext.isUsingVolar()) {
-      requireTSApi(
-        'custom languages',
-        '. Custom languages (including the `vue` option) require the TypeScript API.',
-      )
+  const isUsingVolar = languageContext.isUsingVolar()
 
-      if (generator && generator !== 'tsc') {
-        throw new Error(
-          'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
-        )
-      }
-      generator = 'tsc'
-    } else if (generator === 'tsgo') {
-      throw new Error('The `tsgo` generator does not support custom languages.')
+  oxc ||= {}
+  tsgo ||= {}
+  tsgo.moduleUrl ??= getDefaultTsgoModuleUrl()
+  tsgo.vfs ??= false
+
+  if (isUsingVolar) {
+    if (generator && generator !== 'tsc') {
+      throw new Error(
+        'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
+      )
     }
+    requireTSApi(
+      'custom languages',
+      '. Custom languages require the TypeScript API.',
+    )
+    generator = 'tsc'
   }
 
   if (!generator) {
     if (compilerOptions.isolatedDeclarations) {
       generator = 'oxc'
-    } else if (isTS70Installed()) {
-      if (customLanguages.length) {
-        throw new Error(
-          "TypeScript 7.0 is installed, but the `tsgo` generator does not support custom languages. Enable `isolatedDeclarations` or set `generator: 'oxc'` to use Oxc instead, or install TypeScript 6.0 or below.",
-        )
-      }
-      generator = 'tsgo'
     } else {
-      generator = 'tsc'
+      generator = getDefaultTsgoGenerator() ?? 'tsc'
     }
   }
 
-  oxc ||= {}
-  tsgo ||= {}
+  if (
+    customLanguages.length &&
+    !isUsingVolar &&
+    generator === 'tsgo' &&
+    !tsgo.vfs
+  ) {
+    throw new Error(
+      "The `tsgo` generator requires `tsgo.vfs: true` to process custom languages. Enable VFS, use `generator: 'oxc'`, or use a compatible `tsc` installation.",
+    )
+  }
 
   if (generator === 'tsc') {
     requireTSApi(
@@ -358,10 +386,10 @@ export function resolveOptions({
     if (!warnedTsgo) {
       warnedTsgo = true
       logger.warn(
-        'TypeScript 7.0 does not yet have a stable API and is experimental. Some options will be unavailable.',
+        'TypeScript Go is experimental. Some options will be unavailable.',
       )
     }
-    tsgo.path ??= resolveTsgoPath(logger)
+    resolveTsgoApiPackage(logger, tsgo.moduleUrl)
   }
   oxc.stripInternal ??= !!compilerOptions.stripInternal
   // @ts-expect-error omitted in user options
