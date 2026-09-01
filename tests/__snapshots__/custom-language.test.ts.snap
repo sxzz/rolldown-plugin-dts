@@ -35,6 +35,25 @@ export { foo };
 "
 `;
 
+exports[`volar > custom without volar (tsgo vfs) 1`] = `
+"// main.d.ts
+//#region tests/fixtures/custom-language/foo.custom.d.ts
+export declare const foo: string;
+//#endregion
+//# sourceMappingURL=main.d.ts.map
+// main.d.ts.map
+{"version":3,"file":"main.d.ts","names":[],"sources":["../tests/fixtures/custom-language/foo.custom"],"mappings":";qBACa"}
+// main.js
+//#region tests/fixtures/custom-language/foo.custom
+const foo = "bar";
+//#endregion
+export { foo };
+
+//# sourceMappingURL=main.js.map
+// main.js.map
+{"version":3,"file":"main.js","names":[],"sources":[],"mappings":""}"
+`;
+
 exports[`volar > ts-macro > ts-macro w/ ts-compiler 1`] = `
 "// main.d.ts
 //#region tests/fixtures/ts-macro/main.d.ts

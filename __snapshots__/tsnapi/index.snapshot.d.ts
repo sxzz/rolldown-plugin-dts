@@ -62,6 +62,8 @@ interface TscOptions {
   emitJs?: boolean;
 }
 interface TsgoOptions {
+  moduleUrl?: string;
   path?: string;
+  vfs?: boolean;
 }
 // #endregion

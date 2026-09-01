@@ -16,7 +16,10 @@ export interface CustomLanguage {
   /** Extra file extensions passed to the TypeScript compiler. */
   tsFileExtensionInfos?: FileExtensionInfo[]
 
-  /** Maps a source filename to the TypeScript filename used for declarations. */
+  /**
+   * Maps a source filename to the TypeScript filename used for declarations.
+   * Required for custom file extensions.
+   */
   toTsFilename?: (id: string) => string
 
   /** @ts-ignore - optional dep */

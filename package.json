@@ -55,16 +55,12 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "@typescript/native-preview": "*",
     "@volar/typescript": "~2.4.0",
     "rolldown": "^1.2.0",
-    "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0",
+    "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0 || ~7.1.0-0",
     "vue-tsc": "~3.2.0 || ~3.3.0"
   },
   "peerDependenciesMeta": {
-    "@typescript/native-preview": {
-      "optional": true
-    },
     "@volar/typescript": {
       "optional": true
     },
@@ -92,7 +88,6 @@
     "@ts-macro/language-plugin": "catalog:",
     "@ts-macro/tsc": "catalog:",
     "@types/node": "catalog:",
-    "@typescript/native-preview": "catalog:",
     "@volar/typescript": "catalog:",
     "@vue/language-core": "catalog:",
     "arktype": "catalog:",
@@ -104,6 +99,7 @@
     "tsdown": "catalog:",
     "tsnapi": "catalog:",
     "typescript": "catalog:",
+    "typescript-next": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:",
     "vue-tsc": "catalog:",

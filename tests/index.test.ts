@@ -1,11 +1,13 @@
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
-import { resolveTsgoPath } from '../src/generator/tsgo.ts'
 import { dts } from '../src/index.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
+const require = createRequire(import.meta.url)
+const tsgoModuleUrl = import.meta.resolve('typescript-next')
 
 test('basic', async () => {
   const { snapshot } = await rolldownBuild(
@@ -648,22 +650,64 @@ test('infer false branch', async () => {
 })
 
 test('tsgo with custom path', async () => {
-  const tsgoPath = resolveTsgoPath({
-    info: () => {},
-    warn: () => {},
-    error: () => {},
-  })
+  const getExePath: any = require(
+    path.join(path.dirname(fileURLToPath(tsgoModuleUrl)), 'getExePath.js'),
+  )
+  const tsserverPath = (
+    typeof getExePath === 'function' ? getExePath : getExePath.default
+  )()
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/basic.ts'),
     [
       dts({
         generator: 'tsgo',
-        tsgo: { path: tsgoPath },
+        tsgo: { moduleUrl: tsgoModuleUrl, path: tsserverPath },
         tsconfig: path.resolve(dirname, 'fixtures/basic.tsconfig.json'),
       }),
     ],
   )
   expect(snapshot).toMatchSnapshot()
+})
+
+test('tsgo vfs uses transformed source code', async () => {
+  const input = path.resolve(dirname, 'fixtures/basic.ts')
+  const tsconfig = path.resolve(dirname, 'fixtures/basic.tsconfig.json')
+  const transform = {
+    name: 'transform-before-dts',
+    transform: {
+      order: 'pre' as const,
+      handler(code: string, id: string) {
+        if (id !== input) return
+        return code.replace(
+          'export const foo: number = 42',
+          "export const foo: 'transformed' = 'transformed'",
+        )
+      },
+    },
+  }
+
+  const disk = await rolldownBuild(input, [
+    transform,
+    dts({
+      generator: 'tsgo',
+      tsgo: { moduleUrl: tsgoModuleUrl },
+      tsconfig,
+      emitDtsOnly: true,
+    }),
+  ])
+  const virtual = await rolldownBuild(input, [
+    transform,
+    dts({
+      generator: 'tsgo',
+      tsconfig,
+      emitDtsOnly: true,
+      tsgo: { moduleUrl: tsgoModuleUrl, vfs: true },
+    }),
+  ])
+
+  expect(disk.snapshot).toContain('foo: number')
+  expect(disk.snapshot).not.toContain("foo: 'transformed'")
+  expect(virtual.snapshot).toContain("foo: 'transformed'")
 })
 
 // https://github.com/sxzz/rolldown-plugin-dts/issues/136

@@ -151,6 +151,7 @@ export function createGeneratePlugin(
             : !!mod?.isEntry
           const dtsId = filename_to_dts(id, languageContext)
           dtsMap.set(dtsId, { code, id, isEntry, jsFile })
+          declarationGenerator.addFile?.(code, id)
           debug('register dts source: %s', id)
 
           if (isEntry) {

@@ -8,6 +8,7 @@ import type { CustomLanguage } from '../src/custom-language.ts'
 
 const { dirname } = import.meta
 const require = createRequire(import.meta.url)
+const tsgoModuleUrl = import.meta.resolve('typescript-next')
 
 const external = ['vue', /^@vue/]
 
@@ -150,6 +151,39 @@ describe('volar', () => {
       expect(snapshot).toMatchSnapshot()
     },
   )
+
+  test('custom without volar (tsgo vfs)', async () => {
+    const root = path.resolve(dirname, 'fixtures/custom-language')
+    const RE_CUSTOM = /\.custom$/
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
+      {
+        name: 'convert-custom-to-ts',
+        transform: {
+          order: 'pre',
+          filter: { id: RE_CUSTOM },
+          handler: (code) => ({
+            code: code.replace('<script>', '').replace('</script>', ''),
+            moduleType: 'ts',
+          }),
+        },
+      },
+      dts({
+        generator: 'tsgo',
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        sourcemap: true,
+        tsgo: { moduleUrl: tsgoModuleUrl, vfs: true },
+        customLanguages: [
+          {
+            extensionPatterns: [RE_CUSTOM],
+            toTsFilename: (id) => id.replace(RE_CUSTOM, '.custom.ts'),
+          },
+        ],
+      }),
+    ])
+
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).toContain('declare const foo: string')
+  })
 })
 
 function createTsMacroLanguage(): CustomLanguage {
