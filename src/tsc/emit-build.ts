@@ -233,7 +233,11 @@ function collectProjectGraph(
     parsedConfig.options = patchCompilerOptions(parsedConfig.options, {
       tsconfigPath,
       force,
-      sourcemap,
+      // For a project that has no source files (e.g., a tsconfig.json file
+      // that only contains references), we don't need to generate a sourcemap
+      // and we don't need to print the warning about the missing
+      // `declaration`, `declarationMap` in the tsconfig.json file.
+      sourcemap: sourcemap && parsedConfig.fileNames.length > 0,
     })
 
     projects.push({ tsconfigPath, parsedConfig })
