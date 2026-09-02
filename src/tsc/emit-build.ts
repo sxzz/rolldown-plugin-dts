@@ -177,10 +177,7 @@ function buildProjects(
     createProgramWithPatchedCompilerOptions({
       force,
       sourcemap,
-      // The solution builder invokes this for each referenced project, but
-      // hands us its compiler options without telling us which tsconfig file
-      // they came from. `collectProjectGraph` has already warned about the
-      // whole graph, so patch silently here rather than name the wrong file.
+      /** we don't need to print warning here because we have done this in {@link collectProjectGraph} */
       tsconfigPath: null,
     }),
   )
