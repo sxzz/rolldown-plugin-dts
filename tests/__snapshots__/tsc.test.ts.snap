@@ -44,7 +44,7 @@ export declare const a = 1;
 //#endregion
 //# sourceMappingURL=index.d.ts.map
 // index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.d.ts"],"mappings":";qBAAqB"}
+{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":";qBAAa"}
 // index.js
 //#region tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
