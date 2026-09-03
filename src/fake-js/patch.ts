@@ -168,12 +168,13 @@ function getExportAllNamespace(
 
 /**
  * Handle `__reExport` call
+ *
+ * Pass `exportsNames` to collect the `X_exports -> import_lib` mappings.
  */
 export function patchReExport(
   nodes: t.ProgramStatement[],
+  exportsNames: Map<string, string> = new Map(),
 ): t.ProgramStatement[] {
-  const exportsNames = new Map<string, string>()
-
   for (const [i, node] of nodes.entries()) {
     if (
       node.type === 'ImportDeclaration' &&

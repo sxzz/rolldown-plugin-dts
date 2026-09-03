@@ -246,6 +246,23 @@ export declare class Foo {}
 //#endregion"
 `;
 
+exports[`dts input > type imported via local module re-exporting an external package 1`] = `
+"// index.d.ts
+import { WidgetProps } from "some-pkg";
+declare namespace wrapper_d_exports {
+  export { Wrapper as default };
+}
+import * as import_some_pkg from "some-pkg";
+declare const Wrapper: (props: WidgetProps) => null;
+//#endregion
+//#region tests/fixtures/dts-input-reexport-external/index.d.ts
+export interface ConsumerProps extends Omit<import_some_pkg.WidgetProps, 'id'> {
+  id: string;
+}
+export declare function Consumer(props: ConsumerProps): null;
+//#endregion"
+`;
+
 exports[`entryFileNames > custom chunk name 2`] = `
 "// chunks/D2aRkv2b-types.d.ts
 //#region tests/fixtures/dts-multi-input/types.d.ts
