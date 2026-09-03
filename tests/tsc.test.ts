@@ -33,7 +33,7 @@ describe('tsc', () => {
   test('parallel', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/basic.ts'),
-      [dts({ generator: 'tsc', parallel: true })],
+      [dts({ generator: 'tsc', tsc: { parallel: true } })],
     )
     expect(snapshot).toContain('export declare const foo: number;')
   })
@@ -60,7 +60,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           compilerOptions: { isolatedDeclarations: false },
-          build: true,
+          tsc: { build: true },
         }),
       ],
     )
@@ -76,7 +76,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           sourcemap: true,
-          build: false,
+          tsc: { build: false },
         }),
       ],
       {},
@@ -100,7 +100,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           sourcemap: true,
-          build: true,
+          tsc: { build: true },
         }),
       ],
       {},
@@ -124,7 +124,7 @@ describe('tsc', () => {
       [
         dts({
           tsconfig: path.resolve(root, 'tsconfig.react.json'),
-          build: true,
+          tsc: { build: true },
           sourcemap: true,
           emitDtsOnly: true,
         }),
@@ -148,7 +148,7 @@ describe('tsc', () => {
       [
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
-          build: true,
+          tsc: { build: true },
           sourcemap: true,
           emitDtsOnly: true,
         }),
@@ -180,7 +180,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           compilerOptions: { isolatedDeclarations: false },
-          build: true,
+          tsc: { build: true },
         }),
       ],
     )
@@ -213,7 +213,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           compilerOptions: { isolatedDeclarations: false },
-          build: true,
+          tsc: { build: true },
         }),
       ],
     )

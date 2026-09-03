@@ -12,6 +12,7 @@ const tsconfig = path.resolve(
   import.meta.dirname,
   'fixtures/source-map/tsconfig.json',
 )
+const tsgoModuleUrl = import.meta.resolve('typescript-next')
 
 beforeAll(async () => {
   await rm(tempDir, { recursive: true, force: true })
@@ -82,6 +83,7 @@ test('tsgo', async () => {
     plugins: [
       dts({
         generator: 'tsgo',
+        tsgo: { moduleUrl: tsgoModuleUrl },
         tsconfig,
         sourcemap: true,
         emitDtsOnly: true,

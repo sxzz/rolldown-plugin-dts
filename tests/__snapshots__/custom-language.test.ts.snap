@@ -35,6 +35,25 @@ export { foo };
 "
 `;
 
+exports[`volar > custom without volar (tsgo vfs) 1`] = `
+"// main.d.ts
+//#region tests/fixtures/custom-language/foo.custom.d.ts
+export declare const foo: string;
+//#endregion
+//# sourceMappingURL=main.d.ts.map
+// main.d.ts.map
+{"version":3,"file":"main.d.ts","names":[],"sources":["../tests/fixtures/custom-language/foo.custom"],"mappings":";qBACa"}
+// main.js
+//#region tests/fixtures/custom-language/foo.custom
+const foo = "bar";
+//#endregion
+export { foo };
+
+//# sourceMappingURL=main.js.map
+// main.js.map
+{"version":3,"file":"main.js","names":[],"sources":[],"mappings":""}"
+`;
+
 exports[`volar > ts-macro > ts-macro w/ ts-compiler 1`] = `
 "// main.d.ts
 //#region tests/fixtures/ts-macro/main.d.ts
@@ -82,6 +101,23 @@ declare const __VLS_export: import("@vue/runtime-core").DefineComponent<__VLS_Pr
 declare const _default: typeof __VLS_export;
 //#endregion
 export { _default as default };"
+`;
+
+exports[`volar > vue > vue-sfc w/ parallel ts-compiler 1`] = `
+"// main.d.ts
+//#region tests/fixtures/vue-sfc/App.vue.d.ts
+type __VLS_Props = {
+  foo: string;
+};
+declare global {
+  interface Window {
+    foo: string;
+  }
+}
+declare const __VLS_export: import("@vue/runtime-core").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("@vue/runtime-core").ComponentOptionsMixin, import("@vue/runtime-core").ComponentOptionsMixin, {}, string, import("@vue/runtime-core").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("@vue/runtime-core").ComponentProvideOptions, false, {}, any>;
+declare const _default: typeof __VLS_export;
+//#endregion
+export { _default as App };"
 `;
 
 exports[`volar > vue > vue-sfc w/ ts-compiler 1`] = `

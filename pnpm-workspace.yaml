@@ -10,7 +10,6 @@ catalog:
   '@ts-macro/language-plugin': ^0.3.7
   '@ts-macro/tsc': ^0.3.7
   '@types/node': ^26.4.0
-  '@typescript/native-preview': 'npm:typescript@^7.0.2'
   '@volar/typescript': ^2.4.28
   '@vue/language-core': ^3.3.11
   arktype: ^2.2.3
@@ -22,6 +21,7 @@ catalog:
   tsdown: ^0.22.14
   tsnapi: ^1.4.0
   typescript: ^6.0.3
+  typescript-next: 'npm:typescript@next'
   vitest: ^4.1.11
   vue: ^3.5.42
   vue-tsc: ^3.3.11

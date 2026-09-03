@@ -11,6 +11,22 @@ export interface VueLanguageOptions {
   vueCompilerOptions?: Partial<import('@vue/language-core').VueCompilerOptions>
 }
 
+export function createVueLanguageMetadata(): CustomLanguage {
+  return {
+    extensionPatterns: [RE_VUE],
+    tsFileExtensionInfos: [
+      {
+        extension: 'vue',
+        isMixedContent: true,
+        scriptKind: 7 satisfies ts.ScriptKind.Deferred,
+      },
+    ],
+    toTsFilename(id: string): string {
+      return id.replace(RE_VUE, '.vue.ts')
+    },
+  }
+}
+
 export function createVueLanguage(
   userOptions: VueLanguageOptions = {},
 ): CustomLanguage {
@@ -44,20 +60,10 @@ export function createVueLanguage(
   }
 
   return {
-    extensionPatterns: [RE_VUE],
-    tsFileExtensionInfos: [
-      {
-        extension: 'vue',
-        isMixedContent: true,
-        scriptKind: 7 satisfies ts.ScriptKind.Deferred,
-      },
-    ],
+    ...createVueLanguageMetadata(),
     volarTypeScript,
     createVolarPlugins(ts, options) {
       return [getLanguagePlugin(ts, options)]
-    },
-    toTsFilename(id: string): string {
-      return id.replace(RE_VUE, '.vue.ts')
     },
   }
 }

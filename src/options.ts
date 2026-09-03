@@ -8,9 +8,18 @@ import {
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
-import { resolveTsgoPath } from './generator/tsgo.ts'
-import { isTS70Installed, requireTSApi } from './require.ts'
-import { createVueLanguage, type VueLanguageOptions } from './tsc/vue.ts'
+import { requireTSApi } from './require.ts'
+import {
+  createVueLanguage,
+  createVueLanguageMetadata,
+  type VueLanguageOptions,
+} from './tsc/vue.ts'
+import {
+  getDefaultTsgoModuleUrl,
+  getTsgoPackageInfo,
+  loadTsgoApi,
+} from './tsgo.ts'
+import type { Generator } from './generator/index.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
 const debug = createDebug('rolldown-plugin-dts:options')
@@ -21,23 +30,23 @@ export interface Logger {
   error: (...args: any[]) => void
 }
 
-//#region General Options
-export interface GeneralOptions {
+export interface Options {
   /**
    * The generator used to produce declaration files.
    *
    * - `'tsc'` supports the full TypeScript type system.
    * - `'oxc'` is faster but requires code compatible with
    *   [`isolatedDeclarations`](https://www.typescriptlang.org/tsconfig/#isolatedDeclarations).
-   * - `'tsgo'` uses the experimental TypeScript Go compiler.
+   * - `'tsgo'` uses the experimental TypeScript Go API.
+   * - A custom {@link Generator} implementation can be provided directly.
    *
    * When omitted, the plugin selects `'oxc'` for `isolatedDeclarations`,
-   * `'tsgo'` for TypeScript 7, and `'tsc'` otherwise. Volar-based custom
-   * languages require `'tsc'`.
+   * `'tsgo'` when TypeScript exposes the declaration emit API, and `'tsc'`
+   * otherwise. Volar-based custom languages require `'tsc'`.
    *
    * @default Inferred from the TypeScript configuration and installed compiler.
    */
-  generator?: 'tsc' | 'oxc' | 'tsgo'
+  generator?: 'tsc' | 'oxc' | 'tsgo' | Generator
 
   /**
    * Glob pattern(s) that select source files for declaration generation.
@@ -127,9 +136,54 @@ export interface GeneralOptions {
    * @default console
    */
   logger?: Logger
+
+  /**
+   * Registers the built-in Vue language integration using `vue-tsc`.
+   *
+   * This is a shortcut for a preconfigured {@link Options.customLanguages}
+   * entry and requires the `tsc` generator.
+   *
+   * @default false
+   */
+  vue?: boolean | VueLanguageOptions
+
+  /**
+   * Generates declarations for JavaScript files with JSDoc types.
+   *
+   * @default Enabled when `allowJs` or `checkJs` is set.
+   */
+  emitJs?: boolean
+
+  /** Options for the built-in `tsc` generator. */
+  tsc?: TscOptions
+
+  /**
+   * Options for the `oxc` generator.
+   *
+   * The top-level {@link Options.sourcemap sourcemap} option controls
+   * declaration maps.
+   */
+  oxc?: Omit<IsolatedDeclarationsOptions, 'sourcemap'>
+
+  /**
+   * **[Experimental]** Options for the TypeScript Go generator.
+   */
+  tsgo?: TsgoOptions
+
+  /**
+   * Registers non-standard source languages such as Vue or Astro.
+   *
+   * If a language is supported via {@link https://volarjs.dev Volar},
+   * {@link CustomLanguage.volarTypeScript} and
+   * {@link CustomLanguage.createVolarPlugins} are both required. Volar
+   * languages require `tsc`. Non-Volar languages can use `tsgo` together
+   * with {@link TsgoOptions.vfs `tsgo.vfs`}.
+   *
+   * @experimental
+   */
+  customLanguages?: CustomLanguage[]
 }
 
-//#region tsc Options
 export interface TscOptions {
   /**
    * Uses TypeScript build mode (`tsc -b`) and follows project references.
@@ -147,17 +201,9 @@ export interface TscOptions {
   incremental?: boolean
 
   /**
-   * Registers the built-in Vue language integration using `vue-tsc`.
-   *
-   * This is a shortcut for a preconfigured {@link Options.customLanguages}
-   * entry and requires the `tsc` generator.
-   *
-   * @default false
-   */
-  vue?: boolean | VueLanguageOptions
-
-  /**
    * Runs `tsc` or `vue-tsc` in a separate process.
+   * Custom languages supplied through {@link Options.customLanguages} are not
+   * supported in the worker process.
    *
    * @default false
    */
@@ -178,59 +224,39 @@ export interface TscOptions {
    * @default false
    */
   newContext?: boolean
-
-  /**
-   * Generates declarations for JavaScript files with JSDoc types.
-   *
-   * @default Enabled when `allowJs` or `checkJs` is set.
-   */
-  emitJs?: boolean
-}
-
-/** Configuration accepted by {@link dts}. */
-export interface Options extends GeneralOptions, TscOptions {
-  //#region Oxc
-
-  /**
-   * Options for the `oxc` generator.
-   *
-   * The top-level {@link GeneralOptions.sourcemap sourcemap} option controls
-   * declaration maps.
-   */
-  oxc?: Omit<IsolatedDeclarationsOptions, 'sourcemap'>
-
-  //#region TypeScript Go
-
-  /**
-   * **[Experimental]** Options for the `tsgo` generator.
-   *
-   * Used when {@link GeneralOptions.generator generator} is `'tsgo'` or
-   * TypeScript 7 is detected.
-   */
-  tsgo?: TsgoOptions
-
-  /**
-   * Registers non-standard source languages such as Vue or Astro.
-   *
-   * If a language is supported via {@link https://volarjs.dev Volar},
-   * {@link CustomLanguage.volarTypeScript} and
-   * {@link CustomLanguage.createVolarPlugins} are both required. Volar
-   * languages require `tsc`; `tsgo` does not support custom languages.
-   *
-   * @experimental
-   */
-  customLanguages?: CustomLanguage[]
 }
 
 export interface TsgoOptions {
-  /** Path to a custom `tsgo` executable. */
+  /**
+   * URL of the TypeScript module that provides the TypeScript Go API.
+   *
+   * Use `import.meta.resolve()` to select an npm alias or another compatible
+   * TypeScript module.
+   *
+   * @default import.meta.resolve('typescript')
+   */
+  moduleUrl?: string
+
+  /**
+   * Path passed to the TypeScript Go API as `tsserverPath`.
+   */
   path?: string
+
+  /**
+   * Supplies Rolldown-transformed source code to the `tsgo` API through a
+   * virtual filesystem.
+   *
+   * @default false
+   */
+  vfs?: boolean
 }
 
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 
 export type OptionsResolved = Overwrite<
-  Required<Omit<Options, 'compilerOptions' | 'vue' | 'customLanguages'>>,
+  Required<
+    Omit<Options, 'compilerOptions' | 'vue' | 'customLanguages' | 'tsc'>
+  >,
   {
     entry?: string[]
     tsconfig?: string
@@ -238,6 +264,8 @@ export type OptionsResolved = Overwrite<
     tsconfigRaw: TsconfigJson
     tsgo: TsgoOptions
     languageContext: LanguageContext
+    vue: false | VueLanguageOptions
+    tsc: Required<TscOptions>
   }
 >
 
@@ -258,14 +286,9 @@ export function resolveOptions({
   sideEffects = false,
   logger = console,
   customLanguages,
+  tsc,
 
-  // tsc
-  build = false,
-  incremental = false,
   vue = false,
-  parallel = false,
-  eager = false,
-  newContext = false,
   emitJs,
 
   oxc,
@@ -288,8 +311,6 @@ export function resolveOptions({
     ...compilerOptions,
   }
 
-  incremental ||=
-    compilerOptions.incremental || !!compilerOptions.tsBuildInfoFile
   sourcemap ??= !!compilerOptions.declarationMap
   compilerOptions.declarationMap = sourcemap
 
@@ -299,50 +320,86 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  customLanguages ||= []
-  if (vue) {
-    customLanguages.push(createVueLanguage(typeof vue === 'object' ? vue : {}))
+  const tscOptions: Required<TscOptions> = {
+    build: tsc?.build ?? false,
+    incremental:
+      tsc?.incremental ??
+      !!(compilerOptions.incremental || compilerOptions.tsBuildInfoFile),
+    parallel: tsc?.parallel ?? false,
+    eager: tsc?.eager ?? false,
+    newContext: tsc?.newContext ?? false,
+  }
+
+  const hasCustomLanguages = !!customLanguages?.length
+  customLanguages = [...(customLanguages || [])]
+  const vueOptions: false | VueLanguageOptions = vue
+    ? typeof vue === 'object'
+      ? vue
+      : {}
+    : false
+  if (vueOptions) {
+    if (generator && generator !== 'tsc') {
+      throw new Error(
+        'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
+      )
+    }
+    customLanguages.push(
+      tscOptions.parallel
+        ? createVueLanguageMetadata()
+        : createVueLanguage(vueOptions),
+    )
   }
 
   const languageContext = new LanguageContext(customLanguages)
-  if (customLanguages.length) {
-    // Custom languages that rely on Volar can only be handled by the `tsc`
-    // generator; Volar-free languages also work with `oxc`, but `tsgo` does not
-    // support custom languages at all.
-    if (languageContext.isUsingVolar()) {
-      requireTSApi(
-        'custom languages',
-        '. Custom languages (including the `vue` option) require the TypeScript API.',
-      )
+  const isUsingVolar = !!vueOptions || languageContext.isUsingVolar()
 
-      if (generator && generator !== 'tsc') {
-        throw new Error(
-          'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
-        )
-      }
-      generator = 'tsc'
-    } else if (generator === 'tsgo') {
-      throw new Error('The `tsgo` generator does not support custom languages.')
+  oxc ||= {}
+  tsgo ||= {}
+  const defaultTsgoModuleUrl = getDefaultTsgoModuleUrl()
+  tsgo.moduleUrl ??= defaultTsgoModuleUrl
+  tsgo.vfs ??= false
+
+  if (isUsingVolar) {
+    if (generator && generator !== 'tsc') {
+      throw new Error(
+        'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
+      )
     }
+    generator = 'tsc'
   }
 
   if (!generator) {
     if (compilerOptions.isolatedDeclarations) {
       generator = 'oxc'
-    } else if (isTS70Installed()) {
-      if (customLanguages.length) {
-        throw new Error(
-          "TypeScript 7.0 is installed, but the `tsgo` generator does not support custom languages. Enable `isolatedDeclarations` or set `generator: 'oxc'` to use Oxc instead, or install TypeScript 6.0 or below.",
-        )
-      }
-      generator = 'tsgo'
     } else {
-      generator = 'tsc'
+      const pkg = getTsgoPackageInfo(defaultTsgoModuleUrl)
+      generator = pkg?.hasTsgoApi ? 'tsgo' : 'tsc'
     }
   }
 
-  oxc ||= {}
-  tsgo ||= {}
+  if (generator === 'tsc' && tscOptions.parallel && hasCustomLanguages) {
+    throw new Error(
+      'The `tsc.parallel` option does not support `customLanguages`. Disable `tsc.parallel` or use the built-in `vue` option for Vue.',
+    )
+  }
+
+  if (isUsingVolar) {
+    requireTSApi(
+      vueOptions ? 'Vue' : 'custom languages',
+      vueOptions ? '.' : '. Custom languages require the TypeScript API.',
+    )
+  }
+
+  if (
+    customLanguages.length &&
+    !isUsingVolar &&
+    generator === 'tsgo' &&
+    !tsgo.vfs
+  ) {
+    throw new Error(
+      "The `tsgo` generator requires `tsgo.vfs: true` to process custom languages. Enable VFS, use `generator: 'oxc'`, or use a compatible `tsc` installation.",
+    )
+  }
 
   if (generator === 'tsc') {
     requireTSApi(
@@ -358,10 +415,10 @@ export function resolveOptions({
     if (!warnedTsgo) {
       warnedTsgo = true
       logger.warn(
-        'TypeScript 7.0 does not yet have a stable API and is experimental. Some options will be unavailable.',
+        'TypeScript Go is experimental. Some options will be unavailable.',
       )
     }
-    tsgo.path ??= resolveTsgoPath(logger)
+    loadTsgoApi(tsgo.moduleUrl, logger)
   }
   oxc.stripInternal ??= !!compilerOptions.stripInternal
   // @ts-expect-error omitted in user options
@@ -388,12 +445,8 @@ export function resolveOptions({
     cjsDefault,
     sideEffects,
 
-    // tsc
-    build,
-    incremental,
-    parallel,
-    eager,
-    newContext,
+    vue: vueOptions,
+    tsc: tscOptions,
     emitJs,
     languageContext,
 
