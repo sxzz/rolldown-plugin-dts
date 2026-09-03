@@ -597,6 +597,7 @@ describe('chunk alias type collision', () => {
     expect(snapshot).toMatchSnapshot()
     expect(chunks).toHaveLength(2)
     // `fn` leaves the shared chunk under the alias `n`, the name of a type
+    expect(snapshot).toContain('fn as n')
     expect(snapshot).not.toContain('type fn as n')
     expect(snapshot).toContain('export { fn, type n }')
   })
