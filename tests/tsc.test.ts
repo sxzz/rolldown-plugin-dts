@@ -148,7 +148,7 @@ describe('tsc', () => {
       [
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
-          build: true,
+          tsc: { build: true },
           sourcemap: true,
           emitDtsOnly: true,
         }),
