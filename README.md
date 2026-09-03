@@ -192,15 +192,21 @@ export default {
 }
 ```
 
-## CommonJS
+## Limitations
 
-Declaration bundling requires an ESM Rolldown output. For CommonJS packages,
-build the JavaScript output separately and use `emitDtsOnly` for a second
-declaration-only build.
+Declaration bundling requires an ESM Rolldown output. The `cjs` output format is
+not supported. For CommonJS packages, build the JavaScript output separately
+and use `emitDtsOnly` for a second declaration-only build.
 
-The plugin expects ESM-style declaration input. Syntax such as `export =` or
-`import x = require('x')` may not bundle correctly. If it comes from a
-dependency, mark that dependency as external.
+The following declaration input cannot be bundled:
+
+- CommonJS export assignments such as `export = value`.
+- CommonJS import aliases such as `import value = require('package')`.
+- Script-style ambient declarations, such as `declare module 'package' { ... }`
+  or unexported top-level `declare` statements. Bundled declaration chunks are
+  always modules, which would change the meaning of these declarations.
+
+Mark dependencies that use unsupported declaration syntax as external.
 
 ## Credits
 

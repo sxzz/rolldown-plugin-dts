@@ -611,7 +611,7 @@ test('cyclic import', async () => {
 })
 
 test('side effects', async () => {
-  const { snapshot } = await rolldownBuild(
+  const { snapshot, chunks } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/side-effects/index.ts'),
     [
       dts({
@@ -622,6 +622,11 @@ test('side effects', async () => {
     {},
     { preserveModules: true },
   )
+  const modChunk = chunks.find((chunk) => chunk.fileName === 'mod.d.ts')
+  if (modChunk?.type !== 'chunk') {
+    throw new Error('Expected mod.d.ts to be an output chunk')
+  }
+  expect(modChunk.code).toContain('export {}')
   expect(snapshot).toMatchSnapshot()
 })
 

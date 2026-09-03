@@ -571,6 +571,17 @@ export function createFakeJsPlugin({
       return { code: EMPTY_STUB, map: null }
     }
 
+    if (!program.body.some(isModuleStatement)) {
+      program.body.push(
+        b.ExportNamedDeclaration({
+          declaration: null,
+          specifiers: [],
+          source: null,
+          attributes: [],
+        }),
+      )
+    }
+
     // recover comments
     const comments = new Set<t.Comment>()
     const commentsValue = new Set<string>() // deduplicate
@@ -628,4 +639,18 @@ export function createFakeJsPlugin({
   function getDeclaration(declarationId: number) {
     return declarationMap.get(declarationId)!
   }
+}
+
+function isModuleStatement(node: t.ProgramStatement): boolean {
+  return (
+    is.oneOf(node, [
+      'ImportDeclaration',
+      'ExportAllDeclaration',
+      'ExportDefaultDeclaration',
+      'ExportNamedDeclaration',
+      'TSExportAssignment',
+    ]) ||
+    (node.type === 'TSImportEqualsDeclaration' &&
+      node.moduleReference.type === 'TSExternalModuleReference')
+  )
 }

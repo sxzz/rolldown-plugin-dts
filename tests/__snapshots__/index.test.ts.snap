@@ -473,7 +473,8 @@ import "./mod.js";
 //#region tests/fixtures/side-effects/mod.d.ts
 declare global {
   let sideEffectExecuted: boolean;
-}"
+}
+export {};"
 `;
 
 exports[`sub namespace 1`] = `

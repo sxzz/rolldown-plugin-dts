@@ -6,7 +6,8 @@ exports[`volar > astro 1`] = `
 interface Props {
   name: string;
 }
-declare function Foo(_props: Props): any;"
+declare function Foo(_props: Props): any;
+export {};"
 `;
 
 exports[`volar > custom without volar (oxc) 1`] = `
