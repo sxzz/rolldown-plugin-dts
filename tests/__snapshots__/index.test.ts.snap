@@ -37,7 +37,7 @@ export { Cls, Enum, fn, foo };
 "
 `;
 
-exports[`chunk alias type collision 1`] = `
+exports[`chunk alias type collision > minified internal exports 1`] = `
 "// entry.d.ts
 import { n as fn, t as n } from "./shared-chunk-BiIeNIrJ.js";
 export { fn, type n };
@@ -49,6 +49,20 @@ declare const fn: () => string;
 type n = string;
 //#endregion
 export { fn as n, n as t };"
+`;
+
+exports[`chunk alias type collision > original internal exports 1`] = `
+"// entry.d.ts
+import { fn, n } from "./shared-chunk-B9gKTuoj.js";
+export { fn, type n };
+// shared-chunk-B9gKTuoj.d.ts
+//#region tests/fixtures/chunk-alias-type-collision/shared.d.ts
+declare const fn: () => string;
+//#endregion
+//#region tests/fixtures/chunk-alias-type-collision/types.d.ts
+type n = string;
+//#endregion
+export { fn, n };"
 `;
 
 exports[`cjs exports 1`] = `

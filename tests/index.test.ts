@@ -578,19 +578,40 @@ test('codeSplitting', async () => {
   expect(chunks).toHaveLength(2)
 })
 
-test('chunk alias type collision', async () => {
-  const { snapshot, chunks } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/chunk-alias-type-collision/entry.ts'),
-    [dts({ emitDtsOnly: true })],
-    {},
-    {
-      codeSplitting: {
-        groups: [{ test: /(shared|types)/, name: 'shared-chunk.d' }],
-      },
-    },
+describe('chunk alias type collision', () => {
+  const entry = path.resolve(
+    dirname,
+    'fixtures/chunk-alias-type-collision/entry.ts',
   )
-  expect(snapshot).toMatchSnapshot()
-  expect(chunks).toHaveLength(2)
+  const codeSplitting = {
+    groups: [{ test: /(shared|types)/, name: 'shared-chunk.d' }],
+  }
+
+  test('minified internal exports', async () => {
+    const { snapshot, chunks } = await rolldownBuild(
+      entry,
+      [dts({ emitDtsOnly: true })],
+      {},
+      { codeSplitting },
+    )
+    expect(snapshot).toMatchSnapshot()
+    expect(chunks).toHaveLength(2)
+    // `fn` leaves the shared chunk under the alias `n`, the name of a type
+    expect(snapshot).not.toContain('type fn as n')
+    expect(snapshot).toContain('export { fn, type n }')
+  })
+
+  test('original internal exports', async () => {
+    const { snapshot, chunks } = await rolldownBuild(
+      entry,
+      [dts({ emitDtsOnly: true })],
+      {},
+      { codeSplitting, minifyInternalExports: false },
+    )
+    expect(snapshot).toMatchSnapshot()
+    expect(chunks).toHaveLength(2)
+    expect(snapshot).toContain('export { fn, type n }')
+  })
 })
 
 test('re-export from lib', async () => {
