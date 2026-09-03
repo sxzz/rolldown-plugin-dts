@@ -164,7 +164,7 @@ function createTscWorker(vue: false | VueLanguageOptions): TscWorker {
         childProcess.send({
           id,
           options,
-          ...(vue ? { vue } : undefined),
+          vue: vue || undefined,
         } satisfies WorkerRequest)
       }),
     kill: () => childProcess.kill(),
