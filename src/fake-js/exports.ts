@@ -214,11 +214,16 @@ function collectChunkExports(
   chunk: RenderedChunk,
   moduleExportsMap: Map<string, ModuleExports>,
 ): ChunkExports {
+  if (!chunk.facadeModuleId || !moduleExportsMap.has(chunk.facadeModuleId)) {
+    return {
+      typeOnlyNames: new Set(),
+      typeOnlyExportAllSources: new Set(),
+      inlineNames: new Set(),
+    }
+  }
+
   const exportsByModule = resolveAllModuleExports(moduleExportsMap)
-  const roots =
-    chunk.facadeModuleId && moduleExportsMap.has(chunk.facadeModuleId)
-      ? [chunk.facadeModuleId]
-      : chunk.moduleIds
+  const roots = [chunk.facadeModuleId]
   const mergedExports = new Map<string, boolean>()
   const typeOnlyExportAllSources = new Set<string>()
 

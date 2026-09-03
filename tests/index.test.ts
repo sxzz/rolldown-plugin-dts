@@ -578,6 +578,21 @@ test('codeSplitting', async () => {
   expect(chunks).toHaveLength(2)
 })
 
+test('chunk alias type collision', async () => {
+  const { snapshot, chunks } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/chunk-alias-type-collision/entry.ts'),
+    [dts({ emitDtsOnly: true })],
+    {},
+    {
+      codeSplitting: {
+        groups: [{ test: /(shared|types)/, name: 'shared-chunk.d' }],
+      },
+    },
+  )
+  expect(snapshot).toMatchSnapshot()
+  expect(chunks).toHaveLength(2)
+})
+
 test('re-export from lib', async () => {
   const cwd = path.resolve(dirname, 'fixtures/re-export-lib')
   const { snapshot: onlyA } = await rolldownBuild(
