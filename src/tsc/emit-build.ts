@@ -177,7 +177,8 @@ function buildProjects(
     createProgramWithPatchedCompilerOptions({
       force,
       sourcemap,
-      tsconfigPath: tsconfig,
+      /** we don't need to print warning here because we have done this in {@link collectProjectGraph} */
+      tsconfigPath: null,
     }),
   )
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
@@ -231,13 +232,12 @@ function collectProjectGraph(
     if (!parsedConfig) continue
 
     parsedConfig.options = patchCompilerOptions(parsedConfig.options, {
-      tsconfigPath,
+      // A project without source files (e.g. a tsconfig.json file that only
+      // contains references) emits no declaration files, so there is nothing
+      // for the user to fix in it. Pass `null` to patch it without warning.
+      tsconfigPath: parsedConfig.fileNames.length > 0 ? tsconfigPath : null,
       force,
-      // For a project that has no source files (e.g., a tsconfig.json file
-      // that only contains references), we don't need to generate a sourcemap
-      // and we don't need to print the warning about the missing
-      // `declaration`, `declarationMap` in the tsconfig.json file.
-      sourcemap: sourcemap && parsedConfig.fileNames.length > 0,
+      sourcemap,
     })
 
     projects.push({ tsconfigPath, parsedConfig })
@@ -276,7 +276,8 @@ function parseTsconfig(
 }
 
 interface CompilerPatchOptions {
-  tsconfigPath: string
+  // The tsconfig file to name in the warnings, or `null` to patch silently.
+  tsconfigPath: string | null
   force: boolean
   sourcemap: boolean
 }
