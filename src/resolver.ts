@@ -33,7 +33,6 @@ export function createDtsResolvePlugin({
   }
 
   const dtsResolver = new ResolverFactory({
-    mainFields: ['types', 'typings', 'module', 'main'],
     conditionNames: ['types', 'typings', 'import', 'require'],
     tsconfig: tsconfig
       ? { configFile: tsconfig, references: 'auto' }
