@@ -8,4 +8,3 @@ dist
 *.tgz
 
 temp
-!tests/fixtures/types-versions-range/node_modules
