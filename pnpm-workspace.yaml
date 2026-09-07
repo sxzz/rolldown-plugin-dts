@@ -22,7 +22,7 @@ catalog:
   tsdown: ^0.23.0
   tsnapi: ^1.4.2
   typescript: ^6.0.3
-  vitest: ^4.1.11
+  vitest: ^5.0.0
   vue: ^3.5.42
   vue-tsc: ^3.3.11
   zod: ^4.5.4
