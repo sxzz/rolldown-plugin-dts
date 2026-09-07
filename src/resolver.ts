@@ -136,9 +136,7 @@ export function createDtsResolvePlugin({
         // TODO reference
       )
     } else {
-      dtsPath =
-        dtsResolver.resolveDtsSync(importer, id).path ??
-        dtsResolver.sync(path.dirname(importer), id).path
+      dtsPath = dtsResolver.resolveDtsSync(importer, id).path
     }
     debug('Using %s for dts import: %O -> %O', resolver, id, dtsPath)
 

@@ -58,7 +58,7 @@ describe('volar', () => {
             vue: true,
           }),
         ],
-        { external },
+        { external, tsconfig: path.resolve(root, 'tsconfig.build.json') },
       )
       expect(snapshot).not.toContain('@/App.vue')
       expect(snapshot).toContain('DefineComponent')
