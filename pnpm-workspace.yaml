@@ -19,7 +19,7 @@ catalog:
   prettier: ^3.9.6
   rolldown: ^1.2.7
   ts-macro: ^0.3.7
-  tsdown: ^0.22.14
+  tsdown: ^0.23.0
   tsnapi: ^1.4.2
   typescript: ^6.0.3
   vitest: ^4.1.11
