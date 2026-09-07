@@ -177,9 +177,6 @@ catalogs:
       specifier: ^4.5.4
       version: 4.5.4
   prod:
-    dts-resolver:
-      specifier: ^3.0.0
-      version: 3.0.0
     get-tsconfig:
       specifier: 5.0.0-beta.6
       version: 5.0.0-beta.6
@@ -203,9 +200,6 @@ importers:
 
   .:
     dependencies:
-      dts-resolver:
-        specifier: catalog:prod
-        version: 3.0.0
       get-tsconfig:
         specifier: catalog:prod
         version: 5.0.0-beta.6
