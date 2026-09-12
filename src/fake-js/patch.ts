@@ -193,12 +193,14 @@ function getExportAllNamespace(
  * }
  * ```
  *
- * `deps` are the dependencies of the declaration after bundling.
+ * `deps` are the dependencies of the declaration after bundling, `depMeanings`
+ * what each of them has to refer to.
  */
 export function patchNamespaceMembers(
   decl: t.TSModuleDeclaration,
   scope: NamespaceScope,
   deps: t.Node[],
+  depMeanings: number[],
 ): void {
   const block = decl.body!
 
@@ -216,7 +218,7 @@ export function patchNamespaceMembers(
       const root = getRootIdentifier(dep)
       if (root?.name !== member.name) return false
 
-      const meaning = root === dep ? scope.depMeanings[i] : QUALIFIER_MEANING
+      const meaning = root === dep ? depMeanings[i] : QUALIFIER_MEANING
       return !!(member.meaning & meaning)
     })
     if (!captures) continue

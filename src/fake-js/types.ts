@@ -41,8 +41,6 @@ export interface NamespaceScope {
   /** The statements of the body, as parsed */
   body: t.ProgramStatement[]
   members: NamespaceMember[]
-  /** Bit set of `Meaning` for each dependency of the declaration */
-  depMeanings: number[]
 }
 
 export interface DeclarationInfo {
@@ -50,6 +48,8 @@ export interface DeclarationInfo {
   bindings: t.Identifier[]
   params: TypeParams
   deps: Dep[]
+  /** Bit set of `Meaning` for each dependency, what it has to refer to */
+  depMeanings: number[]
   children: t.Node[]
   /** The scope of a namespace declaring members, see `patchNamespaceMembers` */
   namespace?: NamespaceScope

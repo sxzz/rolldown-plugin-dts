@@ -155,7 +155,12 @@ export async function collectDependencies(
   children: Set<t.Node>,
   identifierMap: Record<string, number>,
   params: TypeParams,
-): Promise<{ deps: Dep[]; namespace?: NamespaceScope }> {
+): Promise<{
+  deps: Dep[]
+  /** Bit set of `Meaning` for each dependency, what it has to refer to */
+  meanings: number[]
+  namespace?: NamespaceScope
+}> {
   const deps = new Set<Dep>()
   const meanings = new Map<Dep, number>()
   const members = collectNamespaceMembers(node, params)
@@ -274,12 +279,12 @@ export async function collectDependencies(
   const result = Array.from(deps)
   return {
     deps: result,
+    meanings: result.map((dep) => meanings.get(dep)!),
     namespace:
       members.size && isNamespaceWithBody(node)
         ? {
             body: [...node.body.body],
             members: Array.from(members.values()),
-            depMeanings: result.map((dep) => meanings.get(dep)!),
           }
         : undefined,
   }

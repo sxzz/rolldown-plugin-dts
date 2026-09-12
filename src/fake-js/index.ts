@@ -260,7 +260,7 @@ export function createFakeJsPlugin({
 
       const params: TypeParams = collectParams(decl)
       const childrenSet = new Set<t.Node>()
-      const { deps, namespace } = await collectDependencies(
+      const { deps, meanings, namespace } = await collectDependencies(
         this,
         decl,
         id,
@@ -280,6 +280,7 @@ export function createFakeJsPlugin({
       const declarationId = registerDeclaration({
         decl,
         deps,
+        depMeanings: meanings,
         bindings,
         params,
         children,
@@ -532,6 +533,7 @@ export function createFakeJsPlugin({
           declaration.decl as t.TSModuleDeclaration,
           declaration.namespace,
           transformedDeps,
+          declaration.depMeanings,
         )
       }
 
