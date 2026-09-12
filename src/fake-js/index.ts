@@ -15,9 +15,11 @@ import {
   collectModuleExports,
   inlineExportDeclaration,
   planChunkExports,
+  resolveBindingMeaning,
 } from './exports.ts'
 import {
   patchImportExport,
+  patchNamespaceMembers,
   patchReExport,
   patchTsNamespace,
   rewriteImportExport,
@@ -30,6 +32,7 @@ import {
   collectReferenceDirectives,
   getIdentifierIndex,
   getIdFromTSEntityName,
+  getRootIdentifier,
   inheritNodeComments,
   isCjsDtsInputSyntax,
   isHelperImport,
@@ -259,13 +262,14 @@ export function createFakeJsPlugin({
 
       const params: TypeParams = collectParams(decl)
       const childrenSet = new Set<t.Node>()
-      const deps = await collectDependencies(
+      const { deps, meanings, roots, namespace } = await collectDependencies(
         this,
         decl,
         id,
         namespaceStmts,
         childrenSet,
         identifierMap,
+        params,
       )
       const children = Array.from(childrenSet).filter((child) =>
         bindings.every((b) => child !== b),
@@ -278,9 +282,13 @@ export function createFakeJsPlugin({
       const declarationId = registerDeclaration({
         decl,
         deps,
+        depMeanings: meanings,
+        depRoots: roots,
         bindings,
         params,
         children,
+        moduleId: id,
+        namespace,
         exportType: isDefaultExport
           ? 'default'
           : isExportDecl
@@ -517,11 +525,22 @@ export function createFakeJsPlugin({
           transformedDep.name = '__Infer'
         }
 
+        keepGlobalReference(declaration, i, transformedDep)
+
         if (originalDep.replace) {
           originalDep.replace(transformedDep)
         } else {
           Object.assign(originalDep, transformedDep)
         }
+      }
+
+      if (declaration.namespace) {
+        patchNamespaceMembers(
+          declaration.decl as t.TSModuleDeclaration,
+          declaration.namespace,
+          transformedDeps,
+          declaration.depMeanings,
+        )
       }
 
       const kind = exportPlan.inlineKinds.get(declarationId!)
@@ -627,6 +646,47 @@ export function createFakeJsPlugin({
       // pragma it appends by a blank line
       code: result.code.trimEnd(),
       map: (result.map ?? null) as SourceMapInput | null,
+    }
+  }
+
+  /**
+   * Undoes a rename rolldown should not have made.
+   *
+   * TypeScript keeps types and values apart, JavaScript does not. Next to
+   * `import type { Response } from './response'`, where `Response` is an
+   * interface, `typeof Response` needs a value, so it means the global
+   * constructor. In the fake-JS it is bound to the import all the same, and
+   * gets renamed together with the interface.
+   *
+   * So for a renamed reference, compare what it needs with what that name is in
+   * its module. If the name cannot be that, e.g. a value is needed and it is
+   * only a type, the reference meant the global and gets its name back. If it
+   * is unclear what the name is, the rename is kept.
+   */
+  function keepGlobalReference(
+    declaration: DeclarationInfo,
+    index: number,
+    transformedDep: t.Node,
+  ) {
+    const root = declaration.depRoots[index]
+    const transformedRoot = getRootIdentifier(transformedDep)
+    if (
+      !root ||
+      !transformedRoot ||
+      transformedRoot.name === root.name ||
+      // bound by the deps function, not by the module
+      declaration.params.some((param) => param.name === root.name)
+    ) {
+      return
+    }
+
+    const meaning = resolveBindingMeaning(
+      moduleExportsMap,
+      declaration.moduleId,
+      root.name,
+    )
+    if (meaning !== undefined && !(meaning & root.meaning)) {
+      transformedRoot.name = root.name
     }
   }
 

@@ -1,7 +1,12 @@
-import { b, is, nameOf } from 'yuku-ast'
+import { b, is, nameOf, walk } from 'yuku-ast'
 import { filename_dts_to, RE_DTS } from '../filename.ts'
-import { isInfer } from './utils.ts'
-import type { ChunkExportPlan } from './types.ts'
+import {
+  QUALIFIER_MEANING,
+  type ChunkExportPlan,
+  type NamespaceMember,
+  type NamespaceScope,
+} from './types.ts'
+import { getDeclarationBindings, getRootIdentifier, isInfer } from './utils.ts'
 import type * as t from 'yuku-parser'
 
 /**
@@ -164,6 +169,179 @@ function getExportAllNamespace(
 
   const exports = node.declarations[0].init.arguments[0]
   return [source, exports] as const
+}
+
+/**
+ * A namespace body is a scope of its own. rolldown does not know about it, so
+ * it may rename a reference inside of the body to the name of a member of that
+ * very namespace, which then captures the reference:
+ *
+ * ```ts
+ * import { Foo as OuterFoo } from './foo'
+ * declare namespace N {
+ *   export type Foo = OuterFoo // bundled to `type Foo = Foo`
+ * }
+ * ```
+ *
+ * A captured member is renamed together with the references to it, and
+ * exported under its original name by a specifier:
+ *
+ * ```ts
+ * declare namespace N {
+ *   type Foo$1 = Foo
+ *   export { Foo$1 as Foo }
+ * }
+ * ```
+ *
+ * `deps` are the dependencies of the declaration after bundling, `depMeanings`
+ * what each of them has to refer to.
+ */
+export function patchNamespaceMembers(
+  decl: t.TSModuleDeclaration,
+  scope: NamespaceScope,
+  deps: t.Node[],
+  depMeanings: number[],
+): void {
+  const block = decl.body!
+
+  // `renderChunk` may run again for the same declaration, start over
+  block.body = [...scope.body]
+  for (const member of scope.members) {
+    renameNamespaceMember(member, member.name)
+  }
+
+  const renamed = new Map<string /* new name */, string /* member name */>()
+  let usedNames: Set<string> | undefined
+
+  for (const member of scope.members) {
+    const captures = deps.some((dep, i) => {
+      const root = getRootIdentifier(dep)
+      if (root?.name !== member.name) return false
+
+      const meaning = root === dep ? depMeanings[i] : QUALIFIER_MEANING
+      return !!(member.meaning & meaning)
+    })
+    if (!captures) continue
+
+    // The new name is only visible inside of the namespace, so it is enough to
+    // not collide with any name used in there.
+    usedNames ||= collectIdentifierNames(decl)
+    let index = 1
+    let name: string
+    do {
+      name = `${member.name}$${index++}`
+    } while (usedNames.has(name))
+    usedNames.add(name)
+
+    renameNamespaceMember(member, name)
+    renamed.set(name, member.name)
+  }
+
+  if (renamed.size) {
+    block.body = exportRenamedMembers(block.body, renamed)
+  }
+}
+
+function renameNamespaceMember(member: NamespaceMember, name: string): void {
+  for (const id of member.bindings) id.name = name
+  for (const id of member.references) id.name = name
+}
+
+function collectIdentifierNames(node: t.Node): Set<string> {
+  const names = new Set<string>()
+  walk(node, {
+    enter(node) {
+      if (node.type === 'Identifier') names.add(node.name)
+    },
+  })
+  return names
+}
+
+function isMemberDeclaration(node: t.Node): node is t.Declaration {
+  return node.type === 'TSDeclareFunction' || is.Declaration(node)
+}
+
+function exportRenamedMembers(
+  body: t.ProgramStatement[],
+  renamed: Map<string /* new name */, string /* member name */>,
+): t.ProgramStatement[] {
+  // An ambient namespace without any export declaration exports all of its
+  // members but the import aliases, with or without an `export` keyword.
+  const implicitExport = body.every(
+    (stmt) =>
+      !(
+        (stmt.type === 'ExportNamedDeclaration' && !stmt.declaration) ||
+        stmt.type === 'ExportAllDeclaration' ||
+        stmt.type === 'ExportDefaultDeclaration' ||
+        stmt.type === 'TSExportAssignment'
+      ),
+  )
+
+  const members = body.map((stmt) => {
+    const hasExportKeyword =
+      stmt.type === 'ExportNamedDeclaration' && !!stmt.declaration
+    const decl = hasExportKeyword ? stmt.declaration! : stmt
+    if (!isMemberDeclaration(decl)) return { stmt }
+
+    const names = getDeclarationBindings(decl).map((id) => id.name)
+    return {
+      stmt,
+      decl,
+      names,
+      hasExportKeyword,
+      exported:
+        hasExportKeyword ||
+        (implicitExport && decl.type !== 'TSImportEqualsDeclaration'),
+      renamed: names.some((name) => renamed.has(name)),
+    }
+  })
+
+  // a member nobody outside of the namespace can see only has to be renamed
+  if (members.every((member) => !member.renamed || !member.exported)) {
+    return body
+  }
+
+  const specifiers = new Map<string /* local */, t.ExportSpecifier>()
+  const result: t.ProgramStatement[] = members.map((member) => {
+    const { stmt, decl } = member
+    if (!decl) return stmt
+
+    if (!member.renamed) {
+      // the export declaration added below ends the implicit export
+      return member.exported && !member.hasExportKeyword
+        ? b.ExportNamedDeclaration({
+            declaration: decl,
+            specifiers: [],
+            source: null,
+            attributes: [],
+          })
+        : stmt
+    }
+
+    if (member.exported) {
+      for (const name of member.names) {
+        specifiers.set(
+          name,
+          b.ExportSpecifier({
+            local: b.Identifier({ name }),
+            exported: b.Identifier({ name: renamed.get(name) ?? name }),
+          }),
+        )
+      }
+    }
+    // drop the `export` keyword, but keep the comments in front of it
+    return member.hasExportKeyword ? { ...decl, comments: stmt.comments } : stmt
+  })
+
+  result.push(
+    b.ExportNamedDeclaration({
+      declaration: null,
+      specifiers: Array.from(specifiers.values()),
+      source: null,
+      attributes: [],
+    }),
+  )
+  return result
 }
 
 /**

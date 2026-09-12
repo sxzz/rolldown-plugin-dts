@@ -1,4 +1,5 @@
 import { is } from 'yuku-ast'
+import { Meaning } from './types.ts'
 import type * as t from 'yuku-parser'
 
 export function isThisExpression(node: t.Node): boolean {
@@ -36,6 +37,60 @@ export function getIdFromTSEntityName(
     return node
   }
   return getIdFromTSEntityName(node.left)
+}
+
+/**
+ * The left-most identifier of a reference, `a` for `a.b.c`
+ */
+export function getRootIdentifier(node: t.Node): t.Identifier | undefined {
+  if (node.type === 'Identifier') return node
+  if (node.type === 'MemberExpression') return getRootIdentifier(node.object)
+  if (node.type === 'TSQualifiedName') return getRootIdentifier(node.left)
+}
+
+/**
+ * What the names a declaration binds mean, a bit set of `Meaning`
+ */
+export function getDeclarationMeaning(node: t.Node): number {
+  switch (node.type) {
+    case 'TSTypeAliasDeclaration':
+    case 'TSInterfaceDeclaration':
+      return Meaning.Type
+    case 'VariableDeclaration':
+    case 'FunctionDeclaration':
+    case 'TSDeclareFunction':
+      return Meaning.Value
+    case 'ClassDeclaration':
+      return Meaning.Type | Meaning.Value
+    case 'TSModuleDeclaration':
+      return Meaning.Namespace | Meaning.Value
+    case 'TSEnumDeclaration':
+    case 'TSImportEqualsDeclaration':
+      return Meaning.Any
+    default:
+      return 0
+  }
+}
+
+/**
+ * The identifiers a declaration binds. Destructuring patterns are ignored.
+ */
+export function getDeclarationBindings(node: t.Node): t.Identifier[] {
+  if (node.type === 'VariableDeclaration') {
+    return node.declarations
+      .map((decl) => decl.id)
+      .filter((id): id is t.Identifier => id.type === 'Identifier')
+  }
+
+  if ('id' in node && node.id) {
+    const id =
+      node.id.type === 'TSQualifiedName'
+        ? getIdFromTSEntityName(node.id)
+        : node.id
+    if (id.type === 'Identifier') return [id]
+  }
+
+  return []
 }
 
 export function isReferenceId(
