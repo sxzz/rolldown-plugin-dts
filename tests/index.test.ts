@@ -707,6 +707,53 @@ test('sub namespace', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+describe('namespace members', () => {
+  const root = path.resolve(dirname, 'fixtures/namespace-members')
+
+  test('rename a member capturing a reference', async () => {
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'capture.ts'), [
+      dts({ emitDtsOnly: true }),
+    ])
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).not.toMatch(/type (\w+) = \1\b/)
+  })
+
+  test('across chunks', async () => {
+    const { snapshot } = await rolldownBuild(
+      ['capture.ts', 'options.ts'],
+      [dts({ emitDtsOnly: true })],
+      { cwd: root },
+    )
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).not.toMatch(/type (\w+) = \1\b/)
+  })
+
+  test('keep a member of another meaning', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'no-capture.ts'),
+      [dts({ emitDtsOnly: true })],
+    )
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).toContain('var Theme: Theme;')
+  })
+
+  test('implicitly exported members', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'dts/implicit-export.d.ts'),
+      [dts({ dtsInput: true, tsconfig: false })],
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test('member not exported', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'dts/private-member.d.ts'),
+      [dts({ dtsInput: true, tsconfig: false })],
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
+})
+
 test('deterministic namespace import index', async () => {
   const cwd = path.resolve(dirname, 'fixtures/import-type-multi')
   // Build multiple times to verify deterministic output
