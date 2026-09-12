@@ -10,12 +10,49 @@ export type TypeParams = Array<{
   typeParams: t.Identifier[]
 }>
 
+/**
+ * The declaration spaces of TypeScript. A name can mean something different in
+ * each of them, e.g. `var Foo: Foo` declares a value and refers to a type.
+ */
+export const Meaning = {
+  Type: 1,
+  Value: 2,
+  Namespace: 4,
+  Any: 7,
+} as const
+
+/**
+ * `a` in `a.b` is a namespace, or a value in `typeof a.b`, but never a type
+ */
+export const QUALIFIER_MEANING: number = Meaning.Namespace | Meaning.Value
+
+/** A name declared directly in the body of a namespace */
+export interface NamespaceMember {
+  name: string
+  /** Bit set of `Meaning`, what the name means inside of the body */
+  meaning: number
+  /** The identifiers declaring the member */
+  bindings: t.Identifier[]
+  /** The identifiers inside of the body referring to the member */
+  references: Set<t.Identifier>
+}
+
+export interface NamespaceScope {
+  /** The statements of the body, as parsed */
+  body: t.ProgramStatement[]
+  members: NamespaceMember[]
+}
+
 export interface DeclarationInfo {
   decl: t.Declaration
   bindings: t.Identifier[]
   params: TypeParams
   deps: Dep[]
+  /** Bit set of `Meaning` for each dependency, what it has to refer to */
+  depMeanings: number[]
   children: t.Node[]
+  /** The scope of a namespace declaring members, see `patchNamespaceMembers` */
+  namespace?: NamespaceScope
   /** How the declaration was exported in the source file, if it was */
   exportType?: InlineExportKind
   /** The comments attached to the declaration, as parsed */

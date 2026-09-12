@@ -18,6 +18,7 @@ import {
 } from './exports.ts'
 import {
   patchImportExport,
+  patchNamespaceMembers,
   patchReExport,
   patchTsNamespace,
   rewriteImportExport,
@@ -259,13 +260,14 @@ export function createFakeJsPlugin({
 
       const params: TypeParams = collectParams(decl)
       const childrenSet = new Set<t.Node>()
-      const deps = await collectDependencies(
+      const { deps, meanings, namespace } = await collectDependencies(
         this,
         decl,
         id,
         namespaceStmts,
         childrenSet,
         identifierMap,
+        params,
       )
       const children = Array.from(childrenSet).filter((child) =>
         bindings.every((b) => child !== b),
@@ -278,9 +280,11 @@ export function createFakeJsPlugin({
       const declarationId = registerDeclaration({
         decl,
         deps,
+        depMeanings: meanings,
         bindings,
         params,
         children,
+        namespace,
         exportType: isDefaultExport
           ? 'default'
           : isExportDecl
@@ -522,6 +526,15 @@ export function createFakeJsPlugin({
         } else {
           Object.assign(originalDep, transformedDep)
         }
+      }
+
+      if (declaration.namespace) {
+        patchNamespaceMembers(
+          declaration.decl as t.TSModuleDeclaration,
+          declaration.namespace,
+          transformedDeps,
+          declaration.depMeanings,
+        )
       }
 
       const kind = exportPlan.inlineKinds.get(declarationId!)
