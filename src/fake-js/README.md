@@ -106,6 +106,39 @@ what a reference asks for. Only the direct members of the namespace are tracked,
 and a name that a type parameter or a nested namespace declares again is left
 alone.
 
+## Types and values
+
+TypeScript keeps types, values and namespaces apart, JavaScript has a single
+namespace. A name can be a type in a module and a value in the global scope:
+
+```ts
+import type { Response } from './typed-response' // an interface
+export interface Options {
+  Response?: typeof Response // the global constructor
+}
+```
+
+In the fake-JS both are the same `Response` bound to the import, so rolldown
+renames the `typeof` along with the interface once that gets another name.
+
+`transform` records two things. For every dependency, what it needs: `typeof X`
+needs a value, `x: X` a type. And for every module, what each of its top-level
+names is: `interface Response` is only a type, `class Foo` a type and a value,
+an import whatever it points to, followed through re-exports as long as they
+stay inside the bundle.
+
+`renderChunk` compares the two whenever a dependency was renamed. `typeof
+Response` above needs a value, but the only `Response` in its module is an
+imported interface, so it cannot have meant the import. It meant the global, and
+gets back the name it was written with.
+
+If it is unclear what a name is, for example because it comes from an external
+module, it counts as possibly anything and the rename is kept. A reference is
+only reset when that is certain to be right.
+
+The dependency itself stays, so the declaration it was bound to is not
+tree-shaken because of this.
+
 ## Export shape
 
 A declaration written as `export declare const x` is emitted as
@@ -145,12 +178,12 @@ Smaller ones:
 
 ## Files
 
-| File                 | Scope                                                                                                                                                                                                                                                                                  |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts`           | The plugin. `transform` turns a declaration file into fake JavaScript, `renderChunk` turns a bundled chunk back into declarations, and `declarationMap` connects the two. Also names the `.d.ts` chunks and drops the `.d.ts.map` files when sourcemaps are off.                       |
-| `exports.ts`         | Everything about the shape of the exports: what each module exports, collected during `transform`, and the `ChunkExportPlan` of a chunk — which names are type only, which declarations get their `export` keyword back, whether `export =` may be emitted.                            |
-| `patch.ts`           | Statement rewrites. `rewriteImportExport` prepares imports and exports for bundling, `patchImportExport`, `patchTsNamespace` and `patchReExport` undo that and rolldown's `__exportAll` / `__reExport` helpers afterwards, `patchNamespaceMembers` renames captured namespace members. |
-| `dependency.ts`      | Walks a declaration for what it references: type references, type parameters, the members of a namespace, and `import('...')` types, which are hoisted into real namespace imports so rolldown can resolve them.                                                                       |
-| `runtime-binding.ts` | The encoding above: the builder and the type guards that recognise it again in a chunk.                                                                                                                                                                                                |
-| `utils.ts`           | Small shared AST and comment helpers.                                                                                                                                                                                                                                                  |
-| `types.ts`           | The types shared across the files.                                                                                                                                                                                                                                                     |
+| File                 | Scope                                                                                                                                                                                                                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.ts`           | The plugin. `transform` turns a declaration file into fake JavaScript, `renderChunk` turns a bundled chunk back into declarations, and `declarationMap` connects the two. Also names the `.d.ts` chunks and drops the `.d.ts.map` files when sourcemaps are off.                                        |
+| `exports.ts`         | Everything about the shape of the exports: what each module exports, collected during `transform` together with what its top-level names mean, and the `ChunkExportPlan` of a chunk — which names are type only, which declarations get their `export` keyword back, whether `export =` may be emitted. |
+| `patch.ts`           | Statement rewrites. `rewriteImportExport` prepares imports and exports for bundling, `patchImportExport`, `patchTsNamespace` and `patchReExport` undo that and rolldown's `__exportAll` / `__reExport` helpers afterwards, `patchNamespaceMembers` renames captured namespace members.                  |
+| `dependency.ts`      | Walks a declaration for what it references: type references, type parameters, the members of a namespace, and `import('...')` types, which are hoisted into real namespace imports so rolldown can resolve them.                                                                                        |
+| `runtime-binding.ts` | The encoding above: the builder and the type guards that recognise it again in a chunk.                                                                                                                                                                                                                 |
+| `utils.ts`           | Small shared AST and comment helpers.                                                                                                                                                                                                                                                                   |
+| `types.ts`           | The types shared across the files.                                                                                                                                                                                                                                                                      |

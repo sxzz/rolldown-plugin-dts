@@ -578,6 +578,109 @@ export declare const foo: number;
 //#endregion"
 `;
 
+exports[`reference to a global next to a type of the same name > across chunks 1`] = `
+"// index.d.ts
+import { Response as TypedResponse } from "./typed-response.js";
+//#region index.d.ts
+export interface Options {
+  /** Bring your own implementation */
+  Response?: typeof Response;
+  prototype?: typeof Response.prototype;
+}
+export declare function request<T>(url: string, options?: Options): Promise<TypedResponse<T>>;
+//#endregion
+// typed-response.d.ts
+//#region typed-response.d.ts
+/** A \`Response\` whose \`json()\` is typed */
+interface TypedResponse<T> extends Response {
+  json(): Promise<T>;
+}
+//#endregion
+export type { TypedResponse as Response };"
+`;
+
+exports[`reference to a global next to a type of the same name > keep following a declaration with a value side 1`] = `
+"// value.d.ts
+//#region value-a.d.ts
+declare class Client$1 {
+  a: string;
+}
+interface Widget$1 {
+  id: string;
+}
+declare const Widget$1: {
+  new (): Widget$1;
+};
+//#endregion
+//#region value-b.d.ts
+declare class Client {
+  b: string;
+}
+interface Widget {
+  name: string;
+}
+declare const Widget: {
+  new (): Widget;
+};
+//#endregion
+//#region value.d.ts
+export declare const clients: [typeof Client$1, typeof Client];
+export declare const widgets: [typeof Widget$1, typeof Widget];
+export declare class Sub extends Client {}
+//#endregion"
+`;
+
+exports[`reference to a global next to a type of the same name > through re-exports 1`] = `
+"// reexport.d.ts
+//#region typed-response.d.ts
+/** A \`Response\` whose \`json()\` is typed */
+interface TypedResponse<T> extends Response {
+  json(): Promise<T>;
+}
+//#endregion
+//#region reexport.d.ts
+export declare function ctor(): typeof Response;
+export declare function value(): TypedResponse<string>;
+//#endregion"
+`;
+
+exports[`reference to a global next to a type of the same name > type exported under the name of the global 1`] = `
+"// index.d.ts
+//#region typed-response.d.ts
+/** A \`Response\` whose \`json()\` is typed */
+interface TypedResponse<T> extends Response {
+  json(): Promise<T>;
+}
+//#endregion
+//#region index.d.ts
+export interface Options {
+  /** Bring your own implementation */
+  Response?: typeof Response;
+  prototype?: typeof Response.prototype;
+}
+export declare function request<T>(url: string, options?: Options): Promise<TypedResponse<T>>;
+//#endregion"
+`;
+
+exports[`reference to a global next to a type of the same name > type renamed by a collision 1`] = `
+"// collision.d.ts
+//#region collision-http.d.ts
+interface Response$1<T> extends globalThis.Response {
+  json(): Promise<T>;
+}
+export interface Options {
+  Response?: typeof Response;
+}
+export declare function request<T>(url: string, options?: Options): Promise<Response$1<T>>;
+//#endregion
+//#region collision.d.ts
+/** unrelated to the \`Response\` of \`./collision-http\` */
+export interface Response {
+  ok: boolean;
+}
+//#endregion"
+`;
+
 exports[`resolve dts 1`] = `
 "// index.d.ts
 //#region tests/fixtures/resolve-dts/mod.d.ts

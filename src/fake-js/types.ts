@@ -43,6 +43,13 @@ export interface NamespaceScope {
   members: NamespaceMember[]
 }
 
+/** The left-most identifier of a dependency, `a` for `a.b.c`, as written */
+export interface DepRoot {
+  name: string
+  /** Bit set of `Meaning`, what the identifier has to refer to */
+  meaning: number
+}
+
 export interface DeclarationInfo {
   decl: t.Declaration
   bindings: t.Identifier[]
@@ -50,7 +57,10 @@ export interface DeclarationInfo {
   deps: Dep[]
   /** Bit set of `Meaning` for each dependency, what it has to refer to */
   depMeanings: number[]
+  depRoots: Array<DepRoot | undefined>
   children: t.Node[]
+  /** The module declaring it */
+  moduleId: string
   /** The scope of a namespace declaring members, see `patchNamespaceMembers` */
   namespace?: NamespaceScope
   /** How the declaration was exported in the source file, if it was */
@@ -64,6 +74,19 @@ export interface ModuleExports {
   exports: Map<string, boolean>
   reExports: ReExportInfo[]
   exportAlls: ExportAllInfo[]
+  /** Bit set of `Meaning` for each name declared at the top level */
+  declared: Map<string, number>
+  /** The imported bindings by their local name */
+  imports: Map<string, ImportBinding>
+  /** The local name of each export that is not a re-export */
+  exportLocals: Map<string /* exported */, string /* local */>
+}
+
+export interface ImportBinding {
+  /** The resolved id of the imported module, if it is part of the bundle */
+  source?: string
+  /** The imported name, `*` for a namespace import */
+  imported: string
 }
 
 export interface ReExportInfo {

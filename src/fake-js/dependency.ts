@@ -3,6 +3,7 @@ import {
   Meaning,
   QUALIFIER_MEANING,
   type Dep,
+  type DepRoot,
   type NamespaceMap,
   type NamespaceMember,
   type NamespaceScope,
@@ -10,6 +11,7 @@ import {
 } from './types.ts'
 import {
   getDeclarationBindings,
+  getDeclarationMeaning,
   getIdentifierIndex,
   getIdFromTSEntityName,
   getRootIdentifier,
@@ -55,27 +57,6 @@ export function collectParams(node: t.Node): TypeParams {
     name,
     typeParams,
   }))
-}
-
-function getDeclarationMeaning(node: t.Node): number {
-  switch (node.type) {
-    case 'TSTypeAliasDeclaration':
-    case 'TSInterfaceDeclaration':
-      return Meaning.Type
-    case 'VariableDeclaration':
-    case 'FunctionDeclaration':
-    case 'TSDeclareFunction':
-      return Meaning.Value
-    case 'ClassDeclaration':
-      return Meaning.Type | Meaning.Value
-    case 'TSModuleDeclaration':
-      return Meaning.Namespace | Meaning.Value
-    case 'TSEnumDeclaration':
-    case 'TSImportEqualsDeclaration':
-      return Meaning.Any
-    default:
-      return 0
-  }
 }
 
 function isNamespaceWithBody(
@@ -159,10 +140,13 @@ export async function collectDependencies(
   deps: Dep[]
   /** Bit set of `Meaning` for each dependency, what it has to refer to */
   meanings: number[]
+  /** The left-most identifier of each dependency, as written */
+  roots: Array<DepRoot | undefined>
   namespace?: NamespaceScope
 }> {
   const deps = new Set<Dep>()
   const meanings = new Map<Dep, number>()
+  const roots = new Map<Dep, DepRoot>()
   const members = collectNamespaceMembers(node, params)
   const seen = new Set<t.Node>()
   const preserveImportTypeCache = new Map<string, boolean>()
@@ -280,6 +264,7 @@ export async function collectDependencies(
   return {
     deps: result,
     meanings: result.map((dep) => meanings.get(dep)!),
+    roots: result.map((dep) => roots.get(dep)),
     namespace:
       members.size && isNamespaceWithBody(node)
         ? {
@@ -293,11 +278,9 @@ export async function collectDependencies(
     if (isThisExpression(node) || isInferred(node)) return
 
     const root = getRootIdentifier(node)
+    const rootMeaning = root === node ? meaning : QUALIFIER_MEANING
     const member = root && members.get(root.name)
-    if (
-      member &&
-      member.meaning & (root === node ? meaning : QUALIFIER_MEANING)
-    ) {
+    if (member && member.meaning & rootMeaning) {
       // refers to a member of the namespace, not to anything around it
       member.references.add(root)
       return
@@ -305,6 +288,7 @@ export async function collectDependencies(
 
     deps.add(node)
     meanings.set(node, meaning)
+    if (root) roots.set(node, { name: root.name, meaning: rootMeaning })
   }
 }
 
