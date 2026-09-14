@@ -31,7 +31,7 @@ catalogs:
   prod:
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.6
-    obug: ^2.1.4
+    obug: ^3.0.0
     yuku-ast: ^0.10.0
     yuku-codegen: ^0.10.0
     yuku-parser: ^0.10.0
