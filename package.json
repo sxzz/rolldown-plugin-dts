@@ -45,7 +45,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^12.3.1",
+      "version": "^12.4.2",
       "onFail": "download"
     }
   },
@@ -63,6 +63,7 @@
   "peerDependencies": {
     "@typescript/native-preview": "*",
     "@volar/typescript": "~2.4.0",
+    "@vue/language-core": "~3.2.0 || ~3.3.0",
     "rolldown": "^1.2.0",
     "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0",
     "vue-tsc": "~3.2.0 || ~3.3.0"
@@ -72,6 +73,9 @@
       "optional": true
     },
     "@volar/typescript": {
+      "optional": true
+    },
+    "@vue/language-core": {
       "optional": true
     },
     "typescript": {

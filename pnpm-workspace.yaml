@@ -15,26 +15,26 @@ catalog:
   '@vue/language-core': ^3.3.11
   arktype: ^2.2.3
   bumpp: ^12.3.0
-  eslint: ^10.9.1
+  eslint: ^10.10.0
   prettier: ^3.9.6
-  rolldown: ^1.2.7
+  rolldown: ^1.2.8
   ts-macro: ^0.3.7
   tsdown: ^0.23.0
-  tsnapi: ^1.4.2
+  tsnapi: ^1.5.0
   typescript: ^6.0.3
-  vitest: ^5.0.0
+  vitest: ^5.0.1
   vue: ^3.5.42
   vue-tsc: ^3.3.11
-  zod: ^4.5.4
+  zod: ^4.6.5
 
 catalogs:
   prod:
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.6
     obug: ^3.0.0
-    yuku-ast: ^0.10.0
-    yuku-codegen: ^0.10.0
-    yuku-parser: ^0.10.0
+    yuku-ast: ^0.10.1
+    yuku-codegen: ^0.10.1
+    yuku-parser: ^0.10.1
 
 minimumReleaseAge: 0
 trustLockfile: true
