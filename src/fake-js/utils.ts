@@ -38,6 +38,36 @@ export function getIdFromTSEntityName(
   return getIdFromTSEntityName(node.left)
 }
 
+/**
+ * The left-most identifier of a reference, `a` for `a.b.c`
+ */
+export function getRootIdentifier(node: t.Node): t.Identifier | undefined {
+  if (node.type === 'Identifier') return node
+  if (node.type === 'MemberExpression') return getRootIdentifier(node.object)
+  if (node.type === 'TSQualifiedName') return getRootIdentifier(node.left)
+}
+
+/**
+ * The identifiers a declaration binds. Destructuring patterns are ignored.
+ */
+export function getDeclarationBindings(node: t.Node): t.Identifier[] {
+  if (node.type === 'VariableDeclaration') {
+    return node.declarations
+      .map((decl) => decl.id)
+      .filter((id): id is t.Identifier => id.type === 'Identifier')
+  }
+
+  if ('id' in node && node.id) {
+    const id =
+      node.id.type === 'TSQualifiedName'
+        ? getIdFromTSEntityName(node.id)
+        : node.id
+    if (id.type === 'Identifier') return [id]
+  }
+
+  return []
+}
+
 export function isReferenceId(
   node?: t.Node | null,
 ): node is t.Identifier | t.MemberExpression {
