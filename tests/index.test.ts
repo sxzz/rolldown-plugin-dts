@@ -147,6 +147,17 @@ test('tree-shaking', async () => {
 })
 
 describe('dts input', () => {
+  test('type imported via local module re-exporting an external package', async () => {
+    const root = path.resolve(dirname, 'fixtures/dts-input-reexport-external')
+    const { snapshot, chunks } = await rolldownBuild(
+      [path.join(root, 'index.d.ts')],
+      [dts({ dtsInput: true })],
+      { external: 'some-pkg' },
+    )
+    expect(chunks[0].code).not.toContain('wrapper_d_exports.WidgetProps')
+    expect(snapshot).toMatchSnapshot()
+  })
+
   test('input array', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       [path.resolve(dirname, 'fixtures/dts-input.d.ts')],
