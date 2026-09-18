@@ -25,6 +25,7 @@
     "jsdoc",
     "volar"
   ],
+  "sideEffects": false,
   "exports": {
     ".": "./dist/index.mjs",
     "./internal": "./dist/internal.mjs",
