@@ -1,9 +1,5 @@
 // index.d.ts
 //#region tests/rollup-plugin-dts/namespace-references/ns.d.ts
-interface Shadowed1 {}
-interface Shadowed2 {}
-interface Shadowed3 {}
-interface Shadowed4 {}
 interface Referenced1 {}
 interface Referenced2 {}
 export declare namespace ns {

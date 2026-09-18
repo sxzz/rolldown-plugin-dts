@@ -1,12 +1,14 @@
 import { b, is, nameOf } from 'yuku-ast'
 import { isRuntimeBindingVariableDeclaration } from './runtime-binding.ts'
-import { getIdFromTSEntityName } from './utils.ts'
-import type {
-  ChunkExportPlan,
-  DeclarationInfo,
-  InlineExportKind,
-  ModuleExports,
+import {
+  Meaning,
+  QUALIFIER_MEANING,
+  type ChunkExportPlan,
+  type DeclarationInfo,
+  type InlineExportKind,
+  type ModuleExports,
 } from './types.ts'
+import { getDeclarationMeaning, getIdFromTSEntityName } from './utils.ts'
 import type { RenderedChunk, TransformPluginContext } from 'rolldown'
 import type * as t from 'yuku-parser'
 
@@ -22,10 +24,14 @@ export async function collectModuleExports(
     exports: new Map(),
     reExports: [],
     exportAlls: [],
+    declared: new Map(),
+    imports: new Map(),
+    exportLocals: new Map(),
   }
 
   for (const node of nodes) {
     collectTypeOnlyLocals(node, info.typeOnlyLocals)
+    await collectBindings(context, node, id, info)
   }
 
   for (const node of nodes) {
@@ -48,6 +54,45 @@ function collectTypeOnlyLocals(
     ) {
       typeOnlyLocals.add(specifier.local.name)
     }
+  }
+}
+
+/**
+ * Collects what the top level of the module binds: the declarations with what
+ * they mean, and the imports with where they come from.
+ */
+async function collectBindings(
+  context: TransformPluginContext,
+  node: t.ProgramStatement,
+  id: string,
+  info: ModuleExports,
+): Promise<void> {
+  if (node.type === 'ImportDeclaration') {
+    const source = await resolveExportSource(context, node.source, id)
+    for (const specifier of node.specifiers) {
+      info.imports.set(specifier.local.name, {
+        source,
+        imported:
+          specifier.type === 'ImportSpecifier'
+            ? nameOf(specifier.imported)!
+            : specifier.type === 'ImportDefaultSpecifier'
+              ? 'default'
+              : '*',
+      })
+    }
+    return
+  }
+
+  const decl =
+    node.type === 'ExportNamedDeclaration' ||
+    node.type === 'ExportDefaultDeclaration'
+      ? node.declaration
+      : node
+  const meaning = decl ? getDeclarationMeaning(decl) : 0
+  if (!decl || !meaning) return
+
+  for (const name of collectDeclarationNames(decl)) {
+    info.declared.set(name, (info.declared.get(name) || 0) | meaning)
   }
 }
 
@@ -116,6 +161,7 @@ async function collectExportInfo(
     if (node.declaration) {
       for (const name of collectDeclarationNames(node.declaration)) {
         info.exports.set(name, false)
+        info.exportLocals.set(name, name)
       }
       return
     }
@@ -130,6 +176,7 @@ async function collectExportInfo(
         info.reExports.push({ source, local, exported, typeOnly })
       } else {
         info.exports.set(exported, typeOnly || info.typeOnlyLocals.has(local))
+        if (!node.source) info.exportLocals.set(exported, local)
       }
     }
     return
@@ -137,6 +184,11 @@ async function collectExportInfo(
 
   if (node.type === 'ExportDefaultDeclaration') {
     info.exports.set('default', false)
+    const [local] =
+      node.declaration.type === 'Identifier'
+        ? [node.declaration.name]
+        : collectDeclarationNames(node.declaration)
+    if (local) info.exportLocals.set('default', local)
     return
   }
 
@@ -165,6 +217,101 @@ async function resolveExportSource(
   if (!resolved || resolved.external) return
 
   return resolved.id
+}
+
+/**
+ * What a name means at the top level of a module, a bit set of `Meaning`.
+ * Follows imports to what they import, as far as that is part of the bundle;
+ * anything that cannot be told means `Meaning.Any`. Returns `undefined` if the
+ * module does not bind the name at all.
+ */
+export function resolveBindingMeaning(
+  moduleExportsMap: Map<string, ModuleExports>,
+  id: string,
+  name: string,
+  seen: Set<string> = new Set(),
+): number | undefined {
+  const info = moduleExportsMap.get(id)
+  if (!info) return Meaning.Any
+
+  const declared = info.declared.get(name)
+  const binding = info.imports.get(name)
+  if (!binding) return declared
+
+  let imported: number
+  if (binding.imported === '*') {
+    imported = QUALIFIER_MEANING
+  } else if (binding.source) {
+    imported =
+      resolveExportMeaning(
+        moduleExportsMap,
+        binding.source,
+        binding.imported,
+        seen,
+      ) ?? Meaning.Any
+  } else {
+    imported = Meaning.Any
+  }
+  return (declared || 0) | imported
+}
+
+/**
+ * What an export of a module means. Returns `undefined` if the module does not
+ * export the name.
+ */
+function resolveExportMeaning(
+  moduleExportsMap: Map<string, ModuleExports>,
+  id: string,
+  name: string,
+  seen: Set<string>,
+): number | undefined {
+  const info = moduleExportsMap.get(id)
+  if (!info) return Meaning.Any
+
+  const key = `${id}\0${name}`
+  if (seen.has(key)) return Meaning.Any
+  seen.add(key)
+
+  const local = info.exportLocals.get(name)
+  if (local !== undefined) {
+    return (
+      resolveBindingMeaning(moduleExportsMap, id, local, seen) ?? Meaning.Any
+    )
+  }
+
+  const reExport = info.reExports.find(({ exported }) => exported === name)
+  if (reExport) {
+    if (!reExport.source) return Meaning.Any
+    return (
+      resolveExportMeaning(
+        moduleExportsMap,
+        reExport.source,
+        reExport.local,
+        seen,
+      ) ?? Meaning.Any
+    )
+  }
+
+  // e.g. `export * as ns from '...'`
+  if (info.exports.has(name)) return Meaning.Any
+
+  if (name === 'default') return
+  let external = false
+  for (const exportAll of info.exportAlls) {
+    if (!exportAll.source) {
+      external = true
+      continue
+    }
+    const meaning = resolveExportMeaning(
+      moduleExportsMap,
+      exportAll.source,
+      name,
+      seen,
+    )
+    if (meaning !== undefined) return meaning
+  }
+  // an `export *` of an external module may export anything
+  if (external) return Meaning.Any
 }
 
 // #endregion
