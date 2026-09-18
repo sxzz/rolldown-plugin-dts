@@ -37,6 +37,7 @@ catalogs:
     yuku-parser: ^0.10.1
 
 minimumReleaseAge: 0
+shellEmulator: true
 trustLockfile: true
 trustPolicy: no-downgrade
 trustPolicyIgnoreAfter: 10080 # 7 days
