@@ -8,3 +8,4 @@ export declare class Foo {
   protected mb(): void;
 }
 //#endregion
+export {};

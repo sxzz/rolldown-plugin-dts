@@ -5,3 +5,4 @@ export declare type Foo = {
   [k: string]: A;
 };
 //#endregion
+export {};

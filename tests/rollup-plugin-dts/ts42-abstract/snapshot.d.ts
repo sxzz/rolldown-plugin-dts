@@ -9,3 +9,4 @@ declare abstract class AbstractClass {
 }
 export type AbstractConstructor<T extends AbstractClass> = abstract new (...args: any[]) => T;
 //#endregion
+export {};

@@ -766,3 +766,15 @@ test('declaration with export', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test('declaration with export keeps the others private', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/export-decl-private.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toContain('export declare class Foo')
+  // without an `export { ... }` statement, every declaration in a .d.ts is
+  // exported, `Internal` included
+  expect(snapshot).toContain('export {};')
+  expect(snapshot).toMatchSnapshot()
+})
