@@ -71,6 +71,7 @@ export function createFakeJsPlugin({
   let declarationIdx = 0
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
+  const fileCommentsMap = new Map<string /* filename */, t.AttachedComment[]>()
   const moduleExportsMap = new Map<string /* filename */, ModuleExports>()
   const warnedCjsDtsInputs = new Set<string>()
 
@@ -184,7 +185,16 @@ export function createFakeJsPlugin({
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.ProgramStatement) => (program.body[i] = stmt)
-      if (rewriteImportExport(stmt, setStmt, appendStmts)) continue
+      if (rewriteImportExport(stmt, setStmt, appendStmts)) {
+        // The file's doc comment, e.g. `@module`, is attached to its first
+        // statement. An import or export keeps no comments, so save it for
+        // `renderChunk` to restore.
+        if (i === 0) {
+          const docComments = stmt.comments?.filter(isDocComment)
+          if (docComments?.length) fileCommentsMap.set(id, docComments)
+        }
+        continue
+      }
 
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
@@ -582,6 +592,14 @@ export function createFakeJsPlugin({
       )
     }
 
+    // recover the entry's doc comment, but not those of the modules it inlines
+    const fileComments =
+      chunk.facadeModuleId && fileCommentsMap.get(chunk.facadeModuleId)
+    if (fileComments) {
+      program.body[0].comments ||= []
+      program.body[0].comments.unshift(...fileComments)
+    }
+
     // recover comments
     const comments = new Set<t.Comment>()
     const commentsValue = new Set<string>() // deduplicate
@@ -639,6 +657,14 @@ export function createFakeJsPlugin({
   function getDeclaration(declarationId: number) {
     return declarationMap.get(declarationId)!
   }
+}
+
+function isDocComment(comment: t.AttachedComment): boolean {
+  return (
+    comment.position === 'before' &&
+    comment.type === 'Block' &&
+    comment.value.startsWith('*')
+  )
 }
 
 function isModuleStatement(node: t.ProgramStatement): boolean {
