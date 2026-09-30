@@ -231,6 +231,18 @@ import { n as input2, t as Input2 } from "./chunks/BBKVF6ft.js";
 export { Input2, input2 };"
 `;
 
+exports[`file doc comment before an import 1`] = `
+"// index.d.ts
+/**
+ * Docs for this entry point.
+ *
+ * @module
+ */
+type Raw = string;
+export declare function makeId(value: string): Raw;
+export {};"
+`;
+
 exports[`import = syntax 1`] = `
 "// import-equals.d.ts
 import * as zodModule from "external-zod";
