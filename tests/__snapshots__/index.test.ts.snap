@@ -496,6 +496,18 @@ export type { A };
 "
 `;
 
+exports[`tree-shaking namespace import referenced by qualified name 1`] = `
+"// index.d.ts
+//#region tests/fixtures/tree-shaking-qualified-name/mod.d.ts
+type A$1 = string;
+declare const b$1: number;
+//#endregion
+//#region tests/fixtures/tree-shaking-qualified-name/index.d.ts
+export type A = A$1;
+export declare const b: typeof b$1;
+//#endregion"
+`;
+
 exports[`tsgo with custom path 1`] = `
 "// basic.d.ts
 //#region tests/fixtures/basic.d.ts
