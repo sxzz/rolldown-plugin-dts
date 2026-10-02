@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
@@ -669,6 +671,34 @@ test('tsgo with custom path', async () => {
     ],
   )
   expect(snapshot).toMatchSnapshot()
+})
+
+test('tsgo does not emit next to sources outside the tsconfig directory', async () => {
+  const tsgoPath = resolveTsgoPath({
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+  })
+  const root = path.resolve(dirname, 'fixtures/tsgo-outside-root')
+  const strayDts = path.resolve(root, 'shared/greet.d.ts')
+  await rm(strayDts, { force: true })
+  try {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'pkg/index.ts'),
+      [
+        dts({
+          generator: 'tsgo',
+          tsgo: { path: tsgoPath },
+          tsconfig: path.resolve(root, 'pkg/tsconfig.json'),
+          emitDtsOnly: true,
+        }),
+      ],
+    )
+    expect(snapshot).toContain('interface Greeting')
+    expect(existsSync(strayDts)).toBe(false)
+  } finally {
+    await rm(strayDts, { force: true })
+  }
 })
 
 // https://github.com/sxzz/rolldown-plugin-dts/issues/136

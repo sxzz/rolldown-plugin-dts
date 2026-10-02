@@ -59,7 +59,11 @@ export function createGenerator(
   if (generator === 'tsgo') {
     return new TsgoGenerator({
       tsgoPath: tsgo.path!,
-      rootDir: tsconfig ? path.dirname(tsconfig) : cwd,
+      // Use the filesystem root so every emitted file maps into the temp
+      // outDir. With a narrower rootDir, tsgo writes declarations for files
+      // outside it (e.g. workspace packages resolved to their sources) next
+      // to those source files.
+      rootDir: path.parse(tsconfig ? path.dirname(tsconfig) : cwd).root,
       tsconfig: tsconfig!,
       sourcemap,
       languageContext,
