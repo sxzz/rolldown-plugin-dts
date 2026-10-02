@@ -550,6 +550,35 @@ export { createComponent };
 "
 `;
 
+exports[`type parameter does not shadow a same-named import 1`] = `
+"// index.d.ts
+declare namespace schema_d_exports {
+  export { Str, Struct };
+}
+interface Struct<Fields> {
+  readonly fields: Fields;
+}
+interface Str {
+  readonly kind: 'string';
+}
+//#endregion
+//#region tests/fixtures/type-param-shadow/index.d.ts
+// \`pipe\` declares a nested type parameter named \`S\`, which must not shadow the
+// module-scope import that the qualified references resolve to.
+export declare const value: Struct<{
+  readonly name: Str;
+  pipe<A, S = never>(this: A, ab: (_: A) => S): S;
+}>;
+// The same collision, plus an \`infer S\` in the same declaration. The inferred
+// reference has to keep binding to the \`infer\`, not to the type parameter.
+export declare const inferred: Struct<{
+  readonly name: Str;
+  pipe<A, S = never>(this: A, ab: (_: A) => S): S;
+  unwrap<B>(this: B): B extends Array<infer S> ? S : never;
+}>;
+//#endregion"
+`;
+
 exports[`type-only export 1`] = `
 "// index.d.ts
 //#endregion

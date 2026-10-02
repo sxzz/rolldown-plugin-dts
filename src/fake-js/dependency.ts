@@ -6,6 +6,7 @@ import {
   isThisExpression,
   overwriteNode,
   TSEntityNameToRuntime,
+  TYPE_PARAM_PREFIX,
 } from './utils.ts'
 import type { Dep, NamespaceMap, TypeParams } from './types.ts'
 import type { TransformPluginContext } from 'rolldown'
@@ -54,6 +55,7 @@ export async function collectDependencies(
   namespaceStmts: NamespaceMap,
   children: Set<t.Node>,
   identifierMap: Record<string, number>,
+  typeParamNames: Set<string>,
 ): Promise<Dep[]> {
   const deps = new Set<Dep>()
   const seen = new Set<t.Node>()
@@ -124,7 +126,22 @@ export async function collectDependencies(
       } else {
         switch (node.type) {
           case 'TSTypeReference': {
-            addDependency(TSEntityNameToRuntime(node.typeName))
+            const reference = TSEntityNameToRuntime(node.typeName)
+            // A type parameter can only be referenced by a bare type
+            // reference with a plain identifier name. As a qualified name's
+            // left, a `typeof` operand, a heritage root or an import type it
+            // resolves in the namespace or value meaning instead, so no other
+            // case needs the prefix and no scope tracking is required.
+            // `isInferred` compares by name, so it has to run before the
+            // rename.
+            if (
+              reference.type === 'Identifier' &&
+              !isInferred(reference) &&
+              typeParamNames.has(reference.name)
+            ) {
+              reference.name = `${TYPE_PARAM_PREFIX}${reference.name}`
+            }
+            addDependency(reference)
             break
           }
           case 'TSQualifiedName': {

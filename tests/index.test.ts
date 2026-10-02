@@ -652,6 +652,21 @@ test('infer false branch', async () => {
   )
 })
 
+// https://github.com/sxzz/rolldown-plugin-dts/issues/307
+test('type parameter does not shadow a same-named import', async () => {
+  const { snapshot } = await rolldownBuild(
+    [path.resolve(dirname, 'fixtures/type-param-shadow/index.d.ts')],
+    [dts({ dtsInput: true, emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+
+  // the import stays bound, so the declarations it reaches are kept
+  expect(snapshot).toContain('interface Struct<Fields>')
+  expect(snapshot).toContain('interface Str')
+  expect(snapshot).not.toContain('S.Struct')
+  expect(snapshot).not.toContain('S.Str')
+})
+
 test('tsgo with custom path', async () => {
   const tsgoPath = resolveTsgoPath({
     info: () => {},
