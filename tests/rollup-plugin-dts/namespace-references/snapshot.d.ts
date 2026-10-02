@@ -23,3 +23,4 @@ export declare namespace ns {
   }
 }
 //#endregion
+export {};

@@ -571,7 +571,14 @@ export function createFakeJsPlugin({
       return { code: EMPTY_STUB, map: null }
     }
 
-    if (!program.body.some(isModuleStatement)) {
+    // A .d.ts file without a scope marker exports every declaration in it.
+    // Inline exports can leave a chunk without one, so add `export {}` like tsc
+    // does, or the declarations the chunk does not export become public.
+    if (
+      !program.body.some(isModuleStatement) ||
+      (!program.body.some(isScopeMarker) &&
+        program.body.some(isImplicitlyExported))
+    ) {
       program.body.push(
         b.ExportNamedDeclaration({
           declaration: null,
@@ -652,5 +659,32 @@ function isModuleStatement(node: t.ProgramStatement): boolean {
     ]) ||
     (node.type === 'TSImportEqualsDeclaration' &&
       node.moduleReference.type === 'TSExternalModuleReference')
+  )
+}
+
+/**
+ * `export { ... }`, `export * from` or `export =`. A .d.ts file with one of
+ * them exports only what it names, without one it exports every declaration.
+ */
+function isScopeMarker(node: t.ProgramStatement): boolean {
+  return (
+    (node.type === 'ExportNamedDeclaration' && !node.declaration) ||
+    is.oneOf(node, ['ExportAllDeclaration', 'TSExportAssignment']) ||
+    (node.type === 'ExportDefaultDeclaration' &&
+      !is.Declaration(node.declaration))
+  )
+}
+
+/**
+ * A declaration that a .d.ts file without a scope marker exports. Imports and
+ * ambient modules, `declare module 'x'` and `declare global`, are not exported.
+ */
+function isImplicitlyExported(node: t.ProgramStatement): boolean {
+  if (!is.Declaration(node) || node.type === 'TSImportEqualsDeclaration') {
+    return false
+  }
+  return (
+    node.type !== 'TSModuleDeclaration' ||
+    (node.kind !== 'global' && !is.StringLiteral(node.id))
   )
 }

@@ -18,6 +18,7 @@ export declare class Cls {
   fn(e: Enum): void;
 }
 //#endregion
+export {};
 // basic.js
 //#region tests/fixtures/basic.ts
 const foo = 42;
@@ -115,6 +116,20 @@ exports[`declaration with export 1`] = `
 export default function fn(): void;
 export declare const a = 1;
 //#endregion"
+`;
+
+exports[`declaration with export keeps the others private 1`] = `
+"// export-decl-private.d.ts
+//#region tests/fixtures/export-decl-private.d.ts
+type Internal = {
+  a: string;
+};
+export declare class Foo {
+  readonly x: Internal;
+  constructor(x: Internal);
+}
+//#endregion
+export {};"
 `;
 
 exports[`declare module 1`] = `
@@ -333,7 +348,8 @@ exports[`infer type parameter 1`] = `
 type Mapped<T> = T extends Record<string, infer U> ? U : never;
 export type Fn1<U = unknown> = () => Mapped<U>;
 export type Fn2<V = unknown> = () => Mapped<V>;
-//#endregion"
+//#endregion
+export {};"
 `;
 
 exports[`input alias 1`] = `
@@ -415,7 +431,8 @@ export interface Test {
   [b](): string;
   get [c](): string;
 }
-//#endregion"
+//#endregion
+export {};"
 `;
 
 exports[`re-export from lib > both 1`] = `
@@ -514,6 +531,7 @@ export declare class Cls {
   fn(e: Enum): void;
 }
 //#endregion
+export {};
 // basic.js
 //#region tests/fixtures/basic.ts
 const foo = 42;

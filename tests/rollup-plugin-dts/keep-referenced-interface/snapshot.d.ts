@@ -5,3 +5,4 @@ export interface Foo {
   bar: Bar;
 }
 //#endregion
+export {};

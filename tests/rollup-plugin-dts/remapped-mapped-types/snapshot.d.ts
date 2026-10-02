@@ -17,3 +17,4 @@ interface Circle {
 }
 export type KindlessCircle = RemoveKindField<Circle>;
 //#endregion
+export {};

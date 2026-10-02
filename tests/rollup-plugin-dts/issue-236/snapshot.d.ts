@@ -6,3 +6,4 @@ type Props = {
 };
 export declare const Button: React.FC<Props>;
 //#endregion
+export {};

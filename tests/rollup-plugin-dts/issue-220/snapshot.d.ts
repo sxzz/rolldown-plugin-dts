@@ -8,3 +8,4 @@ export declare class Test {
   readonly letter = Alphabet.a;
 }
 //#endregion
+export {};
