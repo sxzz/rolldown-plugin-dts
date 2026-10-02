@@ -1,6 +1,8 @@
-import { createRequire } from 'node:module'
+import fs, { existsSync } from 'node:fs'
+import { rm } from 'node:fs/promises'
+import module, { createRequire } from 'node:module'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
+import url, { pathToFileURL } from 'node:url'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
   createGenerator,
@@ -249,6 +251,41 @@ describe('TypeScript 7.0 CLI backend (deprecated)', () => {
     expect(createGenerator(resolved, () => undefined)).toBeInstanceOf(
       TsgoGenerator,
     )
+  })
+
+  test('does not emit next to sources outside the tsconfig directory', async () => {
+    const root = path.resolve(import.meta.dirname, 'fixtures/tsgo-outside-root')
+    const source = path.resolve(root, 'shared/greet.ts')
+    const strayDts = path.resolve(root, 'shared/greet.d.ts')
+    const getExePath: any = realRequire(
+      path.join(
+        path.dirname(realRequire.resolve('typescript-next')),
+        'getExePath.js',
+      ),
+    )
+    const tsgoPath = (
+      typeof getExePath === 'function' ? getExePath : getExePath.default
+    )({ fs, module, path, url })
+
+    mockInstalled([7, false])
+    const resolved = resolveOptions({
+      tsconfig: path.resolve(root, 'pkg/tsconfig.json'),
+      logger: logger(),
+    })
+    resolved.tsgo.path = tsgoPath
+    const generator = createGenerator(resolved, () => undefined)
+    expect(generator).toBeInstanceOf(TsgoCliGenerator)
+
+    await rm(strayDts, { force: true })
+    try {
+      await generator.init?.()
+      const result = await generator.emit('', source)
+      expect(result.code).toContain('interface Greeting')
+      expect(existsSync(strayDts)).toBe(false)
+    } finally {
+      await generator.dispose?.()
+      await rm(strayDts, { force: true })
+    }
   })
 })
 
