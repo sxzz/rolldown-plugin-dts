@@ -32,9 +32,9 @@ catalogs:
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.6
     obug: ^3.0.0
-    yuku-ast: ^0.15.1
-    yuku-codegen: ^0.15.1
-    yuku-parser: ^0.15.1
+    yuku-ast: ^0.17.0
+    yuku-codegen: ^0.17.0
+    yuku-parser: ^0.17.0
 
 minimumReleaseAge: 0
 shellEmulator: true
