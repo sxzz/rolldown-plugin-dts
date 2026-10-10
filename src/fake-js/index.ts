@@ -36,6 +36,8 @@ import {
   isInfer,
   overwriteNode,
   pragmaComments,
+  stripTypeParamPrefix,
+  TYPE_PARAM_PREFIX,
 } from './utils.ts'
 import type { OptionsResolved } from '../options.ts'
 import type {
@@ -266,6 +268,7 @@ export function createFakeJsPlugin({
         namespaceStmts,
         childrenSet,
         identifierMap,
+        new Set(params.map(({ name }) => name)),
       )
       const children = Array.from(childrenSet).filter((child) =>
         bindings.every((b) => child !== b),
@@ -298,7 +301,9 @@ export function createFakeJsPlugin({
         id: null,
         generator: false,
         async: false,
-        params: params.map(({ name }) => b.Identifier({ name })),
+        params: params.map(({ name }) =>
+          b.Identifier({ name: `${TYPE_PARAM_PREFIX}${name}` }),
+        ),
         body: depsBody,
         expression: true,
       })
@@ -495,7 +500,7 @@ export function createFakeJsPlugin({
 
       const transformedParams = depsFn.params as t.Identifier[]
       for (const [i, transformedParam] of transformedParams.entries()) {
-        const transformedName = transformedParam.name
+        const transformedName = stripTypeParamPrefix(transformedParam.name)
         for (const originalTypeParam of declaration.params[i].typeParams) {
           originalTypeParam.name = transformedName
         }
@@ -513,8 +518,11 @@ export function createFakeJsPlugin({
           undefinedDep.start = transformedDep.start
           undefinedDep.end = transformedDep.end
           transformedDep = undefinedDep
-        } else if (isInfer(transformedDep)) {
-          transformedDep.name = '__Infer'
+        } else if (transformedDep.type === 'Identifier') {
+          const { name } = transformedDep
+          transformedDep.name = isInfer(transformedDep)
+            ? '__Infer'
+            : stripTypeParamPrefix(name)
         }
 
         if (originalDep.replace) {
