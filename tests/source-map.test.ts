@@ -130,3 +130,26 @@ test('disable dts source map only', async () => {
     ]
   `)
 })
+
+// https://github.com/rolldown/tsdown/issues/1091
+test.each([true, 'inline'] as const)(
+  'disable dts source map only does not leave sourceMappingURL (sourcemap: %s)',
+  async (sourcemap) => {
+    const { chunks } = await rolldownBuild(
+      input,
+      [dts({ sourcemap: false })],
+      {},
+      { sourcemap },
+    )
+
+    const dtsChunk = chunks.find((chunk) => chunk.fileName === 'index.d.ts')
+    expect(dtsChunk?.type).toBe('chunk')
+    if (dtsChunk?.type !== 'chunk') return
+    expect(dtsChunk.code).not.toContain('sourceMappingURL')
+    expect(dtsChunk.map).toBeNull()
+
+    const jsChunk = chunks.find((chunk) => chunk.fileName === 'index.js')
+    if (jsChunk?.type !== 'chunk') throw new Error('missing index.js')
+    expect(jsChunk.code).toContain('//# sourceMappingURL=')
+  },
+)
