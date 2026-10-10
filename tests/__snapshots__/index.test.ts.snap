@@ -418,6 +418,135 @@ export interface Test {
 //#endregion"
 `;
 
+exports[`namespace members > across chunks 1`] = `
+"// capture.d.ts
+import { RequestOptions, Timeout, t as options_d_exports } from "./options.js";
+import { Socket } from "external-net";
+//#region capture.d.ts
+export declare class Client {}
+export declare namespace Client {
+  /** reached through a renamed import of an external module */
+  type Socket$1 = Socket;
+  /** reached through a renamed import */
+  type Timeout$1 = Timeout;
+  /** reached through a namespace import */
+  type RequestOptions$1 = RequestOptions;
+  export import Page = options_d_exports.Page;
+  export type Retry = {
+    timeout: Timeout$1;
+  };
+  export { Socket$1 as Socket, Timeout$1 as Timeout, RequestOptions$1 as RequestOptions };
+}
+//#endregion
+// options.d.ts
+declare namespace options_d_exports {
+  export { Page, RequestOptions, Theme, Timeout };
+}
+export interface RequestOptions {
+  timeout?: number;
+}
+export type Timeout = number;
+export interface Theme {
+  color: string;
+}
+export declare class Page<Item> {
+  items: Item[];
+}
+//#endregion
+export { options_d_exports as t };"
+`;
+
+exports[`namespace members > implicitly exported members 1`] = `
+"// implicit-export.d.ts
+//#region tests/fixtures/namespace-members/dts/options.d.ts
+type Timeout = number;
+//#endregion
+//#region tests/fixtures/namespace-members/dts/implicit-export.d.ts
+export declare namespace Config {
+  type Timeout$1 = Timeout;
+  export interface Limits {
+    timeout: Timeout$1;
+  }
+  export const version: string;
+  import Alias = Config.Limits;
+  export { Timeout$1 as Timeout };
+}
+//#endregion"
+`;
+
+exports[`namespace members > keep a member of another meaning 1`] = `
+"// no-capture.d.ts
+//#region tests/fixtures/namespace-members/options.d.ts
+interface RequestOptions {
+  timeout?: number;
+}
+type Timeout = number;
+interface Theme {
+  color: string;
+}
+declare class Page<Item> {
+  items: Item[];
+}
+//#endregion
+//#region tests/fixtures/namespace-members/no-capture.d.ts
+export declare function Card(): void;
+export declare namespace Card {
+  var Theme: Theme;
+}
+//#endregion"
+`;
+
+exports[`namespace members > member not exported 1`] = `
+"// private-member.d.ts
+//#region tests/fixtures/namespace-members/dts/options.d.ts
+type Timeout = number;
+//#endregion
+//#region tests/fixtures/namespace-members/dts/private-member.d.ts
+export declare namespace Config {
+  type Timeout$1 = Timeout;
+  export interface Limits {
+    timeout: Timeout$1;
+  }
+  export {};
+}
+//#endregion"
+`;
+
+exports[`namespace members > rename a member capturing a reference 1`] = `
+"// capture.d.ts
+import { Socket } from "external-net";
+declare namespace options_d_exports {
+  export { Page, RequestOptions, Theme, Timeout };
+}
+interface RequestOptions {
+  timeout?: number;
+}
+type Timeout = number;
+interface Theme {
+  color: string;
+}
+declare class Page<Item> {
+  items: Item[];
+}
+//#endregion
+//#region tests/fixtures/namespace-members/capture.d.ts
+export declare class Client {}
+export declare namespace Client {
+  /** reached through a renamed import of an external module */
+  type Socket$1 = Socket;
+  /** reached through a renamed import */
+  type Timeout$1 = Timeout;
+  /** reached through a namespace import */
+  type RequestOptions$1 = RequestOptions;
+  export import Page = options_d_exports.Page;
+  export type Retry = {
+    timeout: Timeout$1;
+  };
+  export { Socket$1 as Socket, Timeout$1 as Timeout, RequestOptions$1 as RequestOptions };
+}
+//#endregion"
+`;
+
 exports[`re-export from lib > both 1`] = `
 "// a.d.ts
 export * from "stub-lib";
