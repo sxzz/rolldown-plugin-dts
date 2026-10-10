@@ -8,3 +8,4 @@ export declare class Foo {
   constructor(a: A, b: B);
 }
 //#endregion
+export {};

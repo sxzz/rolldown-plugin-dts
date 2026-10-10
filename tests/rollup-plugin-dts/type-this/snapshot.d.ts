@@ -5,3 +5,4 @@ declare class Foo {
 }
 export declare function thisType(this: Foo): void;
 //#endregion
+export {};

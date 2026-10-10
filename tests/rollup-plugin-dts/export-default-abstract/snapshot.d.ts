@@ -12,3 +12,4 @@ export default abstract class MemberInfo {
   abstract readonly memberType: MemberTypes;
 }
 //#endregion
+export {};

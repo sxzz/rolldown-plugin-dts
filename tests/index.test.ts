@@ -766,3 +766,11 @@ test('declaration with export', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test('inline exports keep other declarations private', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/export-decl-private.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})

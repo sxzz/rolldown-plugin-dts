@@ -13,3 +13,4 @@ declare global {
   }
 }
 //#endregion
+export {};
