@@ -707,6 +707,97 @@ test('sub namespace', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+describe('namespace members', () => {
+  const root = path.resolve(dirname, 'fixtures/namespace-members')
+
+  test('rename a member capturing a reference', async () => {
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'capture.ts'), [
+      dts({ emitDtsOnly: true }),
+    ])
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).not.toMatch(/type (\w+) = \1\b/)
+  })
+
+  test('across chunks', async () => {
+    const { snapshot } = await rolldownBuild(
+      ['capture.ts', 'options.ts'],
+      [dts({ emitDtsOnly: true })],
+      { cwd: root },
+    )
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).not.toMatch(/type (\w+) = \1\b/)
+  })
+
+  test('keep a member of another meaning', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'no-capture.ts'),
+      [dts({ emitDtsOnly: true })],
+    )
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).toContain('var Theme: Theme;')
+  })
+
+  test('implicitly exported members', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'dts/implicit-export.d.ts'),
+      [dts({ dtsInput: true, tsconfig: false })],
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test('member not exported', async () => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(root, 'dts/private-member.d.ts'),
+      [dts({ dtsInput: true, tsconfig: false })],
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
+})
+
+describe('reference to a global next to a type of the same name', () => {
+  const root = path.resolve(dirname, 'fixtures/typeof-global')
+  const build = (input: string | string[]) =>
+    rolldownBuild(input, [dts({ dtsInput: true, tsconfig: false })], {
+      cwd: root,
+    })
+
+  test('type exported under the name of the global', async () => {
+    const { snapshot } = await build('index.d.ts')
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).toContain('Response?: typeof Response;')
+    expect(snapshot).toContain('prototype?: typeof Response.prototype;')
+    expect(snapshot).toContain('Promise<TypedResponse<T>>')
+  })
+
+  test('across chunks', async () => {
+    const { snapshot } = await build(['index.d.ts', 'typed-response.d.ts'])
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).toContain('Response?: typeof Response;')
+  })
+
+  test('through re-exports', async () => {
+    const { snapshot } = await build('reexport.d.ts')
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).toContain('ctor(): typeof Response;')
+    expect(snapshot).toContain('value(): TypedResponse<string>;')
+  })
+
+  test('type renamed by a collision', async () => {
+    const { snapshot } = await build('collision.d.ts')
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).toContain('Response?: typeof Response;')
+    expect(snapshot).toContain('Promise<Response$1<T>>')
+  })
+
+  test('keep following a declaration with a value side', async () => {
+    const { snapshot } = await build('value.d.ts')
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).toContain('[typeof Client$1, typeof Client]')
+    expect(snapshot).toContain('[typeof Widget$1, typeof Widget]')
+    expect(snapshot).toContain('class Sub extends Client {}')
+  })
+})
+
 test('deterministic namespace import index', async () => {
   const cwd = path.resolve(dirname, 'fixtures/import-type-multi')
   // Build multiple times to verify deterministic output
