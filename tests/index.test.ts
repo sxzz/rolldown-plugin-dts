@@ -766,3 +766,14 @@ test('declaration with export', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+test('file doc comment before an import', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/file-doc-comment/index.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toContain('Docs for this entry point.')
+  // only the entry's own comment, not those of the modules it inlines
+  expect(snapshot).not.toContain('Docs for an inlined module.')
+  expect(snapshot).toMatchSnapshot()
+})
