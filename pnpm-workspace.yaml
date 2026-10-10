@@ -2,29 +2,29 @@ overrides:
   rolldown: 'catalog:'
 
 catalog:
-  '@astrojs/ts-plugin': ^1.10.11
+  '@astrojs/ts-plugin': ^1.10.12
   '@jridgewell/source-map': ^0.3.11
   '@sxzz/eslint-config': ^8.6.0
-  '@sxzz/prettier-config': ^2.3.2
-  '@sxzz/test-utils': ^0.5.18
+  '@sxzz/prettier-config': ^2.3.3
+  '@sxzz/test-utils': ^0.5.19
   '@ts-macro/language-plugin': ^0.3.7
   '@ts-macro/tsc': ^0.3.7
-  '@types/node': ^26.4.1
+  '@types/node': ^26.6.5
   '@typescript/native-preview': 'npm:typescript@^7.0.2'
   '@volar/typescript': ^2.4.28
-  '@vue/language-core': ^3.3.11
-  arktype: ^2.2.3
+  '@vue/language-core': ^3.3.13
+  arktype: ^2.2.8
   bumpp: ^12.3.0
-  eslint: ^10.10.0
-  prettier: ^3.9.6
-  rolldown: ^1.2.8
+  eslint: ^10.12.0
+  prettier: ^3.9.10
+  rolldown: ^1.2.13
   ts-macro: ^0.3.7
   tsdown: ^0.23.0
   tsnapi: ^1.5.0
   typescript: ^6.0.3
-  vitest: ^5.0.1
-  vue: ^3.5.42
-  vue-tsc: ^3.3.11
+  vitest: ^5.0.3
+  vue: ^3.5.43
+  vue-tsc: ^3.3.13
   zod: ^4.6.5
 
 catalogs:
@@ -32,9 +32,9 @@ catalogs:
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.6
     obug: ^3.0.0
-    yuku-ast: ^0.17.0
-    yuku-codegen: ^0.17.0
-    yuku-parser: ^0.17.0
+    yuku-ast: ^0.18.1
+    yuku-codegen: ^0.18.1
+    yuku-parser: ^0.18.1
 
 minimumReleaseAge: 0
 shellEmulator: true

@@ -383,8 +383,7 @@ export { input1 };
 import { n as input2, t as Input2 } from "../input2-DJYu6NZD.js";
 export { Input2, input2 };
 // output2/index.js
-import { t as input2 } from "../input2-2tKDBMMN.js";
-export { input2 };
+export { t as input2 } from "../input2-2tKDBMMN.js";
 "
 `;
 
