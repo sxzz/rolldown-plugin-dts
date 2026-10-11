@@ -521,7 +521,8 @@ declare const b$1: number;
 //#region tests/fixtures/tree-shaking-qualified-name/index.d.ts
 export type A = A$1;
 export declare const b: typeof b$1;
-//#endregion"
+//#endregion
+export {};"
 `;
 
 exports[`tsgo with custom path 1`] = `
