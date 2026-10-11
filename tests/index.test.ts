@@ -146,6 +146,22 @@ test('tree-shaking', async () => {
   expect(snapshot).matchSnapshot()
 })
 
+test('tree-shaking namespace import referenced by qualified name', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/tree-shaking-qualified-name/index.ts'),
+    [dts({ emitDtsOnly: true })],
+    {
+      treeshake: {
+        moduleSideEffects: false,
+      },
+      external: /^node:.*/,
+    },
+  )
+  expect(snapshot).matchSnapshot()
+  expect(snapshot).not.toContain('node:http')
+  expect(snapshot).not.toContain('foo')
+})
+
 describe('dts input', () => {
   test('input array', async () => {
     const { snapshot, chunks } = await rolldownBuild(

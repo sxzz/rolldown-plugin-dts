@@ -1,7 +1,5 @@
 // index.d.ts
-declare namespace mod_d_exports {
-  export { a };
-}
+//#region tests/rollup-plugin-dts/basic/mod.d.ts
 declare const a: string;
 //#endregion
 //#region tests/rollup-plugin-dts/basic/foo.d.ts
