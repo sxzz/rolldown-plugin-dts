@@ -140,18 +140,18 @@ async function collectExportInfo(
     return
   }
 
-  if (node.type === 'ExportAllDeclaration') {
-    if (node.exported) {
-      info.exports.set(nameOf(node.exported)!, node.exportKind === 'type')
-      return
-    }
+  if (node.type !== 'ExportAllDeclaration') return
 
-    info.exportAlls.push({
-      source: await resolveExportSource(context, node.source, id),
-      rawSource: node.source.value,
-      typeOnly: node.exportKind === 'type',
-    })
+  if (node.exported) {
+    info.exports.set(nameOf(node.exported)!, node.exportKind === 'type')
+    return
   }
+
+  info.exportAlls.push({
+    source: await resolveExportSource(context, node.source, id),
+    rawSource: node.source.value,
+    typeOnly: node.exportKind === 'type',
+  })
 }
 
 async function resolveExportSource(

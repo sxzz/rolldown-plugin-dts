@@ -163,6 +163,7 @@ export function createGeneratePlugin(
           }
         }
 
+        // eslint-disable-next-line unicorn/prefer-early-return
         if (emitDtsOnly) {
           if (RE_JSON.test(id)) return '{}'
           return EMPTY_STUB
