@@ -6,3 +6,4 @@ declare abstract class Base {}
 //#region tests/rollup-plugin-dts/using-namespace-import-multiple/index.d.ts
 export declare class Klass extends Base implements Iface {}
 //#endregion
+export {};

@@ -3,3 +3,4 @@
 interface Foo {}
 export declare type Bar = Foo;
 //#endregion
+export {};

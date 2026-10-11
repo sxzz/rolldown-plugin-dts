@@ -394,7 +394,7 @@ export function createFakeJsPlugin({
     const result = generate(program, {
       comments: false,
       ...(sourcemap && {
-        sourceMaps: { source: code, sourceFileName: id },
+        sourceMap: { source: code, sourceFileName: id },
       }),
     })
 
@@ -571,7 +571,7 @@ export function createFakeJsPlugin({
       return { code: EMPTY_STUB, map: null }
     }
 
-    if (!program.body.some(isModuleStatement)) {
+    if (needsScopeMarker(program.body)) {
       program.body.push(
         b.ExportNamedDeclaration({
           declaration: null,
@@ -614,7 +614,7 @@ export function createFakeJsPlugin({
     const result = generate(program, {
       comments: true,
       ...(sourcemap && {
-        sourceMaps: {
+        sourceMap: {
           source: code,
           sourceFileName: chunk.fileName,
         },
@@ -641,16 +641,38 @@ export function createFakeJsPlugin({
   }
 }
 
-function isModuleStatement(node: t.ProgramStatement): boolean {
-  return (
-    is.oneOf(node, [
-      'ImportDeclaration',
-      'ExportAllDeclaration',
-      'ExportDefaultDeclaration',
-      'ExportNamedDeclaration',
-      'TSExportAssignment',
-    ]) ||
-    (node.type === 'TSImportEqualsDeclaration' &&
-      node.moduleReference.type === 'TSExternalModuleReference')
-  )
+function needsScopeMarker(body: t.ProgramStatement[]): boolean {
+  let hasModuleStatement = false
+  let hasPrivateDeclaration = false
+
+  for (const node of body) {
+    switch (node.type) {
+      case 'ExportAllDeclaration':
+      case 'TSExportAssignment':
+        return false
+      case 'ExportNamedDeclaration':
+        if (!node.declaration) return false
+        hasModuleStatement = true
+        break
+      case 'ExportDefaultDeclaration':
+        if (!is.Declaration(node.declaration)) return false
+        hasModuleStatement = true
+        break
+      case 'ImportDeclaration':
+        hasModuleStatement = true
+        break
+      case 'TSImportEqualsDeclaration':
+        hasModuleStatement ||=
+          node.moduleReference.type === 'TSExternalModuleReference'
+        break
+      default:
+        hasPrivateDeclaration ||=
+          is.Declaration(node) &&
+          (node.type !== 'TSModuleDeclaration' ||
+            (node.kind !== 'global' && !is.StringLiteral(node.id)))
+    }
+  }
+
+  // Inline exports alone do not prevent private declarations from being exported.
+  return !hasModuleStatement || hasPrivateDeclaration
 }

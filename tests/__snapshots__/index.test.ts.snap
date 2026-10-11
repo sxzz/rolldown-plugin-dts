@@ -18,6 +18,7 @@ export declare class Cls {
   fn(e: Enum): void;
 }
 //#endregion
+export {};
 // basic.js
 //#region tests/fixtures/basic.ts
 const foo = 42;
@@ -333,7 +334,22 @@ exports[`infer type parameter 1`] = `
 type Mapped<T> = T extends Record<string, infer U> ? U : never;
 export type Fn1<U = unknown> = () => Mapped<U>;
 export type Fn2<V = unknown> = () => Mapped<V>;
-//#endregion"
+//#endregion
+export {};"
+`;
+
+exports[`inline exports keep other declarations private 1`] = `
+"// export-decl-private.d.ts
+//#region tests/fixtures/export-decl-private.d.ts
+type Internal = {
+  a: string;
+};
+export declare class Foo {
+  readonly x: Internal;
+  constructor(x: Internal);
+}
+//#endregion
+export {};"
 `;
 
 exports[`input alias 1`] = `
@@ -383,8 +399,7 @@ export { input1 };
 import { n as input2, t as Input2 } from "../input2-DJYu6NZD.js";
 export { Input2, input2 };
 // output2/index.js
-import { t as input2 } from "../input2-2tKDBMMN.js";
-export { input2 };
+export { t as input2 } from "../input2-2tKDBMMN.js";
 "
 `;
 
@@ -415,7 +430,8 @@ export interface Test {
   [b](): string;
   get [c](): string;
 }
-//#endregion"
+//#endregion
+export {};"
 `;
 
 exports[`re-export from lib > both 1`] = `
@@ -514,6 +530,7 @@ export declare class Cls {
   fn(e: Enum): void;
 }
 //#endregion
+export {};
 // basic.js
 //#region tests/fixtures/basic.ts
 const foo = 42;
