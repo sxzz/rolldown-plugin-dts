@@ -149,21 +149,17 @@ test('tree-shaking', async () => {
 test('tree-shaking namespace import referenced by qualified name', async () => {
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/tree-shaking-qualified-name/index.ts'),
-    [
-      dts({ emitDtsOnly: true }),
-      {
-        name: 'external-node',
-        resolveId(id) {
-          if (id.startsWith('node:'))
-            return { id, external: true, moduleSideEffects: false }
-        },
+    [dts({ emitDtsOnly: true })],
+    {
+      treeshake: {
+        moduleSideEffects: false,
       },
-    ],
-    { treeshake: true },
+      external: /^node:.*/,
+    },
   )
+  expect(snapshot).matchSnapshot()
   expect(snapshot).not.toContain('node:http')
   expect(snapshot).not.toContain('foo')
-  expect(snapshot).matchSnapshot()
 })
 
 describe('dts input', () => {
