@@ -4,7 +4,7 @@ overrides:
 catalog:
   '@astrojs/ts-plugin': ^1.10.12
   '@jridgewell/source-map': ^0.3.11
-  '@sxzz/eslint-config': ^8.6.0
+  '@sxzz/eslint-config': ^8.7.0
   '@sxzz/prettier-config': ^2.3.3
   '@sxzz/test-utils': ^0.5.19
   '@ts-macro/language-plugin': ^0.3.7
@@ -19,7 +19,7 @@ catalog:
   prettier: ^3.9.10
   rolldown: ^1.2.13
   ts-macro: ^0.3.7
-  tsdown: ^0.23.0
+  tsdown: ^0.23.1
   tsnapi: ^1.5.0
   typescript: ^6.0.3
   vitest: ^5.0.3
@@ -32,9 +32,9 @@ catalogs:
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.6
     obug: ^3.0.0
-    yuku-ast: ^0.18.1
-    yuku-codegen: ^0.18.1
-    yuku-parser: ^0.18.1
+    yuku-ast: ^0.19.0
+    yuku-codegen: ^0.19.0
+    yuku-parser: ^0.19.0
 
 minimumReleaseAge: 0
 shellEmulator: true
