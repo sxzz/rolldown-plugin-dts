@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { styleText } from 'node:util'
 import { tryRequire, tryResolve } from './require.ts'
 import type { Logger } from './options.ts'
-import type * as TsgoApiModule from 'typescript-next/unstable/async'
+import type * as TsgoApiModule from 'typescript-next/async'
 
 export interface TsgoPackageInfo {
   api?: typeof TsgoApiModule
@@ -33,7 +33,7 @@ export function getTsgoPackageInfo(
     return
   }
 
-  const apiPath = tryResolve('typescript/unstable/async', {
+  const apiPath = tryResolve('typescript/async', {
     paths: [path.dirname(modulePath)],
   })
   const api = apiPath ? tryRequire<typeof TsgoApiModule>(apiPath) : undefined

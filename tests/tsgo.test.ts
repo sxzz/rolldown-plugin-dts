@@ -42,10 +42,46 @@ test('vfs accumulates files, applies changes, and resets between builds', async 
   expect(changed.error).toBeUndefined()
   expect(changed.code).toContain('valueB: "changed-b"')
 
+  const unchanged = await generator.emit(aCode, a)
+  expect(unchanged).toEqual(changed)
+
   await generator.dispose()
   await generator.init()
 
   const rebuilt = await generator.emit(aCode, a)
   expect(rebuilt.error).toBeUndefined()
   expect(rebuilt.code).toContain('valueB: number')
+})
+
+test('vfs resolves new files in virtual directories and retains them across updates', async () => {
+  const dependency = path.join(root, 'virtual/nested/dependency.ts')
+  const entryCode = "export { value } from './virtual/nested/dependency.ts'\n"
+  generator = createGenerator()
+  await generator.init()
+
+  generator.addFile("export const value = 'virtual' as const\n", dependency)
+  const first = await generator.emit(entryCode, a)
+  expect(first.error).toBeUndefined()
+  expect(first.code).toContain(
+    "export { value } from './virtual/nested/dependency.ts'",
+  )
+
+  const output = await generator.emit(
+    "import { value } from './virtual/nested/dependency.ts'\nexport const copy = value\n",
+    a,
+  )
+  expect(output.error).toBeUndefined()
+  expect(output.code).toContain('copy: "virtual"')
+
+  const outputs = await Promise.all([
+    generator.emit('export const value = 42 as const\n', dependency),
+    generator.emit(
+      "import { value } from './virtual/nested/dependency.ts'\nexport const copy = value\n",
+      a,
+    ),
+  ])
+  expect(outputs[0].error).toBeUndefined()
+  expect(outputs[0].code).toContain('value: 42')
+  expect(outputs[1].error).toBeUndefined()
+  expect(outputs[1].code).toContain('copy: 42')
 })

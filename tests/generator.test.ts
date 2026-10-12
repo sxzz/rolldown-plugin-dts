@@ -91,7 +91,7 @@ function mockInstalled([ts, custom]: Installed) {
       if (!ts) throw new Error(`Cannot find module '${id}'`)
       return TYPESCRIPT_PACKAGE_JSON_PATH
     }
-    if (id === 'typescript/unstable/async') {
+    if (id === 'typescript/async') {
       const customRoot = normalizePath(path.join(MOCK_ROOT, 'xxx'))
       const isCustom = options?.paths?.some((value) => {
         const normalized = normalizePath(value)
