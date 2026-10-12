@@ -1,13 +1,11 @@
-import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { createDebug } from 'obug'
 import { loadTsgoApi } from '../tsgo.ts'
 import type { LanguageContext } from '../custom-language.ts'
 import type { Generator, GeneratorResult } from './index.ts'
 import type { SourceMapInput } from 'rolldown'
-import type * as TsgoApiModule from 'typescript-next/unstable/async'
-import type { API, Snapshot } from 'typescript-next/unstable/async'
-import type { FileSystem } from 'typescript-next/unstable/fs'
+import type * as TsgoApiModule from 'typescript-next/async'
+import type { API, Snapshot } from 'typescript-next/async'
 
 const debug = createDebug('rolldown-plugin-dts:tsgo')
 
@@ -25,7 +23,6 @@ export class TsgoGenerator implements Generator {
   private apiModule?: typeof TsgoApiModule
   private api?: API
   private snapshot?: Snapshot
-  private activeFiles = new Map<string, string>()
   private pendingFiles = new Map<string, string>()
   private openedFiles = new Set<string>()
   private emitQueue: Promise<void> = Promise.resolve()
@@ -35,20 +32,17 @@ export class TsgoGenerator implements Generator {
   }
 
   async init(): Promise<void> {
-    this.activeFiles.clear()
     this.pendingFiles.clear()
     this.openedFiles.clear()
     this.emitQueue = Promise.resolve()
 
     this.apiModule = loadTsgoApi(this.options.moduleUrl)
-    const { tsgoPath, cwd, tsconfig, vfs } = this.options
-    const fs = vfs ? this.createFileSystem() : undefined
+    const { tsgoPath, cwd, tsconfig } = this.options
     this.api = new this.apiModule.API({
       cwd,
       tsserverPath: tsgoPath,
-      fs,
     })
-    this.snapshot = await this.api.updateSnapshot({
+    this.snapshot = await this.api.createSnapshot({
       openProjects: [tsconfig],
     })
   }
@@ -81,35 +75,6 @@ export class TsgoGenerator implements Generator {
     this.api = this.snapshot = undefined
   }
 
-  private createFileSystem(): FileSystem {
-    return {
-      readFile: (fileName) => this.activeFiles.get(path.resolve(fileName)),
-      fileExists: (fileName) =>
-        this.activeFiles.has(path.resolve(fileName)) ? true : undefined,
-      directoryExists: (directoryName) =>
-        this.hasVirtualDirectory(directoryName) ? true : undefined,
-      realpath: (fileName) => {
-        const normalized = path.resolve(fileName)
-        if (
-          this.activeFiles.has(normalized) ||
-          this.hasVirtualDirectory(normalized)
-        ) {
-          return normalized
-        }
-      },
-    }
-  }
-
-  private hasVirtualDirectory(directoryName: string): boolean {
-    const normalized = path.resolve(directoryName)
-    const prefix = normalized.endsWith(path.sep)
-      ? normalized
-      : `${normalized}${path.sep}`
-    return this.activeFiles
-      .keys()
-      .some((fileName) => fileName.startsWith(prefix))
-  }
-
   private toTsFilename(fileName: string): string {
     return path.resolve(this.options.languageContext.toTsFilename(fileName))
   }
@@ -123,36 +88,20 @@ export class TsgoGenerator implements Generator {
     const entries = [...this.pendingFiles]
     this.pendingFiles.clear()
 
-    const previous = new Map<string, string | undefined>()
-    const created: string[] = []
-    const changed: string[] = []
-    const openFiles: string[] = []
-
-    for (const [fileName, code] of entries) {
-      const hadVirtualFile = this.activeFiles.has(fileName)
-      previous.set(fileName, this.activeFiles.get(fileName))
-      this.activeFiles.set(fileName, code)
-
-      if (hadVirtualFile || existsSync(fileName)) changed.push(fileName)
-      else created.push(fileName)
-
-      if (!this.openedFiles.has(fileName)) openFiles.push(fileName)
-    }
+    const openFiles = entries
+      .map(([fileName]) => fileName)
+      .filter((fileName) => !this.openedFiles.has(fileName))
 
     let nextSnapshot: Snapshot
     try {
-      nextSnapshot = await this.api.updateSnapshot({
-        fileChanges: {
-          ...(created.length ? { created } : undefined),
-          ...(changed.length ? { changed } : undefined),
-        },
+      nextSnapshot = await this.snapshot.update({
+        fileSystem: { kind: 'layer', files: Object.fromEntries(entries) },
+        // Filesystem layers mark projects dirty; rebuild them before emitting.
+        ensurePrograms: true,
         ...(openFiles.length ? { openFiles } : undefined),
       })
     } catch (error) {
       for (const [fileName, code] of entries) {
-        const oldCode = previous.get(fileName)
-        if (oldCode === undefined) this.activeFiles.delete(fileName)
-        else this.activeFiles.set(fileName, oldCode)
         if (!this.pendingFiles.has(fileName)) {
           this.pendingFiles.set(fileName, code)
         }
@@ -163,7 +112,7 @@ export class TsgoGenerator implements Generator {
     for (const fileName of openFiles) this.openedFiles.add(fileName)
     const oldSnapshot = this.snapshot
     this.snapshot = nextSnapshot
-    await oldSnapshot.dispose()
+    if (oldSnapshot !== nextSnapshot) await oldSnapshot.dispose()
   }
 
   private async emitFromSnapshot(fileName: string): Promise<GeneratorResult> {
