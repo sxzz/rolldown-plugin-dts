@@ -128,6 +128,19 @@ export async function collectDependencies(
             break
           }
           case 'TSQualifiedName': {
+            // A qualified name inside one of these parents is resolved there as
+            // a whole (`ns.A` as a member of `ns`); adding its leftmost
+            // identifier as well would keep the entire namespace.
+            if (
+              parent &&
+              is.oneOf(parent, [
+                'TSTypeReference',
+                'TSTypeQuery',
+                'TSQualifiedName',
+                'TSImportType',
+              ])
+            )
+              break
             addDependency(getIdFromTSEntityName(node.left))
             break
           }

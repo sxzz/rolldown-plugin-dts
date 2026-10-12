@@ -10,3 +10,4 @@ export declare class D {
   readonly c: C;
 }
 //#endregion
+export {};

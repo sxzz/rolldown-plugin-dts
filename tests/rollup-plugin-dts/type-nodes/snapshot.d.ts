@@ -24,3 +24,4 @@ export declare function arrayAndTuple(a: [L, M]): N[];
 export declare function predicate(a: any): a is O;
 export declare function assertion(a: any): asserts a is P;
 //#endregion
+export {};

@@ -31,56 +31,56 @@ export function patchImportExport(
   }
 
   if (
-    is.oneOf(node, [
+    !is.oneOf(node, [
       'ImportDeclaration',
       'ExportAllDeclaration',
       'ExportNamedDeclaration',
     ])
   ) {
-    if (
-      node.type === 'ExportAllDeclaration' &&
-      node.source &&
-      exportPlan.typeOnlyExportAllSources.has(node.source.value)
-    ) {
-      node.exportKind = 'type'
-    }
+    return
+  }
 
-    if (
-      node.type === 'ExportNamedDeclaration' &&
-      exportPlan.typeOnlyNames.size
-    ) {
-      for (const spec of node.specifiers) {
-        const name = nameOf(spec.exported)!
-        if (exportPlan.typeOnlyNames.has(name)) {
-          if (spec.type === 'ExportSpecifier') {
-            spec.exportKind = 'type'
-          } else {
-            node.exportKind = 'type'
-          }
+  if (
+    node.type === 'ExportAllDeclaration' &&
+    node.source &&
+    exportPlan.typeOnlyExportAllSources.has(node.source.value)
+  ) {
+    node.exportKind = 'type'
+  }
+
+  if (node.type === 'ExportNamedDeclaration' && exportPlan.typeOnlyNames.size) {
+    for (const spec of node.specifiers) {
+      const name = nameOf(spec.exported)!
+      if (exportPlan.typeOnlyNames.has(name)) {
+        if (spec.type === 'ExportSpecifier') {
+          spec.exportKind = 'type'
+        } else {
+          node.exportKind = 'type'
         }
       }
-      normalizeTypeOnlyExport(node)
     }
+    normalizeTypeOnlyExport(node)
+  }
 
-    if (node.source?.value && RE_DTS.test(node.source.value)) {
-      node.source.value = filename_dts_to(node.source.value, 'js')
-      return node
-    }
+  if (node.source?.value && RE_DTS.test(node.source.value)) {
+    node.source.value = filename_dts_to(node.source.value, 'js')
+    return node
+  }
 
-    if (
-      cjsDefault &&
-      exportPlan.allowExportAssignment &&
-      node.type === 'ExportNamedDeclaration' &&
-      !node.source &&
-      node.specifiers.length === 1 &&
-      node.specifiers[0].type === 'ExportSpecifier' &&
-      nameOf(node.specifiers[0].exported) === 'default'
-    ) {
-      const defaultExport = node.specifiers[0]
-      return b.TSExportAssignment({
-        expression: defaultExport.local,
-      })
-    }
+  // eslint-disable-next-line unicorn/prefer-early-return
+  if (
+    cjsDefault &&
+    exportPlan.allowExportAssignment &&
+    node.type === 'ExportNamedDeclaration' &&
+    !node.source &&
+    node.specifiers.length === 1 &&
+    node.specifiers[0].type === 'ExportSpecifier' &&
+    nameOf(node.specifiers[0].exported) === 'default'
+  ) {
+    const defaultExport = node.specifiers[0]
+    return b.TSExportAssignment({
+      expression: defaultExport.local,
+    })
   }
 }
 

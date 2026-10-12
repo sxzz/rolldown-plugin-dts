@@ -7,3 +7,4 @@ export interface State<in out T> {
   set: (value: T) => void;
 }
 //#endregion
+export {};

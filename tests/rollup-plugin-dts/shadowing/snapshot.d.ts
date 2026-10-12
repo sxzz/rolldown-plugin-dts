@@ -18,3 +18,4 @@ export declare type GenericType<K = any, L = K> = {
 };
 export interface GenericExtends<M = any, N = M> extends GenericInterface<M, N> {}
 //#endregion
+export {};

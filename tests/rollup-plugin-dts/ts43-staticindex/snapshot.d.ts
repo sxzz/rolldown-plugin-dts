@@ -9,3 +9,4 @@ export declare class Foo {
   static [propName: string]: string | number | StaticT;
 }
 //#endregion
+export {};

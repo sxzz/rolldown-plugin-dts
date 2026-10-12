@@ -13,6 +13,7 @@ export function createDtsInputPlugin({
         ? (options) => {
             return {
               treeshake:
+                // eslint-disable-next-line unicorn/prefer-logical-operator-over-ternary
                 options.treeshake === false
                   ? false
                   : {

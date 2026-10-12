@@ -10,3 +10,4 @@ export interface Foo {
   ns: typeof bar_d_exports;
 }
 //#endregion
+export {};

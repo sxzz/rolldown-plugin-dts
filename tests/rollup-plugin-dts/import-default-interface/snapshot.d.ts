@@ -5,3 +5,4 @@ interface Bar {}
 //#region tests/rollup-plugin-dts/import-default-interface/index.d.ts
 export interface Foo extends Bar {}
 //#endregion
+export {};

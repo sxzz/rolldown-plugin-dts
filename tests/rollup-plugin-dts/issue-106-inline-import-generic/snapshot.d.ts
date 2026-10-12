@@ -8,3 +8,4 @@ export declare class CalendarDataManager {
   emitter: ObjectWithParam<SimpleInterface>;
 }
 //#endregion
+export {};

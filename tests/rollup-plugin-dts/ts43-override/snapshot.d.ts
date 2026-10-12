@@ -13,3 +13,4 @@ export declare class SpecializedComponent extends SomeComponent {
   override hide(): HideT;
 }
 //#endregion
+export {};

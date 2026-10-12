@@ -13,3 +13,4 @@ export default class Foo {
   method(e: E): F;
 }
 //#endregion
+export {};

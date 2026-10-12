@@ -180,6 +180,22 @@ test('tree-shaking', async () => {
   expect(snapshot).matchSnapshot()
 })
 
+test('tree-shaking namespace import referenced by qualified name', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/tree-shaking-qualified-name/index.ts'),
+    [dts({ emitDtsOnly: true })],
+    {
+      treeshake: {
+        moduleSideEffects: false,
+      },
+      external: /^node:.*/,
+    },
+  )
+  expect(snapshot).matchSnapshot()
+  expect(snapshot).not.toContain('node:http')
+  expect(snapshot).not.toContain('foo')
+})
+
 describe('dts input', () => {
   test('input array', async () => {
     const { snapshot, chunks } = await rolldownBuild(
@@ -645,7 +661,7 @@ test('cyclic import', async () => {
 })
 
 test('side effects', async () => {
-  const { snapshot } = await rolldownBuild(
+  const { snapshot, chunks } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/side-effects/index.ts'),
     [
       dts({
@@ -656,6 +672,11 @@ test('side effects', async () => {
     {},
     { preserveModules: true },
   )
+  const modChunk = chunks.find((chunk) => chunk.fileName === 'mod.d.ts')
+  if (modChunk?.type !== 'chunk') {
+    throw new Error('Expected mod.d.ts to be an output chunk')
+  }
+  expect(modChunk.code).toContain('export {}')
   expect(snapshot).toMatchSnapshot()
 })
 
@@ -833,6 +854,14 @@ test('import = syntax', async () => {
 test('declaration with export', async () => {
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/export-decl.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('inline exports keep other declarations private', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/export-decl-private.ts'),
     [dts({ emitDtsOnly: true })],
   )
   expect(snapshot).toMatchSnapshot()

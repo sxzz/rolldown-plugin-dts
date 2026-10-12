@@ -33,3 +33,4 @@ export declare type TyFn = <T = J>(j: T, k: Gen<K>) => L;
 export declare type TyCtor = new <T = M>(m: T, n: Gen<N>) => O;
 export interface I2 extends Gen<P> {}
 //#endregion
+export {};

@@ -13,3 +13,4 @@ export default class Foo extends A {
   method(d: D): E;
 }
 //#endregion
+export {};
