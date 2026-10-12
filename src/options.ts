@@ -228,7 +228,7 @@ export interface TscOptions {
 
 export interface TsgoOptions {
   /**
-   * URL of the TypeScript module that provides the TypeScript Go API.
+   * A `file://` URL of the TypeScript module that provides the TypeScript Go API.
    *
    * Use `import.meta.resolve()` to select an npm alias or another compatible
    * TypeScript module.

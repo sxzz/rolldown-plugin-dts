@@ -1,9 +1,10 @@
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { styleText } from 'node:util'
-import { tryRequire, tryResolve } from './require.ts'
+import { require, tryRequire, tryResolve } from './require.ts'
 import type { Logger } from './options.ts'
 import type * as TsgoApiModule from 'typescript-next/async'
+import type * as TsgoFsModule from 'typescript-next/fs'
 
 export interface TsgoPackageInfo {
   api?: typeof TsgoApiModule
@@ -24,15 +25,9 @@ export function getDefaultTsgoModuleUrl(): string | undefined {
 export function getTsgoPackageInfo(
   moduleUrl: string | undefined,
 ): TsgoPackageInfo | undefined {
-  if (!moduleUrl) return
+  if (moduleUrl == null) return
 
-  let modulePath = moduleUrl
-  try {
-    if (moduleUrl.startsWith('file:')) modulePath = fileURLToPath(moduleUrl)
-  } catch {
-    return
-  }
-
+  const modulePath = getTsgoModulePath(moduleUrl)
   const apiPath = tryResolve('typescript/async', {
     paths: [path.dirname(modulePath)],
   })
@@ -60,4 +55,26 @@ export function loadTsgoApi(
     )
   }
   return pkg.api!
+}
+
+export function loadTsgoFileSystem(
+  moduleUrl: string | undefined = getDefaultTsgoModuleUrl(),
+): typeof TsgoFsModule {
+  if (moduleUrl == null) throw new Error('No TypeScript module found.')
+  const modulePath = getTsgoModulePath(moduleUrl)
+  return require(
+    require.resolve('typescript/fs', { paths: [path.dirname(modulePath)] }),
+  )
+}
+
+function getTsgoModulePath(moduleUrl: string): string {
+  try {
+    if (!moduleUrl.startsWith('file://')) throw new Error('Expected file://')
+    return fileURLToPath(moduleUrl)
+  } catch (cause) {
+    throw new Error(
+      "The `tsgo.moduleUrl` option must be a valid file:// URL. Use `import.meta.resolve('typescript')` or `import.meta.resolve('typescript-next')`.",
+      { cause },
+    )
+  }
 }
