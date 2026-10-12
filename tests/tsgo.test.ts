@@ -1,8 +1,10 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { afterEach, expect, test } from 'vitest'
 import { LanguageContext } from '../src/custom-language.ts'
 import { TsgoGenerator } from '../src/generator/tsgo.ts'
+import { loadTsgoApi, loadTsgoFileSystem } from '../src/tsgo.ts'
 
 const root = path.resolve(import.meta.dirname, 'fixtures/tsgo-vfs')
 const moduleUrl = import.meta.resolve('typescript-next')
@@ -26,6 +28,29 @@ function createGenerator(): TsgoGenerator {
     languageContext: new LanguageContext([]),
   })
 }
+
+test.each([
+  '',
+  fileURLToPath(moduleUrl),
+  './node_modules/typescript-next/lib/version.cjs',
+  'typescript-next',
+  'https://example.com/typescript.js',
+  'file:/typescript/lib/version.cjs',
+  'file:///invalid%xx',
+])('rejects invalid moduleUrl %j', async (invalidModuleUrl) => {
+  const message = 'The `tsgo.moduleUrl` option must be a valid file:// URL'
+  expect(() => loadTsgoApi(invalidModuleUrl)).toThrow(message)
+  expect(() => loadTsgoFileSystem(invalidModuleUrl)).toThrow(message)
+  await expect(
+    new TsgoGenerator({
+      moduleUrl: invalidModuleUrl,
+      cwd: root,
+      tsconfig,
+      vfs: false,
+      languageContext: new LanguageContext([]),
+    }).init(),
+  ).rejects.toThrow(message)
+})
 
 test('vfs accumulates files, applies changes, and resets between builds', async () => {
   const aCode = await readFile(a, 'utf8')

@@ -155,8 +155,9 @@ dts({
 
 The TypeScript Go generator is experimental and requires a `tsconfig.json`.
 
-`tsgo.moduleUrl` defaults to `import.meta.resolve('typescript')`. It can point
-to an npm alias or another compatible TypeScript module. The selected module
+`tsgo.moduleUrl` must be a `file://` URL and defaults to
+`import.meta.resolve('typescript')`. Use `import.meta.resolve()` to select an
+npm alias or another compatible TypeScript module. The selected module
 must expose `Program.prototype.getDeclarationEmit`; there is no package-name
 fallback.
 

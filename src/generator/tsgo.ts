@@ -1,11 +1,12 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
-import { loadTsgoApi } from '../tsgo.ts'
+import { loadTsgoApi, loadTsgoFileSystem } from '../tsgo.ts'
 import type { LanguageContext } from '../custom-language.ts'
 import type { Generator, GeneratorResult } from './index.ts'
 import type { SourceMapInput } from 'rolldown'
 import type * as TsgoApiModule from 'typescript-next/async'
 import type { API, Snapshot } from 'typescript-next/async'
+import type * as TsgoFsModule from 'typescript-next/fs'
 
 const debug = createDebug('rolldown-plugin-dts:tsgo')
 
@@ -21,6 +22,7 @@ export interface TsgoGeneratorOptions {
 export class TsgoGenerator implements Generator {
   private options: TsgoGeneratorOptions
   private apiModule?: typeof TsgoApiModule
+  private fsModule?: typeof TsgoFsModule
   private api?: API
   private snapshot?: Snapshot
   private pendingFiles = new Map<string, string>()
@@ -37,6 +39,9 @@ export class TsgoGenerator implements Generator {
     this.emitQueue = Promise.resolve()
 
     this.apiModule = loadTsgoApi(this.options.moduleUrl)
+    this.fsModule = this.options.vfs
+      ? loadTsgoFileSystem(this.options.moduleUrl)
+      : undefined
     const { tsgoPath, cwd, tsconfig } = this.options
     this.api = new this.apiModule.API({
       cwd,
@@ -81,7 +86,7 @@ export class TsgoGenerator implements Generator {
 
   private async flushPendingFiles(): Promise<void> {
     if (!this.pendingFiles.size) return
-    if (!this.api || !this.snapshot) {
+    if (!this.fsModule || !this.snapshot) {
       throw new Error('TsgoGenerator has not been initialized.')
     }
 
@@ -95,7 +100,7 @@ export class TsgoGenerator implements Generator {
     let nextSnapshot: Snapshot
     try {
       nextSnapshot = await this.snapshot.update({
-        fileSystem: { kind: 'layer', files: Object.fromEntries(entries) },
+        fileSystem: this.fsModule.createFileSystemLayer(entries),
         // Filesystem layers mark projects dirty; rebuild them before emitting.
         ensurePrograms: true,
         ...(openFiles.length ? { openFiles } : undefined),
