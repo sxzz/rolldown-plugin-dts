@@ -13,6 +13,21 @@ export function isInfer(node: t.Node): node is t.Identifier {
   return is.Identifier(node, 'infer')
 }
 
+/**
+ * A declaration's type parameters become the parameters of the same arrow
+ * function that carries its dependencies, so a type parameter named like one of
+ * the module's import bindings would shadow it and the import would be dropped
+ * as unused. The parameters are prefixed to keep the two apart, and the prefix
+ * is stripped again when the original names are restored in `renderChunk`.
+ */
+export const TYPE_PARAM_PREFIX = '_$tp$'
+
+export function stripTypeParamPrefix(name: string): string {
+  return name.startsWith(TYPE_PARAM_PREFIX)
+    ? name.slice(TYPE_PARAM_PREFIX.length)
+    : name
+}
+
 export function TSEntityNameToRuntime(
   node: t.TSTypeName,
 ): t.MemberExpression | t.Identifier | t.ThisExpression {
