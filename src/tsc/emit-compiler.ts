@@ -139,7 +139,7 @@ function createTsProgramFromParsedConfig({
 
     if (hasReferences) {
       throw new Error(
-        `[rolldown-plugin-dts] Unable to load ${id}; You have "references" in your tsconfig file. Perhaps you want to add \`dts: { build: true }\` in your config?`,
+        `[rolldown-plugin-dts] Unable to load ${id}; You have "references" in your tsconfig file. Perhaps you want to add \`dts: { tsc: { build: true } }\` in your config?`,
       )
     }
 
@@ -204,7 +204,7 @@ export function tscEmitCompiler(tscOptions: TscOptions): TscResult {
       dtsCode = file.getFullText()
     } else {
       console.warn(
-        '[rolldown-plugin-dts] Warning: Failed to emit declaration file. Please try to enable `eager` option (`dts.eager` for tsdown).',
+        '[rolldown-plugin-dts] Warning: Failed to emit declaration file. Please try to enable `tsc.eager` option (`dts.tsc.eager` for tsdown).',
       )
     }
   }
