@@ -246,6 +246,40 @@ describe('dts input', () => {
     )
   })
 
+  describe('re-exports a member of a CommonJS `export =` module', () => {
+    const root = path.resolve(dirname, 'fixtures/cjs-dts-dep-named-reexport')
+
+    test('unused', async () => {
+      const { snapshot } = await rolldownBuild(
+        [path.join(root, 'index.d.ts')],
+        [dts({ dtsInput: true })],
+        {
+          cwd: root,
+          treeshake: true,
+          onwarn(warning) {
+            expect.unreachable(warning.message)
+          },
+        },
+      )
+      expect(snapshot).not.toContain('.cts')
+      expect(snapshot).toMatchSnapshot()
+    })
+
+    test('used', async () => {
+      const { snapshot } = await rolldownBuild(
+        [path.join(root, 'used.d.ts')],
+        [dts({ dtsInput: true })],
+        {
+          cwd: root,
+          onwarn(warning) {
+            expect.unreachable(warning.message)
+          },
+        },
+      )
+      expect(snapshot).toMatchSnapshot()
+    })
+  })
+
   test('input object', async () => {
     const { snapshot, chunks } = await rolldownBuild(
       { index: path.resolve(dirname, 'fixtures/dts-input.d.ts') },
@@ -538,6 +572,17 @@ test('cjs exports', async () => {
     )
     expect(snapshot).not.toContain('export =')
     expect(snapshot).toMatchSnapshot()
+  }
+
+  // an entry's own `export =` is not expanded into named exports
+  {
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/cjs-export-assignment.cts')],
+      [dts({ emitDtsOnly: true, cjsDefault: true })],
+      { onwarn() {} },
+    )
+    expect(snapshot).toContain('export = api;')
+    expect(snapshot).not.toContain('api_a')
   }
 })
 

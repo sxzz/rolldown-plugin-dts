@@ -1,5 +1,6 @@
-import { b, is, nameOf } from 'yuku-ast'
+import { b, is, nameOf, walk } from 'yuku-ast'
 import { filename_dts_to, RE_DTS } from '../filename.ts'
+import { collectDeclarationNames } from './exports.ts'
 import { isInfer } from './utils.ts'
 import type { ChunkExportPlan } from './types.ts'
 import type * as t from 'yuku-parser'
@@ -246,6 +247,182 @@ export function patchReExport(
   }
 
   return nodes
+}
+
+/**
+ * Expose the members of an `export =` target as named exports, the way
+ * TypeScript resolves `import { x } from './cjs'`
+ *
+ * ```ts
+ * declare const _exports: { x: typeof x }
+ * declare namespace ns { interface Y {} }
+ * export = _exports // or ns
+ * ```
+ * to
+ * ```ts
+ * declare const _exports_x: typeof _exports.x
+ * export { _exports_x as x }
+ * import ns_Y = ns.Y
+ * export { ns_Y as Y }
+ * ```
+ *
+ * @returns the `export =` statement, if its target could be expanded
+ */
+export function expandExportAssignment(
+  body: t.ProgramStatement[],
+): t.TSExportAssignment | undefined {
+  const assignment = body.find(
+    (node): node is t.TSExportAssignment =>
+      node.type === 'TSExportAssignment' &&
+      node.expression.type === 'Identifier',
+  )
+  if (!assignment) return
+  const target = (assignment.expression as t.Identifier).name
+
+  // name -> whether it is a namespace member (`import =`) or a property (`typeof`)
+  const members = new Map<string, 'namespace' | 'property'>()
+  let expandable = false
+  for (const node of body) {
+    if (node.type === 'VariableDeclaration') {
+      for (const declarator of node.declarations) {
+        const type = declarator.id.typeAnnotation?.typeAnnotation
+        if (
+          !is.Identifier(declarator.id, target) ||
+          type?.type !== 'TSTypeLiteral'
+        ) {
+          continue
+        }
+        expandable = true
+        for (const name of collectPropertyNames(type)) {
+          if (!members.has(name)) members.set(name, 'property')
+        }
+      }
+    } else if (
+      node.type === 'TSModuleDeclaration' &&
+      node.kind === 'namespace'
+    ) {
+      if (is.Identifier(node.id, target)) {
+        expandable = true
+        for (const name of collectNamespaceExportNames(node)) {
+          members.set(name, 'namespace')
+        }
+      } else if (node.id.type === 'TSQualifiedName') {
+        // `declare namespace ns.a.b {}` exports `a` from `ns`
+        let id = node.id
+        while (id.left.type === 'TSQualifiedName') id = id.left
+        if (is.Identifier(id.left, target)) {
+          expandable = true
+          members.set(id.right.name, 'namespace')
+        }
+      }
+    }
+  }
+  if (!expandable) return
+
+  // e.g. tsc emits both `export =` and named exports for JSON modules
+  const exportedNames = new Set<string>()
+  const usedNames = new Set<string>()
+  for (const node of body) {
+    if (node.type === 'ExportNamedDeclaration') {
+      for (const spec of node.specifiers) {
+        exportedNames.add(nameOf(spec.exported)!)
+      }
+      if (node.declaration) {
+        for (const name of collectDeclarationNames(node.declaration)) {
+          exportedNames.add(name)
+        }
+      }
+    }
+
+    walk(node, {
+      enter(node) {
+        if (node.type === 'Identifier') usedNames.add(node.name)
+      },
+    })
+  }
+
+  for (const [name, kind] of members) {
+    if (exportedNames.has(name)) continue
+
+    let alias = `${target}_${name}`
+    while (usedNames.has(alias)) alias += '$'
+    usedNames.add(alias)
+
+    const reference = b.TSQualifiedName({
+      left: b.Identifier({ name: target }),
+      right: b.Identifier({ name }),
+    })
+    body.push(
+      kind === 'namespace'
+        ? b.TSImportEqualsDeclaration({
+            id: b.Identifier({ name: alias }),
+            moduleReference: reference,
+            importKind: 'value',
+          })
+        : b.VariableDeclaration({
+            kind: 'const',
+            declare: true,
+            declarations: [
+              b.VariableDeclarator({
+                id: b.Identifier({
+                  name: alias,
+                  typeAnnotation: b.TSTypeAnnotation({
+                    typeAnnotation: b.TSTypeQuery({
+                      exprName: reference,
+                      typeArguments: null,
+                    }),
+                  }),
+                }),
+                init: null,
+              }),
+            ],
+          }),
+      b.ExportNamedDeclaration({
+        declaration: null,
+        specifiers: [
+          b.ExportSpecifier({
+            local: b.Identifier({ name: alias }),
+            exported: b.Identifier({ name }),
+          }),
+        ],
+        source: null,
+        attributes: [],
+      }),
+    )
+  }
+
+  return assignment
+}
+
+function collectPropertyNames(type: t.TSTypeLiteral): string[] {
+  return type.members.flatMap((member) =>
+    (member.type === 'TSPropertySignature' ||
+      (member.type === 'TSMethodSignature' && member.kind === 'method')) &&
+    !member.computed &&
+    member.key.type === 'Identifier'
+      ? [member.key.name]
+      : [],
+  )
+}
+
+/**
+ * Every member of an ambient namespace is exported, unless the namespace has
+ * an `export { ... }` list, in which case only explicit exports are
+ */
+function collectNamespaceExportNames(node: t.TSModuleDeclaration): string[] {
+  const body = node.body?.body ?? []
+  const hasExportList = body.some(
+    (stmt) => stmt.type === 'ExportNamedDeclaration' && !stmt.declaration,
+  )
+
+  return body.flatMap((stmt) => {
+    if (stmt.type === 'ExportNamedDeclaration') {
+      return stmt.declaration
+        ? collectDeclarationNames(stmt.declaration)
+        : stmt.specifiers.map((spec) => nameOf(spec.exported)!)
+    }
+    return hasExportList ? [] : collectDeclarationNames(stmt)
+  })
 }
 
 // fix:

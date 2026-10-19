@@ -51,7 +51,7 @@ function collectTypeOnlyLocals(
   }
 }
 
-function collectDeclarationNames(node: t.Node): string[] {
+export function collectDeclarationNames(node: t.Node): string[] {
   if (node.type === 'VariableDeclaration') {
     return node.declarations.flatMap((decl) => collectPatternNames(decl.id))
   }

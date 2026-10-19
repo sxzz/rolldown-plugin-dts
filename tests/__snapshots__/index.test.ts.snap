@@ -247,6 +247,68 @@ export declare class Foo {}
 //#endregion"
 `;
 
+exports[`dts input > re-exports a member of a CommonJS \`export =\` module > unused 1`] = `
+"// index.d.ts
+//#region node_modules/cjs-named/lib/rule.d.mts
+interface Rule {
+  names: string[];
+}
+//#endregion
+//#region index.d.ts
+export type MyRule = Rule;
+//#endregion
+export {};"
+`;
+
+exports[`dts input > re-exports a member of a CommonJS \`export =\` module > used 1`] = `
+"// used.d.ts
+//#region node_modules/cjs-named/lib/rule.d.mts
+interface Rule {
+  names: string[];
+}
+//#endregion
+//#region node_modules/cjs-named/lib/resolve-module.d.cts
+declare const _exports: {
+  resolveModule: typeof resolveModule;
+  resolveModuleCustomResolve: typeof resolveModuleCustomResolve;
+};
+declare function resolveModule(id: string): string;
+declare function resolveModuleCustomResolve(id: string): string;
+declare const _exports_resolveModule: typeof _exports.resolveModule;
+declare const _exports_resolveModuleCustomResolve: typeof _exports.resolveModuleCustomResolve;
+//#endregion
+//#region node_modules/cjs-named/lib/ns.d.cts
+declare function ns(): void;
+declare namespace ns {
+  interface Options {
+    strict: boolean;
+  }
+  const version: string;
+}
+import ns_Options = ns.Options;
+import ns_version = ns.version;
+//#endregion
+//#region node_modules/cjs-named/lib/ns-list.d.cts
+declare namespace nsList {
+  interface Hidden {}
+  interface Local {
+    local: true;
+  }
+  export { Local as Renamed };
+}
+import nsList_Renamed = nsList.Renamed;
+//#endregion
+//#region node_modules/cjs-named/lib/ns-dotted.d.cts
+declare namespace dotted.inner {
+  interface Deep {
+    deep: true;
+  }
+}
+import dotted_inner = dotted.inner;
+//#endregion
+export { ns_Options as Options, nsList_Renamed as Renamed, dotted_inner as inner, _exports_resolveModule as resolveModule, ns_version as version };"
+`;
+
 exports[`entryFileNames > custom chunk name 2`] = `
 "// chunks/D2aRkv2b-types.d.ts
 //#region tests/fixtures/dts-multi-input/types.d.ts

@@ -94,8 +94,12 @@ nothing but a default into `export = x`.
 **CommonJS declaration input is not supported either.** `export = X` and
 `import X = require('...')` are ambient CommonJS constructs without an ES module
 equivalent, so they cannot take part in bundling. `export = <identifier>` is
-rewritten to `export { x as default }` so that the common case still bundles;
-anything else is reported by a warning. A dependency in `node_modules` written
+rewritten to `export { x as default }` so that the common case still bundles.
+When `x` is a namespace or a `declare const` with an object type, each of its
+members is also exposed as a named export, so `export { y } from './cjs'`
+resolves the way TypeScript resolves it, and no warning is reported. Entries
+are left alone, so their exports stay as declared and `cjsDefault` can emit
+`export =` again. Anything else is reported by a warning. A dependency in `node_modules` written
 this way should be marked as external instead.
 
 Smaller ones:

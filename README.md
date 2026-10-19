@@ -200,7 +200,9 @@ and use `emitDtsOnly` for a second declaration-only build.
 
 The following declaration input cannot be bundled:
 
-- CommonJS export assignments such as `export = value`.
+- CommonJS export assignments such as `export = value`. When a bundled
+  dependency's `value` is a namespace or an object-typed `declare const`, its
+  members can still be imported by name.
 - CommonJS import aliases such as `import value = require('package')`.
 - Script-style ambient declarations, such as `declare module 'package' { ... }`
   or unexported top-level `declare` statements. Bundled declaration chunks are

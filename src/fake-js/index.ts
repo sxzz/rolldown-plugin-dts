@@ -17,6 +17,7 @@ import {
   planChunkExports,
 } from './exports.ts'
 import {
+  expandExportAssignment,
   patchImportExport,
   patchReExport,
   patchTsNamespace,
@@ -160,10 +161,20 @@ export function createFakeJsPlugin({
     }
 
     const { program } = file
+    // only needed to resolve named imports, and an entry must keep the exports
+    // it declares, e.g. for `cjsDefault` to emit `export =` again
+    const expandedAssignment = this.getModuleInfo(id)?.isEntry
+      ? undefined
+      : expandExportAssignment(program.body)
     moduleExportsMap.set(id, await collectModuleExports(this, program.body, id))
     const identifierMap: Record<string, number> = Object.create(null)
 
-    if (!warnedCjsDtsInputs.has(id) && program.body.some(isCjsDtsInputSyntax)) {
+    if (
+      !warnedCjsDtsInputs.has(id) &&
+      program.body.some(
+        (node) => node !== expandedAssignment && isCjsDtsInputSyntax(node),
+      )
+    ) {
       warnedCjsDtsInputs.add(id)
       this.warn(
         `${id} uses CommonJS dts syntax. ${
