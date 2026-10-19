@@ -47,6 +47,24 @@ describe('volar', () => {
       expect(snapshot).toMatchSnapshot()
     })
 
+    test('vue-sfc via `paths` alias in a custom tsconfig', async () => {
+      const root = path.resolve(dirname, 'fixtures/vue-sfc-paths')
+      const { snapshot } = await rolldownBuild(
+        path.resolve(root, 'main.ts'),
+        [
+          dts({
+            tsconfig: path.resolve(root, 'tsconfig.build.json'),
+            emitDtsOnly: true,
+            vue: true,
+          }),
+        ],
+        { external, tsconfig: path.resolve(root, 'tsconfig.build.json') },
+      )
+      expect(snapshot).not.toContain('@/App.vue')
+      expect(snapshot).toContain('DefineComponent')
+      expect(snapshot).toMatchSnapshot()
+    })
+
     test('vue-sfc as entries w/o ts importer', async () => {
       const root = path.resolve(dirname, 'fixtures/vue-sfc-entries')
       const { snapshot } = await rolldownBuild(
