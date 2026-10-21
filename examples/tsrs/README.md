@@ -33,8 +33,9 @@ Plugin-level `compilerOptions`, `tsconfigRaw`, and `sourcemap` overrides do not
 change the tsrs program. This example does not build project references or
 support Vue, custom languages, or content mappers.
 
-By default, tsrs reads sources from disk. With `vfs: true`, the generator overlays
-sources registered by Rolldown. Source transforms must run before the dts
+By default, tsrs reads sources from disk and allows concurrent declaration
+requests. With `vfs: true`, the generator overlays sources registered by Rolldown
+and serializes snapshot updates and emits. Source transforms must run before the dts
 transform hook. Dependencies not yet registered still come from disk, so this
 example cannot guarantee transformed dependency inference when declarations are
 requested before those dependencies are loaded. Each build starts a new tsrs
@@ -64,6 +65,8 @@ generators on the repository's five entry points and synthetic projects with
 sources, and disables declaration maps and incremental builds. All compilers
 read the same tsconfig per workload; tsc uses `eager: true` to load the complete
 configured project, as the native APIs do.
+Both native generators allow concurrent emit requests in this disk-based
+benchmark; only VFS mode requires serialized snapshot updates.
 
 The TypeScript runner starts `benchmark-worker.ts` in a fresh Node process for
 each measurement. Use `--runs 1 --memory-runs 1` for a quick validation run.

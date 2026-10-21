@@ -10,7 +10,9 @@ import {
 import os from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
+import { setImmediate } from 'node:timers/promises'
 import { rolldown } from 'rolldown'
+import { Program } from 'tsrs/unstable/async'
 import { dts } from '../../src/index.ts'
 import { createTsrsGenerator } from './generator.ts'
 
@@ -59,6 +61,50 @@ test('tsrs custom generator', async (t) => {
         ])
       } finally {
         await build.close()
+      }
+    },
+  )
+
+  await t.test(
+    'disk emits can overlap without waiting for earlier requests',
+    async (t) => {
+      const generator = createTsrsGenerator({ cwd, tsconfig })
+      const started = Promise.withResolvers<void>()
+      const release = Promise.withResolvers<void>()
+      const originalEmit = Program.prototype.getDeclarationEmit
+      let calls = 0
+      let outputs: ReturnType<typeof generator.emit>[] = []
+      try {
+        await generator.init!()
+        t.mock.method(
+          Program.prototype,
+          'getDeclarationEmit',
+          async function (
+            this: Program,
+            ...args: Parameters<typeof originalEmit>
+          ) {
+            calls++
+            started.resolve()
+            await release.promise
+            return originalEmit.apply(this, args)
+          },
+        )
+        outputs = [generator.emit('', entry), generator.emit('', dependency)]
+        await started.promise
+        await setImmediate()
+        // The second request must reach the API while the first is still blocked.
+        assert.equal(calls, 2)
+        release.resolve()
+        const [entryOutput, dependencyOutput] = await Promise.all(outputs)
+        assert.equal(entryOutput.error, undefined)
+        assert.equal(dependencyOutput.error, undefined)
+        assert.match(entryOutput.code!, /copy = 42/)
+        assert.match(dependencyOutput.code!, /value = 42/)
+      } finally {
+        release.resolve()
+        await Promise.allSettled(outputs)
+        t.mock.restoreAll()
+        await generator.dispose!()
       }
     },
   )

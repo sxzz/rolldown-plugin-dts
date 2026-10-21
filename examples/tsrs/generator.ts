@@ -137,6 +137,8 @@ export function createTsrsGenerator({
     addFile,
     emit(code, fileName) {
       fileName = toFileName(fileName)
+      if (!vfs) return emit(fileName)
+
       addFile(code, fileName)
       // Snapshot updates and releases must not race concurrent Rolldown loads.
       const result = queue.then(() => emit(fileName))
