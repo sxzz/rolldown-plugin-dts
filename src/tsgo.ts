@@ -6,11 +6,6 @@ import type { Logger } from './options.ts'
 import type * as TsgoApiModule from 'typescript-next/async'
 import type * as TsgoFsModule from 'typescript-next/fs'
 
-export interface TsgoPackageInfo {
-  api?: typeof TsgoApiModule
-  hasTsgoApi: boolean
-}
-
 export function getDefaultTsgoModuleUrl(): string | undefined {
   try {
     // Tests replace the CommonJS resolver to exercise different installations.
@@ -22,9 +17,9 @@ export function getDefaultTsgoModuleUrl(): string | undefined {
   } catch {}
 }
 
-export function getTsgoPackageInfo(
+export function tryLoadTsgoApi(
   moduleUrl: string | undefined,
-): TsgoPackageInfo | undefined {
+): typeof TsgoApiModule | undefined {
   if (moduleUrl == null) return
 
   const modulePath = getTsgoModulePath(moduleUrl)
@@ -32,20 +27,17 @@ export function getTsgoPackageInfo(
     paths: [path.dirname(modulePath)],
   })
   const api = apiPath ? tryRequire<typeof TsgoApiModule>(apiPath) : undefined
-  return {
-    api,
-    hasTsgoApi: !!api?.Program?.prototype.getDeclarationEmit,
-  }
+  return api?.Program?.prototype.getDeclarationEmit ? api : undefined
 }
 
 export function loadTsgoApi(
   moduleUrl: string | undefined = getDefaultTsgoModuleUrl(),
   logger?: Logger,
 ): typeof TsgoApiModule {
-  const pkg = getTsgoPackageInfo(moduleUrl)
-  if (!pkg?.hasTsgoApi) {
+  const api = tryLoadTsgoApi(moduleUrl)
+  if (!api) {
     throw new Error(
-      `The TypeScript module${moduleUrl ? ` at ${moduleUrl}` : ''} does not provide the tsgo \`getDeclarationEmit\` API. Please install \`typescript@next\` or set \`tsgo.moduleUrl\` to a compatible module, for example \`import.meta.resolve('typescript-next')\`.`,
+      `The TypeScript module${moduleUrl ? ` at ${moduleUrl}` : ''} does not provide the tsgo \`getDeclarationEmit\` API. Please install \`typescript@7.1.0-beta\` or set \`tsgo.moduleUrl\` to a compatible module, for example \`import.meta.resolve('typescript-next')\`.`,
     )
   }
 
@@ -54,7 +46,7 @@ export function loadTsgoApi(
       `Emit types with TypeScript Go from ${styleText('underline', moduleUrl)}`,
     )
   }
-  return pkg.api!
+  return api
 }
 
 export function loadTsgoFileSystem(

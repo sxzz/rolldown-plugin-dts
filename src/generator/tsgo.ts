@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
+import { RE_DTS, RE_NODE_MODULES } from '../filename.ts'
 import { loadTsgoApi, loadTsgoFileSystem } from '../tsgo.ts'
 import type { LanguageContext } from '../custom-language.ts'
 import type { Generator, GeneratorResult } from './index.ts'
@@ -17,6 +18,7 @@ export interface TsgoGeneratorOptions {
   tsconfig: string
   vfs: boolean
   languageContext: LanguageContext
+  loadSource?: (fileName: string) => Promise<void>
 }
 
 export class TsgoGenerator implements Generator {
@@ -27,6 +29,7 @@ export class TsgoGenerator implements Generator {
   private snapshot?: Snapshot
   private pendingFiles = new Map<string, string>()
   private openedFiles = new Set<string>()
+  private loadedSourceFiles = new Set<string>()
   private emitQueue: Promise<void> = Promise.resolve()
 
   constructor(options: TsgoGeneratorOptions) {
@@ -36,6 +39,7 @@ export class TsgoGenerator implements Generator {
   async init(): Promise<void> {
     this.pendingFiles.clear()
     this.openedFiles.clear()
+    this.loadedSourceFiles.clear()
     this.emitQueue = Promise.resolve()
 
     this.apiModule = loadTsgoApi(this.options.moduleUrl)
@@ -65,6 +69,7 @@ export class TsgoGenerator implements Generator {
     this.addFile(code, fileName)
     const result = this.emitQueue.then(async () => {
       await this.flushPendingFiles()
+      await this.loadSourceFiles()
       return this.emitFromSnapshot(fileName)
     })
     this.emitQueue = result.then(
@@ -82,6 +87,38 @@ export class TsgoGenerator implements Generator {
 
   private toTsFilename(fileName: string): string {
     return path.resolve(this.options.languageContext.toTsFilename(fileName))
+  }
+
+  private async loadSourceFiles(): Promise<void> {
+    const { loadSource } = this.options
+    if (!loadSource) return
+
+    // Transforms may introduce new imports. Refresh the program until every
+    // local source it discovers has been loaded through Rolldown.
+    while (true) {
+      const sources = new Set<string>()
+      for (const project of this.snapshot!.getProjects()) {
+        for (const name of await project.program.getSourceFileNames()) {
+          const fileName = path.resolve(name)
+          if (
+            !RE_DTS.test(fileName) &&
+            !RE_NODE_MODULES.test(fileName) &&
+            !this.openedFiles.has(fileName) &&
+            !this.loadedSourceFiles.has(fileName)
+          ) {
+            sources.add(fileName)
+          }
+        }
+      }
+      if (!sources.size) return
+      await Promise.all(
+        [...sources].map(async (fileName) => {
+          await loadSource(fileName)
+          this.loadedSourceFiles.add(fileName)
+        }),
+      )
+      await this.flushPendingFiles()
+    }
   }
 
   private async flushPendingFiles(): Promise<void> {
@@ -126,13 +163,30 @@ export class TsgoGenerator implements Generator {
     }
 
     const tsFileName = this.toTsFilename(fileName)
-    const project = await this.snapshot
+    let project = await this.snapshot
       .getDefaultProjectForFile(tsFileName)
       .catch((error: unknown) => {
         throw new Error(mapError(error, tsFileName, fileName), {
           cause: error,
         })
       })
+    // Opening VFS files can select a nearby tsconfig instead of the requested one.
+    const configuredProject = this.snapshot.getConfiguredProject(
+      this.options.tsconfig,
+    )
+    if (configuredProject && configuredProject.id !== project?.id) {
+      const fileNames = await configuredProject.program.getSourceFileNames()
+      const canonicalFileName = this.api.getCanonicalFileName(tsFileName)
+      if (
+        fileNames.some(
+          (name) =>
+            this.api!.getCanonicalFileName(path.resolve(name)) ===
+            canonicalFileName,
+        )
+      ) {
+        project = configuredProject
+      }
+    }
     if (!project) {
       return {
         error: `No TypeScript Go project found for ${fileName}. Please check your tsconfig and custom language filename mapping.`,

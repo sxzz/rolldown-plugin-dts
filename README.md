@@ -18,8 +18,8 @@ npm i -D rolldown-plugin-dts
 Install the compiler required by your generator:
 
 ```bash
-npm i -D typescript@^6    # tsc
-npm i -D typescript@next  # tsgo API
+npm i -D typescript@^6          # tsc
+npm i -D typescript@7.1.0-beta  # tsgo API
 ```
 
 Oxc is provided by Rolldown and needs no additional dependency.
@@ -90,6 +90,8 @@ dts({
 | `sideEffects`     | Mark declaration modules as having side effects.                                          | `false`                 |
 | `logger`          | Logger implementing `info`, `warn`, and `error`.                                          | `console`               |
 
+`tsc.*`, `oxc.*`, and `tsgo.*` apply only to their respective generators.
+
 `entry` may include files that are not Rolldown entry points:
 
 ```ts
@@ -107,10 +109,10 @@ CommonJS-style declaration input.
 | ----------------- | ------------------------------------------------------------- | ---------------------------------------- |
 | `tsc.build`       | Use TypeScript build mode and follow project references.      | `false`                                  |
 | `tsc.incremental` | Persist build outputs, including `.tsbuildinfo`, to disk.     | Enabled by the matching tsconfig options |
-| `vue`             | Register the built-in Vue integration using `vue-tsc`.        | `false`                                  |
 | `tsc.parallel`    | Run `tsc` or `vue-tsc` in a separate process.                 | `false`                                  |
 | `tsc.eager`       | Load every file listed by `tsconfig.json`.                    | `false`                                  |
 | `tsc.newContext`  | Use an isolated compiler cache instead of the shared context. | `false`                                  |
+| `vue`             | Register the built-in Vue integration using `vue-tsc`.        | `false`                                  |
 | `emitJs`          | Generate declarations for JavaScript files with JSDoc types.  | `allowJs` or `checkJs`                   |
 
 `tsc.incremental` applies to build mode. When disabled, build outputs stay in
@@ -138,13 +140,19 @@ This API is experimental and may change.
 
 ### Oxc
 
-`oxc` accepts
-[`IsolatedDeclarationsOptions`](https://oxc.rs/docs/guide/usage/transformer.html).
-Use the top-level `sourcemap` option for declaration maps.
+Oxc generates declarations from each source file independently. Your code must
+be compatible with `isolatedDeclarations`, including explicit type annotations
+where required for exported declarations.
+
+| Option              | Description                                                                                  | Default                          |
+| ------------------- | -------------------------------------------------------------------------------------------- | -------------------------------- |
+| `oxc.stripInternal` | Omit declarations marked with `/** @internal */`.                                            | `compilerOptions.stripInternal`  |
+| `sourcemap`         | Generate `.d.ts.map` files so editors can navigate from declarations to the original source. | `compilerOptions.declarationMap` |
 
 ```ts
 dts({
   generator: 'oxc',
+  sourcemap: true,
   oxc: {
     stripInternal: true,
   },
@@ -153,33 +161,32 @@ dts({
 
 ### TypeScript Go
 
-The TypeScript Go generator is experimental and requires a `tsconfig.json`.
+Experimental. Requires `typescript@7.1.0-beta` or a compatible version and a
+`tsconfig.json`.
 
-`tsgo.moduleUrl` must be a `file://` URL and defaults to
-`import.meta.resolve('typescript')`. Use `import.meta.resolve()` to select an
-npm alias or another compatible TypeScript module. The selected module
-must expose `Program.prototype.getDeclarationEmit`; there is no package-name
-fallback.
+| Option           | Description                                                  | Default                             |
+| ---------------- | ------------------------------------------------------------ | ----------------------------------- |
+| `tsgo.moduleUrl` | File URL of the TypeScript package that provides the Go API. | `import.meta.resolve('typescript')` |
+| `tsgo.path`      | Custom API server executable, passed as `tsserverPath`.      | Provided by the selected package    |
+| `tsgo.vfs`       | Supply transformed source code through a virtual filesystem. | `false`                             |
 
-`tsgo.vfs` defaults to `false` and only affects `tsgo`.
+- The plugin's current `tsgo` implementation reads compiler settings from the
+  config file; `tsconfigRaw` and `compilerOptions` do not override them.
+- Declaration maps require `compilerOptions.declarationMap: true` in the config
+  file; setting only the plugin's `sourcemap: true` produces a warning.
+- With `tsgo.vfs: true`, source transforms must run before the dts transform hook.
+  Non-Volar custom languages also require a `toTsFilename` mapping; Vue and
+  Volar integrations require `tsc`.
 
 ```ts
 dts({
   generator: 'tsgo',
   tsgo: {
     moduleUrl: import.meta.resolve('typescript'),
-    path: '/path/to/tsserver',
     vfs: true,
   },
 })
 ```
-
-For example, a separately installed npm alias can be selected with
-`moduleUrl: import.meta.resolve('typescript-next')`.
-
-With VFS enabled, `tsgo` receives the transformed code observed by the dts
-transform hook instead of rereading source files from disk. Source-transforming
-plugins must appear before `dts()` for their output to be included.
 
 ## Vite
 

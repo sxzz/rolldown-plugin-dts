@@ -3,7 +3,7 @@ import path from 'node:path'
 import { SourceMapConsumer } from '@jridgewell/source-map'
 import { expectFilesSnapshot, rolldownBuild } from '@sxzz/test-utils'
 import { build } from 'rolldown'
-import { beforeAll, expect, test } from 'vitest'
+import { beforeAll, expect, test, vi } from 'vitest'
 import { dts } from '../src/index.ts'
 
 const tempDir = path.join(import.meta.dirname, 'temp')
@@ -96,6 +96,47 @@ test('tsgo', async () => {
   const sourcemap = await readFile(path.resolve(dir, 'index.d.ts.map'), 'utf8')
   validateSourceMap(sourcemap)
 })
+
+test.each([true, false])(
+  'tsgo sourcemap with tsconfig declarationMap=%s',
+  async (declarationMap) => {
+    const dir = path.join(tempDir, `source-map-tsgo-${declarationMap}`)
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+    await build({
+      input,
+      plugins: [
+        dts({
+          generator: 'tsgo',
+          tsgo: { moduleUrl: tsgoModuleUrl },
+          tsconfig: declarationMap
+            ? tsconfig
+            : path.resolve(
+                import.meta.dirname,
+                'fixtures/source-map/tsconfig-no-declaration-map.json',
+              ),
+          sourcemap: true,
+          emitDtsOnly: true,
+          logger,
+        }),
+      ],
+      output: { dir },
+      write: true,
+    })
+
+    const warning =
+      "The `tsgo` generator requires `compilerOptions.declarationMap: true` in your tsconfig file for source mappings. The plugin's `sourcemap` option does not override the tsconfig."
+    if (declarationMap) {
+      expect(logger.warn).not.toHaveBeenCalledWith(warning)
+      const sourcemap = await readFile(
+        path.resolve(dir, 'index.d.ts.map'),
+        'utf8',
+      )
+      validateSourceMap(sourcemap)
+    } else {
+      expect(logger.warn).toHaveBeenCalledWith(warning)
+    }
+  },
+)
 
 // https://github.com/rolldown/tsdown/issues/975
 test('empty dts chunk does not break output sourcemap', async () => {

@@ -14,11 +14,7 @@ import {
   createVueLanguageMetadata,
   type VueLanguageOptions,
 } from './tsc/vue.ts'
-import {
-  getDefaultTsgoModuleUrl,
-  getTsgoPackageInfo,
-  loadTsgoApi,
-} from './tsgo.ts'
+import { getDefaultTsgoModuleUrl, loadTsgoApi, tryLoadTsgoApi } from './tsgo.ts'
 import type { Generator } from './generator/index.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
@@ -86,20 +82,30 @@ export interface Options {
    * A `tsconfig.json` path, resolved relative to {@link cwd}.
    *
    * When omitted or `true`, the nearest config is discovered from {@link cwd}.
-   * Set to `false` to disable config loading.
+   * Set to `false` to disable config loading. The `tsgo` generator requires a
+   * config file.
    */
   tsconfig?: string | boolean
 
-  /** Raw `tsconfig.json` values merged over the loaded config. */
+  /**
+   * Raw `tsconfig.json` values merged over the loaded config.
+   * The plugin's current `tsgo` implementation does not apply these overrides
+   * to the TypeScript program.
+   */
   tsconfigRaw?: Omit<TsconfigJson, 'compilerOptions'>
 
   /**
    * Compiler options merged over those loaded from `tsconfig.json`.
+   * In the plugin's current `tsgo` implementation, these affect plugin behavior
+   * but do not override the program's compiler options. Set those options in
+   * the config file instead.
    */
   compilerOptions?: TsconfigJson.CompilerOptions
 
   /**
    * Emits declaration maps (`.d.ts.map`).
+   * With `tsgo`, source mappings also require `compilerOptions.declarationMap`
+   * to be enabled in the on-disk config; `sourcemap: true` alone is insufficient.
    *
    * @default The value of `compilerOptions.declarationMap`.
    */
@@ -372,8 +378,7 @@ export function resolveOptions({
     if (compilerOptions.isolatedDeclarations) {
       generator = 'oxc'
     } else {
-      const pkg = getTsgoPackageInfo(defaultTsgoModuleUrl)
-      generator = pkg?.hasTsgoApi ? 'tsgo' : 'tsc'
+      generator = tryLoadTsgoApi(defaultTsgoModuleUrl) ? 'tsgo' : 'tsc'
     }
   }
 
@@ -419,6 +424,11 @@ export function resolveOptions({
       )
     }
     loadTsgoApi(tsgo.moduleUrl, logger)
+    if (sourcemap && !resolvedTsconfig?.compilerOptions?.declarationMap) {
+      logger.warn(
+        "The `tsgo` generator requires `compilerOptions.declarationMap: true` in your tsconfig file for source mappings. The plugin's `sourcemap` option does not override the tsconfig.",
+      )
+    }
   }
   oxc.stripInternal ??= !!compilerOptions.stripInternal
   // @ts-expect-error omitted in user options

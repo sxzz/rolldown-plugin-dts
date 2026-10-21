@@ -763,6 +763,41 @@ test('tsgo vfs uses transformed source code', async () => {
   expect(virtual.snapshot).toContain("foo: 'transformed'")
 })
 
+test.each([false, true])(
+  'tsgo vfs infers types from transformed dependencies (circular: %s)',
+  async (circular) => {
+    const root = path.resolve(dirname, 'fixtures/tsgo-vfs')
+    const dependency = path.join(root, 'b.ts')
+    const { chunks } = await rolldownBuild(path.join(root, 'a.ts'), [
+      {
+        name: 'transform-dependency-before-dts',
+        transform: {
+          order: 'pre',
+          handler(_code, id) {
+            if (id !== dependency) return
+            return `
+            ${circular ? "import { pair } from './a.ts'; export function getPair() { return pair }" : ''}
+            export const valueB: string = 'transformed'
+          `
+          },
+        },
+      },
+      dts({
+        generator: 'tsgo',
+        tsconfig: path.join(root, 'tsconfig.json'),
+        tsgo: { moduleUrl: tsgoModuleUrl, vfs: true },
+      }),
+    ])
+
+    const declaration = chunks
+      .filter((chunk) => chunk.type === 'chunk')
+      .find((chunk) => chunk.fileName === 'a.d.ts')
+    expect(declaration).toBeDefined()
+    expect(declaration!.code).toContain('valueB: string')
+    expect(declaration!.code).not.toContain('valueB: number')
+  },
+)
+
 // https://github.com/sxzz/rolldown-plugin-dts/issues/136
 test('css.ts files', async () => {
   const root = path.resolve(dirname, 'fixtures/css-ts')

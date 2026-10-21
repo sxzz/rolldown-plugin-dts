@@ -78,6 +78,27 @@ test('vfs accumulates files, applies changes, and resets between builds', async 
   expect(rebuilt.code).toContain('valueB: number')
 })
 
+test('vfs uses the specified tsconfig instead of the default project', async () => {
+  generator = new TsgoGenerator({
+    moduleUrl,
+    cwd: root,
+    tsconfig: path.join(root, 'tsconfig.build.json'),
+    vfs: true,
+    languageContext: new LanguageContext([]),
+  })
+  await generator.init()
+
+  for (const value of [1, 2]) {
+    const output = await generator.emit(
+      `/** @internal */\nexport const internal = 0\nexport const visible = ${value}\n`,
+      a,
+    )
+    expect(output.error).toBeUndefined()
+    expect(output.code).toContain(`visible = ${value}`)
+    expect(output.code).not.toContain('internal')
+  }
+})
+
 test('vfs resolves new files in virtual directories and retains them across updates', async () => {
   const dependency = path.join(root, 'virtual/nested/dependency.ts')
   const entryCode = "export { value } from './virtual/nested/dependency.ts'\n"

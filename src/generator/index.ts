@@ -56,6 +56,7 @@ export function createGenerator(
     | 'sourcemap'
   >,
   getEntries: () => string[] | undefined,
+  loadSource?: (fileName: string) => Promise<void>,
 ): Generator {
   if (typeof generator !== 'string') return generator
 
@@ -71,6 +72,7 @@ export function createGenerator(
       tsconfig: tsconfig!,
       vfs: !!tsgo.vfs,
       languageContext,
+      loadSource,
     })
   }
 

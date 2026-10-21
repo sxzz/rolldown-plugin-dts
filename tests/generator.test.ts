@@ -347,7 +347,7 @@ describe('resolve generator', () => {
       installed: [7, false],
       generator: 'tsgo',
       tsconfig: TSCONFIG,
-      expected: 'install `typescript@next`',
+      expected: 'install `typescript@7.1.0-beta`',
       isThrow: true,
     },
     {
