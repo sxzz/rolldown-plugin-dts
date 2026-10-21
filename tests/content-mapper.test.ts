@@ -83,6 +83,35 @@ test('reports mapper failures', async () => {
   ).rejects.toThrow('failed to transform this file')
 })
 
+test('reports mapper diagnostics even when their codes match TypeScript syntax errors', async () => {
+  await writeFile(
+    path.join(root, 'Example.component'),
+    'export const value = 1 // MAPPER_DIAGNOSTIC',
+  )
+  await expect(
+    rolldownBuild(path.join(root, 'Example.component'), [dts(options)]),
+  ).rejects.toThrow('Test mapper diagnostic')
+})
+
+test.each(['broken.ts', 'Broken.component'])(
+  'ignores unrelated syntax errors in %s',
+  async (fileName) => {
+    await writeFile(path.join(root, fileName), 'export const broken = ;')
+    await writeFile(
+      path.join(root, 'tsconfig.json'),
+      JSON.stringify({
+        extends: './base.json',
+        include: ['*.ts', '*.component'],
+      }),
+    )
+    const { snapshot } = await rolldownBuild(
+      path.join(root, 'Example.component'),
+      [dts(options)],
+    )
+    expect(snapshot).toContain('name: string')
+  },
+)
+
 test('declaration maps point to the original mapper source', async () => {
   const { chunks } = await rolldownBuild(
     path.join(root, 'Example.component'),

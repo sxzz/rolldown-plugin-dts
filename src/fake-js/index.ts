@@ -393,9 +393,7 @@ export function createFakeJsPlugin({
 
     const result = generate(program, {
       comments: false,
-      ...(sourcemap && {
-        sourceMap: { source: code, sourceFileName: id },
-      }),
+      sourceMap: sourcemap ? { source: code, sourceFileName: id } : undefined,
     })
 
     return {
@@ -613,12 +611,9 @@ export function createFakeJsPlugin({
 
     const result = generate(program, {
       comments: true,
-      ...(sourcemap && {
-        sourceMap: {
-          source: code,
-          sourceFileName: chunk.fileName,
-        },
-      }),
+      sourceMap: sourcemap
+        ? { source: code, sourceFileName: chunk.fileName }
+        : undefined,
     })
 
     return {

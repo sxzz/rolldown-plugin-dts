@@ -31,6 +31,16 @@ process.stdin.on('data', (chunk) => {
         extension: '.ts',
         mappings: [[0, text.length, 0, text.length, 0, 0]],
       }
+      if (text.includes('MAPPER_DIAGNOSTIC')) {
+        result.diagnostics = [
+          {
+            code: 1005,
+            messageText: 'Test mapper diagnostic',
+            start: 0,
+            length: 0,
+          },
+        ]
+      }
     }
     respond({ id: request.id, result })
   }

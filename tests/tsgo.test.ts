@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { LanguageContext } from '../src/custom-language.ts'
 import { TsgoGenerator } from '../src/generator/tsgo.ts'
 import { loadTsgoApi, loadTsgoFileSystem } from '../src/tsgo.ts'
@@ -17,14 +17,15 @@ let generator: TsgoGenerator | undefined
 afterEach(async () => {
   await generator?.dispose()
   generator = undefined
+  vi.restoreAllMocks()
 })
 
-function createGenerator(): TsgoGenerator {
+function createGenerator(vfs = true): TsgoGenerator {
   return new TsgoGenerator({
     moduleUrl,
     cwd: root,
     tsconfig,
-    vfs: true,
+    vfs,
     languageContext: new LanguageContext([]),
   })
 }
@@ -50,6 +51,79 @@ test.each([
       languageContext: new LanguageContext([]),
     }).init(),
   ).rejects.toThrow(message)
+})
+
+test('concurrent disk emits share configured project membership until the next build', async () => {
+  const { Program, Snapshot } = loadTsgoApi(moduleUrl)
+  const getSourceFileNames = vi.spyOn(Program.prototype, 'getSourceFileNames')
+  const getDefaultProject = vi.spyOn(
+    Snapshot.prototype,
+    'getDefaultProjectForFile',
+  )
+  generator = createGenerator(false)
+  await generator.init()
+
+  for (let build = 1; build <= 2; build++) {
+    const outputs = await Promise.all(
+      [a, b, a].map((fileName) => generator!.emit('', fileName)),
+    )
+    for (const output of outputs) {
+      expect(output.error).toBeUndefined()
+      expect(output.code).toContain('valueB: number')
+    }
+    expect(getSourceFileNames).toHaveBeenCalledTimes(build)
+    expect(getDefaultProject).not.toHaveBeenCalled()
+    await generator.dispose()
+    if (build === 1) await generator.init()
+  }
+})
+
+test('retries configured project membership after a failed request', async () => {
+  const { Program } = loadTsgoApi(moduleUrl)
+  const getSourceFileNames = vi
+    .spyOn(Program.prototype, 'getSourceFileNames')
+    .mockRejectedValueOnce(new Error('Failed to load source file names'))
+  generator = createGenerator(false)
+  await generator.init()
+
+  await expect(generator.emit('', a)).rejects.toThrow(
+    'Failed to load source file names',
+  )
+  expect((await generator.emit('', a)).code).toContain('valueB: number')
+  expect(getSourceFileNames).toHaveBeenCalledTimes(2)
+})
+
+test('falls back to the default project for a virtual file outside the configured project', async () => {
+  const { Snapshot } = loadTsgoApi(moduleUrl)
+  const getDefaultProject = vi.spyOn(
+    Snapshot.prototype,
+    'getDefaultProjectForFile',
+  )
+  const fileName = path.join(root, 'virtual/outside.ts')
+  generator = createGenerator()
+  await generator.init()
+
+  const output = await generator.emit('export const outside = 42', fileName)
+  expect(output.error).toBeUndefined()
+  expect(output.code).toContain('outside = 42')
+  expect(getDefaultProject).toHaveBeenCalledExactlyOnceWith(fileName)
+})
+
+test('reports a missing project after a configured project cache miss', async () => {
+  const { Snapshot } = loadTsgoApi(moduleUrl)
+  const getDefaultProject = vi.spyOn(
+    Snapshot.prototype,
+    'getDefaultProjectForFile',
+  )
+  const fileName = path.join(root, 'missing.ts')
+  generator = createGenerator(false)
+  await generator.init()
+
+  const output = await generator.emit('', fileName)
+  expect(output.error).toContain(
+    `No TypeScript Go project found for ${fileName}`,
+  )
+  expect(getDefaultProject).toHaveBeenCalledExactlyOnceWith(fileName)
 })
 
 test('vfs accumulates files, applies changes, and resets between builds', async () => {
@@ -100,10 +174,18 @@ test('vfs uses the specified tsconfig instead of the default project', async () 
 })
 
 test('vfs resolves new files in virtual directories and retains them across updates', async () => {
+  const { Program, Snapshot } = loadTsgoApi(moduleUrl)
+  const getSourceFileNames = vi.spyOn(Program.prototype, 'getSourceFileNames')
+  const getDefaultProject = vi.spyOn(
+    Snapshot.prototype,
+    'getDefaultProjectForFile',
+  )
   const dependency = path.join(root, 'virtual/nested/dependency.ts')
   const entryCode = "export { value } from './virtual/nested/dependency.ts'\n"
   generator = createGenerator()
   await generator.init()
+  await generator.emit(await readFile(a, 'utf8'), a)
+  expect(getSourceFileNames).toHaveBeenCalledTimes(1)
 
   generator.addFile("export const value = 'virtual' as const\n", dependency)
   const first = await generator.emit(entryCode, a)
@@ -130,4 +212,5 @@ test('vfs resolves new files in virtual directories and retains them across upda
   expect(outputs[0].code).toContain('value: 42')
   expect(outputs[1].error).toBeUndefined()
   expect(outputs[1].code).toContain('copy: 42')
+  expect(getDefaultProject).not.toHaveBeenCalled()
 })
