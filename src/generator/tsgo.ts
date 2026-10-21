@@ -129,7 +129,7 @@ export class TsgoGenerator implements Generator {
     const project = await this.snapshot
       .getDefaultProjectForFile(tsFileName)
       .catch((error: unknown) => {
-        throw new Error(this.mapError(error, tsFileName, fileName), {
+        throw new Error(mapError(error, tsFileName, fileName), {
           cause: error,
         })
       })
@@ -142,13 +142,13 @@ export class TsgoGenerator implements Generator {
     const output = await project.program
       .getDeclarationEmit([tsFileName])
       .catch((error: unknown) => {
-        throw new Error(this.mapError(error, tsFileName, fileName), {
+        throw new Error(mapError(error, tsFileName, fileName), {
           cause: error,
         })
       })
     if (output.emitSkipped && output.diagnostics.length) {
       return {
-        error: this.mapError(
+        error: mapError(
           this.apiModule.formatDiagnostics(output.diagnostics, this.api),
           tsFileName,
           fileName,
@@ -185,12 +185,12 @@ export class TsgoGenerator implements Generator {
 
     return { code, map }
   }
+}
 
-  private mapError(
-    error: unknown,
-    tsFileName: string,
-    fileName: string,
-  ): string {
-    return String(error).replaceAll(tsFileName, fileName)
-  }
+function mapError(
+  error: unknown,
+  tsFileName: string,
+  fileName: string,
+): string {
+  return String(error).replaceAll(tsFileName, fileName)
 }
