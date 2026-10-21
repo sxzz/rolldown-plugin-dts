@@ -62,7 +62,7 @@ export function requireTSApi(
   const tsPkg = getPackageInfo('typescript')
   if (tsPkg && isNativeTypeScriptVersion(tsPkg.version)) {
     throw new Error(
-      `TypeScript ${tsPkg.version} does not provide the classic TypeScript API required by ${mode}. Please use TypeScript 6.0 or below${message}`,
+      `TypeScript ${tsPkg.version} does not provide the classic TypeScript API required by ${mode}. Please use TypeScript <7.0${message}`,
     )
   }
 
@@ -71,7 +71,7 @@ export function requireTSApi(
     ts = require('typescript')
   } catch (cause) {
     throw new Error(
-      `TypeScript is not installed. Please install the \`typescript\` package (v6.0 or below for the classic API)${
+      `TypeScript is not installed. Please install the \`typescript\` package (<7.0 for the classic API)${
         message
       }`,
       { cause },

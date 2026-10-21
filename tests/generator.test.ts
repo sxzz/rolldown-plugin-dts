@@ -213,7 +213,8 @@ describe('resolve generator', () => {
     {
       installed: [7, false],
       tsconfig: TSCONFIG,
-      expected: 'classic TypeScript API required by tsc',
+      expected:
+        "Please use TypeScript <7.0, switch to TypeScript >=7.1 with `generator: 'tsgo'`, or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.",
       isThrow: true,
     },
     {

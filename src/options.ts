@@ -416,7 +416,7 @@ export function resolveOptions({
   if (generator === 'tsc') {
     requireTSApi(
       'tsc',
-      ', or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.',
+      ", switch to TypeScript >=7.1 with `generator: 'tsgo'`, or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.",
     )
   } else if (generator === 'tsgo') {
     if (!tsconfig) {
