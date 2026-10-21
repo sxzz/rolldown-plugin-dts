@@ -76,6 +76,7 @@ type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "cus
   }>;
 }>;
 interface TsgoOptions {
+  runExternalCode?: boolean;
   moduleUrl?: string;
   path?: string;
   vfs?: boolean;

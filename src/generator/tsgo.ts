@@ -14,6 +14,7 @@ const debug = createDebug('rolldown-plugin-dts:tsgo')
 export interface TsgoGeneratorOptions {
   moduleUrl?: string
   tsgoPath?: string
+  runExternalCode?: boolean
   cwd: string
   tsconfig: string
   vfs: boolean
@@ -50,10 +51,24 @@ export class TsgoGenerator implements Generator {
     this.api = new this.apiModule.API({
       cwd,
       tsserverPath: tsgoPath,
+      runExternalCode: this.options.runExternalCode,
     })
     this.snapshot = await this.api.createSnapshot({
       openProjects: [tsconfig],
     })
+    if (!this.options.languageContext.contentMapperExtensions.length) return
+    // Mapper setup and transform errors can otherwise produce empty declarations.
+    const project = this.snapshot.getConfiguredProject(tsconfig)
+    if (!project) return
+    const diagnostics = (
+      await Promise.all([
+        project.program.getConfigFileParsingDiagnostics(),
+        project.program.getSyntacticDiagnostics(),
+      ])
+    ).flat()
+    if (diagnostics.length) {
+      throw new Error(this.apiModule.formatDiagnostics(diagnostics, this.api))
+    }
   }
 
   addFile(code: string, fileName: string): void {
@@ -162,7 +177,11 @@ export class TsgoGenerator implements Generator {
       throw new Error('TsgoGenerator has not been initialized.')
     }
 
-    const tsFileName = this.toTsFilename(fileName)
+    const tsFileName = this.options.languageContext.isContentMappedFile(
+      fileName,
+    )
+      ? path.resolve(fileName)
+      : this.toTsFilename(fileName)
     let project = await this.snapshot
       .getDefaultProjectForFile(tsFileName)
       .catch((error: unknown) => {

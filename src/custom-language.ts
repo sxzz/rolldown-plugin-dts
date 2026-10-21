@@ -35,6 +35,8 @@ export interface CustomLanguage {
 export class LanguageContext {
   languages: CustomLanguage[]
   patterns: RegExp[]
+  /** @internal */
+  contentMapperExtensions: string[] = []
 
   constructor(languages: CustomLanguage[]) {
     this.languages = languages
@@ -99,7 +101,15 @@ export class LanguageContext {
     })
   }
 
+  /** @internal */
+  isContentMappedFile(id: string): boolean {
+    return this.contentMapperExtensions.some((extension) =>
+      id.endsWith(extension),
+    )
+  }
+
   toTsFilename(id: string): string {
+    if (this.isContentMappedFile(id)) return `${id}.ts`
     for (const language of this.languages) {
       if (
         language.toTsFilename &&

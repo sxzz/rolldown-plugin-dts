@@ -1,0 +1,14 @@
+{
+  "name": "test-content-mapper",
+  "private": true,
+  "type": "module",
+  "typescript": {
+    "contentMapper": {
+      "exec": [
+        "node",
+        "server.mjs"
+      ]
+    }
+  },
+  "main": "server.mjs"
+}

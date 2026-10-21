@@ -164,19 +164,20 @@ dts({
 Experimental. Requires `typescript@7.1.0-beta` or a compatible version and a
 `tsconfig.json`.
 
-| Option           | Description                                                  | Default                             |
-| ---------------- | ------------------------------------------------------------ | ----------------------------------- |
-| `tsgo.moduleUrl` | File URL of the TypeScript package that provides the Go API. | `import.meta.resolve('typescript')` |
-| `tsgo.path`      | Custom API server executable, passed as `tsserverPath`.      | Provided by the selected package    |
-| `tsgo.vfs`       | Supply transformed source code through a virtual filesystem. | `false`                             |
+| Option                 | Description                                                  | Default                             |
+| ---------------------- | ------------------------------------------------------------ | ----------------------------------- |
+| `tsgo.moduleUrl`       | File URL of the TypeScript package that provides the Go API. | `import.meta.resolve('typescript')` |
+| `tsgo.path`            | Custom API server executable, passed as `tsserverPath`.      | Provided by the selected package    |
+| `tsgo.runExternalCode` | Allow execution of content mappers configured in tsconfig.   | `false`                             |
+| `tsgo.vfs`             | Supply transformed source code through a virtual filesystem. | `false`                             |
 
 - The plugin's current `tsgo` implementation reads compiler settings from the
   config file; `tsconfigRaw` and `compilerOptions` do not override them.
 - Declaration maps require `compilerOptions.declarationMap: true` in the config
   file; setting only the plugin's `sourcemap: true` produces a warning.
 - With `tsgo.vfs: true`, source transforms must run before the dts transform hook.
-  Non-Volar custom languages also require a `toTsFilename` mapping; Vue and
-  Volar integrations require `tsc`.
+  Non-Volar custom languages also require a `toTsFilename` mapping.
+  Volar integrations, including `tsc.vue`, require `tsc`.
 
 ```ts
 dts({
@@ -187,6 +188,22 @@ dts({
   },
 })
 ```
+
+#### Content mappers
+
+Configure `contentMappers` in your tsconfig and enable `tsgo.runExternalCode`:
+
+```ts
+dts({
+  generator: 'tsgo',
+  tsgo: { runExternalCode: true },
+})
+```
+
+Extensions declared by content mappers (including inherited tsconfig settings)
+are recognized automatically; `customLanguages` is not needed. Content mappers
+read files from disk and cannot be combined with `tsgo.vfs`. If you also emit
+JavaScript, use your framework's Rolldown plugin to transform these source files.
 
 ## Vite
 

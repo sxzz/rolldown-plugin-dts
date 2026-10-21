@@ -8,6 +8,7 @@ import {
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
+import { escapeRegExp } from './regexp.ts'
 import { requireTSApi } from './require.ts'
 import {
   createVueLanguage,
@@ -234,6 +235,14 @@ export interface TscOptions {
 
 export interface TsgoOptions {
   /**
+   * Allows TypeScript to execute content mappers configured in tsconfig.
+   * Cannot be combined with `tsgo.vfs` when content mappers are configured.
+   *
+   * @default false
+   */
+  runExternalCode?: boolean
+
+  /**
    * A `file://` URL of the TypeScript module that provides the TypeScript Go API.
    *
    * Use `import.meta.resolve()` to select an npm alias or another compatible
@@ -422,6 +431,27 @@ export function resolveOptions({
       )
     }
     loadTsgoApi(tsgo.moduleUrl, logger)
+
+    const contentMappers: { extensions: string[] }[] | undefined = (
+      resolvedTsconfig as any
+    )?.contentMappers
+    if (contentMappers?.length) {
+      if (!tsgo.runExternalCode) {
+        throw new Error('Content mappers require `tsgo.runExternalCode: true`.')
+      }
+      if (tsgo.vfs) {
+        throw new Error('Content mappers cannot be combined with `tsgo.vfs`.')
+      }
+      languageContext.contentMapperExtensions = [
+        ...new Set(contentMappers.flatMap((mapper) => mapper.extensions)),
+      ]
+      languageContext.patterns.push(
+        ...languageContext.contentMapperExtensions.map(
+          (extension) => new RegExp(`${escapeRegExp(extension)}$`),
+        ),
+      )
+    }
+
     if (sourcemap && !resolvedTsconfig?.compilerOptions?.declarationMap) {
       logger.warn(
         "The `tsgo` generator requires `compilerOptions.declarationMap: true` in your tsconfig file for source mappings. The plugin's `sourcemap` option does not override the tsconfig.",

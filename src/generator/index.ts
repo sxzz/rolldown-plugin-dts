@@ -66,6 +66,7 @@ export function createGenerator(
     return new TsgoGenerator({
       moduleUrl: tsgo.moduleUrl,
       tsgoPath: tsgo.path,
+      runExternalCode: tsgo.runExternalCode,
       cwd,
       tsconfig: tsconfig!,
       vfs: !!tsgo.vfs,
