@@ -1,6 +1,5 @@
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { styleText } from 'node:util'
 import { require, tryRequire, tryResolve } from './require.ts'
 import type { Logger } from './options.ts'
 import type * as TsgoApiModule from 'typescript-next/async'
@@ -37,15 +36,11 @@ export function loadTsgoApi(
   const api = tryLoadTsgoApi(moduleUrl)
   if (!api) {
     throw new Error(
-      `The TypeScript module${moduleUrl ? ` at ${moduleUrl}` : ''} does not provide the tsgo \`getDeclarationEmit\` API. Please install \`typescript@7.1.0-beta\` or set \`tsgo.moduleUrl\` to a compatible module, for example \`import.meta.resolve('typescript-next')\`.`,
+      'The selected TypeScript version does not support tsgo. Install `typescript@7.1.0-beta` or set `tsgo.moduleUrl` to a compatible version.',
     )
   }
 
-  if (logger && moduleUrl) {
-    logger.info(
-      `Emit types with TypeScript Go from ${styleText('underline', moduleUrl)}`,
-    )
-  }
+  logger?.info('Emit types with TypeScript Go')
   return api
 }
 

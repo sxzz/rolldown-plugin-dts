@@ -134,7 +134,6 @@ interface Fixture {
   generator?: Options['generator']
   tsconfig?: string
   expected: string
-  selectedPackage?: string
   isThrow?: boolean
 }
 
@@ -310,14 +309,12 @@ describe('resolve generator', () => {
       generator: 'tsgo',
       tsconfig: TSCONFIG,
       expected: 'tsgo',
-      selectedPackage: TYPESCRIPT_MODULE_URL,
     },
     {
       installed: ['next', 'next'],
       generator: 'tsgo',
       tsconfig: TSCONFIG,
       expected: 'tsgo',
-      selectedPackage: TYPESCRIPT_MODULE_URL,
     },
     {
       installed: [7, 'next'],
@@ -325,7 +322,6 @@ describe('resolve generator', () => {
       tsgo: { moduleUrl: CUSTOM_MODULE_URL },
       tsconfig: TSCONFIG,
       expected: 'tsgo',
-      selectedPackage: CUSTOM_MODULE_URL,
     },
     {
       installed: [6, 'next'],
@@ -333,28 +329,27 @@ describe('resolve generator', () => {
       tsgo: { moduleUrl: CUSTOM_MODULE_URL },
       tsconfig: TSCONFIG,
       expected: 'tsgo',
-      selectedPackage: CUSTOM_MODULE_URL,
     },
     {
       installed: [6, 7],
       generator: 'tsgo',
       tsgo: { moduleUrl: CUSTOM_MODULE_URL },
       tsconfig: TSCONFIG,
-      expected: CUSTOM_MODULE_URL,
+      expected: 'The selected TypeScript version does not support tsgo',
       isThrow: true,
     },
     {
       installed: [7, false],
       generator: 'tsgo',
       tsconfig: TSCONFIG,
-      expected: 'install `typescript@7.1.0-beta`',
+      expected: 'Install `typescript@7.1.0-beta`',
       isThrow: true,
     },
     {
       installed: [false, false],
       generator: 'tsgo',
       tsconfig: TSCONFIG,
-      expected: 'The TypeScript module does not provide',
+      expected: 'The selected TypeScript version does not support tsgo',
       isThrow: true,
     },
     // A custom API server path still requires a package that provides the API.
@@ -373,7 +368,7 @@ describe('resolve generator', () => {
       generator: 'tsgo',
       tsgo: { path: '/bin/custom-tsserver' },
       tsconfig: TSCONFIG,
-      expected: 'The TypeScript module does not provide',
+      expected: 'The selected TypeScript version does not support tsgo',
       isThrow: true,
     },
     {
@@ -539,7 +534,6 @@ describe('resolve generator', () => {
         generator,
         tsconfig,
         expected,
-        selectedPackage,
         isThrow,
       },
     ) => {
@@ -580,10 +574,8 @@ describe('resolve generator', () => {
         eager: tsc?.eager ?? false,
         newContext: tsc?.newContext ?? false,
       })
-      if (selectedPackage) {
-        expect(logger.info.mock.calls.flat().join(' ')).toContain(
-          selectedPackage,
-        )
+      if (resolved.generator === 'tsgo') {
+        expect(logger.info).toHaveBeenCalledWith('Emit types with TypeScript Go')
       }
     },
   )
