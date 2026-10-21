@@ -38,7 +38,6 @@ export function createGenerator(
     cwd,
     oxc,
     languageContext,
-    vue,
     tsc,
     tsgo,
     sourcemap,
@@ -50,7 +49,6 @@ export function createGenerator(
     | 'cwd'
     | 'oxc'
     | 'languageContext'
-    | 'vue'
     | 'tsc'
     | 'tsgo'
     | 'sourcemap'
@@ -84,7 +82,7 @@ export function createGenerator(
     cwd,
     sourcemap,
     languageContext,
-    vue,
+    vue: tsc.vue,
     parallel: tsc.parallel,
     newContext: tsc.newContext,
     getEntries,

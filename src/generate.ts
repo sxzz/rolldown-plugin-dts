@@ -43,7 +43,6 @@ export function createGeneratePlugin(
     | 'oxc'
     | 'emitDtsOnly'
     | 'languageContext'
-    | 'vue'
     | 'tsc'
     | 'tsgo'
     | 'emitJs'

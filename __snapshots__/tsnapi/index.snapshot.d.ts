@@ -40,7 +40,6 @@ export interface Options {
   cjsDefault?: boolean;
   sideEffects?: boolean;
   logger?: Logger;
-  vue?: boolean | VueLanguageOptions;
   emitJs?: boolean;
   tsc?: TscOptions;
   oxc?: Omit<IsolatedDeclarationsOptions, "sourcemap">;
@@ -48,6 +47,7 @@ export interface Options {
   customLanguages?: CustomLanguage[];
 }
 export interface TscOptions {
+  vue?: boolean | VueLanguageOptions;
   build?: boolean;
   incremental?: boolean;
   parallel?: boolean;
@@ -58,21 +58,22 @@ export interface TscOptions {
 
 // #region Functions
 export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
-export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "oxc" | "emitDtsOnly" | "languageContext" | "vue" | "tsc" | "tsgo" | "emitJs" | "sourcemap">): Plugin;
+export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "oxc" | "emitDtsOnly" | "languageContext" | "tsc" | "tsgo" | "emitJs" | "sourcemap">): Plugin;
 export declare function dts(_?: Options): Plugin[];
-export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, tsc, vue, emitJs, oxc, tsgo }: Options): OptionsResolved;
+export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, tsc, emitJs, oxc, tsgo }: Options): OptionsResolved;
 // #endregion
 
 // #region Referenced (internal)
-type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "vue" | "customLanguages" | "tsc">>, {
+type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "customLanguages" | "tsc">>, {
   entry?: string[];
   tsconfig?: string;
   oxc: IsolatedDeclarationsOptions;
   tsconfigRaw: TsconfigJson;
   tsgo: TsgoOptions;
   languageContext: LanguageContext;
-  vue: false | VueLanguageOptions;
-  tsc: Required<TscOptions>;
+  tsc: Overwrite<Required<TscOptions>, {
+    vue: false | VueLanguageOptions;
+  }>;
 }>;
 interface TsgoOptions {
   moduleUrl?: string;

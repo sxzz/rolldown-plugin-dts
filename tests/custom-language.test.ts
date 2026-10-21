@@ -21,7 +21,7 @@ describe('volar', () => {
         [
           dts({
             emitDtsOnly: true,
-            vue: true,
+            tsc: { vue: true },
             compilerOptions: {
               isolatedDeclarations: false,
             },
@@ -39,10 +39,10 @@ describe('volar', () => {
         [
           dts({
             emitDtsOnly: true,
-            vue: {
-              vueCompilerOptions: { fallthroughAttributes: false },
+            tsc: {
+              vue: { vueCompilerOptions: { fallthroughAttributes: false } },
+              parallel: true,
             },
-            tsc: { parallel: true },
             compilerOptions: {
               isolatedDeclarations: false,
             },
@@ -61,7 +61,7 @@ describe('volar', () => {
           dts({
             tsconfig: path.resolve(root, 'tsconfig.json'),
             emitDtsOnly: true,
-            vue: true,
+            tsc: { vue: true },
           }),
         ],
         { external },
@@ -76,7 +76,7 @@ describe('volar', () => {
         [
           dts({
             emitDtsOnly: true,
-            vue: true,
+            tsc: { vue: true },
             compilerOptions: {
               isolatedDeclarations: false,
             },
@@ -111,7 +111,7 @@ describe('volar', () => {
           dts({
             emitDtsOnly: true,
             tsconfig: path.resolve(root, 'tsconfig.json'),
-            vue: true,
+            tsc: { vue: true },
             customLanguages: [tsMacro],
           }),
         ],

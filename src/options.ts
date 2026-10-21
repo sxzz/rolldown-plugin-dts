@@ -144,16 +144,6 @@ export interface Options {
   logger?: Logger
 
   /**
-   * Registers the built-in Vue language integration using `vue-tsc`.
-   *
-   * This is a shortcut for a preconfigured {@link Options.customLanguages}
-   * entry and requires the `tsc` generator.
-   *
-   * @default false
-   */
-  vue?: boolean | VueLanguageOptions
-
-  /**
    * Generates declarations for JavaScript files with JSDoc types.
    *
    * @default Enabled when `allowJs` or `checkJs` is set.
@@ -191,6 +181,16 @@ export interface Options {
 }
 
 export interface TscOptions {
+  /**
+   * Registers the built-in Vue language integration using `vue-tsc`.
+   *
+   * This is a shortcut for a preconfigured {@link Options.customLanguages}
+   * entry and requires the `tsc` generator.
+   *
+   * @default false
+   */
+  vue?: boolean | VueLanguageOptions
+
   /**
    * Uses TypeScript build mode (`tsc -b`) and follows project references.
    *
@@ -260,9 +260,7 @@ export interface TsgoOptions {
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 
 export type OptionsResolved = Overwrite<
-  Required<
-    Omit<Options, 'compilerOptions' | 'vue' | 'customLanguages' | 'tsc'>
-  >,
+  Required<Omit<Options, 'compilerOptions' | 'customLanguages' | 'tsc'>>,
   {
     entry?: string[]
     tsconfig?: string
@@ -270,8 +268,7 @@ export type OptionsResolved = Overwrite<
     tsconfigRaw: TsconfigJson
     tsgo: TsgoOptions
     languageContext: LanguageContext
-    vue: false | VueLanguageOptions
-    tsc: Required<TscOptions>
+    tsc: Overwrite<Required<TscOptions>, { vue: false | VueLanguageOptions }>
   }
 >
 
@@ -294,7 +291,6 @@ export function resolveOptions({
   customLanguages,
   tsc,
 
-  vue = false,
   emitJs,
 
   oxc,
@@ -326,7 +322,14 @@ export function resolveOptions({
     compilerOptions,
   }
 
-  const tscOptions: Required<TscOptions> = {
+  const vue = tsc?.vue
+  const vueOptions: false | VueLanguageOptions = vue
+    ? typeof vue === 'object'
+      ? vue
+      : {}
+    : false
+  const tscOptions: OptionsResolved['tsc'] = {
+    vue: vueOptions,
     build: tsc?.build ?? false,
     incremental:
       tsc?.incremental ??
@@ -338,15 +341,10 @@ export function resolveOptions({
 
   const hasCustomLanguages = !!customLanguages?.length
   customLanguages = [...(customLanguages || [])]
-  const vueOptions: false | VueLanguageOptions = vue
-    ? typeof vue === 'object'
-      ? vue
-      : {}
-    : false
   if (vueOptions) {
     if (generator && generator !== 'tsc') {
       throw new Error(
-        'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
+        'Volar-based custom languages (including the `tsc.vue` option) require the `tsc` generator.',
       )
     }
     customLanguages.push(
@@ -368,7 +366,7 @@ export function resolveOptions({
   if (isUsingVolar) {
     if (generator && generator !== 'tsc') {
       throw new Error(
-        'Volar-based custom languages (including the `vue` option) require the `tsc` generator.',
+        'Volar-based custom languages (including the `tsc.vue` option) require the `tsc` generator.',
       )
     }
     generator = 'tsc'
@@ -384,7 +382,7 @@ export function resolveOptions({
 
   if (generator === 'tsc' && tscOptions.parallel && hasCustomLanguages) {
     throw new Error(
-      'The `tsc.parallel` option does not support `customLanguages`. Disable `tsc.parallel` or use the built-in `vue` option for Vue.',
+      'The `tsc.parallel` option does not support `customLanguages`. Disable `tsc.parallel` or use the built-in `tsc.vue` option for Vue.',
     )
   }
 
@@ -455,7 +453,6 @@ export function resolveOptions({
     cjsDefault,
     sideEffects,
 
-    vue: vueOptions,
     tsc: tscOptions,
     emitJs,
     languageContext,

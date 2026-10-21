@@ -112,7 +112,7 @@ CommonJS-style declaration input.
 | `tsc.parallel`    | Run `tsc` or `vue-tsc` in a separate process.                 | `false`                                  |
 | `tsc.eager`       | Load every file listed by `tsconfig.json`.                    | `false`                                  |
 | `tsc.newContext`  | Use an isolated compiler cache instead of the shared context. | `false`                                  |
-| `vue`             | Register the built-in Vue integration using `vue-tsc`.        | `false`                                  |
+| `tsc.vue`             | Register the built-in Vue integration using `vue-tsc`.        | `false`                                  |
 | `emitJs`          | Generate declarations for JavaScript files with JSDoc types.  | `allowJs` or `checkJs`                   |
 
 `tsc.incremental` applies to build mode. When disabled, build outputs stay in
@@ -133,7 +133,7 @@ invalidateContextFile(globalContext, 'src/foo.ts')
 
 `customLanguages` registers non-standard source files such as Vue or Astro.
 Volar integrations must provide both `volarTypeScript` and
-`createVolarPlugins`; they require the `tsc` generator. `vue: true` is the
+`createVolarPlugins`; they require the `tsc` generator. `tsc.vue: true` is the
 preconfigured Vue shortcut.
 
 This API is experimental and may change.

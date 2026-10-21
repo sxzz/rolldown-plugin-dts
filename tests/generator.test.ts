@@ -127,7 +127,6 @@ interface Fixture {
   installed?: Installed
   isolatedDecl?: boolean
   oxc?: Options['oxc']
-  vue?: boolean
   tsc?: Options['tsc']
   customLanguages?: Options['customLanguages']
   tsgo?: Options['tsgo']
@@ -147,7 +146,6 @@ function formatTitle(fixture: Fixture): string {
   if (fixture.isolatedDecl) parts.push('isolatedDecl')
   if (fixture.oxc !== undefined)
     parts.push(`oxc=${JSON.stringify(fixture.oxc)}`)
-  if (fixture.vue) parts.push('vue')
   if (fixture.tsc !== undefined)
     parts.push(`tsc=${JSON.stringify(fixture.tsc)}`)
   if (fixture.customLanguages)
@@ -379,43 +377,43 @@ describe('resolve generator', () => {
     //#endregion
 
     //#region vue (Volar-based, requires tsc)
-    { vue: true, expected: 'tsc' },
+    { tsc: { vue: true }, expected: 'tsc' },
     {
       installed: [false, false],
-      vue: true,
+      tsc: { vue: true },
       expected: 'TypeScript is not installed',
       isThrow: true,
     },
     {
       installed: [7, false],
-      vue: true,
+      tsc: { vue: true },
       expected: 'does not provide the classic TypeScript API required by Vue',
       isThrow: true,
     },
     {
-      vue: true,
+      tsc: { vue: true },
       generator: 'oxc',
       expected: 'require the `tsc` generator',
       isThrow: true,
     },
     {
-      vue: true,
+      tsc: { vue: true },
       generator: 'tsgo',
       expected: 'require the `tsc` generator',
       isThrow: true,
     },
     {
       installed: ['next', false],
-      vue: true,
+      tsc: { vue: true },
       generator: 'tsgo',
       expected: 'require the `tsc` generator',
       isThrow: true,
     },
-    { vue: true, generator: 'tsc', expected: 'tsc' },
-    { vue: true, tsc: { parallel: true }, expected: 'tsc' },
-    { vue: true, isolatedDecl: true, expected: 'tsc' },
+    { tsc: { vue: true }, generator: 'tsc', expected: 'tsc' },
+    { tsc: { vue: true, parallel: true }, expected: 'tsc' },
+    { tsc: { vue: true }, isolatedDecl: true, expected: 'tsc' },
     // tsgo settings are ignored when tsc is selected
-    { installed: [6, 'next'], vue: true, tsgo: {}, expected: 'tsc' },
+    { installed: [6, 'next'], tsc: { vue: true }, tsgo: {}, expected: 'tsc' },
     //#endregion
 
     //#region Volar-based custom language (requires tsc)
@@ -454,7 +452,7 @@ describe('resolve generator', () => {
     { customLanguages: [volarLanguage], isolatedDecl: true, expected: 'tsc' },
     {
       customLanguages: [volarLanguage, plainLanguage],
-      vue: true,
+      tsc: { vue: true },
       expected: 'tsc',
     },
     //#endregion
@@ -527,7 +525,6 @@ describe('resolve generator', () => {
         installed = [6, false],
         isolatedDecl,
         oxc,
-        vue,
         tsc,
         customLanguages,
         tsgo,
@@ -545,7 +542,6 @@ describe('resolve generator', () => {
           isolatedDeclarations: isolatedDecl,
         },
         oxc,
-        vue,
         tsc: tsc && { ...tsc },
         // resolveOptions may push into the array (e.g. vue), so avoid
         // sharing the same array between fixtures
@@ -568,6 +564,7 @@ describe('resolve generator', () => {
       )
       expect(resolved.tsgo.vfs).toBe(tsgo?.vfs ?? false)
       expect(resolved.tsc).toStrictEqual({
+        vue: typeof tsc?.vue === 'object' ? tsc.vue : tsc?.vue ? {} : false,
         build: tsc?.build ?? false,
         incremental: tsc?.incremental ?? false,
         parallel: tsc?.parallel ?? false,
@@ -575,7 +572,9 @@ describe('resolve generator', () => {
         newContext: tsc?.newContext ?? false,
       })
       if (resolved.generator === 'tsgo') {
-        expect(logger.info).toHaveBeenCalledWith('Emit types with TypeScript Go')
+        expect(logger.info).toHaveBeenCalledWith(
+          'Emit types with TypeScript Go',
+        )
       }
     },
   )
