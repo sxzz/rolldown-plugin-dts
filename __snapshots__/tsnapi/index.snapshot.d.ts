@@ -9,28 +9,25 @@ export interface CustomLanguage {
   volarTypeScript?: typeof import("@volar/typescript");
   createVolarPlugins?: Parameters<(typeof import("@volar/typescript"))["proxyCreateProgram"]>[2];
 }
+export interface Generator {
+  init?: () => void | Promise<void>;
+  addFile?: (_: string, _: string) => void;
+  emit: (_: string, _: string) => GeneratorResult | Promise<GeneratorResult>;
+  dispose?: () => void | Promise<void>;
+  invalidate?: (_: string) => void;
+}
+export interface GeneratorResult {
+  code?: string;
+  map?: SourceMapInput;
+  error?: RollupError | string;
+}
 export interface Logger {
   info: (..._: any[]) => void;
   warn: (..._: any[]) => void;
   error: (..._: any[]) => void;
 }
-export interface Options extends GeneralOptions, TscOptions {
-  oxc?: Omit<IsolatedDeclarationsOptions, "sourcemap">;
-  tsgo?: TsgoOptions;
-  customLanguages?: CustomLanguage[];
-}
-// #endregion
-
-// #region Functions
-export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
-export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "build" | "incremental" | "oxc" | "emitDtsOnly" | "languageContext" | "parallel" | "eager" | "tsgo" | "newContext" | "emitJs" | "sourcemap">): Plugin;
-export declare function dts(_?: Options): Plugin[];
-export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, build, incremental, vue, parallel, eager, newContext, emitJs, oxc, tsgo }: Options): OptionsResolved;
-// #endregion
-
-// #region Referenced (internal)
-interface GeneralOptions {
-  generator?: "tsc" | "oxc" | "tsgo";
+export interface Options {
+  generator?: "tsc" | "oxc" | "tsgo" | Generator;
   entry?: string | string[];
   cwd?: string;
   dtsInput?: boolean;
@@ -43,25 +40,43 @@ interface GeneralOptions {
   cjsDefault?: boolean;
   sideEffects?: boolean;
   logger?: Logger;
+  vue?: boolean | VueLanguageOptions;
+  emitJs?: boolean;
+  tsc?: TscOptions;
+  oxc?: Omit<IsolatedDeclarationsOptions, "sourcemap">;
+  tsgo?: TsgoOptions;
+  customLanguages?: CustomLanguage[];
 }
-type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "vue" | "customLanguages">>, {
+export interface TscOptions {
+  build?: boolean;
+  incremental?: boolean;
+  parallel?: boolean;
+  eager?: boolean;
+  newContext?: boolean;
+}
+// #endregion
+
+// #region Functions
+export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
+export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "oxc" | "emitDtsOnly" | "languageContext" | "vue" | "tsc" | "tsgo" | "emitJs" | "sourcemap">): Plugin;
+export declare function dts(_?: Options): Plugin[];
+export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, tsc, vue, emitJs, oxc, tsgo }: Options): OptionsResolved;
+// #endregion
+
+// #region Referenced (internal)
+type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "vue" | "customLanguages" | "tsc">>, {
   entry?: string[];
   tsconfig?: string;
   oxc: IsolatedDeclarationsOptions;
   tsconfigRaw: TsconfigJson;
   tsgo: TsgoOptions;
   languageContext: LanguageContext;
+  vue: false | VueLanguageOptions;
+  tsc: Required<TscOptions>;
 }>;
-interface TscOptions {
-  build?: boolean;
-  incremental?: boolean;
-  vue?: boolean | VueLanguageOptions;
-  parallel?: boolean;
-  eager?: boolean;
-  newContext?: boolean;
-  emitJs?: boolean;
-}
 interface TsgoOptions {
+  moduleUrl?: string;
   path?: string;
+  vfs?: boolean;
 }
 // #endregion
