@@ -103,15 +103,15 @@ function createTsProgramFromParsedConfig({
     declaration: true,
     $configRaw: parsedConfig.raw,
     $rootDir: baseDir,
+  }
+  if (languageContext.languages.length) {
     // Allow non-TS extensions (e.g. `.vue`) to be used as root files. Without
     // this, TypeScript silently drops root files whose extension is not in its
     // built-in supported list, so `program.getSourceFile(id)` returns
     // `undefined` for a `.vue` entry that is not imported by a `.ts` file.
     // Only relevant when a custom language (e.g. Vue) registers such
     // extensions; module resolution already handles the imported-file case.
-    ...(languageContext.languages.length
-      ? { allowNonTsExtensions: true }
-      : undefined),
+    compilerOptions.allowNonTsExtensions = true
   }
 
   const rootNames = [
