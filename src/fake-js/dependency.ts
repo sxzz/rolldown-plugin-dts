@@ -118,7 +118,11 @@ export async function collectDependencies(
         if (node.computed && isReferenceId(node.key)) {
           addDependency(node.key)
         }
-        if ('value' in node && isReferenceId(node.value)) {
+        if (
+          'value' in node &&
+          parent?.type !== 'ObjectPattern' &&
+          isReferenceId(node.value)
+        ) {
           addDependency(node.value)
         }
       } else {
