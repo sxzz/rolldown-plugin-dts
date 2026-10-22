@@ -63,6 +63,8 @@ import type * as t from 'yuku-parser'
 // output:
 // export declare function x$1(xx: X$1): void
 
+const RE_SOURCE_MAPPING_URL = /\n?\/\/# sourceMappingURL=[^\n]*\n?$/
+
 export function createFakeJsPlugin({
   sourcemap,
   cjsDefault,
@@ -125,6 +127,21 @@ export function createFakeJsPlugin({
 
     generateBundle(options, bundle) {
       for (const chunk of Object.values(bundle)) {
+        // `sourcemap` is an output-wide option, so the JS sourcemap setting
+        // also applies to dts chunks. When declaration maps are disabled,
+        // drop the map and its `sourceMappingURL` comment from dts chunks so
+        // they don't reference a file that is never emitted.
+        if (
+          !sourcemap &&
+          chunk.type === 'chunk' &&
+          RE_DTS.test(chunk.fileName)
+        ) {
+          chunk.code = chunk.code.replace(RE_SOURCE_MAPPING_URL, '')
+          chunk.map = null
+          chunk.sourcemapFileName = null
+          continue
+        }
+
         if (!RE_DTS_MAP.test(chunk.fileName)) continue
 
         if (sourcemap) {
