@@ -425,7 +425,8 @@ export function createFakeJsPlugin({
 
     const { program } = file
     program.body = patchTsNamespace(program.body)
-    program.body = patchReExport(program.body)
+    const reExportTargets = new Map<string, string>()
+    program.body = patchReExport(program.body, reExportTargets)
 
     const exportPlan = planChunkExports(
       chunk,
@@ -515,6 +516,18 @@ export function createFakeJsPlugin({
           transformedDep = undefinedDep
         } else if (isInfer(transformedDep)) {
           transformedDep.name = '__Infer'
+        } else if (
+          transformedDep.type === 'MemberExpression' &&
+          !transformedDep.computed &&
+          transformedDep.object.type === 'Identifier' &&
+          transformedDep.property.type === 'Identifier'
+        ) {
+          // `X_exports.A` only exists via `__reExport(X_exports, import_lib)`,
+          // so reference `import_lib.A` instead.
+          const target = reExportTargets.get(transformedDep.object.name)
+          if (target && target !== transformedDep.object.name) {
+            transformedDep.object.name = target
+          }
         }
 
         if (originalDep.replace) {
