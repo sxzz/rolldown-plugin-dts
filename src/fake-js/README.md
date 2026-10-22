@@ -60,13 +60,13 @@ export declare function fn(a: Foo$1): void
 var [binding, ...] = [declarationId, (typeParam, ...) => [dep, ...], ["child", ...], sideEffect()]
 ```
 
-| Slot            | Purpose                                                                                                                                                                                                            |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| array pattern   | The names the declaration binds. An array pattern because `declare const a = 1, b = 2` binds several names at once, `var` because merged declarations redeclare the same name.                                     |
-| `declarationId` | Index into the plugin's `declarationMap`, which holds the original AST.                                                                                                                                            |
-| deps function   | Every identifier the declaration references. Its parameters are the declaration's type parameters, so a type parameter shadows an outer binding exactly like it does in TypeScript, and gets renamed the same way. |
-| children array  | One empty string literal per identifier inside the declaration, only used to carry source positions back for sourcemaps.                                                                                           |
-| `sideEffect()`  | Optional. A call to an unresolved global, so that a declaration nothing references — `declare module '...'`, `declare global` — is not tree-shaken away.                                                           |
+| Slot            | Purpose                                                                                                                                                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| array pattern   | The names the declaration binds. An array pattern because `declare const a = 1, b = 2` binds several names at once, `var` because merged declarations redeclare the same name.                                                             |
+| `declarationId` | Index into the plugin's `declarationMap`, which holds the original AST.                                                                                                                                                                    |
+| deps function   | Every identifier the declaration references. Its parameters are the declaration's type parameters under a reserved prefix, so that a type parameter cannot shadow a same-named import; the prefix is stripped when the names are restored. |
+| children array  | One empty string literal per identifier inside the declaration, only used to carry source positions back for sourcemaps.                                                                                                                   |
+| `sideEffect()`  | Optional. A call to an unresolved global, so that a declaration nothing references — `declare module '...'`, `declare global` — is not tree-shaken away.                                                                                   |
 
 ## Export shape
 
