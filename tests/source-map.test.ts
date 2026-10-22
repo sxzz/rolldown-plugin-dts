@@ -56,25 +56,33 @@ test('oxc', async () => {
   validateSourceMap(sourcemap)
 })
 
-test('tsc', async () => {
-  const dir = path.join(tempDir, 'source-map-tsc')
-  await build({
-    input,
-    plugins: [
-      dts({
-        generator: 'tsc',
-        tsconfig,
-        sourcemap: true,
-        emitDtsOnly: true,
-      }),
-    ],
-    output: { dir },
-    write: true,
-  })
-  await expectFilesSnapshot(dir, '__snapshots__/source-map-tsc.md')
-  const sourcemap = await readFile(path.resolve(dir, 'index.d.ts.map'), 'utf8')
-  validateSourceMap(sourcemap)
-})
+test.each([true, false])(
+  'tsc with tsconfig declaration=%s',
+  async (declaration) => {
+    const dir = path.join(tempDir, 'source-map-tsc')
+    await build({
+      input,
+      plugins: [
+        dts({
+          generator: 'tsc',
+          tsc: { newContext: true },
+          tsconfig,
+          compilerOptions: { declaration },
+          sourcemap: true,
+          emitDtsOnly: true,
+        }),
+      ],
+      output: { dir },
+      write: true,
+    })
+    await expectFilesSnapshot(dir, '__snapshots__/source-map-tsc.md')
+    const sourcemap = await readFile(
+      path.resolve(dir, 'index.d.ts.map'),
+      'utf8',
+    )
+    validateSourceMap(sourcemap)
+  },
+)
 
 test('tsgo', async () => {
   const dir = path.join(tempDir, 'source-map-tsgo')

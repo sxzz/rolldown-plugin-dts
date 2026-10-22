@@ -100,8 +100,6 @@ function createTsProgramFromParsedConfig({
   const compilerOptions: CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
-    // This emitter exists to produce declarations; `declaration: false` in the
-    // tsconfig would make the declaration sourcemap emit hit a TS assertion.
     declaration: true,
     $configRaw: parsedConfig.raw,
     $rootDir: baseDir,
