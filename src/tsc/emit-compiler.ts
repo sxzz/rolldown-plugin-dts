@@ -100,6 +100,7 @@ function createTsProgramFromParsedConfig({
   const compilerOptions: CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
+    declaration: true,
     $configRaw: parsedConfig.raw,
     $rootDir: baseDir,
     // Allow non-TS extensions (e.g. `.vue`) to be used as root files. Without
