@@ -115,6 +115,9 @@ CommonJS-style declaration input.
 | `tsc.vue`             | Register the built-in Vue integration using `vue-tsc`.        | `false`                                  |
 | `emitJs`          | Generate declarations for JavaScript files with JSDoc types.  | `allowJs` or `checkJs`                   |
 
+Top-level `build`, `incremental`, `parallel`, `eager`, `newContext`, and `vue` are
+deprecated. Use `tsc.*` instead.
+
 `tsc.incremental` applies to build mode. When disabled, build outputs stay in
 memory.
 

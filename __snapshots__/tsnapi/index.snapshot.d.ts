@@ -26,7 +26,7 @@ export interface Logger {
   warn: (..._: any[]) => void;
   error: (..._: any[]) => void;
 }
-export interface Options {
+export interface Options extends DeprecatedOptions {
   generator?: "tsc" | "oxc" | "tsgo" | Generator;
   entry?: string | string[];
   cwd?: string;
@@ -60,11 +60,19 @@ export interface TscOptions {
 export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
 export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "oxc" | "emitDtsOnly" | "languageContext" | "tsc" | "tsgo" | "emitJs" | "sourcemap">): Plugin;
 export declare function dts(_?: Options): Plugin[];
-export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, tsc, emitJs, oxc, tsgo }: Options): OptionsResolved;
+export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, tsc, emitJs, oxc, tsgo, ...deprecated }: Options): OptionsResolved;
 // #endregion
 
 // #region Referenced (internal)
-type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "customLanguages" | "tsc">>, {
+interface DeprecatedOptions {
+  build?: TscOptions["build"];
+  incremental?: TscOptions["incremental"];
+  parallel?: TscOptions["parallel"];
+  eager?: TscOptions["eager"];
+  newContext?: TscOptions["newContext"];
+  vue?: TscOptions["vue"];
+}
+type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "customLanguages" | "tsc" | keyof DeprecatedOptions>>, {
   entry?: string[];
   tsconfig?: string;
   oxc: IsolatedDeclarationsOptions;

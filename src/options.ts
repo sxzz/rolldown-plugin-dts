@@ -1,5 +1,6 @@
 import path from 'node:path'
 import process from 'node:process'
+import { isDeepStrictEqual } from 'node:util'
 import {
   getTsconfig,
   readTsconfig,
@@ -27,7 +28,7 @@ export interface Logger {
   error: (...args: any[]) => void
 }
 
-export interface Options {
+export interface Options extends DeprecatedOptions {
   /**
    * The generator used to produce declaration files.
    *
@@ -181,6 +182,26 @@ export interface Options {
   customLanguages?: CustomLanguage[]
 }
 
+interface DeprecatedOptions {
+  /** @deprecated Use `tsc.build` instead. */
+  build?: TscOptions['build']
+
+  /** @deprecated Use `tsc.incremental` instead. */
+  incremental?: TscOptions['incremental']
+
+  /** @deprecated Use `tsc.parallel` instead. */
+  parallel?: TscOptions['parallel']
+
+  /** @deprecated Use `tsc.eager` instead. */
+  eager?: TscOptions['eager']
+
+  /** @deprecated Use `tsc.newContext` instead. */
+  newContext?: TscOptions['newContext']
+
+  /** @deprecated Use `tsc.vue` instead. */
+  vue?: TscOptions['vue']
+}
+
 export interface TscOptions {
   /**
    * Registers the built-in Vue language integration using `vue-tsc`.
@@ -269,7 +290,12 @@ export interface TsgoOptions {
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 
 export type OptionsResolved = Overwrite<
-  Required<Omit<Options, 'compilerOptions' | 'customLanguages' | 'tsc'>>,
+  Required<
+    Omit<
+      Options,
+      'compilerOptions' | 'customLanguages' | 'tsc' | keyof DeprecatedOptions
+    >
+  >,
   {
     entry?: string[]
     tsconfig?: string
@@ -304,7 +330,34 @@ export function resolveOptions({
 
   oxc,
   tsgo,
+  ...deprecated
 }: Options): OptionsResolved {
+  for (const key of [
+    'build',
+    'incremental',
+    'parallel',
+    'eager',
+    'newContext',
+    'vue',
+  ] as const) {
+    const value = deprecated[key]
+    if (value === undefined) continue
+
+    if (tsc?.[key] !== undefined && !isDeepStrictEqual(value, tsc[key])) {
+      throw new Error(
+        `The deprecated \`${key}\` option conflicts with \`tsc.${key}\`. Remove the top-level \`${key}\` option.`,
+      )
+    }
+    logger.warn(
+      `The top-level \`${key}\` option is deprecated. Use \`tsc.${key}\` instead.`,
+    )
+
+    // Legacy incremental: false follows tsconfig instead of disabling it.
+    if (tsc?.[key] === undefined && (key !== 'incremental' || value)) {
+      tsc = { ...tsc, [key]: value }
+    }
+  }
+
   let resolvedTsconfig: TsconfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
