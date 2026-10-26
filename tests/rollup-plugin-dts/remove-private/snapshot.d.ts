@@ -1,5 +1,4 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/remove-private/index.d.ts
 declare class B {}
 export declare class Foo {
   private a;
@@ -7,5 +6,4 @@ export declare class Foo {
   private ma;
   protected mb(): void;
 }
-//#endregion
 export {};

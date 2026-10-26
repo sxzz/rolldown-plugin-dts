@@ -176,7 +176,7 @@ test('disable dts source map only', async () => {
     [
       "index.d.ts",
       "index.js",
-      "rolldown-runtime-D7D4PA-g.js",
+      "rolldown-runtime-D8jQpDG7.js",
       "index.js.map",
     ]
   `)

@@ -1,9 +1,6 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/issue-160-global-namespace/mod.d.ts
 export interface A {}
 interface B {}
-//#endregion
-//#region tests/rollup-plugin-dts/issue-160-global-namespace/index.d.ts
 declare global {
   namespace Named.Core {
     export { A, B };
@@ -12,5 +9,4 @@ declare global {
     export { A, B };
   }
 }
-//#endregion
 export {};
