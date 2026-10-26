@@ -1,6 +1,5 @@
-import { b, is, walk } from 'yuku-ast'
-import { generate } from 'yuku-codegen'
-import { parse, type ParseResult } from 'yuku-parser'
+import { b, parse, print, walk, type SourceFile } from 'yuku'
+import { is } from 'yuku/utils'
 import {
   filename_js_to_dts,
   RE_DTS,
@@ -51,7 +50,7 @@ import type {
   TransformPluginContext,
   TransformResult,
 } from 'rolldown'
-import type * as t from 'yuku-parser'
+import type * as t from 'yuku'
 
 // input:
 // export declare function x(xx: X): void
@@ -145,9 +144,10 @@ export function createFakeJsPlugin({
     code: string,
     id: string,
   ): Promise<TransformResult> {
-    let file: ParseResult
+    let file: SourceFile
     try {
       file = parse(code, {
+        path: id,
         lang: 'dts',
         sourceType: 'module',
         attachComments: true,
@@ -295,9 +295,6 @@ export function createFakeJsPlugin({
       }) as t.NumericLiteral
       const depsBody: t.ArrayExpression = b.ArrayExpression({ elements: deps })
       const depsNode: t.ArrowFunctionExpression = b.ArrowFunctionExpression({
-        id: null,
-        generator: false,
-        async: false,
         params: params.map(({ name }) => b.Identifier({ name })),
         body: depsBody,
         expression: true,
@@ -317,7 +314,6 @@ export function createFakeJsPlugin({
         b.CallExpression({
           callee: b.Identifier({ name: 'sideEffect' }),
           arguments: [bindings[0]],
-          optional: false,
         })
       const runtimeArrayNode = runtimeBindingArrayExpression([
         declarationIdNode,
@@ -353,15 +349,12 @@ export function createFakeJsPlugin({
         // export { ${binding} as default }
         appendStmts.push(
           b.ExportNamedDeclaration({
-            declaration: null,
             specifiers: [
               b.ExportSpecifier({
                 local: bindings[0],
                 exported: b.Identifier({ name: 'default' }),
               }),
             ],
-            source: null,
-            attributes: [],
           }),
         )
         // replace the whole statement
@@ -378,8 +371,6 @@ export function createFakeJsPlugin({
         b.ExpressionStatement({
           expression: b.CallExpression({
             callee: b.Identifier({ name: 'sideEffect' }),
-            arguments: [],
-            optional: false,
           }),
         }),
       )
@@ -391,12 +382,7 @@ export function createFakeJsPlugin({
       ...appendStmts,
     ]
 
-    const result = generate(program, {
-      comments: false,
-      ...(sourcemap && {
-        sourceMap: { source: code, sourceFileName: id },
-      }),
-    })
+    const result = print(file, { comments: 'none', sourceMap: sourcemap })
 
     return {
       code: result.code,
@@ -409,9 +395,10 @@ export function createFakeJsPlugin({
       return
     }
 
-    let file: ParseResult
+    let file: SourceFile
     try {
       file = parse(code, {
+        path: chunk.fileName,
         lang: 'ts',
         sourceType: 'module',
         attachComments: true,
@@ -535,7 +522,7 @@ export function createFakeJsPlugin({
     const body: t.ProgramStatement[] = []
     // comments of dropped statements, e.g. the `//#endregion` in front of an
     // `export { ... }` that became empty because it was inlined
-    let danglingComments: t.AttachedComment[] = []
+    let danglingComments: t.Comment[] = []
 
     for (const node of program.body) {
       const rendered = renderStatement(node)
@@ -572,14 +559,7 @@ export function createFakeJsPlugin({
     }
 
     if (needsScopeMarker(program.body)) {
-      program.body.push(
-        b.ExportNamedDeclaration({
-          declaration: null,
-          specifiers: [],
-          source: null,
-          attributes: [],
-        }),
-      )
+      program.body.push(b.ExportNamedDeclaration({}))
     }
 
     // recover comments
@@ -602,24 +582,15 @@ export function createFakeJsPlugin({
     if (comments.size) {
       program.body[0].comments ||= []
       program.body[0].comments.unshift(
-        ...Array.from(comments, (c): t.AttachedComment => ({
-          type: c.type,
-          value: c.value,
+        ...Array.from(comments, (c): t.Comment => ({
+          ...c,
           position: 'before',
           sameLine: false,
         })),
       )
     }
 
-    const result = generate(program, {
-      comments: true,
-      ...(sourcemap && {
-        sourceMap: {
-          source: code,
-          sourceFileName: chunk.fileName,
-        },
-      }),
-    })
+    const result = print(file, { comments: 'all', sourceMap: sourcemap })
 
     return {
       // a chunk ending with a comment, e.g. `//#endregion`, is generated with a

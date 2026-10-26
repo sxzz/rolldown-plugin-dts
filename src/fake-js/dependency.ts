@@ -1,4 +1,5 @@
-import { b, is, isIdentifierName, walk, walkAsync } from 'yuku-ast'
+import { b, walk } from 'yuku'
+import { is, isIdentifierName } from 'yuku/utils'
 import {
   getIdentifierIndex,
   getIdFromTSEntityName,
@@ -9,7 +10,7 @@ import {
 } from './utils.ts'
 import type { Dep, NamespaceMap, TypeParams } from './types.ts'
 import type { TransformPluginContext } from 'rolldown'
-import type * as t from 'yuku-parser'
+import type * as t from 'yuku'
 
 /**
  * Collects all TSTypeParameter nodes from the given node and groups them by
@@ -55,9 +56,9 @@ export async function collectDependencies(
   children: Set<t.Node>,
   identifierMap: Record<string, number>,
 ): Promise<Dep[]> {
+  const bundledImports = await resolveImportTypes(context, node, importer)
   const deps = new Set<Dep>()
   const seen = new Set<t.Node>()
-  const preserveImportTypeCache = new Map<string, boolean>()
 
   const inferredStack: string[][] = []
   let currentInferred = new Set<string>()
@@ -65,15 +66,15 @@ export async function collectDependencies(
     return node.type === 'Identifier' && currentInferred.has(node.name)
   }
 
-  await walkAsync(node, {
+  walk(node, {
     enter(node) {
       if (node.type !== 'TSConditionalType') return
 
       const inferred = collectInferredNames(node.extendsType)
       inferredStack.push(inferred)
     },
-    async leave(node, path) {
-      const { parent } = path
+    leave(node, ctx) {
+      const { parent } = ctx
 
       // handle infer scope
       if (node.type === 'TSConditionalType') {
@@ -159,12 +160,7 @@ export async function collectDependencies(
           case 'TSImportType': {
             seen.add(node)
             const { source, qualifier } = node
-
-            const resolved = await context.resolve(source.value, importer)
-            if (!resolved || !!resolved.external) {
-              preserveImportTypeCache.set(source.value, true)
-              break
-            }
+            if (!bundledImports.has(source.value)) break
 
             const dep = importNamespace(
               node,
@@ -191,6 +187,28 @@ export async function collectDependencies(
     if (isThisExpression(node) || isInferred(node)) return
     deps.add(node)
   }
+}
+
+async function resolveImportTypes(
+  context: TransformPluginContext,
+  node: t.Node,
+  importer: string,
+): Promise<Set<string>> {
+  const sources = new Set<string>()
+  walk(node, {
+    TSImportType(node) {
+      sources.add(node.source.value)
+    },
+  })
+
+  const bundled = new Set<string>()
+  await Promise.all(
+    Array.from(sources, async (source) => {
+      const resolved = await context.resolve(source, importer)
+      if (resolved && !resolved.external) bundled.add(source)
+    }),
+  )
+  return bundled
 }
 
 function importNamespace(
@@ -220,8 +238,6 @@ function importNamespace(
       stmt: b.ImportDeclaration({
         specifiers: [b.ImportNamespaceSpecifier({ local })],
         source,
-        phase: null,
-        attributes: [],
       }),
       local,
     })
@@ -276,10 +292,8 @@ function isChildSymbol(node: t.Node, parent: t.Node) {
 function collectInferredNames(node: t.Node) {
   const inferred: string[] = []
   walk(node, {
-    enter(node) {
-      if (node.type === 'TSInferType' && node.typeParameter) {
-        inferred.push(node.typeParameter.name.name)
-      }
+    TSInferType(node) {
+      inferred.push(node.typeParameter.name.name)
     },
   })
   return inferred
