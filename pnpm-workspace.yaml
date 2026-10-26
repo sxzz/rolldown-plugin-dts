@@ -4,21 +4,21 @@ overrides:
 catalog:
   '@astrojs/ts-plugin': ^1.10.12
   '@jridgewell/source-map': ^0.3.11
-  '@sxzz/eslint-config': ^8.7.0
+  '@sxzz/eslint-config': ^8.8.0
   '@sxzz/prettier-config': ^2.3.3
   '@sxzz/test-utils': ^0.5.20
   '@ts-macro/language-plugin': ^0.3.7
   '@ts-macro/tsc': ^0.3.7
   '@types/node': ^26.6.5
-  '@volar/typescript': ^2.4.28
+  '@volar/typescript': ^2.4.30
   '@vue/language-core': ^3.3.13
   arktype: ^2.2.9
   bumpp: ^12.3.0
   eslint: ^10.13.0
   prettier: ^3.9.10
-  rolldown: ^1.2.14
+  rolldown: ^1.2.15
   ts-macro: ^0.3.7
-  tsdown: ^0.23.1
+  tsdown: ^0.23.2
   tsnapi: ^1.5.0
   typescript: ^6.0.3
   typescript-next: 'npm:typescript@7.1.0-dev.20261025.1'

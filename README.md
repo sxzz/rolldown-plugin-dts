@@ -112,7 +112,7 @@ CommonJS-style declaration input.
 | `tsc.parallel`    | Run `tsc` or `vue-tsc` in a separate process.                 | `false`                                  |
 | `tsc.eager`       | Load every file listed by `tsconfig.json`.                    | `false`                                  |
 | `tsc.newContext`  | Use an isolated compiler cache instead of the shared context. | `false`                                  |
-| `tsc.vue`             | Register the built-in Vue integration using `vue-tsc`.        | `false`                                  |
+| `tsc.vue`         | Register the built-in Vue integration using `vue-tsc`.        | `false`                                  |
 | `emitJs`          | Generate declarations for JavaScript files with JSDoc types.  | `allowJs` or `checkJs`                   |
 
 Top-level `build`, `incremental`, `parallel`, `eager`, `newContext`, and `vue` are
