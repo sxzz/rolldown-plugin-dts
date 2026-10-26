@@ -21,7 +21,7 @@ catalog:
   tsdown: ^0.23.1
   tsnapi: ^1.5.0
   typescript: ^6.0.3
-  typescript-next: 'npm:typescript@7.1.0-beta'
+  typescript-next: 'npm:typescript@7.1.0-dev.20261025.1'
   vitest: ^5.0.5
   vue: ^3.5.44
   vue-tsc: ^3.3.13
