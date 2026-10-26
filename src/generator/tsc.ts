@@ -1,6 +1,6 @@
 import { fork } from 'node:child_process'
-import { is } from 'yuku-ast'
-import { parse, type TSPropertySignature } from 'yuku-parser'
+import { parse, type TSPropertySignature } from 'yuku'
+import { is } from 'yuku/utils'
 import { RE_JSON } from '../filename.ts'
 import {
   createContext,

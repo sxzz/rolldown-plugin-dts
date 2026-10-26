@@ -86,9 +86,7 @@
     "dts-resolver": "catalog:prod",
     "get-tsconfig": "catalog:prod",
     "obug": "catalog:prod",
-    "yuku-ast": "catalog:prod",
-    "yuku-codegen": "catalog:prod",
-    "yuku-parser": "catalog:prod"
+    "yuku": "catalog:prod"
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "catalog:",

@@ -1,8 +1,9 @@
-import { b, is, nameOf } from 'yuku-ast'
+import { b } from 'yuku'
+import { is } from 'yuku/utils'
 import { filename_dts_to, RE_DTS } from '../filename.ts'
-import { isInfer } from './utils.ts'
+import { isInfer, nameOf } from './utils.ts'
 import type { ChunkExportPlan } from './types.ts'
-import type * as t from 'yuku-parser'
+import type * as t from 'yuku'
 
 /**
  * patch `.d.ts` suffix in import source to `.js`
@@ -50,7 +51,7 @@ export function patchImportExport(
 
   if (node.type === 'ExportNamedDeclaration' && exportPlan.typeOnlyNames.size) {
     for (const spec of node.specifiers) {
-      const name = nameOf(spec.exported)!
+      const name = nameOf(spec.exported)
       if (exportPlan.typeOnlyNames.has(name)) {
         if (spec.type === 'ExportSpecifier') {
           spec.exportKind = 'type'
@@ -120,7 +121,6 @@ export function patchTsNamespace(
     if (!exports.properties.length) continue
 
     const namespaceExport = b.ExportNamedDeclaration({
-      declaration: null,
       specifiers: exports.properties
         .filter((property) => property.type === 'Property')
         .map((property) => {
@@ -129,15 +129,12 @@ export function patchTsNamespace(
           const exported = property.key as t.Identifier
           return b.ExportSpecifier({ local, exported })
         }),
-      source: null,
-      attributes: [],
     })
     nodes[i] = b.TSModuleDeclaration({
       id: binding,
       body: b.TSModuleBlock({ body: [namespaceExport] }),
       kind: 'namespace',
       declare: true,
-      global: false,
     })
   }
 
@@ -190,7 +187,8 @@ export function patchReExport(
     } else if (
       node.type === 'ExpressionStatement' &&
       node.expression.type === 'CallExpression' &&
-      is.Identifier(node.expression.callee, '__reExport')
+      is.Identifier(node.expression.callee) &&
+      node.expression.callee.name === '__reExport'
     ) {
       // record: __reExport(a_exports, import_lib)
 
@@ -215,7 +213,6 @@ export function patchReExport(
         id: b.Identifier({
           name: (node.declarations[0].id as t.Identifier).name,
         }),
-        typeParameters: null,
         typeAnnotation: b.TSTypeReference({
           typeName: b.TSQualifiedName({
             left: b.Identifier({
@@ -225,9 +222,7 @@ export function patchReExport(
               name: (node.declarations[0].init.property as t.Identifier).name,
             }),
           }),
-          typeArguments: null,
         }),
-        declare: false,
       })
     } else if (
       node.type === 'ExportNamedDeclaration' &&
@@ -300,19 +295,14 @@ export function rewriteImportExport(
         b.ImportDeclaration({
           specifiers: [b.ImportNamespaceSpecifier({ local: decl.id })],
           source: decl.moduleReference.expression,
-          phase: null,
-          attributes: [],
         }),
       )
       if (node.type === 'ExportNamedDeclaration') {
         appendStmts.push(
           b.ExportNamedDeclaration({
-            declaration: null,
             specifiers: [
               b.ExportSpecifier({ local: decl.id, exported: decl.id }),
             ],
-            source: null,
-            attributes: [],
           }),
         )
       }
@@ -324,15 +314,12 @@ export function rewriteImportExport(
   ) {
     set(
       b.ExportNamedDeclaration({
-        declaration: null,
         specifiers: [
           b.ExportSpecifier({
             local: node.expression,
             exported: b.Identifier({ name: 'default' }),
           }),
         ],
-        source: null,
-        attributes: [],
       }),
     )
     return true
@@ -342,15 +329,12 @@ export function rewriteImportExport(
   ) {
     set(
       b.ExportNamedDeclaration({
-        declaration: null,
         specifiers: [
           b.ExportSpecifier({
             local: node.declaration,
             exported: b.Identifier({ name: 'default' }),
           }),
         ],
-        source: null,
-        attributes: [],
       }),
     )
     return true
