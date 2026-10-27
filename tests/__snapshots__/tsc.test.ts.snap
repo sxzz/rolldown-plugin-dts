@@ -419,16 +419,6 @@ export declare const productSchema: z.ZodObject<{
 export declare const product: __Infer<typeof productSchema>;"
 `;
 
-exports[`tsc > resolve paths > resolver: oxc 1`] = `
-"// index.d.ts
-export declare const foo = 42;"
-`;
-
-exports[`tsc > resolve paths > resolver: tsc 1`] = `
-"// index.d.ts
-export declare const foo = 42;"
-`;
-
 exports[`tsc > typescript compiler 1`] = `
 "// entry1.d.ts
 export declare const str = "foo";

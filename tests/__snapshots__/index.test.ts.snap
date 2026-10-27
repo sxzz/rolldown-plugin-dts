@@ -375,6 +375,16 @@ export type { Foo };
 "
 `;
 
+exports[`resolve paths > resolver: oxc 1`] = `
+"// index.d.ts
+export declare const foo = 42;"
+`;
+
+exports[`resolve paths > resolver: tsc 1`] = `
+"// index.d.ts
+export declare const foo = 42;"
+`;
+
 exports[`scss imports are externalized 1`] = `
 "// index.d.ts
 export declare const foo: number;"
@@ -412,41 +422,6 @@ declare const b$1: number;
 export type A = A$1;
 export declare const b: typeof b$1;
 export {};"
-`;
-
-exports[`tsgo with custom path 1`] = `
-"// basic.d.ts
-export declare const foo: number;
-type SomeType<T> = T;
-type FooType = string;
-interface Interface {}
-export declare function fn(arg0: SomeType<FooType>, opt: Interface): void;
-export declare enum Enum {
-  A = 0,
-  B = 1,
-  C = 2
-}
-export declare class Cls {
-  foo: string;
-  fn(e: Enum): void;
-}
-export {};
-// basic.js
-// tests/fixtures/basic.ts
-const foo = 42;
-function fn(arg0, opt) {}
-let Enum = /* @__PURE__ */ function(Enum) {
-	Enum[Enum["A"] = 0] = "A";
-	Enum[Enum["B"] = 1] = "B";
-	Enum[Enum["C"] = 2] = "C";
-	return Enum;
-}({});
-var Cls = class {
-	foo;
-	fn(e) {}
-};
-export { Cls, Enum, fn, foo };
-"
 `;
 
 exports[`tsx 1`] = `
