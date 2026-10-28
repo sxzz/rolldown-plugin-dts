@@ -5,6 +5,7 @@ import {
   RE_DTS,
   RE_DTS_MAP,
   RE_NODE_MODULES,
+  RE_ROLLDOWN_RUNTIME,
   replaceTemplateName,
   resolveTemplateFn,
 } from '../filename.ts'
@@ -44,6 +45,8 @@ import type {
   TypeParams,
 } from './types.ts'
 import type {
+  OutputBundle,
+  OutputChunk,
   Plugin,
   RenderedChunk,
   SourceMapInput,
@@ -136,6 +139,8 @@ export function createFakeJsPlugin({
           delete bundle[chunk.fileName]
         }
       }
+
+      removeDtsOnlyRuntimeChunks(bundle)
     },
   }
 
@@ -646,4 +651,34 @@ function needsScopeMarker(body: t.ProgramStatement[]): boolean {
 
   // Inline exports alone do not prevent private declarations from being exported.
   return !hasModuleStatement || hasPrivateDeclaration
+}
+
+function removeDtsOnlyRuntimeChunks(bundle: OutputBundle): void {
+  const chunks = Object.values(bundle).filter(
+    (chunk): chunk is OutputChunk => chunk.type === 'chunk',
+  )
+
+  for (const chunk of chunks) {
+    if (
+      chunk.moduleIds.length !== 1 ||
+      !RE_ROLLDOWN_RUNTIME.test(chunk.moduleIds[0])
+    )
+      continue
+
+    const importers = chunks.filter((importer) =>
+      importer.imports.includes(chunk.fileName),
+    )
+    if (
+      importers.length === 0 ||
+      importers.some((importer) => !RE_DTS.test(importer.fileName))
+    )
+      continue
+
+    delete bundle[chunk.fileName]
+    for (const importer of importers) {
+      importer.imports = importer.imports.filter(
+        (fileName) => fileName !== chunk.fileName,
+      )
+    }
+  }
 }

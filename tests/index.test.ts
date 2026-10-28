@@ -901,3 +901,33 @@ test('inline exports keep other declarations private', async () => {
   )
   expect(snapshot).toMatchSnapshot()
 })
+
+describe('rolldown runtime chunk', () => {
+  test('removed when only used by dts chunks', async () => {
+    const { chunks } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/runtime-dts-only/index.ts'),
+      [dts()],
+      {},
+      { preserveModules: true },
+    )
+    expect(chunks.map((chunk) => chunk.fileName).toSorted()).toStrictEqual([
+      'index.d.ts',
+      'index.js',
+      'worker.d.ts',
+    ])
+    const workerChunk = chunks.find((chunk) => chunk.fileName === 'worker.d.ts')
+    expect(workerChunk?.type === 'chunk' && workerChunk.imports).toEqual([])
+  })
+
+  test('kept when used by js chunks', async () => {
+    const { chunks } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/source-map/index.ts'),
+      [dts()],
+      {},
+      { preserveModules: true },
+    )
+    expect(chunks.map((chunk) => chunk.fileName)).toContain(
+      '_virtual/_rolldown/runtime.js',
+    )
+  })
+})
