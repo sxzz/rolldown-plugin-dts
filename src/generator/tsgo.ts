@@ -118,8 +118,7 @@ export class TsgoGenerator implements Generator {
   async dispose(): Promise<void> {
     await this.emitQueue
     await this.api?.close()
-    this.api = this.snapshot = undefined
-    this.projectFiles = undefined
+    this.api = this.snapshot = this.projectFiles = undefined
   }
 
   private get displayName(): string {
