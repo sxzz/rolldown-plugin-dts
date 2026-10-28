@@ -16,7 +16,12 @@ import {
   createVueLanguageMetadata,
   type VueLanguageOptions,
 } from './tsc/vue.ts'
-import { getDefaultTsgoModuleUrl, loadTsgoApi, tryLoadTsgoApi } from './tsgo.ts'
+import {
+  getDefaultTsgoModuleUrl,
+  loadTsgoApi,
+  tryLoadTsgoApi,
+  type NativeCompiler,
+} from './tsgo.ts'
 import type { Generator } from './generator/index.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 
@@ -36,6 +41,9 @@ export interface Options extends DeprecatedOptions {
    * - `'oxc'` is faster but requires code compatible with
    *   [`isolatedDeclarations`](https://www.typescriptlang.org/tsconfig/#isolatedDeclarations).
    * - `'tsgo'` uses the experimental TypeScript Go API.
+   * - `'tsrs'` uses the highly experimental [tsrs](https://github.com/oxc-project/tsrs)
+   *   API, a Rust port of TypeScript Go. Only the latest `tsrs` release is
+   *   supported. It is never selected automatically.
    * - A custom {@link Generator} implementation can be provided directly.
    *
    * When omitted, the plugin selects `'oxc'` for `isolatedDeclarations`,
@@ -44,7 +52,7 @@ export interface Options extends DeprecatedOptions {
    *
    * @default Inferred from the TypeScript configuration and installed compiler.
    */
-  generator?: 'tsc' | 'oxc' | 'tsgo' | Generator
+  generator?: 'tsc' | 'oxc' | 'tsgo' | 'tsrs' | Generator
 
   /**
    * Glob pattern(s) that select source files for declaration generation.
@@ -85,7 +93,7 @@ export interface Options extends DeprecatedOptions {
    *
    * When omitted or `true`, the nearest config is discovered from {@link cwd}.
    * Set to `false` to disable config loading. The `tsgo` generator requires a
-   * config file.
+   * config file, as does `tsrs`.
    */
   tsconfig?: string | boolean
 
@@ -98,7 +106,7 @@ export interface Options extends DeprecatedOptions {
 
   /**
    * Compiler options merged over those loaded from `tsconfig.json`.
-   * In the plugin's current `tsgo` implementation, these affect plugin behavior
+   * In the plugin's current `tsgo` and `tsrs` implementations, these affect plugin behavior
    * but do not override the program's compiler options. Set those options in
    * the config file instead.
    */
@@ -106,7 +114,7 @@ export interface Options extends DeprecatedOptions {
 
   /**
    * Emits declaration maps (`.d.ts.map`).
-   * With `tsgo`, source mappings also require `compilerOptions.declarationMap`
+   * With `tsgo` or `tsrs`, source mappings also require `compilerOptions.declarationMap`
    * to be enabled in the on-disk config; `sourcemap: true` alone is insufficient.
    *
    * @default The value of `compilerOptions.declarationMap`.
@@ -169,13 +177,20 @@ export interface Options extends DeprecatedOptions {
   tsgo?: TsgoOptions
 
   /**
+   * **[Highly experimental]** Options for the tsrs generator.
+   * Only the latest `tsrs` release is supported.
+   */
+  tsrs?: TsrsOptions
+
+  /**
    * Registers non-standard source languages such as Vue or Astro.
    *
    * If a language is supported via {@link https://volarjs.dev Volar},
    * {@link CustomLanguage.volarTypeScript} and
    * {@link CustomLanguage.createVolarPlugins} are both required. Volar
    * languages require `tsc`. Non-Volar languages can use `tsgo` together
-   * with {@link TsgoOptions.vfs `tsgo.vfs`}.
+   * with {@link TsgoOptions.vfs `tsgo.vfs`}, or `tsrs` with
+   * {@link TsrsOptions.vfs `tsrs.vfs`}.
    *
    * @experimental
    */
@@ -287,6 +302,36 @@ export interface TsgoOptions {
   vfs?: boolean
 }
 
+export interface TsrsOptions {
+  /**
+   * Allows tsrs to execute content mappers configured in tsconfig.
+   * Cannot be combined with `tsrs.vfs` when content mappers are configured.
+   *
+   * @default false
+   */
+  runExternalCode?: boolean
+
+  /**
+   * A `file://` URL of the `tsrs` package module.
+   *
+   * @default import.meta.resolve('tsrs')
+   */
+  moduleUrl?: string
+
+  /**
+   * Path to a custom tsrs executable, passed to the API as `tsserverPath`.
+   */
+  path?: string
+
+  /**
+   * Supplies Rolldown-transformed source code to the tsrs API through a
+   * virtual filesystem.
+   *
+   * @default false
+   */
+  vfs?: boolean
+}
+
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U
 
 export type OptionsResolved = Overwrite<
@@ -302,12 +347,13 @@ export type OptionsResolved = Overwrite<
     oxc: IsolatedDeclarationsOptions
     tsconfigRaw: TsconfigJson
     tsgo: TsgoOptions
+    tsrs: TsrsOptions
     languageContext: LanguageContext
     tsc: Overwrite<Required<TscOptions>, { vue: false | VueLanguageOptions }>
   }
 >
 
-let warnedTsgo = false
+const warnedNative = new Set<NativeCompiler>()
 
 export function resolveOptions({
   generator,
@@ -330,6 +376,7 @@ export function resolveOptions({
 
   oxc,
   tsgo,
+  tsrs,
   ...deprecated
 }: Options): OptionsResolved {
   for (const key of [
@@ -424,6 +471,9 @@ export function resolveOptions({
   const defaultTsgoModuleUrl = getDefaultTsgoModuleUrl()
   tsgo.moduleUrl ??= defaultTsgoModuleUrl
   tsgo.vfs ??= false
+  tsrs ||= {}
+  tsrs.moduleUrl ??= getDefaultTsgoModuleUrl('tsrs')
+  tsrs.vfs ??= false
 
   if (isUsingVolar) {
     if (generator && generator !== 'tsc') {
@@ -455,14 +505,11 @@ export function resolveOptions({
     )
   }
 
-  if (
-    customLanguages.length &&
-    !isUsingVolar &&
-    generator === 'tsgo' &&
-    !tsgo.vfs
-  ) {
+  const native =
+    generator === 'tsgo' ? tsgo : generator === 'tsrs' ? tsrs : undefined
+  if (customLanguages.length && !isUsingVolar && native && !native.vfs) {
     throw new Error(
-      "The `tsgo` generator requires `tsgo.vfs: true` to process custom languages. Enable VFS, use `generator: 'oxc'`, or use a compatible `tsc` installation.",
+      `The \`${generator}\` generator requires \`${generator}.vfs: true\` to process custom languages. Enable VFS, use \`generator: 'oxc'\`, or use a compatible \`tsc\` installation.`,
     )
   }
 
@@ -471,29 +518,36 @@ export function resolveOptions({
       'tsc',
       ", switch to TypeScript >=7.1 with `generator: 'tsgo'`, or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.",
     )
-  } else if (generator === 'tsgo') {
+  } else if (native) {
+    const compiler = generator as NativeCompiler
     if (!tsconfig) {
       throw new Error(
-        'The `tsgo` generator requires a tsconfig file to be specified.',
+        `The \`${compiler}\` generator requires a tsconfig file to be specified.`,
       )
     }
-    if (!warnedTsgo) {
-      warnedTsgo = true
+    if (!warnedNative.has(compiler)) {
+      warnedNative.add(compiler)
       logger.warn(
-        'TypeScript Go is experimental. Some options will be unavailable.',
+        compiler === 'tsrs'
+          ? 'tsrs support is highly experimental and may change or break without notice. Some options will be unavailable.'
+          : 'TypeScript Go is experimental. Some options will be unavailable.',
       )
     }
-    loadTsgoApi(tsgo.moduleUrl, logger)
+    loadTsgoApi(native.moduleUrl, logger, compiler)
 
     const contentMappers: { extensions: string[] }[] | undefined = (
       resolvedTsconfig as any
     )?.contentMappers
     if (contentMappers?.length) {
-      if (!tsgo.runExternalCode) {
-        throw new Error('Content mappers require `tsgo.runExternalCode: true`.')
+      if (!native.runExternalCode) {
+        throw new Error(
+          `Content mappers require \`${compiler}.runExternalCode: true\`.`,
+        )
       }
-      if (tsgo.vfs) {
-        throw new Error('Content mappers cannot be combined with `tsgo.vfs`.')
+      if (native.vfs) {
+        throw new Error(
+          `Content mappers cannot be combined with \`${compiler}.vfs\`.`,
+        )
       }
       languageContext.contentMapperExtensions = [
         ...new Set(contentMappers.flatMap((mapper) => mapper.extensions)),
@@ -507,7 +561,7 @@ export function resolveOptions({
 
     if (sourcemap && !resolvedTsconfig?.compilerOptions?.declarationMap) {
       logger.warn(
-        "The `tsgo` generator requires `compilerOptions.declarationMap: true` in your tsconfig file for source mappings. The plugin's `sourcemap` option does not override the tsconfig.",
+        `The \`${compiler}\` generator requires \`compilerOptions.declarationMap: true\` in your tsconfig file for source mappings. The plugin's \`sourcemap\` option does not override the tsconfig.`,
       )
     }
   }
@@ -542,6 +596,7 @@ export function resolveOptions({
 
     oxc,
     tsgo,
+    tsrs,
     logger,
   }
   debug('Resolved Options: %O', resolved)

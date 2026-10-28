@@ -1,7 +1,11 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
 import { RE_DTS, RE_NODE_MODULES } from '../filename.ts'
-import { loadTsgoApi, loadTsgoFileSystem } from '../tsgo.ts'
+import {
+  loadTsgoApi,
+  loadTsgoFileSystem,
+  type NativeCompiler,
+} from '../tsgo.ts'
 import type { LanguageContext } from '../custom-language.ts'
 import type { Generator, GeneratorResult } from './index.ts'
 import type { SourceMapInput } from 'rolldown'
@@ -13,6 +17,11 @@ import type { Diagnostic } from 'typescript-next/proto'
 const debug = createDebug('rolldown-plugin-dts:tsgo')
 
 export interface TsgoGeneratorOptions {
+  /**
+   * Compiler package providing the TypeScript Go API.
+   * @default 'tsgo'
+   */
+  compiler?: NativeCompiler
   moduleUrl?: string
   tsgoPath?: string
   runExternalCode?: boolean
@@ -46,9 +55,10 @@ export class TsgoGenerator implements Generator {
     this.projectFiles = undefined
     this.emitQueue = Promise.resolve()
 
-    this.apiModule = loadTsgoApi(this.options.moduleUrl)
+    const { compiler } = this.options
+    this.apiModule = loadTsgoApi(this.options.moduleUrl, undefined, compiler)
     this.fsModule = this.options.vfs
-      ? loadTsgoFileSystem(this.options.moduleUrl)
+      ? loadTsgoFileSystem(this.options.moduleUrl, compiler)
       : undefined
     const { tsgoPath, cwd, tsconfig } = this.options
     this.api = new this.apiModule.API({
@@ -110,6 +120,10 @@ export class TsgoGenerator implements Generator {
     await this.api?.close()
     this.api = this.snapshot = undefined
     this.projectFiles = undefined
+  }
+
+  private get displayName(): string {
+    return this.options.compiler === 'tsrs' ? 'tsrs' : 'TypeScript Go'
   }
 
   private toTsFilename(fileName: string): string {
@@ -235,7 +249,7 @@ export class TsgoGenerator implements Generator {
             })
     if (!project) {
       return {
-        error: `No TypeScript Go project found for ${fileName}. Please check your tsconfig and custom language filename mapping.`,
+        error: `No ${this.displayName} project found for ${fileName}. Please check your tsconfig and custom language filename mapping.`,
       }
     }
 
@@ -277,9 +291,12 @@ export class TsgoGenerator implements Generator {
     }
 
     if (!code) {
-      debug('[tsgo] declaration output is missing for', tsFileName)
+      debug(
+        `[${this.options.compiler || 'tsgo'}] declaration output is missing for`,
+        tsFileName,
+      )
       return {
-        error: `tsgo did not generate a declaration file for ${fileName}. Please check your tsconfig.`,
+        error: `${this.options.compiler || 'tsgo'} did not generate a declaration file for ${fileName}. Please check your tsconfig.`,
       }
     }
 

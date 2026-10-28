@@ -27,7 +27,7 @@ export interface Logger {
   error: (..._: any[]) => void;
 }
 export interface Options extends DeprecatedOptions {
-  generator?: "tsc" | "oxc" | "tsgo" | Generator;
+  generator?: "tsc" | "oxc" | "tsgo" | "tsrs" | Generator;
   entry?: string | string[];
   cwd?: string;
   dtsInput?: boolean;
@@ -44,6 +44,7 @@ export interface Options extends DeprecatedOptions {
   tsc?: TscOptions;
   oxc?: Omit<IsolatedDeclarationsOptions, "sourcemap">;
   tsgo?: TsgoOptions;
+  tsrs?: TsrsOptions;
   customLanguages?: CustomLanguage[];
 }
 export interface TscOptions {
@@ -58,9 +59,9 @@ export interface TscOptions {
 
 // #region Functions
 export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
-export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "oxc" | "emitDtsOnly" | "languageContext" | "tsc" | "tsgo" | "emitJs" | "sourcemap">): Plugin;
+export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "oxc" | "emitDtsOnly" | "languageContext" | "tsc" | "tsgo" | "tsrs" | "emitJs" | "sourcemap">): Plugin;
 export declare function dts(_?: Options): Plugin[];
-export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, tsc, emitJs, oxc, tsgo, ...deprecated }: Options): OptionsResolved;
+export declare function resolveOptions({ generator, entry, cwd, dtsInput, emitDtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, tsc, emitJs, oxc, tsgo, tsrs, ...deprecated }: Options): OptionsResolved;
 // #endregion
 
 // #region Referenced (internal)
@@ -78,12 +79,19 @@ type OptionsResolved = Overwrite<Required<Omit<Options, "compilerOptions" | "cus
   oxc: IsolatedDeclarationsOptions;
   tsconfigRaw: TsconfigJson;
   tsgo: TsgoOptions;
+  tsrs: TsrsOptions;
   languageContext: LanguageContext;
   tsc: Overwrite<Required<TscOptions>, {
     vue: false | VueLanguageOptions;
   }>;
 }>;
 interface TsgoOptions {
+  runExternalCode?: boolean;
+  moduleUrl?: string;
+  path?: string;
+  vfs?: boolean;
+}
+interface TsrsOptions {
   runExternalCode?: boolean;
   moduleUrl?: string;
   path?: string;

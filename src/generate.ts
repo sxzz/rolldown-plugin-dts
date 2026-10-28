@@ -45,6 +45,7 @@ export function createGeneratePlugin(
     | 'languageContext'
     | 'tsc'
     | 'tsgo'
+    | 'tsrs'
     | 'emitJs'
     | 'sourcemap'
   >,

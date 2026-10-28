@@ -40,6 +40,7 @@ export function createGenerator(
     languageContext,
     tsc,
     tsgo,
+    tsrs,
     sourcemap,
   }: Pick<
     OptionsResolved,
@@ -51,6 +52,7 @@ export function createGenerator(
     | 'languageContext'
     | 'tsc'
     | 'tsgo'
+    | 'tsrs'
     | 'sourcemap'
   >,
   getEntries: () => string[] | undefined,
@@ -62,14 +64,16 @@ export function createGenerator(
     return new OxcGenerator(oxc, languageContext)
   }
 
-  if (generator === 'tsgo') {
+  if (generator === 'tsgo' || generator === 'tsrs') {
+    const native = generator === 'tsrs' ? tsrs : tsgo
     return new TsgoGenerator({
-      moduleUrl: tsgo.moduleUrl,
-      tsgoPath: tsgo.path,
-      runExternalCode: tsgo.runExternalCode,
+      compiler: generator,
+      moduleUrl: native.moduleUrl,
+      tsgoPath: native.path,
+      runExternalCode: native.runExternalCode,
       cwd,
       tsconfig: tsconfig!,
-      vfs: !!tsgo.vfs,
+      vfs: !!native.vfs,
       languageContext,
       loadSource,
     })

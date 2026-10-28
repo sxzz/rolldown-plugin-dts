@@ -20,6 +20,7 @@ Install the compiler required by your generator:
 ```bash
 npm i -D typescript@^6          # tsc
 npm i -D typescript@7.1.0-beta  # tsgo API
+npm i -D tsrs                   # tsrs API
 ```
 
 Oxc is provided by Rolldown and needs no additional dependency.
@@ -45,11 +46,12 @@ See [rolldown.config.ts](./rolldown.config.ts) for the project's own setup.
 
 ## Generators
 
-| Generator | Use it for                                        | Requirement                                 |
-| --------- | ------------------------------------------------- | ------------------------------------------- |
-| `tsc`     | Full TypeScript compatibility                     | TypeScript 5.x or 6.x                       |
-| `oxc`     | Fast generation for isolated declarations         | Code compatible with `isolatedDeclarations` |
-| `tsgo`    | TypeScript Go's asynchronous declaration emit API | TypeScript 7.1 or later                     |
+| Generator | Use it for                                               | Requirement                                 |
+| --------- | -------------------------------------------------------- | ------------------------------------------- |
+| `tsc`     | Full TypeScript compatibility                            | TypeScript 5.x or 6.x                       |
+| `oxc`     | Fast generation for isolated declarations                | Code compatible with `isolatedDeclarations` |
+| `tsgo`    | TypeScript Go's asynchronous declaration emit API        | TypeScript 7.1 or later                     |
+| `tsrs`    | tsrs, a Rust port of TypeScript Go (highly experimental) | Latest `tsrs` release                       |
 
 When `generator` is omitted, the plugin selects:
 
@@ -57,8 +59,9 @@ When `generator` is omitted, the plugin selects:
 2. `tsgo` when `typescript` exposes `Program.prototype.getDeclarationEmit`.
 3. `tsc` otherwise.
 
-Automatic selection only inspects `typescript`. When `tsgo` is selected
-explicitly, a module without `getDeclarationEmit` reports an error.
+Automatic selection only inspects `typescript` and never selects `tsrs`. When
+`tsgo` is selected explicitly, a module without `getDeclarationEmit` reports an
+error.
 
 `generator` also accepts an object implementing the exported `Generator`
 interface.
@@ -90,7 +93,8 @@ dts({
 | `sideEffects`     | Mark declaration modules as having side effects.                                          | `false`                 |
 | `logger`          | Logger implementing `info`, `warn`, and `error`.                                          | `console`               |
 
-`tsc.*`, `oxc.*`, and `tsgo.*` apply only to their respective generators.
+`tsc.*`, `oxc.*`, `tsgo.*`, and `tsrs.*` apply only to their respective
+generators.
 
 `entry` may include files that are not Rolldown entry points:
 
@@ -207,6 +211,30 @@ Extensions declared by content mappers (including inherited tsconfig settings)
 are recognized automatically; `customLanguages` is not needed. Content mappers
 read files from disk and cannot be combined with `tsgo.vfs`. If you also emit
 JavaScript, use your framework's Rolldown plugin to transform these source files.
+
+### tsrs
+
+Highly experimental. Uses the Node API of
+[tsrs](https://github.com/oxc-project/tsrs), which mirrors the TypeScript Go
+API. Only the latest `tsrs` release is supported, and behavior may change
+without notice. Requires a `tsconfig.json`.
+
+| Option                 | Description                                                  | Default                       |
+| ---------------------- | ------------------------------------------------------------ | ----------------------------- |
+| `tsrs.moduleUrl`       | File URL of the `tsrs` package.                              | `import.meta.resolve('tsrs')` |
+| `tsrs.path`            | Custom tsrs executable, passed as `tsserverPath`.            | Provided by the package       |
+| `tsrs.runExternalCode` | Allow execution of content mappers configured in tsconfig.   | `false`                       |
+| `tsrs.vfs`             | Supply transformed source code through a virtual filesystem. | `false`                       |
+
+The notes for TypeScript Go above, including content mappers, also apply to
+`tsrs`.
+
+```ts
+dts({
+  generator: 'tsrs',
+  tsrs: { vfs: true },
+})
+```
 
 ## Vite
 
