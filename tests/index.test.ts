@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
@@ -6,8 +5,6 @@ import { describe, expect, test } from 'vitest'
 import { dts, type Generator } from '../src/index.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
-const require = createRequire(import.meta.url)
-const tsgoModuleUrl = import.meta.resolve('typescript-next')
 
 test('basic', async () => {
   const { snapshot } = await rolldownBuild(
@@ -78,6 +75,21 @@ test('resolve dts', async () => {
     [dts()],
   )
   expect(snapshot).matchSnapshot()
+})
+
+describe('resolve paths', () => {
+  test.each(['oxc', 'tsc'] as const)('resolver: %s', async (resolver) => {
+    const root = path.resolve(dirname, 'fixtures/paths')
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+      dts({
+        generator: 'oxc',
+        emitDtsOnly: true,
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        resolver,
+      }),
+    ])
+    expect(snapshot).toMatchSnapshot()
+  })
 })
 
 // Test alias mapping based on rolldown input option
@@ -701,102 +713,6 @@ test('infer false branch', async () => {
     'T extends Array<infer U> ? (T extends Array<infer U2> ? U2 : U) : ',
   )
 })
-
-test('tsgo with custom path', async () => {
-  const getExePath: any = require(
-    path.join(path.dirname(fileURLToPath(tsgoModuleUrl)), 'getExePath.js'),
-  )
-  const tsserverPath = (
-    typeof getExePath === 'function' ? getExePath : getExePath.default
-  )()
-  const { snapshot } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/basic.ts'),
-    [
-      dts({
-        generator: 'tsgo',
-        tsgo: { moduleUrl: tsgoModuleUrl, path: tsserverPath },
-        tsconfig: path.resolve(dirname, 'fixtures/basic.tsconfig.json'),
-      }),
-    ],
-  )
-  expect(snapshot).toMatchSnapshot()
-})
-
-test('tsgo vfs uses transformed source code', async () => {
-  const input = path.resolve(dirname, 'fixtures/basic.ts')
-  const tsconfig = path.resolve(dirname, 'fixtures/basic.tsconfig.json')
-  const transform = {
-    name: 'transform-before-dts',
-    transform: {
-      order: 'pre' as const,
-      handler(code: string, id: string) {
-        if (id !== input) return
-        return code.replace(
-          'export const foo: number = 42',
-          "export const foo: 'transformed' = 'transformed'",
-        )
-      },
-    },
-  }
-
-  const disk = await rolldownBuild(input, [
-    transform,
-    dts({
-      generator: 'tsgo',
-      tsgo: { moduleUrl: tsgoModuleUrl },
-      tsconfig,
-      emitDtsOnly: true,
-    }),
-  ])
-  const virtual = await rolldownBuild(input, [
-    transform,
-    dts({
-      generator: 'tsgo',
-      tsconfig,
-      emitDtsOnly: true,
-      tsgo: { moduleUrl: tsgoModuleUrl, vfs: true },
-    }),
-  ])
-
-  expect(disk.snapshot).toContain('foo: number')
-  expect(disk.snapshot).not.toContain("foo: 'transformed'")
-  expect(virtual.snapshot).toContain("foo: 'transformed'")
-})
-
-test.each([false, true])(
-  'tsgo vfs infers types from transformed dependencies (circular: %s)',
-  async (circular) => {
-    const root = path.resolve(dirname, 'fixtures/tsgo-vfs')
-    const dependency = path.join(root, 'b.ts')
-    const { chunks } = await rolldownBuild(path.join(root, 'a.ts'), [
-      {
-        name: 'transform-dependency-before-dts',
-        transform: {
-          order: 'pre',
-          handler(_code, id) {
-            if (id !== dependency) return
-            return `
-            ${circular ? "import { pair } from './a.ts'; export function getPair() { return pair }" : ''}
-            export const valueB: string = 'transformed'
-          `
-          },
-        },
-      },
-      dts({
-        generator: 'tsgo',
-        tsconfig: path.join(root, 'tsconfig.json'),
-        tsgo: { moduleUrl: tsgoModuleUrl, vfs: true },
-      }),
-    ])
-
-    const declaration = chunks
-      .filter((chunk) => chunk.type === 'chunk')
-      .find((chunk) => chunk.fileName === 'a.d.ts')
-    expect(declaration).toBeDefined()
-    expect(declaration!.code).toContain('valueB: string')
-    expect(declaration!.code).not.toContain('valueB: number')
-  },
-)
 
 // https://github.com/sxzz/rolldown-plugin-dts/issues/136
 test('css.ts files', async () => {

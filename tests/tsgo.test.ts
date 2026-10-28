@@ -1,12 +1,18 @@
 import { readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { rolldownBuild } from '@sxzz/test-utils'
 import { afterEach, expect, test } from 'vitest'
 import { LanguageContext } from '../src/custom-language.ts'
 import { TsgoGenerator } from '../src/generator/tsgo.ts'
+import { dts } from '../src/index.ts'
 import { loadTsgoApi, loadTsgoFileSystem } from '../src/tsgo.ts'
 
-const root = path.resolve(import.meta.dirname, 'fixtures/tsgo-vfs')
+const { dirname } = import.meta
+const require = createRequire(import.meta.url)
+
+const root = path.resolve(dirname, 'fixtures/tsgo-vfs')
 const moduleUrl = import.meta.resolve('typescript-next')
 const tsconfig = path.join(root, 'tsconfig.json')
 const a = path.join(root, 'a.ts')
@@ -131,3 +137,97 @@ test('vfs resolves new files in virtual directories and retains them across upda
   expect(outputs[1].error).toBeUndefined()
   expect(outputs[1].code).toContain('copy: 42')
 })
+
+test('tsgo with custom path', async () => {
+  const getExePath: any = require(
+    path.join(path.dirname(fileURLToPath(moduleUrl)), 'getExePath.js'),
+  )
+  const tsserverPath = (
+    typeof getExePath === 'function' ? getExePath : getExePath.default
+  )()
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/basic.ts'),
+    [
+      dts({
+        generator: 'tsgo',
+        tsgo: { moduleUrl, path: tsserverPath },
+        tsconfig: path.resolve(dirname, 'fixtures/basic.tsconfig.json'),
+      }),
+    ],
+  )
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('tsgo vfs uses transformed source code', async () => {
+  const input = path.resolve(dirname, 'fixtures/basic.ts')
+  const basicTsconfig = path.resolve(dirname, 'fixtures/basic.tsconfig.json')
+  const transform = {
+    name: 'transform-before-dts',
+    transform: {
+      order: 'pre' as const,
+      handler(code: string, id: string) {
+        if (id !== input) return
+        return code.replace(
+          'export const foo: number = 42',
+          "export const foo: 'transformed' = 'transformed'",
+        )
+      },
+    },
+  }
+
+  const disk = await rolldownBuild(input, [
+    transform,
+    dts({
+      generator: 'tsgo',
+      tsgo: { moduleUrl },
+      tsconfig: basicTsconfig,
+      emitDtsOnly: true,
+    }),
+  ])
+  const virtual = await rolldownBuild(input, [
+    transform,
+    dts({
+      generator: 'tsgo',
+      tsconfig: basicTsconfig,
+      emitDtsOnly: true,
+      tsgo: { moduleUrl, vfs: true },
+    }),
+  ])
+
+  expect(disk.snapshot).toContain('foo: number')
+  expect(disk.snapshot).not.toContain("foo: 'transformed'")
+  expect(virtual.snapshot).toContain("foo: 'transformed'")
+})
+
+test.each([false, true])(
+  'tsgo vfs infers types from transformed dependencies (circular: %s)',
+  async (circular) => {
+    const { chunks } = await rolldownBuild(a, [
+      {
+        name: 'transform-dependency-before-dts',
+        transform: {
+          order: 'pre',
+          handler(_code, id) {
+            if (id !== b) return
+            return `
+            ${circular ? "import { pair } from './a.ts'; export function getPair() { return pair }" : ''}
+            export const valueB: string = 'transformed'
+          `
+          },
+        },
+      },
+      dts({
+        generator: 'tsgo',
+        tsconfig,
+        tsgo: { moduleUrl, vfs: true },
+      }),
+    ])
+
+    const declaration = chunks
+      .filter((chunk) => chunk.type === 'chunk')
+      .find((chunk) => chunk.fileName === 'a.d.ts')
+    expect(declaration).toBeDefined()
+    expect(declaration!.code).toContain('valueB: string')
+    expect(declaration!.code).not.toContain('valueB: number')
+  },
+)
