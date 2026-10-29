@@ -1,17 +1,27 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
 import { RE_DTS, RE_NODE_MODULES } from '../filename.ts'
-import { loadTsgoApi, loadTsgoFileSystem } from '../tsgo.ts'
+import {
+  loadTsgoApi,
+  loadTsgoFileSystem,
+  type NativeCompiler,
+} from '../tsgo.ts'
 import type { LanguageContext } from '../custom-language.ts'
 import type { Generator, GeneratorResult } from './index.ts'
 import type { SourceMapInput } from 'rolldown'
 import type * as TsgoApiModule from 'typescript-next/async'
 import type { API, Snapshot } from 'typescript-next/async'
 import type * as TsgoFsModule from 'typescript-next/fs'
+import type { Diagnostic } from 'typescript-next/proto'
 
 const debug = createDebug('rolldown-plugin-dts:tsgo')
 
 export interface TsgoGeneratorOptions {
+  /**
+   * Compiler package providing the TypeScript Go API.
+   * @default 'tsgo'
+   */
+  compiler?: NativeCompiler
   moduleUrl?: string
   tsgoPath?: string
   runExternalCode?: boolean
@@ -28,6 +38,7 @@ export class TsgoGenerator implements Generator {
   private fsModule?: typeof TsgoFsModule
   private api?: API
   private snapshot?: Snapshot
+  private projectFiles?: Promise<Set<string>>
   private pendingFiles = new Map<string, string>()
   private openedFiles = new Set<string>()
   private loadedSourceFiles = new Set<string>()
@@ -41,11 +52,13 @@ export class TsgoGenerator implements Generator {
     this.pendingFiles.clear()
     this.openedFiles.clear()
     this.loadedSourceFiles.clear()
+    this.projectFiles = undefined
     this.emitQueue = Promise.resolve()
 
-    this.apiModule = loadTsgoApi(this.options.moduleUrl)
+    const { compiler } = this.options
+    this.apiModule = loadTsgoApi(this.options.moduleUrl, undefined, compiler)
     this.fsModule = this.options.vfs
-      ? loadTsgoFileSystem(this.options.moduleUrl)
+      ? loadTsgoFileSystem(this.options.moduleUrl, compiler)
       : undefined
     const { tsgoPath, cwd, tsconfig } = this.options
     this.api = new this.apiModule.API({
@@ -56,18 +69,26 @@ export class TsgoGenerator implements Generator {
     this.snapshot = await this.api.createSnapshot({
       openProjects: [tsconfig],
     })
-    if (!this.options.languageContext.contentMapperExtensions.length) return
-    // Mapper setup and transform errors can otherwise produce empty declarations.
-    const project = this.snapshot.getConfiguredProject(tsconfig)
-    if (!project) return
-    const diagnostics = (
-      await Promise.all([
-        project.program.getConfigFileParsingDiagnostics(),
-        project.program.getSyntacticDiagnostics(),
-      ])
-    ).flat()
-    if (diagnostics.length) {
-      throw new Error(this.apiModule.formatDiagnostics(diagnostics, this.api))
+
+    // eslint-disable-next-line unicorn/prefer-early-return
+    if (this.options.languageContext.contentMapperExtensions.length) {
+      // Mapper setup and transform errors can otherwise produce empty declarations.
+      const project = this.snapshot.getConfiguredProject(tsconfig)
+      if (project) {
+        const diagnostics = (
+          await Promise.all([
+            project.program.getConfigFileParsingDiagnostics(),
+            project.program.getSyntacticDiagnostics(),
+          ])
+        )
+          .flat()
+          .filter(isMapperDiagnostic)
+        if (diagnostics.length) {
+          throw new Error(
+            this.apiModule.formatDiagnostics(diagnostics, this.api),
+          )
+        }
+      }
     }
   }
 
@@ -97,7 +118,11 @@ export class TsgoGenerator implements Generator {
   async dispose(): Promise<void> {
     await this.emitQueue
     await this.api?.close()
-    this.api = this.snapshot = undefined
+    this.api = this.snapshot = this.projectFiles = undefined
+  }
+
+  private get displayName(): string {
+    return this.options.compiler === 'tsrs' ? 'tsrs' : 'TypeScript Go'
   }
 
   private toTsFilename(fileName: string): string {
@@ -155,7 +180,7 @@ export class TsgoGenerator implements Generator {
         fileSystem: this.fsModule.createFileSystemLayer(entries),
         // Filesystem layers mark projects dirty; rebuild them before emitting.
         ensurePrograms: true,
-        ...(openFiles.length ? { openFiles } : undefined),
+        openFiles,
       })
     } catch (error) {
       for (const [fileName, code] of entries) {
@@ -166,10 +191,15 @@ export class TsgoGenerator implements Generator {
       throw error
     }
 
-    for (const fileName of openFiles) this.openedFiles.add(fileName)
+    for (const fileName of openFiles) {
+      this.openedFiles.add(fileName)
+    }
     const oldSnapshot = this.snapshot
     this.snapshot = nextSnapshot
-    if (oldSnapshot !== nextSnapshot) await oldSnapshot.dispose()
+    this.projectFiles = undefined
+    if (oldSnapshot !== nextSnapshot) {
+      await oldSnapshot.dispose()
+    }
   }
 
   private async emitFromSnapshot(fileName: string): Promise<GeneratorResult> {
@@ -182,33 +212,43 @@ export class TsgoGenerator implements Generator {
     )
       ? path.resolve(fileName)
       : this.toTsFilename(fileName)
-    let project = await this.snapshot
-      .getDefaultProjectForFile(tsFileName)
-      .catch((error: unknown) => {
-        throw new Error(mapError(error, tsFileName, fileName), {
-          cause: error,
-        })
-      })
     // Opening VFS files can select a nearby tsconfig instead of the requested one.
     const configuredProject = this.snapshot.getConfiguredProject(
       this.options.tsconfig,
     )
-    if (configuredProject && configuredProject.id !== project?.id) {
-      const fileNames = await configuredProject.program.getSourceFileNames()
-      const canonicalFileName = this.api.getCanonicalFileName(tsFileName)
-      if (
-        fileNames.some(
-          (name) =>
-            this.api!.getCanonicalFileName(path.resolve(name)) ===
-            canonicalFileName,
+    if (configuredProject && !this.projectFiles) {
+      // Default-project lookups return the entire project config. Share this
+      // promise so concurrent emits only fetch the file list once per snapshot.
+      this.projectFiles = configuredProject.program
+        .getSourceFileNames()
+        .then(
+          (fileNames) =>
+            new Set(
+              fileNames.map((name) =>
+                this.api!.getCanonicalFileName(path.resolve(name)),
+              ),
+            ),
         )
-      ) {
-        project = configuredProject
-      }
+        .catch((error: unknown) => {
+          this.projectFiles = undefined
+          throw error
+        })
     }
+    const fileNames = await this.projectFiles
+    const project =
+      configuredProject &&
+      fileNames?.has(this.api.getCanonicalFileName(tsFileName))
+        ? configuredProject
+        : await this.snapshot
+            .getDefaultProjectForFile(tsFileName)
+            .catch((error: unknown) => {
+              throw new Error(mapError(error, tsFileName, fileName), {
+                cause: error,
+              })
+            })
     if (!project) {
       return {
-        error: `No TypeScript Go project found for ${fileName}. Please check your tsconfig and custom language filename mapping.`,
+        error: `No ${this.displayName} project found for ${fileName}. Please check your tsconfig and custom language filename mapping.`,
       }
     }
 
@@ -250,14 +290,31 @@ export class TsgoGenerator implements Generator {
     }
 
     if (!code) {
-      debug('[tsgo] declaration output is missing for', tsFileName)
+      debug(
+        `[${this.options.compiler || 'tsgo'}] declaration output is missing for`,
+        tsFileName,
+      )
       return {
-        error: `tsgo did not generate a declaration file for ${fileName}. Please check your tsconfig.`,
+        error: `${this.options.compiler || 'tsgo'} did not generate a declaration file for ${fileName}. Please check your tsconfig.`,
       }
     }
 
     return { code, map }
   }
+}
+
+function isMapperDiagnostic({ source, code }: Diagnostic): boolean {
+  // Mapper-authored diagnostics have a custom source. TypeScript's mapper
+  // setup/transform failures use these codes (TS 7.1). Exclude TS18080, which
+  // can wrap ordinary syntax errors in generated code without source mappings.
+  return (
+    !!source ||
+    (code >= 18065 && code <= 18073) ||
+    (code >= 18075 && code <= 18079) ||
+    (code >= 18081 && code <= 18083) ||
+    code === 18099 ||
+    (code >= 18118 && code <= 18123)
+  )
 }
 
 function mapError(

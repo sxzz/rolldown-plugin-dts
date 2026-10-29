@@ -23,6 +23,7 @@ catalog:
   ts-macro: ^0.3.7
   tsdown: ^0.23.2
   tsnapi: ^1.5.0
+  tsrs: 0.20.1-ts7.1.0-beta
   typescript: ^6.0.3
   typescript-next: 'npm:typescript@7.1.0-dev.20261025.1'
   vitest: ^5.0.5
@@ -41,4 +42,6 @@ minimumReleaseAge: 0
 shellEmulator: true
 trustLockfile: true
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  - tsrs@0.20.1-ts7.1.0-beta
 trustPolicyIgnoreAfter: 10080 # 7 days
