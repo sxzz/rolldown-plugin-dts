@@ -53,6 +53,10 @@ export function isNativeTypeScriptVersion(version: string): boolean {
   return Number.isFinite(major) && major >= 7
 }
 
+export function isTS70Installed(): boolean {
+  return getPackageInfo('typescript')?.version.startsWith('7.0.') ?? false
+}
+
 export function requireTSApi(
   mode: string = 'tsc',
   message: string = '.',

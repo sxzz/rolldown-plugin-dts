@@ -56,11 +56,18 @@ See [rolldown.config.ts](./rolldown.config.ts) for the project's own setup.
 When `generator` is omitted, the plugin selects:
 
 1. `oxc` when `compilerOptions.isolatedDeclarations` is enabled.
-2. `tsgo` when `typescript` exposes `Program.prototype.getDeclarationEmit`.
+2. `tsgo` when `typescript` exposes `Program.prototype.getDeclarationEmit`, or
+   when TypeScript 7.0 is installed (deprecated, see below).
 3. `tsc` otherwise.
 
 Automatic selection only inspects `typescript` and never selects `tsrs`.
 Selecting `tsgo` explicitly requires TypeScript 7.1 or later.
+
+> [!WARNING]
+> TypeScript 7.0 is still supported through its `tsgo` CLI, but this backend is
+> deprecated and will be removed in the next minor. It does not support custom
+> languages or the `tsgo.*` options other than `tsgo.path` (the executable
+> path). Upgrade to TypeScript 7.1 or later.
 
 `generator` also accepts an object implementing the exported `Generator`
 interface.

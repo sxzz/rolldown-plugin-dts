@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { require, tryRequire, tryResolve } from './require.ts'
+import { isTS70Installed, require, tryRequire, tryResolve } from './require.ts'
 import type { Logger } from './options.ts'
 import type * as TsgoApiModule from 'typescript-next/async'
 import type * as TsgoFsModule from 'typescript-next/fs'
@@ -49,6 +49,19 @@ export function tryLoadTsgoApi(
   return api?.Program?.prototype.getDeclarationEmit ? api : undefined
 }
 
+/**
+ * TypeScript 7.0 only ships the `tsgo` CLI, without the declaration emit API.
+ *
+ * @deprecated Remove together with the CLI backend in the next minor.
+ */
+export function isLegacyTsgo(moduleUrl: string | undefined): boolean {
+  return (
+    isTS70Installed() &&
+    moduleUrl === getDefaultTsgoModuleUrl() &&
+    !tryLoadTsgoApi(moduleUrl)
+  )
+}
+
 export function loadTsgoApi(
   moduleUrl: string | undefined,
   logger?: Logger,
@@ -60,7 +73,7 @@ export function loadTsgoApi(
     throw new Error(
       compiler === 'tsrs'
         ? 'tsrs is not installed or does not support declaration emit. Install `tsrs` or set `tsrs.moduleUrl` to a compatible version.'
-        : 'The selected TypeScript version does not support tsgo. Install `typescript@7.1.0-beta` or set `tsgo.moduleUrl` to a compatible version.',
+        : 'The selected TypeScript version does not support tsgo. Install `typescript@7.1.0-beta` or newer, or set `tsgo.moduleUrl` to a compatible version.',
     )
   }
 
