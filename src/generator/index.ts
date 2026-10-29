@@ -1,5 +1,8 @@
+import path from 'node:path'
+import { isLegacyTsgo } from '../tsgo.ts'
 import { OxcGenerator } from './oxc.ts'
 import { TscGenerator } from './tsc.ts'
+import { TsgoCliGenerator } from './tsgo-cli.ts'
 import { TsgoGenerator } from './tsgo.ts'
 import type { OptionsResolved } from '../options.ts'
 import type { RollupError, SourceMapInput } from 'rolldown'
@@ -64,6 +67,16 @@ export function createGenerator(
     return new OxcGenerator(oxc, languageContext)
   }
 
+  if (generator === 'tsgo' && isLegacyTsgo(tsgo.moduleUrl)) {
+    return new TsgoCliGenerator({
+      tsgoPath: tsgo.path!,
+      rootDir: path.dirname(tsconfig!),
+      tsconfig: tsconfig!,
+      sourcemap,
+      languageContext,
+    })
+  }
+
   if (generator === 'tsgo' || generator === 'tsrs') {
     const native = generator === 'tsrs' ? tsrs : tsgo
     return new TsgoGenerator({
@@ -94,4 +107,4 @@ export function createGenerator(
   })
 }
 
-export { OxcGenerator, TscGenerator, TsgoGenerator }
+export { OxcGenerator, TscGenerator, TsgoCliGenerator, TsgoGenerator }

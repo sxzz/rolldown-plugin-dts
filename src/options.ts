@@ -9,6 +9,7 @@ import {
 } from 'get-tsconfig'
 import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
+import { resolveTsgoPath } from './generator/tsgo-cli.ts'
 import { escapeRegExp } from './regexp.ts'
 import { requireTSApi } from './require.ts'
 import {
@@ -18,6 +19,7 @@ import {
 } from './tsc/vue.ts'
 import {
   getDefaultTsgoModuleUrl,
+  isLegacyTsgo,
   loadTsgoApi,
   tryLoadTsgoApi,
   type NativeCompiler,
@@ -47,8 +49,8 @@ export interface Options extends DeprecatedOptions {
    * - A custom {@link Generator} implementation can be provided directly.
    *
    * When omitted, the plugin selects `'oxc'` for `isolatedDeclarations`,
-   * `'tsgo'` when TypeScript exposes the declaration emit API, and `'tsc'`
-   * otherwise. Volar-based custom languages require `'tsc'`.
+   * `'tsgo'` when TypeScript exposes the declaration emit API or is 7.0
+   * (deprecated CLI backend), and `'tsc'` otherwise. Volar-based custom languages require `'tsc'`.
    *
    * @default Inferred from the TypeScript configuration and installed compiler.
    */
@@ -290,6 +292,7 @@ export interface TsgoOptions {
 
   /**
    * Path passed to the TypeScript Go API as `tsserverPath`.
+   * With the deprecated TypeScript 7.0 backend, the `tsgo` executable to run.
    */
   path?: string
 
@@ -488,7 +491,11 @@ export function resolveOptions({
     if (compilerOptions.isolatedDeclarations) {
       generator = 'oxc'
     } else {
-      generator = tryLoadTsgoApi(defaultTsgoModuleUrl) ? 'tsgo' : 'tsc'
+      generator =
+        tryLoadTsgoApi(defaultTsgoModuleUrl) ||
+        isLegacyTsgo(defaultTsgoModuleUrl)
+          ? 'tsgo'
+          : 'tsc'
     }
   }
 
@@ -502,6 +509,13 @@ export function resolveOptions({
     requireTSApi(
       vueOptions ? 'Vue' : 'custom languages',
       vueOptions ? '.' : '. Custom languages require the TypeScript API.',
+    )
+  }
+
+  const legacyTsgo = generator === 'tsgo' && isLegacyTsgo(tsgo.moduleUrl)
+  if (legacyTsgo && customLanguages.length) {
+    throw new Error(
+      "The `tsgo` generator on TypeScript 7.0 does not support custom languages. Upgrade to TypeScript >=7.1, enable `isolatedDeclarations` or set `generator: 'oxc'` to use Oxc instead, or install TypeScript 6.0 or below.",
     )
   }
 
@@ -525,7 +539,11 @@ export function resolveOptions({
         `The \`${compiler}\` generator requires a tsconfig file to be specified.`,
       )
     }
-    if (!warnedNative.has(compiler)) {
+    if (legacyTsgo) {
+      logger.warn(
+        'The `tsgo` generator on TypeScript 7.0 is deprecated and will be removed in the next minor. Upgrade to TypeScript 7.1 or later.',
+      )
+    } else if (!warnedNative.has(compiler)) {
       warnedNative.add(compiler)
       logger.warn(
         compiler === 'tsrs'
@@ -533,36 +551,40 @@ export function resolveOptions({
           : 'TypeScript Go is experimental. Some options will be unavailable.',
       )
     }
-    loadTsgoApi(native.moduleUrl, logger, compiler)
+    if (legacyTsgo) {
+      tsgo.path ??= resolveTsgoPath(logger)
+    } else {
+      loadTsgoApi(native.moduleUrl, logger, compiler)
 
-    const contentMappers: { extensions: string[] }[] | undefined = (
-      resolvedTsconfig as any
-    )?.contentMappers
-    if (contentMappers?.length) {
-      if (!native.runExternalCode) {
-        throw new Error(
-          `Content mappers require \`${compiler}.runExternalCode: true\`.`,
+      const contentMappers: { extensions: string[] }[] | undefined = (
+        resolvedTsconfig as any
+      )?.contentMappers
+      if (contentMappers?.length) {
+        if (!native.runExternalCode) {
+          throw new Error(
+            `Content mappers require \`${compiler}.runExternalCode: true\`.`,
+          )
+        }
+        if (native.vfs) {
+          throw new Error(
+            `Content mappers cannot be combined with \`${compiler}.vfs\`.`,
+          )
+        }
+        languageContext.contentMapperExtensions = [
+          ...new Set(contentMappers.flatMap((mapper) => mapper.extensions)),
+        ]
+        languageContext.patterns.push(
+          ...languageContext.contentMapperExtensions.map(
+            (extension) => new RegExp(`${escapeRegExp(extension)}$`),
+          ),
         )
       }
-      if (native.vfs) {
-        throw new Error(
-          `Content mappers cannot be combined with \`${compiler}.vfs\`.`,
+
+      if (sourcemap && !resolvedTsconfig?.compilerOptions?.declarationMap) {
+        logger.warn(
+          `The \`${compiler}\` generator requires \`compilerOptions.declarationMap: true\` in your tsconfig file for source mappings. The plugin's \`sourcemap\` option does not override the tsconfig.`,
         )
       }
-      languageContext.contentMapperExtensions = [
-        ...new Set(contentMappers.flatMap((mapper) => mapper.extensions)),
-      ]
-      languageContext.patterns.push(
-        ...languageContext.contentMapperExtensions.map(
-          (extension) => new RegExp(`${escapeRegExp(extension)}$`),
-        ),
-      )
-    }
-
-    if (sourcemap && !resolvedTsconfig?.compilerOptions?.declarationMap) {
-      logger.warn(
-        `The \`${compiler}\` generator requires \`compilerOptions.declarationMap: true\` in your tsconfig file for source mappings. The plugin's \`sourcemap\` option does not override the tsconfig.`,
-      )
     }
   }
   oxc.stripInternal ??= !!compilerOptions.stripInternal

@@ -2,6 +2,11 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import {
+  createGenerator,
+  TsgoCliGenerator,
+  TsgoGenerator,
+} from '../src/generator/index.ts'
 import { resolveOptions, type Options } from '../src/options.ts'
 import { mockRequire } from '../src/require.ts'
 import type { CustomLanguage } from '../src/custom-language.ts'
@@ -23,6 +28,11 @@ const TYPESCRIPT_API_PATH = path.join(
   MOCK_ROOT,
   'typescript/dist/api/async/api.js',
 )
+const TYPESCRIPT_EXE_PATH_MODULE = path.join(
+  MOCK_ROOT,
+  'typescript/lib/getExePath.js',
+)
+const TSGO_EXE = path.join(MOCK_ROOT, 'tsgo')
 const CUSTOM_MODULE_PATH = path.join(MOCK_ROOT, 'xxx/lib/index.js')
 const CUSTOM_MODULE_URL = pathToFileURL(CUSTOM_MODULE_PATH).href
 const CUSTOM_API_PATH = path.join(MOCK_ROOT, 'xxx/dist/api/async/api.js')
@@ -55,6 +65,8 @@ function mockInstalled([ts, custom]: Installed) {
       case normalizePath(CUSTOM_MODULE_PATH):
         if (!custom) throw new Error(`Cannot find module '${id}'`)
         return custom === 6 || custom === 'api' ? { createProgram() {} } : {}
+      case normalizePath(TYPESCRIPT_EXE_PATH_MODULE):
+        return () => TSGO_EXE
       case 'typescript/package.json':
       case normalizePath(TYPESCRIPT_PACKAGE_JSON_PATH): {
         if (!ts) throw new Error(`Cannot find module '${id}'`)
@@ -165,6 +177,81 @@ function formatTitle(fixture: Fixture): string {
   return `${parts.join(' ')} => ${result}`
 }
 
+describe('TypeScript 7.0 CLI backend (deprecated)', () => {
+  const logger = () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })
+
+  test.each([undefined, 'tsgo' as const])(
+    'uses the tsgo CLI with a deprecation warning (generator=%s)',
+    (generator) => {
+      mockInstalled([7, false])
+      const log = logger()
+      const resolved = resolveOptions({
+        tsconfig: TSCONFIG,
+        generator,
+        logger: log,
+      })
+      expect(resolved.generator).toBe('tsgo')
+      expect(resolved.tsgo.path).toBe(TSGO_EXE)
+      // The deprecation replaces the generic experimental warning.
+      expect(log.warn).toHaveBeenCalledOnce()
+      expect(log.warn).toHaveBeenCalledWith(
+        expect.stringContaining('deprecated'),
+      )
+      expect(createGenerator(resolved, () => undefined)).toBeInstanceOf(
+        TsgoCliGenerator,
+      )
+    },
+  )
+
+  test('requires a tsconfig file', () => {
+    mockInstalled([7, false])
+    expect(() => resolveOptions({ tsconfig: false })).toThrow(
+      'The `tsgo` generator requires a tsconfig file',
+    )
+  })
+
+  test('does not support custom languages', () => {
+    mockInstalled([7, false])
+    expect(() =>
+      resolveOptions({
+        tsconfig: TSCONFIG,
+        customLanguages: [plainLanguage],
+        logger: logger(),
+      }),
+    ).toThrow('does not support custom languages')
+  })
+
+  test('still rejects the tsc generator', () => {
+    mockInstalled([7, false])
+    expect(() => resolveOptions({ tsconfig: false, generator: 'tsc' })).toThrow(
+      'classic TypeScript API required by tsc',
+    )
+  })
+
+  test('prefers oxc with isolatedDeclarations', () => {
+    mockInstalled([7, false])
+    expect(
+      resolveOptions({
+        tsconfig: false,
+        compilerOptions: { isolatedDeclarations: true },
+      }).generator,
+    ).toBe('oxc')
+  })
+
+  test('TypeScript 7.1 does not use the CLI backend', () => {
+    mockInstalled(['next', false])
+    const log = logger()
+    const resolved = resolveOptions({ tsconfig: TSCONFIG, logger: log })
+    expect(resolved.tsgo.path).toBeUndefined()
+    expect(log.warn).not.toHaveBeenCalledWith(
+      expect.stringContaining('deprecated'),
+    )
+    expect(createGenerator(resolved, () => undefined)).toBeInstanceOf(
+      TsgoGenerator,
+    )
+  })
+})
+
 describe('resolve generator', () => {
   test('preserves a custom generator without compiler inference', () => {
     mockInstalled([false, false])
@@ -210,28 +297,9 @@ describe('resolve generator', () => {
       expected: 'TypeScript is not installed',
       isThrow: true,
     },
-    {
-      installed: [7, false],
-      tsconfig: TSCONFIG,
-      expected:
-        "Please use TypeScript <7.0, switch to TypeScript >=7.1 with `generator: 'tsgo'`, or enable `isolatedDeclarations` in your `tsconfig.json` to use Oxc instead.",
-      isThrow: true,
-    },
-    {
-      // A custom module is only used when configured through moduleUrl.
-      installed: [7, 'next'],
-      tsconfig: TSCONFIG,
-      expected: 'classic TypeScript API required by tsc',
-      isThrow: true,
-    },
     { installed: ['next', false], tsconfig: TSCONFIG, expected: 'tsgo' },
     // API capability, rather than the package version, selects tsgo.
     { installed: ['api', false], tsconfig: TSCONFIG, expected: 'tsgo' },
-    {
-      installed: [7, false],
-      expected: 'classic TypeScript API required by tsc',
-      isThrow: true,
-    },
     {
       installed: ['next', false],
       expected: 'The `tsgo` generator requires a tsconfig file',
@@ -335,13 +403,6 @@ describe('resolve generator', () => {
       tsgo: { moduleUrl: CUSTOM_MODULE_URL },
       tsconfig: TSCONFIG,
       expected: 'The selected TypeScript version does not support tsgo',
-      isThrow: true,
-    },
-    {
-      installed: [7, false],
-      generator: 'tsgo',
-      tsconfig: TSCONFIG,
-      expected: 'Install `typescript@7.1.0-beta`',
       isThrow: true,
     },
     {
@@ -467,13 +528,6 @@ describe('resolve generator', () => {
       isThrow: true,
     },
     { customLanguages: [plainLanguage], isolatedDecl: true, expected: 'oxc' },
-    {
-      installed: [7, false],
-      customLanguages: [plainLanguage],
-      tsconfig: TSCONFIG,
-      expected: 'classic TypeScript API required by tsc',
-      isThrow: true,
-    },
     {
       installed: ['next', false],
       customLanguages: [plainLanguage],
