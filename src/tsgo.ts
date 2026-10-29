@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { isTS70Installed, require, tryRequire, tryResolve } from './require.ts'
+import { getPackageInfo, require, tryRequire, tryResolve } from './require.ts'
 import type { Logger } from './options.ts'
 import type * as TsgoApiModule from 'typescript-next/async'
 import type * as TsgoFsModule from 'typescript-next/fs'
@@ -50,14 +50,16 @@ export function tryLoadTsgoApi(
 }
 
 /**
- * TypeScript 7.0 only ships the `tsgo` CLI, without the declaration emit API.
+ * Whether `moduleUrl` is the installed TypeScript 7.0, which only ships the
+ * `tsgo` CLI without the declaration emit API.
  *
  * @deprecated Remove together with the CLI backend in the next minor.
  */
 export function isLegacyTsgo(moduleUrl: string | undefined): boolean {
   return (
-    isTS70Installed() &&
+    moduleUrl != null &&
     moduleUrl === getDefaultTsgoModuleUrl() &&
+    !!getPackageInfo('typescript')?.version.startsWith('7.0.') &&
     !tryLoadTsgoApi(moduleUrl)
   )
 }

@@ -11,7 +11,7 @@ import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
 import { resolveTsgoPath } from './generator/tsgo-cli.ts'
 import { escapeRegExp } from './regexp.ts'
-import { isTS70Installed, requireTSApi } from './require.ts'
+import { requireTSApi } from './require.ts'
 import {
   createVueLanguage,
   createVueLanguageMetadata,
@@ -49,8 +49,8 @@ export interface Options extends DeprecatedOptions {
    * - A custom {@link Generator} implementation can be provided directly.
    *
    * When omitted, the plugin selects `'oxc'` for `isolatedDeclarations`,
-   * `'tsgo'` when TypeScript exposes the declaration emit API, and `'tsc'`
-   * otherwise. Volar-based custom languages require `'tsc'`.
+   * `'tsgo'` when TypeScript exposes the declaration emit API or is 7.0
+   * (deprecated CLI backend), and `'tsc'` otherwise. Volar-based custom languages require `'tsc'`.
    *
    * @default Inferred from the TypeScript configuration and installed compiler.
    */
@@ -292,6 +292,7 @@ export interface TsgoOptions {
 
   /**
    * Path passed to the TypeScript Go API as `tsserverPath`.
+   * With the deprecated TypeScript 7.0 backend, the `tsgo` executable to run.
    */
   path?: string
 
@@ -491,7 +492,8 @@ export function resolveOptions({
       generator = 'oxc'
     } else {
       generator =
-        tryLoadTsgoApi(defaultTsgoModuleUrl) || isTS70Installed()
+        tryLoadTsgoApi(defaultTsgoModuleUrl) ||
+        isLegacyTsgo(defaultTsgoModuleUrl)
           ? 'tsgo'
           : 'tsc'
     }
@@ -537,7 +539,11 @@ export function resolveOptions({
         `The \`${compiler}\` generator requires a tsconfig file to be specified.`,
       )
     }
-    if (!warnedNative.has(compiler)) {
+    if (legacyTsgo) {
+      logger.warn(
+        'The `tsgo` generator on TypeScript 7.0 is deprecated and will be removed in the next minor. Upgrade to TypeScript 7.1 or later.',
+      )
+    } else if (!warnedNative.has(compiler)) {
       warnedNative.add(compiler)
       logger.warn(
         compiler === 'tsrs'
@@ -546,9 +552,6 @@ export function resolveOptions({
       )
     }
     if (legacyTsgo) {
-      logger.warn(
-        'The `tsgo` generator on TypeScript 7.0 is deprecated. Upgrade to TypeScript 7.1 or later; support for 7.0 will be removed in the next minor.',
-      )
       tsgo.path ??= resolveTsgoPath(logger)
     } else {
       loadTsgoApi(native.moduleUrl, logger, compiler)

@@ -61,13 +61,14 @@ When `generator` is omitted, the plugin selects:
 3. `tsc` otherwise.
 
 Automatic selection only inspects `typescript` and never selects `tsrs`.
-Selecting `tsgo` explicitly requires TypeScript 7.1 or later.
+Selecting `tsgo` explicitly requires TypeScript 7.1 or later, or the
+deprecated TypeScript 7.0 backend below.
 
 > [!WARNING]
-> TypeScript 7.0 is still supported through its `tsgo` CLI, but this backend is
-> deprecated and will be removed in the next minor. It does not support custom
-> languages or the `tsgo.*` options other than `tsgo.path` (the executable
-> path). Upgrade to TypeScript 7.1 or later.
+> With TypeScript 7.0, `tsgo` falls back to running the `tsgo` CLI. This backend
+> is deprecated and will be removed in the next minor; upgrade to TypeScript
+> 7.1 or later. It does not support custom languages, and among the `tsgo.*`
+> options only `tsgo.path` (the executable to run) applies.
 
 `generator` also accepts an object implementing the exported `Generator`
 interface.

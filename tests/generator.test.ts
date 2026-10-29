@@ -192,6 +192,8 @@ describe('TypeScript 7.0 CLI backend (deprecated)', () => {
       })
       expect(resolved.generator).toBe('tsgo')
       expect(resolved.tsgo.path).toBe(TSGO_EXE)
+      // The deprecation replaces the generic experimental warning.
+      expect(log.warn).toHaveBeenCalledOnce()
       expect(log.warn).toHaveBeenCalledWith(
         expect.stringContaining('deprecated'),
       )
@@ -219,7 +221,7 @@ describe('TypeScript 7.0 CLI backend (deprecated)', () => {
     ).toThrow('does not support custom languages')
   })
 
-  test('still rejects tsc and Volar-based languages', () => {
+  test('still rejects the tsc generator', () => {
     mockInstalled([7, false])
     expect(() => resolveOptions({ tsconfig: false, generator: 'tsc' })).toThrow(
       'classic TypeScript API required by tsc',
