@@ -1,3 +1,12 @@
+minimumReleaseAge: 0
+minimumReleaseAgeExcludePrune: true
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 10080 # 7 days
+trustPolicyExcludePrune: true
+trustPolicyExclude:
+  - tsrs@0.20.1-ts7.1.0-beta
+shellEmulator: true
+
 overrides:
   '@volar/language-core': 'catalog:'
   '@volar/typescript': 'catalog:'
@@ -6,12 +15,12 @@ overrides:
 catalog:
   '@astrojs/ts-plugin': ^1.10.12
   '@jridgewell/source-map': ^0.3.11
-  '@sxzz/eslint-config': ^8.8.0
+  '@sxzz/eslint-config': ^8.9.2
   '@sxzz/prettier-config': ^2.3.3
   '@sxzz/test-utils': ^0.5.20
   '@ts-macro/language-plugin': ^0.3.7
   '@ts-macro/tsc': ^0.3.7
-  '@types/node': ^26.6.5
+  '@types/node': ^26.6.6
   '@volar/language-core': ^2.4.30
   '@volar/typescript': ^2.4.30
   '@vue/language-core': ^3.3.13
@@ -21,7 +30,7 @@ catalog:
   prettier: ^3.9.10
   rolldown: ^1.2.15
   ts-macro: ^0.3.7
-  tsdown: ^0.23.2
+  tsdown: ^0.23.3
   tsnapi: ^1.5.0
   tsrs: 0.20.1-ts7.1.0-beta
   typescript: ^6.0.3
@@ -30,18 +39,9 @@ catalog:
   vue: ^3.5.44
   vue-tsc: ^3.3.13
   zod: ^4.6.7
-
 catalogs:
   prod:
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.6
     obug: ^3.0.0
-    yuku: ^0.24.1
-
-minimumReleaseAge: 0
-shellEmulator: true
-trustLockfile: true
-trustPolicy: no-downgrade
-trustPolicyExclude:
-  - tsrs@0.20.1-ts7.1.0-beta
-trustPolicyIgnoreAfter: 10080 # 7 days
+    yuku: ^0.25.0

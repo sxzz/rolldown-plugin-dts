@@ -11,6 +11,8 @@ const require = createRequire(import.meta.url)
 const tsgoModuleUrl = import.meta.resolve('typescript-next')
 
 const external = ['vue', /^@vue/]
+const RE_CUSTOM = /\.custom$/
+const RE_ASTRO = /\.astro$/
 
 describe('volar', () => {
   describe('vue', () => {
@@ -138,7 +140,6 @@ describe('volar', () => {
     async (generator) => {
       const root = path.resolve(dirname, 'fixtures/custom-language')
 
-      const RE_CUSTOM = /\.custom$/
       const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
         {
           name: 'convert-custom-to-ts',
@@ -175,7 +176,6 @@ describe('volar', () => {
 
   test('custom without volar (tsgo vfs)', async () => {
     const root = path.resolve(dirname, 'fixtures/custom-language')
-    const RE_CUSTOM = /\.custom$/
     const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
       {
         name: 'convert-custom-to-ts',
@@ -244,7 +244,7 @@ function createTsMacroLanguage(): CustomLanguage {
 function createAstroLanguage(): CustomLanguage {
   const plugin = getLanguagePlugin()
   return {
-    extensionPatterns: [/\.astro$/],
+    extensionPatterns: [RE_ASTRO],
     tsFileExtensionInfos: [...(plugin.typescript?.extraFileExtensions || [])],
     volarTypeScript: require(
       require.resolve('@volar/typescript', {
@@ -255,7 +255,7 @@ function createAstroLanguage(): CustomLanguage {
       return [plugin]
     },
     toTsFilename(id: string) {
-      return id.replace(/\.astro$/, '.astro.ts')
+      return id.replace(RE_ASTRO, '.astro.ts')
     },
   }
 }
