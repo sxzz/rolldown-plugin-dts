@@ -42,6 +42,7 @@ export class TsgoGenerator implements Generator {
   private pendingFiles = new Map<string, string>()
   private openedFiles = new Set<string>()
   private loadedSourceFiles = new Set<string>()
+  private rootFileProjects = new Map<string, string>()
   private emitQueue: Promise<void> = Promise.resolve()
 
   constructor(options: TsgoGeneratorOptions) {
@@ -52,6 +53,7 @@ export class TsgoGenerator implements Generator {
     this.pendingFiles.clear()
     this.openedFiles.clear()
     this.loadedSourceFiles.clear()
+    this.rootFileProjects.clear()
     this.projectFiles = undefined
     this.emitQueue = Promise.resolve()
 
@@ -66,14 +68,57 @@ export class TsgoGenerator implements Generator {
       tsserverPath: tsgoPath,
       runExternalCode: this.options.runExternalCode,
     })
-    this.snapshot = await this.api.createSnapshot({
+    let snapshot: Snapshot = await this.api.createSnapshot({
       openProjects: [tsconfig],
     })
+    this.snapshot = snapshot
+
+    // A snapshot opens only the requested config, not its referenced projects.
+    // Package imports are external-library files in the consumer program and
+    // cannot be emitted there; open their declared owners in the same session.
+    const seen = new Set([this.api.getCanonicalFileName(tsconfig)])
+    let projects = [this.snapshot.getConfiguredProject(tsconfig)]
+    while (projects.length) {
+      const references = new Set<string>()
+      for (const project of projects) {
+        for (const reference of project?.parsedCommandLine.projectReferences ??
+          []) {
+          // The native API normalizes reference paths but exposes no equivalent
+          // of TypeScript's resolveProjectReferencePath (JSON file or directory).
+          const config = reference.path.endsWith('.json')
+            ? reference.path
+            : path.join(reference.path, 'tsconfig.json')
+          const key = this.api.getCanonicalFileName(config)
+          if (!seen.has(key)) {
+            seen.add(key)
+            references.add(config)
+          }
+        }
+      }
+      if (!references.size) break
+
+      const oldSnapshot = snapshot
+      snapshot = await oldSnapshot.update({
+        openProjects: [...references],
+      })
+      this.snapshot = snapshot
+      if (oldSnapshot !== snapshot) await oldSnapshot.dispose()
+      projects = [...references].map((config) => {
+        const project = snapshot.getConfiguredProject(config)
+        if (!project) {
+          throw new Error(
+            `No TypeScript Go project found for referenced config ${config}.`,
+          )
+        }
+        return project
+      })
+    }
+    this.indexProjectRoots()
 
     // eslint-disable-next-line unicorn/prefer-early-return
     if (this.options.languageContext.contentMapperExtensions.length) {
       // Mapper setup and transform errors can otherwise produce empty declarations.
-      const project = this.snapshot.getConfiguredProject(tsconfig)
+      const project = snapshot.getConfiguredProject(tsconfig)
       if (project) {
         const diagnostics = (
           await Promise.all([
@@ -119,6 +164,7 @@ export class TsgoGenerator implements Generator {
     await this.emitQueue
     await this.api?.close()
     this.api = this.snapshot = this.projectFiles = undefined
+    this.rootFileProjects.clear()
   }
 
   private get displayName(): string {
@@ -127,6 +173,22 @@ export class TsgoGenerator implements Generator {
 
   private toTsFilename(fileName: string): string {
     return path.resolve(this.options.languageContext.toTsFilename(fileName))
+  }
+
+  private indexProjectRoots(): void {
+    if (!this.api || !this.snapshot) return
+
+    this.rootFileProjects.clear()
+    const requested = this.snapshot.getConfiguredProject(this.options.tsconfig)
+    for (const project of this.snapshot.getProjects()) {
+      if (!project.configFileName) continue
+      for (const fileName of project.parsedCommandLine.fileNames) {
+        const key = this.api.getCanonicalFileName(path.resolve(fileName))
+        if (!this.rootFileProjects.has(key) || project.id === requested?.id) {
+          this.rootFileProjects.set(key, project.configFileName)
+        }
+      }
+    }
   }
 
   private async loadSourceFiles(): Promise<void> {
@@ -197,9 +259,9 @@ export class TsgoGenerator implements Generator {
     const oldSnapshot = this.snapshot
     this.snapshot = nextSnapshot
     this.projectFiles = undefined
-    if (oldSnapshot !== nextSnapshot) {
-      await oldSnapshot.dispose()
-    }
+    if (oldSnapshot === nextSnapshot) return
+    this.indexProjectRoots()
+    await oldSnapshot.dispose()
   }
 
   private async emitFromSnapshot(fileName: string): Promise<GeneratorResult> {
@@ -235,9 +297,11 @@ export class TsgoGenerator implements Generator {
         })
     }
     const fileNames = await this.projectFiles
-    const project =
-      configuredProject &&
-      fileNames?.has(this.api.getCanonicalFileName(tsFileName))
+    const canonicalFileName = this.api.getCanonicalFileName(tsFileName)
+    const ownerConfig = this.rootFileProjects.get(canonicalFileName)
+    const project = ownerConfig
+      ? this.snapshot.getConfiguredProject(ownerConfig)
+      : configuredProject && fileNames?.has(canonicalFileName)
         ? configuredProject
         : await this.snapshot
             .getDefaultProjectForFile(tsFileName)
