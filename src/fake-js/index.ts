@@ -72,7 +72,12 @@ export function createFakeJsPlugin({
 }: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin {
   let declarationIdx = 0
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
+  const moduleDeclarationsMap = new Map<
+    string /* filename */,
+    number[] /* declaration ids */
+  >()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
+  const fileCommentsMap = new Map<string /* filename */, t.Comment[]>()
   const moduleExportsMap = new Map<string /* filename */, ModuleExports>()
   const warnedCjsDtsInputs = new Set<string>()
 
@@ -164,6 +169,11 @@ export function createFakeJsPlugin({
       )
     }
 
+    // A watch rebuild transforms changed modules again, so drop what the
+    // previous transform stored. Unchanged modules may keep their cached
+    // output with incremental builds, so their state must stay.
+    clearModuleState(id)
+
     const { program } = file
     moduleExportsMap.set(id, await collectModuleExports(this, program.body, id))
     const identifierMap: Record<string, number> = Object.create(null)
@@ -189,7 +199,16 @@ export function createFakeJsPlugin({
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.ProgramStatement) => (program.body[i] = stmt)
-      if (rewriteImportExport(stmt, setStmt, appendStmts)) continue
+      if (rewriteImportExport(stmt, setStmt, appendStmts)) {
+        // The file's doc comment, e.g. `@module`, is attached to its first
+        // statement. An import or export keeps no comments, so save it for
+        // `renderChunk` to restore.
+        if (i === 0) {
+          const docComments = stmt.comments?.filter(isDocComment)
+          if (docComments?.length) fileCommentsMap.set(id, docComments)
+        }
+        continue
+      }
 
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
@@ -280,7 +299,7 @@ export function createFakeJsPlugin({
         decl.comments = stmt.comments
       }
 
-      const declarationId = registerDeclaration({
+      const declarationId = registerDeclaration(id, {
         decl,
         deps,
         bindings,
@@ -567,6 +586,14 @@ export function createFakeJsPlugin({
       program.body.push(b.ExportNamedDeclaration({}))
     }
 
+    // recover the entry's doc comment, but not those of the modules it inlines
+    const fileComments =
+      chunk.facadeModuleId && fileCommentsMap.get(chunk.facadeModuleId)
+    if (fileComments) {
+      program.body[0].comments ||= []
+      program.body[0].comments.unshift(...fileComments)
+    }
+
     // recover comments
     const comments = new Set<t.Comment>()
     const commentsValue = new Set<string>() // deduplicate
@@ -581,7 +608,6 @@ export function createFakeJsPlugin({
           commentsValue.add(id)
           comments.add(c)
         })
-        commentsMap.delete(id)
       }
     }
     if (comments.size) {
@@ -606,10 +632,25 @@ export function createFakeJsPlugin({
     }
   }
 
-  function registerDeclaration(info: DeclarationInfo) {
+  function registerDeclaration(id: string, info: DeclarationInfo) {
     const declarationId = declarationIdx++
     declarationMap.set(declarationId, info)
+
+    let ids = moduleDeclarationsMap.get(id)
+    if (!ids) moduleDeclarationsMap.set(id, (ids = []))
+    ids.push(declarationId)
+
     return declarationId
+  }
+
+  function clearModuleState(id: string) {
+    for (const declarationId of moduleDeclarationsMap.get(id) || []) {
+      declarationMap.delete(declarationId)
+    }
+    moduleDeclarationsMap.delete(id)
+    moduleExportsMap.delete(id)
+    commentsMap.delete(id)
+    fileCommentsMap.delete(id)
   }
 
   function getDeclaration(declarationId: number) {
@@ -681,4 +722,12 @@ function removeDtsOnlyRuntimeChunks(bundle: OutputBundle): void {
       )
     }
   }
+}
+
+function isDocComment(comment: t.Comment): boolean {
+  return (
+    comment.position === 'before' &&
+    comment.type === 'Block' &&
+    comment.value.startsWith('*')
+  )
 }

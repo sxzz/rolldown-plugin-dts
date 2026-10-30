@@ -1,3 +1,5 @@
+import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
@@ -846,4 +848,37 @@ describe('rolldown runtime chunk', () => {
       '_virtual/_rolldown/runtime.js',
     )
   })
+})
+
+test('file doc comment before an import', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/file-doc-comment/index.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toContain('Docs for this entry point.')
+  // only the entry's own comment, not those of the modules it inlines
+  expect(snapshot).not.toContain('Docs for an inlined module.')
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('file doc comment removed before a rebuild', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'dts-file-doc-comment-'))
+  try {
+    await cp(path.resolve(dirname, 'fixtures/file-doc-comment'), dir, {
+      recursive: true,
+    })
+    const input = path.join(dir, 'index.ts')
+    // reusing the plugins mimics a watch rebuild, which transforms again
+    const plugins = [dts({ emitDtsOnly: true })]
+
+    const first = await rolldownBuild(input, plugins)
+    expect(first.snapshot).toContain('Docs for this entry point.')
+
+    const code = await readFile(input, 'utf8')
+    await writeFile(input, code.replace(/^\/\*\*[\s\S]*?\*\/\n/, ''))
+    const second = await rolldownBuild(input, plugins)
+    expect(second.snapshot).not.toContain('Docs for this entry point.')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
 })
