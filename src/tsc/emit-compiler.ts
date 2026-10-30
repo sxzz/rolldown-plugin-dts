@@ -100,17 +100,18 @@ function createTsProgramFromParsedConfig({
   const compilerOptions: CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
+    declaration: true,
     $configRaw: parsedConfig.raw,
     $rootDir: baseDir,
+  }
+  if (languageContext.languages.length) {
     // Allow non-TS extensions (e.g. `.vue`) to be used as root files. Without
     // this, TypeScript silently drops root files whose extension is not in its
     // built-in supported list, so `program.getSourceFile(id)` returns
     // `undefined` for a `.vue` entry that is not imported by a `.ts` file.
     // Only relevant when a custom language (e.g. Vue) registers such
     // extensions; module resolution already handles the imported-file case.
-    ...(languageContext.languages.length
-      ? { allowNonTsExtensions: true }
-      : undefined),
+    compilerOptions.allowNonTsExtensions = true
   }
 
   const rootNames = [
@@ -139,7 +140,7 @@ function createTsProgramFromParsedConfig({
 
     if (hasReferences) {
       throw new Error(
-        `[rolldown-plugin-dts] Unable to load ${id}; You have "references" in your tsconfig file. Perhaps you want to add \`dts: { build: true }\` in your config?`,
+        `[rolldown-plugin-dts] Unable to load ${id}; You have "references" in your tsconfig file. Perhaps you want to add \`dts: { tsc: { build: true } }\` in your config?`,
       )
     }
 
@@ -204,7 +205,7 @@ export function tscEmitCompiler(tscOptions: TscOptions): TscResult {
       dtsCode = file.getFullText()
     } else {
       console.warn(
-        '[rolldown-plugin-dts] Warning: Failed to emit declaration file. Please try to enable `eager` option (`dts.eager` for tsdown).',
+        '[rolldown-plugin-dts] Warning: Failed to emit declaration file. Please try to enable `tsc.eager` option (`dts.tsc.eager` for tsdown).',
       )
     }
   }

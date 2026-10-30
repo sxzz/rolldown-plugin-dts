@@ -1,9 +1,10 @@
+import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
-import { resolveTsgoPath } from '../src/generator/tsgo.ts'
-import { dts } from '../src/index.ts'
+import { dts, type Generator } from '../src/index.ts'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -13,6 +14,38 @@ test('basic', async () => {
     [dts()],
   )
   expect(snapshot).toMatchSnapshot()
+})
+
+test('custom generator', async () => {
+  const calls: string[] = []
+  const generator: Generator = {
+    init() {
+      calls.push('init')
+    },
+    addFile(_code, fileName) {
+      calls.push(`addFile:${path.basename(fileName)}`)
+    },
+    emit(_code, fileName) {
+      calls.push(`emit:${path.basename(fileName)}`)
+      return { code: 'export declare const custom: true' }
+    },
+    dispose() {
+      calls.push('dispose')
+    },
+  }
+
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/basic.ts'),
+    [dts({ generator, tsconfig: false, emitDtsOnly: true })],
+  )
+
+  expect(snapshot).toContain('declare const custom: true')
+  expect(calls).toStrictEqual([
+    'init',
+    'addFile:basic.ts',
+    'emit:basic.ts',
+    'dispose',
+  ])
 })
 
 test('tsx', async () => {
@@ -44,6 +77,21 @@ test('resolve dts', async () => {
     [dts()],
   )
   expect(snapshot).matchSnapshot()
+})
+
+describe('resolve paths', () => {
+  test.each(['oxc', 'tsc'] as const)('resolver: %s', async (resolver) => {
+    const root = path.resolve(dirname, 'fixtures/paths')
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+      dts({
+        generator: 'oxc',
+        emitDtsOnly: true,
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        resolver,
+      }),
+    ])
+    expect(snapshot).toMatchSnapshot()
+  })
 })
 
 // Test alias mapping based on rolldown input option
@@ -144,6 +192,22 @@ test('tree-shaking', async () => {
     { treeshake: true },
   )
   expect(snapshot).matchSnapshot()
+})
+
+test('tree-shaking namespace import referenced by qualified name', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/tree-shaking-qualified-name/index.ts'),
+    [dts({ emitDtsOnly: true })],
+    {
+      treeshake: {
+        moduleSideEffects: false,
+      },
+      external: /^node:.*/,
+    },
+  )
+  expect(snapshot).matchSnapshot()
+  expect(snapshot).not.toContain('node:http')
+  expect(snapshot).not.toContain('foo')
 })
 
 describe('dts input', () => {
@@ -327,7 +391,7 @@ describe('dts input', () => {
       [
         "input1.d.mts",
         "input2.d.mts",
-        "types-D2aRkv2b.d.ts",
+        "types-RNYvPRwl.d.ts",
       ]
     `)
 
@@ -350,7 +414,7 @@ describe('dts input', () => {
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toMatchInlineSnapshot(`
       [
-        "chunks/D2aRkv2b-types.d.ts",
+        "chunks/RNYvPRwl-types.d.ts",
         "input1.d.ts",
         "input2.d.ts",
       ]
@@ -468,7 +532,7 @@ describe('entryFileNames', () => {
     const chunkNames = chunks.map((chunk) => chunk.fileName).toSorted()
     expect(chunkNames).toMatchInlineSnapshot(`
       [
-        "chunks/D2aRkv2b-types.d.ts",
+        "chunks/RNYvPRwl-types.d.ts",
         "input1.d.ts",
         "input2.d.ts",
       ]
@@ -652,25 +716,6 @@ test('infer false branch', async () => {
   )
 })
 
-test('tsgo with custom path', async () => {
-  const tsgoPath = resolveTsgoPath({
-    info: () => {},
-    warn: () => {},
-    error: () => {},
-  })
-  const { snapshot } = await rolldownBuild(
-    path.resolve(dirname, 'fixtures/basic.ts'),
-    [
-      dts({
-        generator: 'tsgo',
-        tsgo: { path: tsgoPath },
-        tsconfig: path.resolve(dirname, 'fixtures/basic.tsconfig.json'),
-      }),
-    ],
-  )
-  expect(snapshot).toMatchSnapshot()
-})
-
 // https://github.com/sxzz/rolldown-plugin-dts/issues/136
 test('css.ts files', async () => {
   const root = path.resolve(dirname, 'fixtures/css-ts')
@@ -773,4 +818,67 @@ test('inline exports keep other declarations private', async () => {
     [dts({ emitDtsOnly: true })],
   )
   expect(snapshot).toMatchSnapshot()
+})
+
+describe('rolldown runtime chunk', () => {
+  test('removed when only used by dts chunks', async () => {
+    const { chunks } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/runtime-dts-only/index.ts'),
+      [dts()],
+      {},
+      { preserveModules: true },
+    )
+    expect(chunks.map((chunk) => chunk.fileName).toSorted()).toStrictEqual([
+      'index.d.ts',
+      'index.js',
+      'worker.d.ts',
+    ])
+    const workerChunk = chunks.find((chunk) => chunk.fileName === 'worker.d.ts')
+    expect(workerChunk?.type === 'chunk' && workerChunk.imports).toEqual([])
+  })
+
+  test('kept when used by js chunks', async () => {
+    const { chunks } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/source-map/index.ts'),
+      [dts()],
+      {},
+      { preserveModules: true },
+    )
+    expect(chunks.map((chunk) => chunk.fileName)).toContain(
+      '_virtual/_rolldown/runtime.js',
+    )
+  })
+})
+
+test('file doc comment before an import', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/file-doc-comment/index.ts'),
+    [dts({ emitDtsOnly: true })],
+  )
+  expect(snapshot).toContain('Docs for this entry point.')
+  // only the entry's own comment, not those of the modules it inlines
+  expect(snapshot).not.toContain('Docs for an inlined module.')
+  expect(snapshot).toMatchSnapshot()
+})
+
+test('file doc comment removed before a rebuild', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'dts-file-doc-comment-'))
+  try {
+    await cp(path.resolve(dirname, 'fixtures/file-doc-comment'), dir, {
+      recursive: true,
+    })
+    const input = path.join(dir, 'index.ts')
+    // reusing the plugins mimics a watch rebuild, which transforms again
+    const plugins = [dts({ emitDtsOnly: true })]
+
+    const first = await rolldownBuild(input, plugins)
+    expect(first.snapshot).toContain('Docs for this entry point.')
+
+    const code = await readFile(input, 'utf8')
+    await writeFile(input, code.replace(/^\/\*\*[\s\S]*?\*\/\n/, ''))
+    const second = await rolldownBuild(input, plugins)
+    expect(second.snapshot).not.toContain('Docs for this entry point.')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
 })

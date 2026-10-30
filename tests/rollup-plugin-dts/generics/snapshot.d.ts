@@ -1,5 +1,4 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/generics/index.d.ts
 interface A {}
 interface B {}
 interface C {}
@@ -32,5 +31,4 @@ export declare function fn<T = G>(g: T, h: Gen<H>): void;
 export declare type TyFn = <T = J>(j: T, k: Gen<K>) => L;
 export declare type TyCtor = new <T = M>(m: T, n: Gen<N>) => O;
 export interface I2 extends Gen<P> {}
-//#endregion
 export {};

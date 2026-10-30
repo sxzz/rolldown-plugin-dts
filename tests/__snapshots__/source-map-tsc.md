@@ -5,8 +5,6 @@ declare namespace mod_d_exports {
   export { foo };
 }
 declare const foo: number;
-//#endregion
-//#region tests/fixtures/source-map/index.d.ts
 export declare const a: string;
 export declare const b: string;
 type Str = string;
@@ -25,7 +23,6 @@ export declare namespace Ns {
     id: string;
   };
 }
-//#endregion
 export { mod_d_exports as Mod };
 //# sourceMappingURL=index.d.ts.map
 ```
@@ -33,5 +30,5 @@ export { mod_d_exports as Mod };
 ## index.d.ts.map
 
 ```map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../../fixtures/source-map/mod.ts","../../fixtures/source-map/index.ts"],"mappings":";;;cAAa;;;qBCAA;qBAEA;KAIR;wBACW,GAAG,OAAO;iBAIT;EACf;IACE;;EAEF;EACA;;yBAGe;OACH;OACA,IAAI,KAAK;OACT;IACV"}
+{"version":3,"file":"index.d.ts","names":[],"sources":["../../fixtures/source-map/mod.ts","../../fixtures/source-map/index.ts"],"mappings":";;;cAAa;qBCAA;qBAEA;KAIR;wBACW,GAAG,OAAO;iBAIT;EACf;IACE;;EAEF;EACA;;yBAGe;OACH;OACA,IAAI,KAAK;OACT;IACV"}
 ```

@@ -3,7 +3,7 @@ import path from 'node:path'
 import { SourceMapConsumer } from '@jridgewell/source-map'
 import { expectFilesSnapshot, rolldownBuild } from '@sxzz/test-utils'
 import { build } from 'rolldown'
-import { beforeAll, expect, test } from 'vitest'
+import { beforeAll, expect, test, vi } from 'vitest'
 import { dts } from '../src/index.ts'
 
 const tempDir = path.join(import.meta.dirname, 'temp')
@@ -12,6 +12,7 @@ const tsconfig = path.resolve(
   import.meta.dirname,
   'fixtures/source-map/tsconfig.json',
 )
+const tsgoModuleUrl = import.meta.resolve('typescript-next')
 
 beforeAll(async () => {
   await rm(tempDir, { recursive: true, force: true })
@@ -55,25 +56,33 @@ test('oxc', async () => {
   validateSourceMap(sourcemap)
 })
 
-test('tsc', async () => {
-  const dir = path.join(tempDir, 'source-map-tsc')
-  await build({
-    input,
-    plugins: [
-      dts({
-        generator: 'tsc',
-        tsconfig,
-        sourcemap: true,
-        emitDtsOnly: true,
-      }),
-    ],
-    output: { dir },
-    write: true,
-  })
-  await expectFilesSnapshot(dir, '__snapshots__/source-map-tsc.md')
-  const sourcemap = await readFile(path.resolve(dir, 'index.d.ts.map'), 'utf8')
-  validateSourceMap(sourcemap)
-})
+test.each([true, false])(
+  'tsc with tsconfig declaration=%s',
+  async (declaration) => {
+    const dir = path.join(tempDir, 'source-map-tsc')
+    await build({
+      input,
+      plugins: [
+        dts({
+          generator: 'tsc',
+          tsc: { newContext: true },
+          tsconfig,
+          compilerOptions: { declaration },
+          sourcemap: true,
+          emitDtsOnly: true,
+        }),
+      ],
+      output: { dir },
+      write: true,
+    })
+    await expectFilesSnapshot(dir, '__snapshots__/source-map-tsc.md')
+    const sourcemap = await readFile(
+      path.resolve(dir, 'index.d.ts.map'),
+      'utf8',
+    )
+    validateSourceMap(sourcemap)
+  },
+)
 
 test('tsgo', async () => {
   const dir = path.join(tempDir, 'source-map-tsgo')
@@ -82,6 +91,7 @@ test('tsgo', async () => {
     plugins: [
       dts({
         generator: 'tsgo',
+        tsgo: { moduleUrl: tsgoModuleUrl },
         tsconfig,
         sourcemap: true,
         emitDtsOnly: true,
@@ -94,6 +104,47 @@ test('tsgo', async () => {
   const sourcemap = await readFile(path.resolve(dir, 'index.d.ts.map'), 'utf8')
   validateSourceMap(sourcemap)
 })
+
+test.each([true, false])(
+  'tsgo sourcemap with tsconfig declarationMap=%s',
+  async (declarationMap) => {
+    const dir = path.join(tempDir, `source-map-tsgo-${declarationMap}`)
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+    await build({
+      input,
+      plugins: [
+        dts({
+          generator: 'tsgo',
+          tsgo: { moduleUrl: tsgoModuleUrl },
+          tsconfig: declarationMap
+            ? tsconfig
+            : path.resolve(
+                import.meta.dirname,
+                'fixtures/source-map/tsconfig-no-declaration-map.json',
+              ),
+          sourcemap: true,
+          emitDtsOnly: true,
+          logger,
+        }),
+      ],
+      output: { dir },
+      write: true,
+    })
+
+    const warning =
+      "The `tsgo` generator requires `compilerOptions.declarationMap: true` in your tsconfig file for source mappings. The plugin's `sourcemap` option does not override the tsconfig."
+    if (declarationMap) {
+      expect(logger.warn).not.toHaveBeenCalledWith(warning)
+      const sourcemap = await readFile(
+        path.resolve(dir, 'index.d.ts.map'),
+        'utf8',
+      )
+      validateSourceMap(sourcemap)
+    } else {
+      expect(logger.warn).toHaveBeenCalledWith(warning)
+    }
+  },
+)
 
 // https://github.com/rolldown/tsdown/issues/975
 test('empty dts chunk does not break output sourcemap', async () => {
@@ -125,7 +176,7 @@ test('disable dts source map only', async () => {
     [
       "index.d.ts",
       "index.js",
-      "rolldown-runtime-D7D4PA-g.js",
+      "rolldown-runtime-D8jQpDG7.js",
       "index.js.map",
     ]
   `)

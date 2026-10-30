@@ -8,8 +8,11 @@ import type { CustomLanguage } from '../src/custom-language.ts'
 
 const { dirname } = import.meta
 const require = createRequire(import.meta.url)
+const tsgoModuleUrl = import.meta.resolve('typescript-next')
 
 const external = ['vue', /^@vue/]
+const RE_CUSTOM = /\.custom$/
+const RE_ASTRO = /\.astro$/
 
 describe('volar', () => {
   describe('vue', () => {
@@ -20,7 +23,28 @@ describe('volar', () => {
         [
           dts({
             emitDtsOnly: true,
-            vue: true,
+            tsc: { vue: true },
+            compilerOptions: {
+              isolatedDeclarations: false,
+            },
+          }),
+        ],
+        { external },
+      )
+      expect(snapshot).toMatchSnapshot()
+    })
+
+    test('vue-sfc w/ parallel ts-compiler', async () => {
+      const root = path.resolve(dirname, 'fixtures/vue-sfc')
+      const { snapshot } = await rolldownBuild(
+        path.resolve(root, 'main.ts'),
+        [
+          dts({
+            emitDtsOnly: true,
+            tsc: {
+              vue: { vueCompilerOptions: { fallthroughAttributes: false } },
+              parallel: true,
+            },
             compilerOptions: {
               isolatedDeclarations: false,
             },
@@ -39,7 +63,7 @@ describe('volar', () => {
           dts({
             tsconfig: path.resolve(root, 'tsconfig.json'),
             emitDtsOnly: true,
-            vue: true,
+            tsc: { vue: true },
           }),
         ],
         { external },
@@ -72,7 +96,7 @@ describe('volar', () => {
         [
           dts({
             emitDtsOnly: true,
-            vue: true,
+            tsc: { vue: true },
             compilerOptions: {
               isolatedDeclarations: false,
             },
@@ -107,7 +131,7 @@ describe('volar', () => {
           dts({
             emitDtsOnly: true,
             tsconfig: path.resolve(root, 'tsconfig.json'),
-            vue: true,
+            tsc: { vue: true },
             customLanguages: [tsMacro],
           }),
         ],
@@ -134,7 +158,6 @@ describe('volar', () => {
     async (generator) => {
       const root = path.resolve(dirname, 'fixtures/custom-language')
 
-      const RE_CUSTOM = /\.custom$/
       const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
         {
           name: 'convert-custom-to-ts',
@@ -168,6 +191,38 @@ describe('volar', () => {
       expect(snapshot).toMatchSnapshot()
     },
   )
+
+  test('custom without volar (tsgo vfs)', async () => {
+    const root = path.resolve(dirname, 'fixtures/custom-language')
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
+      {
+        name: 'convert-custom-to-ts',
+        transform: {
+          order: 'pre',
+          filter: { id: RE_CUSTOM },
+          handler: (code) => ({
+            code: code.replace('<script>', '').replace('</script>', ''),
+            moduleType: 'ts',
+          }),
+        },
+      },
+      dts({
+        generator: 'tsgo',
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        sourcemap: true,
+        tsgo: { moduleUrl: tsgoModuleUrl, vfs: true },
+        customLanguages: [
+          {
+            extensionPatterns: [RE_CUSTOM],
+            toTsFilename: (id) => id.replace(RE_CUSTOM, '.custom.ts'),
+          },
+        ],
+      }),
+    ])
+
+    expect(snapshot).toMatchSnapshot()
+    expect(snapshot).toContain('declare const foo: string')
+  })
 })
 
 function createTsMacroLanguage(): CustomLanguage {
@@ -207,7 +262,7 @@ function createTsMacroLanguage(): CustomLanguage {
 function createAstroLanguage(): CustomLanguage {
   const plugin = getLanguagePlugin()
   return {
-    extensionPatterns: [/\.astro$/],
+    extensionPatterns: [RE_ASTRO],
     tsFileExtensionInfos: [...(plugin.typescript?.extraFileExtensions || [])],
     volarTypeScript: require(
       require.resolve('@volar/typescript', {
@@ -218,7 +273,7 @@ function createAstroLanguage(): CustomLanguage {
       return [plugin]
     },
     toTsFilename(id: string) {
-      return id.replace(/\.astro$/, '.astro.ts')
+      return id.replace(RE_ASTRO, '.astro.ts')
     },
   }
 }

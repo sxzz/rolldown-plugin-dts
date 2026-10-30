@@ -1,16 +1,20 @@
-import { is } from 'yuku-ast'
-import type * as t from 'yuku-parser'
+import { is } from 'yuku/utils'
+import type * as t from 'yuku'
 
 export function isThisExpression(node: t.Node): boolean {
   return (
-    is.Identifier(node, 'this') ||
+    (is.Identifier(node) && node.name === 'this') ||
     node.type === 'ThisExpression' ||
     (node.type === 'MemberExpression' && isThisExpression(node.object))
   )
 }
 
 export function isInfer(node: t.Node): node is t.Identifier {
-  return is.Identifier(node, 'infer')
+  return is.Identifier(node) && node.name === 'infer'
+}
+
+export function nameOf(node: t.ModuleExportName): string {
+  return node.type === 'Identifier' ? node.name : node.value
 }
 
 export function TSEntityNameToRuntime(
@@ -59,7 +63,7 @@ export function isHelperImport(node: t.Node): boolean {
 
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
 export function collectReferenceDirectives(
-  comment: t.Comment[],
+  comment: readonly t.Comment[],
   negative = false,
 ): t.Comment[] {
   return comment.filter((c) => REFERENCE_RE.test(c.value) !== negative)
@@ -91,7 +95,7 @@ export function overwriteNode<T>(node: t.Node, newNode: T): T {
  * Region markers and alike, the comments worth keeping when their node is
  * replaced or dropped
  */
-export function pragmaComments(node: t.Node): t.AttachedComment[] {
+export function pragmaComments(node: t.Node): t.Comment[] {
   return (
     node.comments?.filter(
       (comment) =>

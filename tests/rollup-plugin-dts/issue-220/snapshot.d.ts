@@ -1,5 +1,4 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/issue-220/index.d.ts
 declare enum Alphabet {
   a = "a",
   b = "b"
@@ -7,5 +6,4 @@ declare enum Alphabet {
 export declare class Test {
   readonly letter = Alphabet.a;
 }
-//#endregion
 export {};

@@ -1,6 +1,7 @@
-import { b, is, nameOf } from 'yuku-ast'
+import { b } from 'yuku'
+import { is } from 'yuku/utils'
 import { isRuntimeBindingVariableDeclaration } from './runtime-binding.ts'
-import { getIdFromTSEntityName } from './utils.ts'
+import { getIdFromTSEntityName, nameOf } from './utils.ts'
 import type {
   ChunkExportPlan,
   DeclarationInfo,
@@ -8,7 +9,7 @@ import type {
   ModuleExports,
 } from './types.ts'
 import type { RenderedChunk, TransformPluginContext } from 'rolldown'
-import type * as t from 'yuku-parser'
+import type * as t from 'yuku'
 
 //#region Module exports
 
@@ -124,8 +125,8 @@ async function collectExportInfo(
     for (const specifier of node.specifiers) {
       const typeOnly = isTypeOnlyExport(node, specifier)
 
-      const exported = nameOf(specifier.exported)!
-      const local = nameOf(specifier.local)!
+      const exported = nameOf(specifier.exported)
+      const local = nameOf(specifier.local)
       if (source) {
         info.reExports.push({ source, local, exported, typeOnly })
       } else {
@@ -140,18 +141,18 @@ async function collectExportInfo(
     return
   }
 
-  if (node.type === 'ExportAllDeclaration') {
-    if (node.exported) {
-      info.exports.set(nameOf(node.exported)!, node.exportKind === 'type')
-      return
-    }
+  if (node.type !== 'ExportAllDeclaration') return
 
-    info.exportAlls.push({
-      source: await resolveExportSource(context, node.source, id),
-      rawSource: node.source.value,
-      typeOnly: node.exportKind === 'type',
-    })
+  if (node.exported) {
+    info.exports.set(nameOf(node.exported), node.exportKind === 'type')
+    return
   }
+
+  info.exportAlls.push({
+    source: await resolveExportSource(context, node.source, id),
+    rawSource: node.source.value,
+    typeOnly: node.exportKind === 'type',
+  })
 }
 
 async function resolveExportSource(
@@ -535,12 +536,7 @@ export function inlineExportDeclaration(
       ? b.ExportDefaultDeclaration({
           declaration: decl as t.ExportDefaultDeclarationKind,
         })
-      : b.ExportNamedDeclaration({
-          declaration: decl,
-          specifiers: [],
-          source: null,
-          attributes: [],
-        })
+      : b.ExportNamedDeclaration({ declaration: decl })
 
   // the comments have to lead the `export` keyword, TypeScript ignores a doc
   // comment sitting between `export` and the declaration

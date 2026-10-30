@@ -15,7 +15,7 @@ import {
 } from './filename.ts'
 import { createGenerator } from './generator/index.ts'
 import type { OptionsResolved } from './options.ts'
-import type { Plugin } from 'rolldown'
+import type { Plugin, PluginContext } from 'rolldown'
 
 const debug = createDebug('rolldown-plugin-dts:generate')
 
@@ -40,20 +40,17 @@ export function createGeneratePlugin(
     | 'cwd'
     | 'tsconfig'
     | 'tsconfigRaw'
-    | 'build'
-    | 'incremental'
     | 'oxc'
     | 'emitDtsOnly'
     | 'languageContext'
-    | 'parallel'
-    | 'eager'
+    | 'tsc'
     | 'tsgo'
-    | 'newContext'
+    | 'tsrs'
     | 'emitJs'
     | 'sourcemap'
   >,
 ): Plugin {
-  const { entry, cwd, emitDtsOnly, languageContext, eager, emitJs } = options
+  const { entry, cwd, emitDtsOnly, languageContext, tsc, emitJs } = options
   const entryIncludes = entry?.filter((p) => p[0] !== '!')
   const entryIgnores = entry?.filter((p) => p[0] === '!').map((p) => p.slice(1))
   const entryMatcher = entry
@@ -74,18 +71,28 @@ export function createGeneratePlugin(
    */
   const inputAliasMap = new Map<string, string>()
 
-  const declarationGenerator = createGenerator(options, () =>
-    eager
-      ? undefined
-      : Array.from(dtsMap.values())
-          .filter((module) => module.isEntry)
-          .map((module) => module.id),
+  let loadSource: PluginContext['load']
+  const declarationGenerator = createGenerator(
+    options,
+    () =>
+      tsc.eager
+        ? undefined
+        : Array.from(dtsMap.values())
+            .filter((module) => module.isEntry)
+            .map((module) => module.id),
+    async (id) => {
+      await loadSource({ id, resolveDependencies: false })
+      // Cached modules may not run their transform hooks again in watch mode.
+      const module = dtsMap.get(filename_to_dts(id, languageContext))
+      if (module) declarationGenerator.addFile?.(module.code, module.id)
+    },
   )
 
   return {
     name: 'rolldown-plugin-dts:generate',
 
     async buildStart(options) {
+      loadSource = this.load.bind(this)
       await declarationGenerator.init?.()
 
       if (!Array.isArray(options.input)) {
@@ -151,6 +158,7 @@ export function createGeneratePlugin(
             : !!mod?.isEntry
           const dtsId = filename_to_dts(id, languageContext)
           dtsMap.set(dtsId, { code, id, isEntry, jsFile })
+          declarationGenerator.addFile?.(code, id)
           debug('register dts source: %s', id)
 
           if (isEntry) {
@@ -163,6 +171,7 @@ export function createGeneratePlugin(
           }
         }
 
+        // eslint-disable-next-line unicorn/prefer-early-return
         if (emitDtsOnly) {
           if (RE_JSON.test(id)) return '{}'
           return EMPTY_STUB

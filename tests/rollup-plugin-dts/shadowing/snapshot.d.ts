@@ -1,5 +1,4 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/shadowing/exports.d.ts
 interface J {}
 export declare class GenericKlass<A = any, B = A> {
   a: A;
@@ -17,5 +16,4 @@ export declare type GenericType<K = any, L = K> = {
   l: L;
 };
 export interface GenericExtends<M = any, N = M> extends GenericInterface<M, N> {}
-//#endregion
 export {};

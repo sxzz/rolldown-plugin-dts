@@ -2,7 +2,6 @@
 
 exports[`basic 1`] = `
 "// basic.d.ts
-//#region tests/fixtures/basic.d.ts
 export declare const foo: number;
 type SomeType<T> = T;
 type FooType = string;
@@ -17,10 +16,9 @@ export declare class Cls {
   foo: string;
   fn(e: Enum): void;
 }
-//#endregion
 export {};
 // basic.js
-//#region tests/fixtures/basic.ts
+// tests/fixtures/basic.ts
 const foo = 42;
 function fn(arg0, opt) {}
 let Enum = /* @__PURE__ */ function(Enum) {
@@ -33,271 +31,216 @@ var Cls = class {
 	foo;
 	fn(e) {}
 };
-//#endregion
 export { Cls, Enum, fn, foo };
 "
 `;
 
 exports[`cjs exports 1`] = `
 "// cjs-exports.js
-//#region tests/fixtures/cjs-exports.ts
+// tests/fixtures/cjs-exports.ts
 var cjs_exports_default = 42;
-//#endregion
 module.exports = cjs_exports_default;
 "
 `;
 
 exports[`cjs exports 2`] = `
 "// cjs-exports.d.ts
-//#region tests/fixtures/cjs-exports.d.ts
 declare const _default: number;
 export = _default;"
 `;
 
 exports[`cjs exports 3`] = `
 "// cjs-default-mixed.d.ts
-//#region tests/fixtures/cjs-default-mixed.d.ts
 export declare const a = 1;
 export default class Foo {
   b: string;
-}
-//#endregion"
+}"
 `;
 
 exports[`codeSplitting 1`] = `
 "// entry.d.ts
-import { t as shared1 } from "./shared1-chunk-qFQGuNhB.js";
-//#region tests/fixtures/manual-chunk/shared2.d.ts
+import { t as shared1 } from "./shared1-chunk-4GFHveN0.js";
 export declare const shared2 = "shared2";
-//#endregion
 export { shared1 };
-// shared1-chunk-qFQGuNhB.d.ts
-//#region tests/fixtures/manual-chunk/shared1.d.ts
+// shared1-chunk-4GFHveN0.d.ts
 declare const shared1 = "shared1";
-//#endregion
 export { shared1 as t };"
 `;
 
 exports[`css.ts files 1`] = `
 "// index.d.ts
-//#region tests/fixtures/css-ts/file.css.d.ts
-export declare const myClass: string;
-//#endregion"
+export declare const myClass: string;"
 `;
 
 exports[`cyclic import 1`] = `
-"// a-CKazneQu.d.ts
-//#region b.d.ts
+"// a-Dn_DNwkd.d.ts
 declare class SomeClass<T extends SomeInterface<number>> {
   value: T;
   constructor(value: T);
   doSomething<T extends SomeInterface<number>>(value: T): T;
 }
 type SomeBoolean = boolean;
-//#endregion
-//#region a.d.ts
 interface SomeInterface<T> {
   value: T;
 }
 type T = SomeBoolean;
-//#endregion
 export { SomeClass as i, T as n, SomeBoolean as r, SomeInterface as t };
 // a.d.ts
-import { n as T, t as SomeInterface } from "./a-CKazneQu.js";
+import { n as T, t as SomeInterface } from "./a-Dn_DNwkd.js";
 export { SomeInterface, T };
 // b.d.ts
-import { i as SomeClass, r as SomeBoolean } from "./a-CKazneQu.js";
+import { i as SomeClass, r as SomeBoolean } from "./a-Dn_DNwkd.js";
 export { SomeBoolean, SomeClass };"
 `;
 
 exports[`declaration with export 1`] = `
 "// export-decl.d.ts
-//#region tests/fixtures/export-decl.d.ts
 export default function fn(): void;
-export declare const a = 1;
-//#endregion"
+export declare const a = 1;"
 `;
 
 exports[`declare module 1`] = `
 "// declare-module.d.ts
-import "./rolldown-runtime-ClRpJifh.js";
-//#region tests/fixtures/declare-module.d.ts
+import "./rolldown-runtime-CPxUEhZH.js";
 declare module "virtual" {
   const _default: string;
   export default _default;
-}
-//#endregion"
+}"
 `;
 
 exports[`decorators 1`] = `
 "// decorator.d.ts
-//#region tests/fixtures/decorator.d.ts
 export declare class Product {
   accessor price;
-}
-//#endregion"
+}"
 `;
 
 exports[`deterministic namespace import index 1`] = `
 "// a.d.ts
-//#region a.d.ts
 export type MyTypeA = import('stub_lib').LibType;
-//#endregion
 // b.d.ts
-//#region b.d.ts
 export type MyTypeB = import('stub_lib').LibType;
-//#endregion
 // c.d.ts
-//#region c.d.ts
-export type MyTypeC = import('stub_lib').LibType;
-//#endregion"
+export type MyTypeC = import('stub_lib').LibType;"
 `;
 
 exports[`deterministic namespace import index 2`] = `
 "// a.d.ts
-//#region a.d.ts
 export type MyTypeA = import('stub_lib').LibType;
-//#endregion
 // b.d.ts
-//#region b.d.ts
 export type MyTypeB = import('stub_lib').LibType;
-//#endregion
 // c.d.ts
-//#region c.d.ts
-export type MyTypeC = import('stub_lib').LibType;
-//#endregion"
+export type MyTypeC = import('stub_lib').LibType;"
 `;
 
 exports[`deterministic namespace import index 3`] = `
 "// a.d.ts
-//#region a.d.ts
 export type MyTypeA = import('stub_lib').LibType;
-//#endregion
 // b.d.ts
-//#region b.d.ts
 export type MyTypeB = import('stub_lib').LibType;
-//#endregion
 // c.d.ts
-//#region c.d.ts
-export type MyTypeC = import('stub_lib').LibType;
-//#endregion"
+export type MyTypeC = import('stub_lib').LibType;"
 `;
 
 exports[`dts input > custom chunk name 2`] = `
-"// chunks/D2aRkv2b-types.d.ts
-//#region tests/fixtures/dts-multi-input/types.d.ts
+"// chunks/RNYvPRwl-types.d.ts
 interface User {
   id: string;
   name: string;
 }
-//#endregion
 export { User as t };
 // input1.d.ts
-import { t as User } from "./chunks/D2aRkv2b-types.js";
-//#region tests/fixtures/dts-multi-input/input1.d.ts
+import { t as User } from "./chunks/RNYvPRwl-types.js";
 export interface ApiResponse {
   data: User;
 }
-//#endregion
 // input2.d.ts
-import { t as User } from "./chunks/D2aRkv2b-types.js";
-//#region tests/fixtures/dts-multi-input/input2.d.ts
+import { t as User } from "./chunks/RNYvPRwl-types.js";
 export interface UserWithAge extends User {
   age: number;
-}
-//#endregion"
+}"
 `;
 
 exports[`dts input > default chunk name 2`] = `
 "// input1.d.mts
-import { t as User } from "./types-D2aRkv2b.js";
-//#region tests/fixtures/dts-multi-input/input1.d.ts
+import { t as User } from "./types-RNYvPRwl.js";
 export interface ApiResponse {
   data: User;
 }
-//#endregion
 // input2.d.mts
-import { t as User } from "./types-D2aRkv2b.js";
-//#region tests/fixtures/dts-multi-input/input2.d.ts
+import { t as User } from "./types-RNYvPRwl.js";
 export interface UserWithAge extends User {
   age: number;
 }
-//#endregion
-// types-D2aRkv2b.d.ts
-//#region tests/fixtures/dts-multi-input/types.d.ts
+// types-RNYvPRwl.d.ts
 interface User {
   id: string;
   name: string;
 }
-//#endregion
 export { User as t };"
 `;
 
 exports[`dts input > input array 1`] = `
 "// dts-input.d.ts
-//#region tests/fixtures/dts-input.d.ts
-export declare class Foo {}
-//#endregion"
+export declare class Foo {}"
 `;
 
 exports[`dts input > input object 1`] = `
 "// index.d.ts
-//#region tests/fixtures/dts-input.d.ts
-export declare class Foo {}
-//#endregion"
+export declare class Foo {}"
 `;
 
 exports[`entryFileNames > custom chunk name 2`] = `
-"// chunks/D2aRkv2b-types.d.ts
-//#region tests/fixtures/dts-multi-input/types.d.ts
+"// chunks/RNYvPRwl-types.d.ts
 interface User {
   id: string;
   name: string;
 }
-//#endregion
 export { User as t };
 // input1.d.ts
-import { t as User } from "./chunks/D2aRkv2b-types.js";
-//#region tests/fixtures/dts-multi-input/input1.d.ts
+import { t as User } from "./chunks/RNYvPRwl-types.js";
 export interface ApiResponse {
   data: User;
 }
-//#endregion
 // input2.d.ts
-import { t as User } from "./chunks/D2aRkv2b-types.js";
-//#region tests/fixtures/dts-multi-input/input2.d.ts
+import { t as User } from "./chunks/RNYvPRwl-types.js";
 export interface UserWithAge extends User {
   age: number;
-}
-//#endregion"
+}"
 `;
 
 exports[`entryFileNames > default chunk name 1`] = `
-"// chunks/CR4BIi8r.d.ts
-//#region tests/fixtures/alias/shared.d.ts
+"// chunks/BBKVF6ft.d.ts
 interface Shared {
   shared: string;
 }
 declare const shared: Shared;
-//#endregion
-//#region tests/fixtures/alias/input2.d.ts
 interface Input2 extends Shared {
   input2: string;
 }
 declare const input2: Input2;
-//#endregion
 export { input2 as n, Input2 as t };
 // input1.d.mts
-import { t as Input2 } from "./chunks/CR4BIi8r.js";
-//#region tests/fixtures/alias/input1.d.ts
+import { t as Input2 } from "./chunks/BBKVF6ft.js";
 export interface Input1 extends Input2 {
   input1: string;
 }
 export declare const input1: Input1;
-//#endregion
 // input2.d.mts
-import { n as input2, t as Input2 } from "./chunks/CR4BIi8r.js";
+import { n as input2, t as Input2 } from "./chunks/BBKVF6ft.js";
 export { Input2, input2 };"
+`;
+
+exports[`file doc comment before an import 1`] = `
+"// index.d.ts
+/**
+ * Docs for this entry point.
+ *
+ * @module
+ */
+type Raw = string;
+export declare function makeId(value: string): Raw;
+export {};"
 `;
 
 exports[`import = syntax 1`] = `
@@ -308,39 +251,29 @@ declare namespace simple_d_exports {
   export { foo };
 }
 declare const foo: number;
-//#endregion
-//#region tests/fixtures/import-equals.d.ts
 import a = zodModule.foo.a;
 export import b = zodModule.foo.b;
-//#endregion
 export { a, simple_d_exports as simple, simple_d_exports as simple2, vue };"
 `;
 
 exports[`infer false branch 1`] = `
 "// index.d.ts
-//#region tests/fixtures/infer-false-branch/mod.d.ts
 type U = "mod";
-//#endregion
-//#region tests/fixtures/infer-false-branch/index.d.ts
 type U$1 = "local";
 export type Test<T> = T extends Array<infer U> ? (T extends Array<infer U2> ? U2 : U) : U$1;
-//#endregion
 export type { U };"
 `;
 
 exports[`infer type parameter 1`] = `
 "// infer-type-param.d.ts
-//#region tests/fixtures/infer-type-param.d.ts
 type Mapped<T> = T extends Record<string, infer U> ? U : never;
 export type Fn1<U = unknown> = () => Mapped<U>;
 export type Fn2<V = unknown> = () => Mapped<V>;
-//#endregion
 export {};"
 `;
 
 exports[`inline exports keep other declarations private 1`] = `
 "// export-decl-private.d.ts
-//#region tests/fixtures/export-decl-private.d.ts
 type Internal = {
   a: string;
 };
@@ -348,100 +281,83 @@ export declare class Foo {
   readonly x: Internal;
   constructor(x: Internal);
 }
-//#endregion
 export {};"
 `;
 
 exports[`input alias 1`] = `
-"// input2-2tKDBMMN.js
-//#endregion
-//#region input2.ts
-const input2 = {
-	shared: "shared",
-	input2: "input2"
-};
-//#endregion
-export { input2 as t };
-
-// input2-DJYu6NZD.d.ts
-//#region shared.d.ts
+"// input2-BBKVF6ft.d.ts
 interface Shared {
   shared: string;
 }
 declare const shared: Shared;
-//#endregion
-//#region input2.d.ts
 interface Input2 extends Shared {
   input2: string;
 }
 declare const input2: Input2;
-//#endregion
 export { input2 as n, Input2 as t };
+// input2-Cp1zUu5D.js
+// input2.ts
+const input2 = {
+	shared: "shared",
+	input2: "input2"
+};
+export { input2 as t };
+
 // output1.d.ts
-import { t as Input2 } from "./input2-DJYu6NZD.js";
-//#region input1.d.ts
+import { t as Input2 } from "./input2-BBKVF6ft.js";
 export interface Input1 extends Input2 {
   input1: string;
 }
 export declare const input1: Input1;
-//#endregion
 // output1.js
-import { t as input2 } from "./input2-2tKDBMMN.js";
-//#region input1.ts
+import { t as input2 } from "./input2-Cp1zUu5D.js";
+// input1.ts
 const input1 = {
 	...input2,
 	input1: "input1"
 };
-//#endregion
 export { input1 };
 
 // output2/index.d.ts
-import { n as input2, t as Input2 } from "../input2-DJYu6NZD.js";
+import { n as input2, t as Input2 } from "../input2-BBKVF6ft.js";
 export { Input2, input2 };
 // output2/index.js
-export { t as input2 } from "../input2-2tKDBMMN.js";
+export { t as input2 } from "../input2-Cp1zUu5D.js";
 "
 `;
 
 exports[`manualChunks 1`] = `
 "// entry.d.ts
-import { t as shared1 } from "./shared1-chunk-qFQGuNhB.js";
-//#region tests/fixtures/manual-chunk/shared2.d.ts
+import { t as shared1 } from "./shared1-chunk-4GFHveN0.js";
 export declare const shared2 = "shared2";
-//#endregion
 export { shared1 };
-// shared1-chunk-qFQGuNhB.d.ts
-//#region tests/fixtures/manual-chunk/shared1.d.ts
+// shared1-chunk-4GFHveN0.d.ts
 declare const shared1 = "shared1";
-//#endregion
 export { shared1 as t };"
 `;
 
 exports[`method signature 1`] = `
 "// index.d.ts
-//#region tests/fixtures/method-signature/mod.d.ts
 declare const a = "aa";
 declare const b = "bb";
 declare const c = "cc";
-//#endregion
-//#region tests/fixtures/method-signature/index.d.ts
 export interface Test {
   [a]: string;
   [b](): string;
   get [c](): string;
 }
-//#endregion
 export {};"
 `;
 
 exports[`re-export from lib > both 1`] = `
-"// a.d.ts
-export * from "stub-lib";
+"// a-B4zIqhFh.d.ts
 import * as import_stub_lib from "stub-lib";
-//#endregion
 export { import_stub_lib as t };
+// a.d.ts
+import "./a-B4zIqhFh.js";
+export * from "stub-lib";
 // b.d.ts
-import { t as a_d_exports } from "./a.js";
+import { t as a_d_exports } from "./a-B4zIqhFh.js";
 type LibType = a_d_exports.LibType;
 export type { LibType };"
 `;
@@ -460,33 +376,36 @@ export type { LibType };"
 
 exports[`real css imports are externalized 1`] = `
 "// index.d.ts
-//#region tests/fixtures/css-real/index.d.ts
-export declare const foo: number;
-//#endregion"
+export declare const foo: number;"
 `;
 
 exports[`resolve dts 1`] = `
 "// index.d.ts
-//#region tests/fixtures/resolve-dts/mod.d.ts
 type Foo = string;
-//#endregion
 export type { Foo };
 // index.js
 "
 `;
 
+exports[`resolve paths > resolver: oxc 1`] = `
+"// index.d.ts
+export declare const foo = 42;"
+`;
+
+exports[`resolve paths > resolver: tsc 1`] = `
+"// index.d.ts
+export declare const foo = 42;"
+`;
+
 exports[`scss imports are externalized 1`] = `
 "// index.d.ts
-//#region tests/fixtures/css-scss/index.d.ts
-export declare const foo: number;
-//#endregion"
+export declare const foo: number;"
 `;
 
 exports[`side effects 1`] = `
 "// index.d.ts
 import "./mod.js";
 // mod.d.ts
-//#region tests/fixtures/side-effects/mod.d.ts
 declare global {
   let sideEffectExecuted: boolean;
 }
@@ -495,101 +414,54 @@ export {};"
 
 exports[`sub namespace 1`] = `
 "// sub-namespace.d.ts
-//#region tests/fixtures/sub-namespace.d.ts
 export declare namespace Foo.Bar {
   export {};
-}
-//#endregion"
+}"
 `;
 
 exports[`tree-shaking 1`] = `
 "// index.d.ts
-//#region tests/fixtures/tree-shaking/mod.d.ts
 type A = string;
-//#endregion
 export type { A };
 // index.js
 "
 `;
 
-exports[`tsgo with custom path 1`] = `
-"// basic.d.ts
-//#region tests/fixtures/basic.d.ts
-export declare const foo: number;
-type SomeType<T> = T;
-type FooType = string;
-interface Interface {}
-export declare function fn(arg0: SomeType<FooType>, opt: Interface): void;
-export declare enum Enum {
-  A = 0,
-  B = 1,
-  C = 2
-}
-export declare class Cls {
-  foo: string;
-  fn(e: Enum): void;
-}
-//#endregion
-export {};
-// basic.js
-//#region tests/fixtures/basic.ts
-const foo = 42;
-function fn(arg0, opt) {}
-let Enum = /* @__PURE__ */ function(Enum) {
-	Enum[Enum["A"] = 0] = "A";
-	Enum[Enum["B"] = 1] = "B";
-	Enum[Enum["C"] = 2] = "C";
-	return Enum;
-}({});
-var Cls = class {
-	foo;
-	fn(e) {}
-};
-//#endregion
-export { Cls, Enum, fn, foo };
-"
+exports[`tree-shaking namespace import referenced by qualified name 1`] = `
+"// index.d.ts
+type A$1 = string;
+declare const b$1: number;
+export type A = A$1;
+export declare const b: typeof b$1;
+export {};"
 `;
 
 exports[`tsx 1`] = `
 "// tsx.d.ts
 import { JSX } from "solid-js";
-//#region tests/fixtures/tsx.d.ts
 export declare function createComponent(): JSX.HTMLAttributes<HTMLElement>;
-//#endregion
 // tsx.js
 import { jsx } from "react/jsx-runtime";
-//#region tests/fixtures/tsx.tsx
+// tests/fixtures/tsx.tsx
 function createComponent() {
 	return /* @__PURE__ */ jsx("div", {});
 }
-//#endregion
 export { createComponent };
 "
 `;
 
 exports[`type-only export 1`] = `
 "// index.d.ts
-//#endregion
-//#region tests/fixtures/type-only-export/mod.d.ts
 declare class A {}
 declare class B {}
 declare namespace namespace_d_exports {
   export { ns };
 }
 declare const ns = 42;
-//#endregion
-//#region tests/fixtures/type-only-export/all.d.ts
 declare const all = 42;
-//#endregion
-//#region tests/fixtures/type-only-export/chain-c.d.ts
 interface c {}
 declare const runtime = 1;
-//#endregion
-//#region tests/fixtures/type-only-export/chain-b.d.ts
 interface Local {}
-//#endregion
-//#region tests/fixtures/type-only-export/class-source.d.ts
 declare class TypeOnlyClass {}
-//#endregion
 export { A as RuntimeA, type A as TypeA, type A as TypeC, type B as TypeB, type TypeOnlyClass, type all, type c, type namespace_d_exports as ns, runtime, type Local as typeOnly };"
 `;

@@ -105,6 +105,7 @@ export function createDtsResolvePlugin({
           }
         }
 
+        // eslint-disable-next-line unicorn/prefer-early-return
         if (isSourceFile(dtsResolution)) {
           debug('Resolving dts import to source file:', id)
           // It's a .ts / custom language source file, so we load it to ensure its .d.ts is generated,

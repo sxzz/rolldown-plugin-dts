@@ -1,7 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "type": "module",
-  "version": "0.28.7",
+  "version": "0.29.0",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
   "license": "MIT",
@@ -21,6 +21,7 @@
     "vite-plugin",
     "dts",
     "typescript",
+    "tsrs",
     "vue",
     "jsdoc",
     "volar"
@@ -46,7 +47,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "12.10.1",
+      "version": "12.16.1",
       "onFail": "download"
     }
   },
@@ -62,21 +63,21 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "@typescript/native-preview": "*",
     "@volar/typescript": "~2.4.0",
     "@vue/language-core": "~3.2.0 || ~3.3.0",
     "rolldown": "^1.2.0",
-    "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0",
+    "tsrs": "*",
+    "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0 || ~7.1.0-0",
     "vue-tsc": "~3.2.0 || ~3.3.0"
   },
   "peerDependenciesMeta": {
-    "@typescript/native-preview": {
-      "optional": true
-    },
     "@volar/typescript": {
       "optional": true
     },
     "@vue/language-core": {
+      "optional": true
+    },
+    "tsrs": {
       "optional": true
     },
     "typescript": {
@@ -89,9 +90,7 @@
   "dependencies": {
     "get-tsconfig": "catalog:prod",
     "obug": "catalog:prod",
-    "yuku-ast": "catalog:prod",
-    "yuku-codegen": "catalog:prod",
-    "yuku-parser": "catalog:prod"
+    "yuku": "catalog:prod"
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "catalog:",
@@ -102,7 +101,6 @@
     "@ts-macro/language-plugin": "catalog:",
     "@ts-macro/tsc": "catalog:",
     "@types/node": "catalog:",
-    "@typescript/native-preview": "catalog:",
     "@volar/typescript": "catalog:",
     "@vue/language-core": "catalog:",
     "arktype": "catalog:",
@@ -113,7 +111,9 @@
     "ts-macro": "catalog:",
     "tsdown": "catalog:",
     "tsnapi": "catalog:",
+    "tsrs": "catalog:",
     "typescript": "catalog:",
+    "typescript-next": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:",
     "vue-tsc": "catalog:",

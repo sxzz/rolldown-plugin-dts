@@ -1,11 +1,11 @@
-import { b, is, walk } from 'yuku-ast'
-import { generate } from 'yuku-codegen'
-import { parse, type ParseResult } from 'yuku-parser'
+import { b, parse, print, walk, type SourceFile } from 'yuku'
+import { is } from 'yuku/utils'
 import {
   filename_js_to_dts,
   RE_DTS,
   RE_DTS_MAP,
   RE_NODE_MODULES,
+  RE_ROLLDOWN_RUNTIME,
   replaceTemplateName,
   resolveTemplateFn,
 } from '../filename.ts'
@@ -45,13 +45,15 @@ import type {
   TypeParams,
 } from './types.ts'
 import type {
+  OutputBundle,
+  OutputChunk,
   Plugin,
   RenderedChunk,
   SourceMapInput,
   TransformPluginContext,
   TransformResult,
 } from 'rolldown'
-import type * as t from 'yuku-parser'
+import type * as t from 'yuku'
 
 // input:
 // export declare function x(xx: X): void
@@ -70,7 +72,12 @@ export function createFakeJsPlugin({
 }: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin {
   let declarationIdx = 0
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
+  const moduleDeclarationsMap = new Map<
+    string /* filename */,
+    number[] /* declaration ids */
+  >()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
+  const fileCommentsMap = new Map<string /* filename */, t.Comment[]>()
   const moduleExportsMap = new Map<string /* filename */, ModuleExports>()
   const warnedCjsDtsInputs = new Set<string>()
 
@@ -137,6 +144,8 @@ export function createFakeJsPlugin({
           delete bundle[chunk.fileName]
         }
       }
+
+      removeDtsOnlyRuntimeChunks(bundle)
     },
   }
 
@@ -145,9 +154,10 @@ export function createFakeJsPlugin({
     code: string,
     id: string,
   ): Promise<TransformResult> {
-    let file: ParseResult
+    let file: SourceFile
     try {
       file = parse(code, {
+        path: id,
         lang: 'dts',
         sourceType: 'module',
         attachComments: true,
@@ -158,6 +168,11 @@ export function createFakeJsPlugin({
         { cause: error },
       )
     }
+
+    // A watch rebuild transforms changed modules again, so drop what the
+    // previous transform stored. Unchanged modules may keep their cached
+    // output with incremental builds, so their state must stay.
+    clearModuleState(id)
 
     const { program } = file
     moduleExportsMap.set(id, await collectModuleExports(this, program.body, id))
@@ -184,7 +199,16 @@ export function createFakeJsPlugin({
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.ProgramStatement) => (program.body[i] = stmt)
-      if (rewriteImportExport(stmt, setStmt, appendStmts)) continue
+      if (rewriteImportExport(stmt, setStmt, appendStmts)) {
+        // The file's doc comment, e.g. `@module`, is attached to its first
+        // statement. An import or export keeps no comments, so save it for
+        // `renderChunk` to restore.
+        if (i === 0) {
+          const docComments = stmt.comments?.filter(isDocComment)
+          if (docComments?.length) fileCommentsMap.set(id, docComments)
+        }
+        continue
+      }
 
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
@@ -275,7 +299,7 @@ export function createFakeJsPlugin({
         decl.comments = stmt.comments
       }
 
-      const declarationId = registerDeclaration({
+      const declarationId = registerDeclaration(id, {
         decl,
         deps,
         bindings,
@@ -295,9 +319,6 @@ export function createFakeJsPlugin({
       }) as t.NumericLiteral
       const depsBody: t.ArrayExpression = b.ArrayExpression({ elements: deps })
       const depsNode: t.ArrowFunctionExpression = b.ArrowFunctionExpression({
-        id: null,
-        generator: false,
-        async: false,
         params: params.map(({ name }) => b.Identifier({ name })),
         body: depsBody,
         expression: true,
@@ -317,7 +338,6 @@ export function createFakeJsPlugin({
         b.CallExpression({
           callee: b.Identifier({ name: 'sideEffect' }),
           arguments: [bindings[0]],
-          optional: false,
         })
       const runtimeArrayNode = runtimeBindingArrayExpression([
         declarationIdNode,
@@ -353,15 +373,12 @@ export function createFakeJsPlugin({
         // export { ${binding} as default }
         appendStmts.push(
           b.ExportNamedDeclaration({
-            declaration: null,
             specifiers: [
               b.ExportSpecifier({
                 local: bindings[0],
                 exported: b.Identifier({ name: 'default' }),
               }),
             ],
-            source: null,
-            attributes: [],
           }),
         )
         // replace the whole statement
@@ -378,8 +395,6 @@ export function createFakeJsPlugin({
         b.ExpressionStatement({
           expression: b.CallExpression({
             callee: b.Identifier({ name: 'sideEffect' }),
-            arguments: [],
-            optional: false,
           }),
         }),
       )
@@ -391,12 +406,7 @@ export function createFakeJsPlugin({
       ...appendStmts,
     ]
 
-    const result = generate(program, {
-      comments: false,
-      ...(sourcemap && {
-        sourceMap: { source: code, sourceFileName: id },
-      }),
-    })
+    const result = print(file, { comments: 'none', sourceMap: sourcemap })
 
     return {
       code: result.code,
@@ -409,9 +419,10 @@ export function createFakeJsPlugin({
       return
     }
 
-    let file: ParseResult
+    let file: SourceFile
     try {
       file = parse(code, {
+        path: chunk.fileName,
         lang: 'ts',
         sourceType: 'module',
         attachComments: true,
@@ -535,7 +546,7 @@ export function createFakeJsPlugin({
     const body: t.ProgramStatement[] = []
     // comments of dropped statements, e.g. the `//#endregion` in front of an
     // `export { ... }` that became empty because it was inlined
-    let danglingComments: t.AttachedComment[] = []
+    let danglingComments: t.Comment[] = []
 
     for (const node of program.body) {
       const rendered = renderStatement(node)
@@ -572,14 +583,15 @@ export function createFakeJsPlugin({
     }
 
     if (needsScopeMarker(program.body)) {
-      program.body.push(
-        b.ExportNamedDeclaration({
-          declaration: null,
-          specifiers: [],
-          source: null,
-          attributes: [],
-        }),
-      )
+      program.body.push(b.ExportNamedDeclaration({}))
+    }
+
+    // recover the entry's doc comment, but not those of the modules it inlines
+    const fileComments =
+      chunk.facadeModuleId && fileCommentsMap.get(chunk.facadeModuleId)
+    if (fileComments) {
+      program.body[0].comments ||= []
+      program.body[0].comments.unshift(...fileComments)
     }
 
     // recover comments
@@ -596,30 +608,20 @@ export function createFakeJsPlugin({
           commentsValue.add(id)
           comments.add(c)
         })
-        commentsMap.delete(id)
       }
     }
     if (comments.size) {
       program.body[0].comments ||= []
       program.body[0].comments.unshift(
-        ...Array.from(comments, (c): t.AttachedComment => ({
-          type: c.type,
-          value: c.value,
+        ...Array.from(comments, (c): t.Comment => ({
+          ...c,
           position: 'before',
           sameLine: false,
         })),
       )
     }
 
-    const result = generate(program, {
-      comments: true,
-      ...(sourcemap && {
-        sourceMap: {
-          source: code,
-          sourceFileName: chunk.fileName,
-        },
-      }),
-    })
+    const result = print(file, { comments: 'all', sourceMap: sourcemap })
 
     return {
       // a chunk ending with a comment, e.g. `//#endregion`, is generated with a
@@ -630,10 +632,25 @@ export function createFakeJsPlugin({
     }
   }
 
-  function registerDeclaration(info: DeclarationInfo) {
+  function registerDeclaration(id: string, info: DeclarationInfo) {
     const declarationId = declarationIdx++
     declarationMap.set(declarationId, info)
+
+    let ids = moduleDeclarationsMap.get(id)
+    if (!ids) moduleDeclarationsMap.set(id, (ids = []))
+    ids.push(declarationId)
+
     return declarationId
+  }
+
+  function clearModuleState(id: string) {
+    for (const declarationId of moduleDeclarationsMap.get(id) || []) {
+      declarationMap.delete(declarationId)
+    }
+    moduleDeclarationsMap.delete(id)
+    moduleExportsMap.delete(id)
+    commentsMap.delete(id)
+    fileCommentsMap.delete(id)
   }
 
   function getDeclaration(declarationId: number) {
@@ -675,4 +692,42 @@ function needsScopeMarker(body: t.ProgramStatement[]): boolean {
 
   // Inline exports alone do not prevent private declarations from being exported.
   return !hasModuleStatement || hasPrivateDeclaration
+}
+
+function removeDtsOnlyRuntimeChunks(bundle: OutputBundle): void {
+  const chunks = Object.values(bundle).filter(
+    (chunk): chunk is OutputChunk => chunk.type === 'chunk',
+  )
+
+  for (const chunk of chunks) {
+    if (
+      chunk.moduleIds.length !== 1 ||
+      !RE_ROLLDOWN_RUNTIME.test(chunk.moduleIds[0])
+    )
+      continue
+
+    const importers = chunks.filter((importer) =>
+      importer.imports.includes(chunk.fileName),
+    )
+    if (
+      importers.length === 0 ||
+      importers.some((importer) => !RE_DTS.test(importer.fileName))
+    )
+      continue
+
+    delete bundle[chunk.fileName]
+    for (const importer of importers) {
+      importer.imports = importer.imports.filter(
+        (fileName) => fileName !== chunk.fileName,
+      )
+    }
+  }
+}
+
+function isDocComment(comment: t.Comment): boolean {
+  return (
+    comment.position === 'before' &&
+    comment.type === 'Block' &&
+    comment.value.startsWith('*')
+  )
 }
