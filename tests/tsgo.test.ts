@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, symlink } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -280,6 +280,34 @@ test('tsgo vfs uses transformed source code', async () => {
   expect(disk.snapshot).toContain('foo: number')
   expect(disk.snapshot).not.toContain("foo: 'transformed'")
   expect(virtual.snapshot).toContain("foo: 'transformed'")
+})
+
+test('emits package sources through referenced projects', async () => {
+  const fixture = path.resolve(dirname, 'fixtures/tsgo-project-references')
+  await Promise.all(
+    [
+      { consumer: 'app', name: 'model', target: 'lib' },
+      { consumer: 'lib', name: 'base', target: 'base' },
+    ].map(async ({ consumer, name, target }) => {
+      const directory = path.join(fixture, consumer, 'node_modules/@fixture')
+      const link = path.join(directory, name)
+      await mkdir(directory, { recursive: true })
+      await rm(link, { force: true, recursive: true })
+      await symlink(path.join(fixture, target), link, 'junction')
+    }),
+  )
+  const { snapshot } = await rolldownBuild(
+    path.join(fixture, 'app/src/index.ts'),
+    [
+      dts({
+        generator: 'tsgo',
+        tsconfig: path.join(fixture, 'app/tsconfig.json'),
+        tsgo: { moduleUrl },
+      }),
+    ],
+  )
+
+  expect(snapshot).toContain('readonly value: string')
 })
 
 test.each([false, true])(
