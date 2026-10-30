@@ -72,6 +72,10 @@ export function createFakeJsPlugin({
 }: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin {
   let declarationIdx = 0
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
+  const moduleDeclarationsMap = new Map<
+    string /* filename */,
+    number[] /* declaration ids */
+  >()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
   const fileCommentsMap = new Map<string /* filename */, t.Comment[]>()
   const moduleExportsMap = new Map<string /* filename */, ModuleExports>()
@@ -164,6 +168,11 @@ export function createFakeJsPlugin({
         { cause: error },
       )
     }
+
+    // A watch rebuild transforms changed modules again, so drop what the
+    // previous transform stored. Unchanged modules may keep their cached
+    // output with incremental builds, so their state must stay.
+    clearModuleState(id)
 
     const { program } = file
     moduleExportsMap.set(id, await collectModuleExports(this, program.body, id))
@@ -290,7 +299,7 @@ export function createFakeJsPlugin({
         decl.comments = stmt.comments
       }
 
-      const declarationId = registerDeclaration({
+      const declarationId = registerDeclaration(id, {
         decl,
         deps,
         bindings,
@@ -599,7 +608,6 @@ export function createFakeJsPlugin({
           commentsValue.add(id)
           comments.add(c)
         })
-        commentsMap.delete(id)
       }
     }
     if (comments.size) {
@@ -624,10 +632,25 @@ export function createFakeJsPlugin({
     }
   }
 
-  function registerDeclaration(info: DeclarationInfo) {
+  function registerDeclaration(id: string, info: DeclarationInfo) {
     const declarationId = declarationIdx++
     declarationMap.set(declarationId, info)
+
+    let ids = moduleDeclarationsMap.get(id)
+    if (!ids) moduleDeclarationsMap.set(id, (ids = []))
+    ids.push(declarationId)
+
     return declarationId
+  }
+
+  function clearModuleState(id: string) {
+    for (const declarationId of moduleDeclarationsMap.get(id) || []) {
+      declarationMap.delete(declarationId)
+    }
+    moduleDeclarationsMap.delete(id)
+    moduleExportsMap.delete(id)
+    commentsMap.delete(id)
+    fileCommentsMap.delete(id)
   }
 
   function getDeclaration(declarationId: number) {
