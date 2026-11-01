@@ -65,6 +65,7 @@ import type * as t from 'yuku'
 // output:
 // export declare function x$1(xx: X$1): void
 
+const RE_SYNTHESIZED_DEFAULT = /^_default(?:_\d+)?$/
 const RE_SOURCE_MAPPING_URL = /\n?\/\/# sourceMappingURL=[^\n]*\n?$/
 
 export function createFakeJsPlugin({
@@ -213,6 +214,22 @@ export function createFakeJsPlugin({
 
     const appendStmts: t.ProgramStatement[] = []
     const namespaceStmts: NamespaceMap = new Map()
+
+    // For `export default <expr>`, TypeScript emits `declare const _default: T`
+    // and `export default _default`, and only maps the latter back to the
+    // source. Map the synthesized binding to that identifier as well.
+    const defaultExportRefs = new Map<string, t.Identifier>()
+    if (sourcemap) {
+      for (const stmt of program.body) {
+        if (
+          stmt.type === 'ExportDefaultDeclaration' &&
+          stmt.declaration.type === 'Identifier' &&
+          RE_SYNTHESIZED_DEFAULT.test(stmt.declaration.name)
+        ) {
+          defaultExportRefs.set(stmt.declaration.name, stmt.declaration)
+        }
+      }
+    }
 
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.ProgramStatement) => (program.body[i] = stmt)
@@ -376,10 +393,14 @@ export function createFakeJsPlugin({
         declarations: [
           b.VariableDeclarator({
             id: b.ArrayPattern({
-              elements: bindings.map((binding) => ({
-                ...binding,
-                typeAnnotation: null,
-              })),
+              elements: bindings.map((binding) => {
+                const ref = defaultExportRefs.get(binding.name)
+                return {
+                  ...binding,
+                  ...(ref && { start: ref.start, end: ref.end }),
+                  typeAnnotation: null,
+                }
+              }),
             }),
             init: runtimeArrayNode,
           }),

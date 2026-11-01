@@ -146,6 +146,44 @@ test.each([true, false])(
   },
 )
 
+// https://github.com/rolldown/tsdown/issues/426
+test.each([
+  ['tsc', { generator: 'tsc', tsc: { newContext: true } }],
+  ['tsgo', { generator: 'tsgo', tsgo: { moduleUrl: tsgoModuleUrl } }],
+] as const)('%s maps a default exported expression', async (name, options) => {
+  const root = path.resolve(
+    import.meta.dirname,
+    'fixtures/source-map-default-export',
+  )
+  const dir = path.join(tempDir, `source-map-default-export-${name}`)
+  await build({
+    input: path.resolve(root, 'index.ts'),
+    plugins: [
+      dts({
+        ...options,
+        tsconfig: path.resolve(root, 'tsconfig.json'),
+        sourcemap: true,
+        emitDtsOnly: true,
+      }),
+    ],
+    output: { dir },
+    write: true,
+  })
+
+  const code = await readFile(path.resolve(dir, 'index.d.ts'), 'utf8')
+  expect(code).toContain('declare const _default: number;')
+
+  const sourcemap = await readFile(path.resolve(dir, 'index.d.ts.map'), 'utf8')
+  const consumer = new SourceMapConsumer(JSON.parse(sourcemap))
+  const mappings: any[] = []
+  consumer.eachMapping((mapping) => {
+    mappings.push(mapping)
+  })
+  expect(mappings.length).toBeGreaterThan(0)
+  // the `export default value + 1` statement
+  expect(mappings.map((mapping) => mapping.originalLine)).toContain(3)
+})
+
 // https://github.com/rolldown/tsdown/issues/975
 test('empty dts chunk does not break output sourcemap', async () => {
   const warnings: string[] = []
