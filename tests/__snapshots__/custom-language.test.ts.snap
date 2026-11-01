@@ -39,10 +39,7 @@ export declare const foo: string;
 // tests/fixtures/custom-language/foo.custom
 const foo = "bar";
 export { foo };
-
-//# sourceMappingURL=main.js.map
-// main.js.map
-{"version":3,"file":"main.js","names":[],"sources":[],"mappings":""}"
+"
 `;
 
 exports[`volar > ts-macro > ts-macro w/ ts-compiler 1`] = `

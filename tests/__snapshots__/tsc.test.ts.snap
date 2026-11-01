@@ -24,10 +24,7 @@ export declare const a = 1;
 // tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
 export { a };
-
-//# sourceMappingURL=index.js.map
-// index.js.map
-{"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
+"
 `;
 
 exports[`tsc > compiler project sourcemap (build: true) 2`] = `
@@ -40,10 +37,7 @@ export declare const a = 1;
 // tests/fixtures/deep-source-map/src/index.ts
 const a = 1;
 export { a };
-
-//# sourceMappingURL=index.js.map
-// index.js.map
-{"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
+"
 `;
 
 exports[`tsc > composite references incremental 1`] = `

@@ -204,3 +204,33 @@ test.each([true, 'inline'] as const)(
     expect(jsChunk.code).toContain('//# sourceMappingURL=')
   },
 )
+
+// https://github.com/rolldown/tsdown/issues/360
+test.each([undefined, false] as const)(
+  'enable dts source map only does not emit JS source maps (sourcemap: %s)',
+  async (sourcemap) => {
+    const { chunks } = await rolldownBuild(
+      input,
+      [dts({ sourcemap: true })],
+      {},
+      { sourcemap },
+    )
+
+    expect(chunks.map((chunk) => chunk.fileName).toSorted()).toEqual([
+      'index.d.ts',
+      'index.d.ts.map',
+      'index.js',
+      'rolldown-runtime-D8jQpDG7.js',
+    ])
+
+    const dtsChunk = chunks.find((chunk) => chunk.fileName === 'index.d.ts')
+    if (dtsChunk?.type !== 'chunk') throw new Error('missing index.d.ts')
+    expect(dtsChunk.code).toContain('//# sourceMappingURL=index.d.ts.map')
+
+    for (const chunk of chunks) {
+      if (chunk.type !== 'chunk' || chunk.fileName === 'index.d.ts') continue
+      expect(chunk.code).not.toContain('sourceMappingURL')
+      expect(chunk.map).toBeNull()
+    }
+  },
+)

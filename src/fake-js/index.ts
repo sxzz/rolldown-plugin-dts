@@ -82,6 +82,8 @@ export function createFakeJsPlugin({
   const fileCommentsMap = new Map<string /* filename */, t.Comment[]>()
   const moduleExportsMap = new Map<string /* filename */, ModuleExports>()
   const warnedCjsDtsInputs = new Set<string>()
+  // whether declaration maps forced `output.sourcemap` on for JS chunks too
+  let jsSourcemapForced = false
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
@@ -94,6 +96,7 @@ export function createFakeJsPlugin({
       }
 
       const { chunkFileNames, entryFileNames } = options
+      jsSourcemapForced = !options.sourcemap && sourcemap
       return {
         ...options,
         sourcemap: options.sourcemap || sourcemap,
@@ -146,6 +149,23 @@ export function createFakeJsPlugin({
           chunk.code = chunk.code.replace(RE_SOURCE_MAPPING_URL, '')
           chunk.map = null
           chunk.sourcemapFileName = null
+          continue
+        }
+
+        // the other way around: declaration maps turn `sourcemap` on for the
+        // whole output, so drop the maps the user didn't ask for from JS chunks
+        if (
+          jsSourcemapForced &&
+          !RE_DTS.test(chunk.fileName) &&
+          !RE_DTS_MAP.test(chunk.fileName)
+        ) {
+          if (chunk.type === 'chunk') {
+            chunk.code = chunk.code.replace(RE_SOURCE_MAPPING_URL, '')
+            chunk.map = null
+            chunk.sourcemapFileName = null
+          } else if (chunk.fileName.endsWith('.map')) {
+            delete bundle[chunk.fileName]
+          }
           continue
         }
 
