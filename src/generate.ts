@@ -1,3 +1,4 @@
+import { existsSync, realpathSync } from 'node:fs'
 import { access } from 'node:fs/promises'
 import path from 'node:path'
 import { createDebug } from 'obug'
@@ -15,7 +16,7 @@ import {
 } from './filename.ts'
 import { createGenerator } from './generator/index.ts'
 import type { OptionsResolved } from './options.ts'
-import type { Plugin, PluginContext } from 'rolldown'
+import type { InputOptions, Plugin, PluginContext } from 'rolldown'
 
 const debug = createDebug('rolldown-plugin-dts:generate')
 
@@ -71,6 +72,42 @@ export function createGeneratePlugin(
    */
   const inputAliasMap = new Map<string, string>()
 
+  /**
+   * A map of dts id to source id, for the dts entries added to `input`
+   *
+   * Rolldown gives emitted entries a lower priority than input entries: a
+   * common chunk can take their file name, and a facade is kept when they are
+   * imported by another entry.
+   */
+  const dtsInputMap = new Map<string, string>()
+
+  function addDtsInput(
+    id: string,
+    { cwd: inputCwd = cwd, resolve }: InputOptions,
+  ): string | undefined {
+    if (
+      id[0] === '\0' ||
+      RE_DTS.test(id) ||
+      RE_NODE_MODULES.test(id) ||
+      (!RE_TS.test(id) &&
+        !RE_JSON.test(id) &&
+        (!emitJs || !RE_JS.test(id)) &&
+        !languageContext.isCustomLanguageFile(id))
+    ) {
+      return
+    }
+
+    // `options` has no `this.resolve`, so other inputs stay emitted entries.
+    let sourceId = path.resolve(inputCwd, id)
+    if (!existsSync(sourceId)) return
+    if (resolve?.symlinks !== false) sourceId = realpathSync(sourceId)
+    if (entryMatcher && !entryMatcher(path.relative(cwd, sourceId))) return
+
+    const dtsId = filename_to_dts(sourceId, languageContext)
+    dtsInputMap.set(dtsId, sourceId)
+    return dtsId
+  }
+
   let loadSource: PluginContext['load']
   const declarationGenerator = createGenerator(
     options,
@@ -91,12 +128,33 @@ export function createGeneratePlugin(
   return {
     name: 'rolldown-plugin-dts:generate',
 
+    options(options) {
+      const { input } = options
+      if (!input) return
+
+      if (typeof input === 'string' || Array.isArray(input)) {
+        const inputs = [input].flat()
+        const dtsInputs = inputs
+          .map((id) => addDtsInput(id, options))
+          .filter((id) => id !== undefined)
+        return { ...options, input: [...inputs, ...dtsInputs] }
+      }
+
+      const dtsInputs: Record<string, string> = {}
+      for (const [name, id] of Object.entries(input)) {
+        const dtsId = addDtsInput(id, options)
+        if (dtsId) dtsInputs[`${name}.d`] = dtsId
+      }
+      return { ...options, input: { ...input, ...dtsInputs } }
+    },
+
     async buildStart(options) {
       loadSource = this.load.bind(this)
       await declarationGenerator.init?.()
 
       if (!Array.isArray(options.input)) {
         for (const [name, id] of Object.entries(options.input)) {
+          if (dtsInputMap.has(id)) continue
           debug('resolving input alias %s -> %s', name, id)
           let resolved = await this.resolve(id)
           if (!id.startsWith('./')) {
@@ -134,7 +192,7 @@ export function createGeneratePlugin(
     },
 
     resolveId(id) {
-      if (!dtsMap.has(id)) return
+      if (!dtsMap.has(id) && !dtsInputMap.has(id)) return
 
       debug('resolve dts id %s', id)
       return { id }
@@ -161,7 +219,7 @@ export function createGeneratePlugin(
           declarationGenerator.addFile?.(code, id)
           debug('register dts source: %s', id)
 
-          if (isEntry) {
+          if (isEntry && !dtsInputMap.has(dtsId)) {
             const name = inputAliasMap.get(id)
             this.emitFile({
               type: 'chunk',
@@ -187,6 +245,13 @@ export function createGeneratePlugin(
         },
       },
       async handler(dtsId) {
+        // An input can load before its source is transformed. Always wait for
+        // the transform, `dtsMap` may hold the code of a previous build.
+        const sourceId = dtsInputMap.get(dtsId)
+        if (sourceId) {
+          await this.load({ id: sourceId, resolveDependencies: false })
+        }
+
         const module = dtsMap.get(dtsId)
         if (!module) return
 

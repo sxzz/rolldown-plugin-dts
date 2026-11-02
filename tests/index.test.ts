@@ -1,8 +1,9 @@
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
+import { rolldown, type OutputAsset, type OutputChunk } from 'rolldown'
 import { describe, expect, test } from 'vitest'
 import { dts, type Generator } from '../src/index.ts'
 
@@ -881,4 +882,114 @@ test('file doc comment removed before a rebuild', async () => {
   } finally {
     await rm(dir, { recursive: true, force: true })
   }
+})
+
+describe('entry chunk names', () => {
+  const root = path.resolve(dirname, 'fixtures/entry-chunk-name')
+  const outputOptions = {
+    entryFileNames: '[name].mjs',
+    chunkFileNames: '[name].mjs',
+    minifyInternalExports: false,
+  }
+  const dtsChunks = (chunks: (OutputChunk | OutputAsset)[]) =>
+    Object.fromEntries(
+      chunks
+        .filter(
+          (chunk): chunk is OutputChunk =>
+            chunk.type === 'chunk' && chunk.fileName.endsWith('.d.mts'),
+        )
+        .map((chunk) => [chunk.fileName, chunk]),
+    )
+
+  test('entry imported by another entry stays one chunk', async () => {
+    const { chunks } = await rolldownBuild(
+      { index: 'index.ts', shared: 'shared/index.ts' },
+      [dts({ oxc: {}, cwd: root })],
+      { cwd: root },
+      outputOptions,
+    )
+    const dtsFiles = dtsChunks(chunks)
+    expect(Object.keys(dtsFiles).toSorted()).toEqual([
+      'index.d.mts',
+      'shared.d.mts',
+    ])
+    expect(dtsFiles['index.d.mts'].exports).toEqual(['x'])
+    expect(dtsFiles['shared.d.mts'].exports).toEqual(['MyType'])
+  })
+
+  test('common chunk does not take the name of an entry', async () => {
+    const { chunks } = await rolldownBuild(
+      { index: 'uses-lib.ts', other: 'uses-lib-too.ts' },
+      [dts({ oxc: {}, cwd: root })],
+      { cwd: root },
+      outputOptions,
+    )
+    const dtsFiles = dtsChunks(chunks)
+    expect(dtsFiles['index.d.mts'].exports).toEqual(['a'])
+    expect(dtsFiles['other.d.mts'].exports).toEqual(['b'])
+    expect(dtsFiles['index2.d.mts'].isEntry).toBe(false)
+  })
+
+  test('array input pairs dts entries with js entries', async () => {
+    const { chunks } = await rolldownBuild(
+      ['index.ts', 'shared/index.ts'],
+      [dts({ oxc: {}, cwd: root })],
+      { cwd: root },
+      outputOptions,
+    )
+    const facades = Object.fromEntries(
+      chunks.map((chunk) => [
+        chunk.fileName,
+        path.relative(root, (chunk as OutputChunk).facadeModuleId!),
+      ]),
+    )
+    expect(facades).toEqual({
+      'index.d.mts': 'index.d.ts',
+      'index.mjs': 'index.ts',
+      'index2.d.mts': path.join('shared', 'index.d.ts'),
+      'index2.mjs': path.join('shared', 'index.ts'),
+    })
+  })
+
+  test('input without extension is still emitted', async () => {
+    const { chunks } = await rolldownBuild(
+      { shared: './shared/index' },
+      [dts({ oxc: {}, cwd: root })],
+      { cwd: root },
+      outputOptions,
+    )
+    expect(Object.keys(dtsChunks(chunks))).toEqual(['shared.d.mts'])
+  })
+
+  test('symlinked input', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'dts-entry-symlink-'))
+    try {
+      await symlink(root, path.join(dir, 'link'), 'junction')
+      const { chunks } = await rolldownBuild(
+        { shared: path.join(dir, 'link/shared/index.ts') },
+        [dts({ oxc: {} })],
+        {},
+        outputOptions,
+      )
+      expect(Object.keys(dtsChunks(chunks))).toEqual(['shared.d.mts'])
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('multiple outputs', async () => {
+    const bundle = await rolldown({
+      input: { index: path.resolve(root, 'index.ts') },
+      cwd: root,
+      plugins: [dts({ oxc: {}, cwd: root })],
+    })
+    try {
+      for (const dir of ['a', 'b']) {
+        const { output } = await bundle.generate({ ...outputOptions, dir })
+        expect(output.map((chunk) => chunk.fileName)).toContain('index.d.mts')
+      }
+    } finally {
+      await bundle.close()
+    }
+  })
 })
