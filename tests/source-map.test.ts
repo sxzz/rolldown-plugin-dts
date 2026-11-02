@@ -3,7 +3,7 @@ import path from 'node:path'
 import { SourceMapConsumer } from '@jridgewell/source-map'
 import { expectFilesSnapshot, rolldownBuild } from '@sxzz/test-utils'
 import { build } from 'rolldown'
-import { beforeAll, expect, test, vi } from 'vitest'
+import { beforeAll, describe, expect, test, vi } from 'vitest'
 import { dts } from '../src/index.ts'
 
 const tempDir = path.join(import.meta.dirname, 'temp')
@@ -145,6 +145,88 @@ test.each([true, false])(
     }
   },
 )
+
+// https://github.com/rolldown/tsdown/issues/426
+describe('default export binding', () => {
+  const root = path.resolve(
+    import.meta.dirname,
+    'fixtures/source-map-default-export',
+  )
+  const generators = {
+    tsc: { generator: 'tsc', tsc: { newContext: true } },
+    tsgo: { generator: 'tsgo', tsgo: { moduleUrl: tsgoModuleUrl } },
+    oxc: { generator: 'oxc' },
+  } as const
+
+  test.each([
+    // no mapping of its own, falls back to the `export default` statement
+    ['expression', 'tsc', [3, 0]],
+    ['expression', 'tsgo', [3, 0]],
+    ['member-expression', 'tsc', [3, 0]],
+    ['member-expression', 'tsgo', [3, 0]],
+    ['non-ascii', 'tsc', [3, 0]],
+    ['non-ascii', 'tsgo', [3, 0]],
+    ['export-assignment', 'tsc', [3, 0]],
+    ['export-assignment', 'tsgo', [3, 0]],
+    ['object', 'tsc', [3, 0]],
+    ['object', 'tsgo', [3, 0]],
+    // oxc maps the declaration itself
+    ['object', 'oxc', [3, 0]],
+    // the line has mappings already, the binding is left alone
+    ['typed', 'tsc', [6, 20]],
+    ['typed', 'tsgo', [6, 20]],
+    ['typed', 'oxc', [6, 0]],
+    // user declarations keep their position
+    ['user-binding', 'tsc', [1, 6]],
+    ['user-binding', 'tsgo', [1, 6]],
+    ['user-binding', 'oxc', [1, 6]],
+    ['user-class', 'tsc', [1, 6]],
+    ['user-class', 'tsgo', [1, 6]],
+    ['user-class', 'oxc', [1, 6]],
+    ['user-overload', 'tsc', [1, 9]],
+    ['user-overload', 'tsgo', [1, 9]],
+    ['user-overload', 'oxc', [1, 9]],
+    ['user-non-ascii', 'tsc', [2, 6]],
+    ['user-non-ascii', 'tsgo', [2, 6]],
+    ['user-non-ascii', 'oxc', [2, 6]],
+  ] as const)('%s (%s)', async (fixture, generator, [line, column]) => {
+    const dir = path.join(tempDir, `default-export-${fixture}-${generator}`)
+    await build({
+      input: path.resolve(root, `${fixture}.ts`),
+      plugins: [
+        dts({
+          ...generators[generator],
+          tsconfig: path.resolve(root, 'tsconfig.json'),
+          sourcemap: true,
+          emitDtsOnly: true,
+        }),
+      ],
+      output: { dir },
+      write: true,
+      logLevel: 'silent',
+    })
+
+    const fileName = path.resolve(dir, `${fixture}.d.ts`)
+    const lines = (await readFile(fileName, 'utf8')).split('\n')
+    const generatedLine = lines.findIndex((code) => code.includes('_default'))
+    const generatedColumn = lines[generatedLine].indexOf('_default')
+
+    const consumer = new SourceMapConsumer(
+      JSON.parse(await readFile(`${fileName}.map`, 'utf8')),
+    )
+    const mappings: any[] = []
+    consumer.eachMapping((mapping) => {
+      mappings.push(mapping)
+    })
+    expect(
+      mappings.find(
+        (mapping) =>
+          mapping.generatedLine === generatedLine + 1 &&
+          mapping.generatedColumn === generatedColumn,
+      ),
+    ).toMatchObject({ originalLine: line, originalColumn: column })
+  })
+})
 
 // https://github.com/rolldown/tsdown/issues/975
 test('empty dts chunk does not break output sourcemap', async () => {

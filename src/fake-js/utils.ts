@@ -82,6 +82,29 @@ export function isCjsDtsInputSyntax(node: t.ProgramStatement): boolean {
   )
 }
 
+export function findDefaultExportRef(
+  body: t.ProgramStatement[],
+): t.Identifier | undefined {
+  for (const stmt of body) {
+    const ref =
+      stmt.type === 'ExportDefaultDeclaration'
+        ? stmt.declaration
+        : stmt.type === 'TSExportAssignment'
+          ? stmt.expression
+          : undefined
+    if (ref) return ref.type === 'Identifier' ? ref : undefined
+  }
+}
+
+export function isLineMapped(
+  mappings: string,
+  code: string,
+  offset: number,
+): boolean {
+  const line = code.slice(0, offset).split('\n').length - 1
+  return !!mappings.split(';')[line]
+}
+
 export function overwriteNode<T>(node: t.Node, newNode: T): T {
   // clear object keys
   for (const key of Object.keys(node)) {
