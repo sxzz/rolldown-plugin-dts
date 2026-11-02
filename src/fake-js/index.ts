@@ -28,12 +28,14 @@ import {
 } from './runtime-binding.ts'
 import {
   collectReferenceDirectives,
+  findDefaultExportRef,
   getIdentifierIndex,
   getIdFromTSEntityName,
   inheritNodeComments,
   isCjsDtsInputSyntax,
   isHelperImport,
   isInfer,
+  isLineMapped,
   overwriteNode,
   pragmaComments,
 } from './utils.ts'
@@ -214,6 +216,22 @@ export function createFakeJsPlugin({
     const appendStmts: t.ProgramStatement[] = []
     const namespaceStmts: NamespaceMap = new Map()
 
+    // Generators map different statements of `export default <expr>`: tsc and
+    // tsgo only map `export default _default`, oxc only maps the declaration.
+    // The former is dropped below, so a binding on a line without mappings
+    // takes the position of its default export reference.
+    const defaultExportRef = sourcemap
+      ? findDefaultExportRef(program.body)
+      : undefined
+    const inputMappings = defaultExportRef
+      ? this.getCombinedSourcemap().mappings
+      : ''
+    const getBindingRange = (binding: t.Identifier) =>
+      binding.name === defaultExportRef?.name &&
+      !isLineMapped(inputMappings, code, binding.start)
+        ? { start: defaultExportRef.start, end: defaultExportRef.end }
+        : undefined
+
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.ProgramStatement) => (program.body[i] = stmt)
       if (rewriteImportExport(stmt, setStmt, appendStmts)) {
@@ -378,6 +396,7 @@ export function createFakeJsPlugin({
             id: b.ArrayPattern({
               elements: bindings.map((binding) => ({
                 ...binding,
+                ...getBindingRange(binding),
                 typeAnnotation: null,
               })),
             }),
