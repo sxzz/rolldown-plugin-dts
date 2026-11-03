@@ -1,4 +1,5 @@
 import path from 'node:path'
+import process from 'node:process'
 import { createDebug } from 'obug'
 import { RE_DTS, RE_NODE_MODULES } from '../filename.ts'
 import {
@@ -113,9 +114,7 @@ export class TsgoGenerator implements Generator {
           .flat()
           .filter(isMapperDiagnostic)
         if (diagnostics.length) {
-          throw new Error(
-            this.apiModule.formatDiagnostics(diagnostics, this.api),
-          )
+          throw new Error(this.formatDiagnostics(diagnostics))
         }
       }
     }
@@ -152,6 +151,13 @@ export class TsgoGenerator implements Generator {
 
   private get displayName(): string {
     return this.options.compiler === 'tsrs' ? 'tsrs' : 'TypeScript Go'
+  }
+
+  private formatDiagnostics(diagnostics: readonly Diagnostic[]): string {
+    const format = process.stderr.hasColors?.()
+      ? this.apiModule!.formatDiagnosticsWithColorAndContext
+      : this.apiModule!.formatDiagnostics
+    return format(diagnostics, this.api!)
   }
 
   private toTsFilename(fileName: string): string {
@@ -311,7 +317,7 @@ export class TsgoGenerator implements Generator {
     if (output.emitSkipped && output.diagnostics.length) {
       return {
         error: mapError(
-          this.apiModule.formatDiagnostics(output.diagnostics, this.api),
+          this.formatDiagnostics(output.diagnostics),
           tsFileName,
           fileName,
         ),
