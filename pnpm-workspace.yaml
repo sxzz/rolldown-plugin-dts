@@ -28,7 +28,7 @@ catalog:
   bumpp: ^12.3.0
   eslint: ^10.13.0
   prettier: ^3.9.10
-  rolldown: ^1.2.15
+  rolldown: ^1.2.16
   ts-macro: ^0.3.7
   tsdown: ^0.23.3
   tsnapi: ^1.5.0
