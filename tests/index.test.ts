@@ -660,12 +660,25 @@ test('declare module', async () => {
   expect(snapshot).toMatchSnapshot()
 })
 
+// `rolldownBuild` disables tree-shaking, so Rolldown includes its whole
+// runtime. Without code splitting, the runtime is inlined into the chunk.
+test('drops the inlined runtime import', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'fixtures/declare-module.ts'),
+    [dts({ dtsOnly: true })],
+    { platform: 'node' },
+    { codeSplitting: false },
+  )
+  expect(snapshot).not.toContain('node:module')
+  expect(snapshot).toContain('declare module "virtual"')
+})
+
 test('keeps createRequire imported by declarations', async () => {
-  // Without tree-shaking the inlined runtime imports `createRequire` as well.
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/runtime-create-require.d.ts'),
     [dts({ dtsOnly: true })],
     { platform: 'node' },
+    { codeSplitting: false },
   )
   expect(snapshot).toContain('import { createRequire } from "node:module"')
   expect(snapshot).toContain('typeof createRequire')

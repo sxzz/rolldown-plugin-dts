@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { b, parse, print, walk, type SourceFile } from 'yuku'
 import { is } from 'yuku/utils'
 import {
@@ -47,6 +48,8 @@ import type {
   TypeParams,
 } from './types.ts'
 import type {
+  FunctionPluginHooks,
+  NormalizedOutputOptions,
   OutputBundle,
   OutputChunk,
   Plugin,
@@ -66,6 +69,9 @@ import type * as t from 'yuku'
 // replace X with X$1
 // output:
 // export declare function x$1(xx: X$1): void
+
+// Rolldown does not export the type of this argument.
+type RenderChunkMeta = Parameters<FunctionPluginHooks['renderChunk']>[3]
 
 const RE_SOURCE_MAPPING_URL = /\n?\/\/# sourceMappingURL=[^\n]*\n?$/
 
@@ -460,7 +466,12 @@ export function createFakeJsPlugin({
     }
   }
 
-  function renderChunk(code: string, chunk: RenderedChunk) {
+  function renderChunk(
+    code: string,
+    chunk: RenderedChunk,
+    _outputOptions: NormalizedOutputOptions,
+    meta: RenderChunkMeta,
+  ) {
     if (!RE_DTS.test(chunk.fileName)) {
       return
     }
@@ -496,6 +507,7 @@ export function createFakeJsPlugin({
       node: t.ProgramStatement,
     ): t.ProgramStatement | null | false {
       if (isHelperImport(node)) return null
+      if (isRuntimeChunkImport(node, chunk, meta)) return null
       if (node.type === 'ExpressionStatement') return null
 
       const newNode = patchImportExport(node, exportPlan, cjsDefault)
@@ -624,8 +636,9 @@ export function createFakeJsPlugin({
 
     program.body = body
 
-    // Without tree-shaking, Rolldown inlines its whole runtime, whose code is
-    // dropped above but whose `createRequire` import would remain.
+    // With `treeshake: false`, Rolldown includes its whole runtime. Inlined
+    // into this chunk, its code is dropped above, but its `createRequire`
+    // import would remain.
     if (chunk.moduleIds.some((id) => RE_ROLLDOWN_RUNTIME.test(id))) {
       program.body = removeRuntimeImports(program.body)
     }
@@ -744,6 +757,28 @@ function needsScopeMarker(body: t.ProgramStatement[]): boolean {
 
   // Inline exports alone do not prevent private declarations from being exported.
   return !hasModuleStatement || hasPrivateDeclaration
+}
+
+/**
+ * Declarations never need the Rolldown runtime, and a runtime chunk imported
+ * only by declaration chunks is removed in `generateBundle`.
+ */
+function isRuntimeChunkImport(
+  node: t.ProgramStatement,
+  chunk: RenderedChunk,
+  meta: RenderChunkMeta,
+): boolean {
+  if (node.type !== 'ImportDeclaration' || node.specifiers.length) return false
+  const fileName = path.posix.join(
+    path.posix.dirname(chunk.fileName),
+    node.source.value,
+  )
+  const imported = meta.chunks[fileName]
+  return (
+    !!imported &&
+    imported.moduleIds.length === 1 &&
+    RE_ROLLDOWN_RUNTIME.test(imported.moduleIds[0])
+  )
 }
 
 function removeRuntimeImports(
