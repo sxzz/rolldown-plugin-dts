@@ -96,26 +96,27 @@ dts({
 
 ### General
 
-| Option            | Description                                                                               | Default                 |
-| ----------------- | ----------------------------------------------------------------------------------------- | ----------------------- |
-| `generator`       | Built-in generator name or a custom `Generator` implementation.                           | Inferred                |
-| `tsc`             | Options for the built-in `tsc` generator.                                                 | `{}`                    |
-| `entry`           | Glob or globs selecting files to emit. Supports `!` negation and paths relative to `cwd`. | Rolldown entries        |
-| `cwd`             | Base directory for config discovery, globs, and relative paths.                           | `process.cwd()`         |
-| `dtsOnly`         | Build declarations only. See [Declaration-only builds](#declaration-only-builds).         | `false`                 |
-| `tsconfig`        | Config path; `true` discovers one and `false` disables loading.                           | Nearest `tsconfig.json` |
-| `tsconfigRaw`     | Raw config values merged over the loaded config.                                          | `{}`                    |
-| `compilerOptions` | Compiler options merged over the loaded config.                                           | `{}`                    |
-| `sourcemap`       | Emit `.d.ts.map` files.                                                                   | `declarationMap`        |
-| `resolver`        | Resolve declaration imports with `oxc` or `tsc`.                                          | `oxc`                   |
-| `cjsDefault`      | Convert a single default export to `export =`.                                            | `false`                 |
-| `sideEffects`     | Mark declaration modules as having side effects.                                          | `false`                 |
-| `logger`          | Logger implementing `info`, `warn`, and `error`.                                          | `console`               |
+| Option            | Description                                                                                                          | Default                 |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `generator`       | Built-in generator name or a custom `Generator` implementation.                                                      | Inferred                |
+| `tsc`             | Options for the built-in `tsc` generator.                                                                            | `{}`                    |
+| `entry`           | Glob or globs filtering which Rolldown entries emit declarations. Supports `!` negation and paths relative to `cwd`. | All Rolldown entries    |
+| `cwd`             | Base directory for config discovery, globs, and relative paths.                                                      | `process.cwd()`         |
+| `dtsOnly`         | Build declarations only. See [Declaration-only builds](#declaration-only-builds).                                    | `false`                 |
+| `tsconfig`        | Config path; `true` discovers one and `false` disables loading.                                                      | Nearest `tsconfig.json` |
+| `tsconfigRaw`     | Raw config values merged over the loaded config.                                                                     | `{}`                    |
+| `compilerOptions` | Compiler options merged over the loaded config.                                                                      | `{}`                    |
+| `sourcemap`       | Emit `.d.ts.map` files.                                                                                              | `declarationMap`        |
+| `resolver`        | Resolve declaration imports with `oxc` or `tsc`.                                                                     | `oxc`                   |
+| `cjsDefault`      | Convert a single default export to `export =`.                                                                       | `false`                 |
+| `sideEffects`     | Mark declaration modules as having side effects.                                                                     | `false`                 |
+| `logger`          | Logger implementing `info`, `warn`, and `error`.                                                                     | `console`               |
 
 `tsc.*`, `oxc.*`, `tsgo.*`, and `tsrs.*` apply only to their respective
 generators.
 
-`entry` may include files that are not Rolldown entry points:
+`entry` filters Rolldown entries. It never adds declarations for files that
+are not entries. For example, to skip declarations for icon entries:
 
 ```ts
 dts({
