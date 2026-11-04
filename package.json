@@ -57,7 +57,7 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "test": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --fast",
     "format": "prettier --cache --write .",
     "release": "bumpp",
     "prepack": "pnpm run build"

@@ -33,6 +33,26 @@ export function TSEntityNameToRuntime(
   })
 }
 
+/**
+ * The reverse of {@link TSEntityNameToRuntime}, in place. A type name taken out
+ * as a runtime dependency comes back from Rolldown as a member expression,
+ * which the printer rejects in a type position.
+ */
+export function runtimeToTSEntityName(node: t.Node): void {
+  if (node.type !== 'MemberExpression') return
+
+  const { object, property } = node
+  runtimeToTSEntityName(object)
+  for (const key of ['object', 'property', 'computed', 'optional']) {
+    Reflect.deleteProperty(node, key)
+  }
+  Object.assign(node, {
+    type: 'TSQualifiedName',
+    left: object,
+    right: property,
+  })
+}
+
 export function getIdFromTSEntityName(
   node: t.TSTypeName,
 ): t.Identifier | t.ThisExpression {

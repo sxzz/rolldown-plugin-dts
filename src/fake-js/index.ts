@@ -39,6 +39,7 @@ import {
   isLineMapped,
   overwriteNode,
   pragmaComments,
+  runtimeToTSEntityName,
 } from './utils.ts'
 import type { OptionsResolved } from '../options.ts'
 import type {
@@ -582,6 +583,18 @@ export function createFakeJsPlugin({
           Object.assign(originalDep, transformedDep)
         }
       }
+
+      walk(declaration.decl, {
+        TSTypeReference(node) {
+          runtimeToTSEntityName(node.typeName)
+        },
+        TSTypeQuery(node) {
+          runtimeToTSEntityName(node.exprName)
+        },
+        TSQualifiedName(node) {
+          runtimeToTSEntityName(node.left)
+        },
+      })
 
       const kind = exportPlan.inlineKinds.get(declarationId!)
       const rendered = kind
