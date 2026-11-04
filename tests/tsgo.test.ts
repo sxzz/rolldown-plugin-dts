@@ -1,7 +1,8 @@
+import fs from 'node:fs'
 import { mkdir, readFile, rm, symlink } from 'node:fs/promises'
-import { createRequire } from 'node:module'
+import module, { createRequire } from 'node:module'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import url, { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { afterEach, expect, test, vi } from 'vitest'
 import { LanguageContext } from '../src/custom-language.ts'
@@ -227,7 +228,7 @@ test('tsgo with custom path', async () => {
   )
   const tsserverPath = (
     typeof getExePath === 'function' ? getExePath : getExePath.default
-  )()
+  )({ fs, module, path, url })
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/basic.ts'),
     [
