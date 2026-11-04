@@ -57,7 +57,7 @@ export interface TscOptions {
 // #endregion
 
 // #region Functions
-export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects, dtsOnly }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects" | "dtsOnly">): Plugin;
+export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
 export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "oxc" | "dtsOnly" | "languageContext" | "tsc" | "tsgo" | "tsrs" | "emitJs" | "sourcemap">): Plugin;
 export declare function dts(_?: Options): Plugin[];
 export declare function resolveOptions({ generator, entry, cwd, dtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, tsc, emitJs, oxc, tsgo, tsrs, ...deprecated }: Options): OptionsResolved;

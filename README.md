@@ -258,8 +258,7 @@ export default defineConfig({
 
 ## Code splitting
 
-When a build emits both JavaScript and declarations, declaration chunk names
-must end in `.d`:
+Declaration chunk names must end in `.d`:
 
 ```ts
 export default {

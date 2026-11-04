@@ -79,11 +79,7 @@ export function createFakeJsPlugin({
   sourcemap,
   cjsDefault,
   sideEffects,
-  dtsOnly,
-}: Pick<
-  OptionsResolved,
-  'sourcemap' | 'cjsDefault' | 'sideEffects' | 'dtsOnly'
->): Plugin {
+}: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin {
   let declarationIdx = 0
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const moduleDeclarationsMap = new Map<
@@ -131,12 +127,6 @@ export function createFakeJsPlugin({
             if (RE_DTS.test(renderedName)) {
               return renderedName
             }
-          }
-
-          // In `dtsOnly` mode every chunk holds declarations, including
-          // chunks named by the user without a `.d` suffix.
-          if (dtsOnly && !RE_DTS.test(nameTemplate)) {
-            return filename_js_to_dts(nameTemplate)
           }
 
           return nameTemplate
