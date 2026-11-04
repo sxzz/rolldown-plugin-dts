@@ -57,10 +57,10 @@ export interface Options extends DeprecatedOptions {
   generator?: 'tsc' | 'oxc' | 'tsgo' | 'tsrs' | Generator
 
   /**
-   * Glob pattern(s) that select source files for declaration generation.
+   * Glob pattern(s) that filter which Rolldown entries emit declarations.
    *
-   * Patterns are relative to {@link cwd} and may be negated with `!`. Matching
-   * files are emitted even when they are not Rolldown entry points.
+   * Patterns are relative to {@link cwd} and may be negated with `!`. Only
+   * Rolldown entries are matched; other files never emit declarations.
    *
    * Cannot be combined with {@link dtsOnly}; set Rolldown's `input` instead.
    *

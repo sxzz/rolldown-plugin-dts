@@ -218,11 +218,11 @@ export function createGeneratePlugin(
           const mod = this.getModuleInfo(id)
           const dtsId = filename_to_dts(id, languageContext)
           const isDtsOnlyEntry = dtsOnlyEntries.get(dtsId)?.id === id
+          // `entry` only filters Rolldown entries; it never adds files.
           const isEntry =
             isDtsOnlyEntry ||
-            (entryMatcher
-              ? entryMatcher(path.relative(cwd, id))
-              : !!mod?.isEntry)
+            (!!mod?.isEntry &&
+              (!entryMatcher || entryMatcher(path.relative(cwd, id))))
           dtsMap.set(dtsId, { code, id, isEntry, jsFile })
           declarationGenerator.addFile?.(code, id)
           debug('register dts source: %s', id)

@@ -159,6 +159,19 @@ test('entry option - negation glob', async () => {
   expect(fileNames).not.toContain('output2/index.d.ts')
 })
 
+test('entry option - does not add non-entry files', async () => {
+  const root = path.resolve(dirname, 'fixtures/alias')
+  const { chunks } = await rolldownBuild(
+    { output1: 'input1.ts' },
+    [dts({ entry: '**/*.ts', cwd: root })],
+    { cwd: root },
+  )
+  const fileNames = chunks.map((chunk) => chunk.fileName).toSorted()
+
+  // `input2.ts` and `shared.ts` match, but are only imported by the entry.
+  expect(fileNames).toEqual(['output1.d.ts', 'output1.js'])
+})
+
 test('isolated declaration error', async () => {
   const error = await rolldownBuild(
     path.resolve(dirname, 'fixtures/isolated-decl-error.ts'),
