@@ -264,7 +264,7 @@ test('tsgo vfs uses transformed source code', async () => {
       generator: 'tsgo',
       tsgo: { moduleUrl },
       tsconfig: basicTsconfig,
-      emitDtsOnly: true,
+      dtsOnly: true,
     }),
   ])
   const virtual = await rolldownBuild(input, [
@@ -272,7 +272,7 @@ test('tsgo vfs uses transformed source code', async () => {
     dts({
       generator: 'tsgo',
       tsconfig: basicTsconfig,
-      emitDtsOnly: true,
+      dtsOnly: true,
       tsgo: { moduleUrl, vfs: true },
     }),
   ])
@@ -280,6 +280,35 @@ test('tsgo vfs uses transformed source code', async () => {
   expect(disk.snapshot).toContain('foo: number')
   expect(disk.snapshot).not.toContain("foo: 'transformed'")
   expect(virtual.snapshot).toContain("foo: 'transformed'")
+})
+
+test('tsgo vfs infers from transformed dependencies in dtsOnly builds', async () => {
+  const fixture = path.resolve(dirname, 'fixtures/tsgo-vfs-dependency')
+  const dep = path.join(fixture, 'dep.ts')
+  const { snapshot } = await rolldownBuild(path.join(fixture, 'main.ts'), [
+    {
+      name: 'transform-dependency',
+      transform: {
+        order: 'pre',
+        handler(code, id) {
+          if (id !== dep) return
+          return code.replace(
+            'foo: number = 1',
+            "foo: 'transformed' = 'transformed'",
+          )
+        },
+      },
+    },
+    dts({
+      generator: 'tsgo',
+      tsconfig: path.join(fixture, 'tsconfig.json'),
+      dtsOnly: true,
+      tsgo: { moduleUrl, vfs: true },
+    }),
+  ])
+  // `main.d.ts` does not import `dep`, so only preloading the transformed
+  // dependency gets this type right.
+  expect(snapshot).toContain('declare const bar: "transformed"')
 })
 
 test('emits package sources through referenced projects', async () => {

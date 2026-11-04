@@ -73,7 +73,11 @@ export function createFakeJsPlugin({
   sourcemap,
   cjsDefault,
   sideEffects,
-}: Pick<OptionsResolved, 'sourcemap' | 'cjsDefault' | 'sideEffects'>): Plugin {
+  dtsOnly,
+}: Pick<
+  OptionsResolved,
+  'sourcemap' | 'cjsDefault' | 'sideEffects' | 'dtsOnly'
+>): Plugin {
   let declarationIdx = 0
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const moduleDeclarationsMap = new Map<
@@ -121,6 +125,12 @@ export function createFakeJsPlugin({
             if (RE_DTS.test(renderedName)) {
               return renderedName
             }
+          }
+
+          // In `dtsOnly` mode every chunk holds declarations, including
+          // chunks named by the user without a `.d` suffix.
+          if (dtsOnly && !RE_DTS.test(nameTemplate)) {
+            return filename_js_to_dts(nameTemplate)
           }
 
           return nameTemplate
@@ -614,6 +624,12 @@ export function createFakeJsPlugin({
 
     program.body = body
 
+    // Without tree-shaking, Rolldown inlines its whole runtime, whose code is
+    // dropped above but whose `createRequire` import would remain.
+    if (chunk.moduleIds.some((id) => RE_ROLLDOWN_RUNTIME.test(id))) {
+      program.body = removeRuntimeImports(program.body)
+    }
+
     if (program.body.length === 0) {
       return { code: EMPTY_STUB, map: null }
     }
@@ -728,6 +744,42 @@ function needsScopeMarker(body: t.ProgramStatement[]): boolean {
 
   // Inline exports alone do not prevent private declarations from being exported.
   return !hasModuleStatement || hasPrivateDeclaration
+}
+
+function removeRuntimeImports(
+  body: t.ProgramStatement[],
+): t.ProgramStatement[] {
+  const isRuntimeSpecifier = (spec: t.ImportDeclarationSpecifier) =>
+    spec.type === 'ImportSpecifier' &&
+    spec.imported.type === 'Identifier' &&
+    spec.imported.name === 'createRequire'
+  const runtimeImports = body.filter(
+    (node): node is t.ImportDeclaration =>
+      node.type === 'ImportDeclaration' &&
+      node.source.value === 'node:module' &&
+      node.specifiers.some(isRuntimeSpecifier),
+  )
+  if (!runtimeImports.length) return body
+
+  // Declarations may import `createRequire` themselves.
+  const referenced = new Set<string>()
+  for (const node of body) {
+    if (runtimeImports.includes(node as t.ImportDeclaration)) continue
+    walk(node, {
+      enter(child) {
+        if (child.type === 'Identifier') referenced.add(child.name)
+      },
+    })
+  }
+
+  return body.filter((node) => {
+    if (!runtimeImports.includes(node as t.ImportDeclaration)) return true
+    const decl = node as t.ImportDeclaration
+    decl.specifiers = decl.specifiers.filter(
+      (spec) => !isRuntimeSpecifier(spec) || referenced.has(spec.local.name),
+    )
+    return decl.specifiers.length > 0
+  })
 }
 
 function removeDtsOnlyRuntimeChunks(bundle: OutputBundle): void {

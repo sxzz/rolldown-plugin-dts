@@ -18,7 +18,7 @@ describe('tsc', () => {
       [path.resolve(root, 'entry1.ts'), path.resolve(root, 'entry2.ts')],
       [
         dts({
-          emitDtsOnly: true,
+          dtsOnly: true,
           compilerOptions: {
             skipLibCheck: true,
             isolatedDeclarations: false,
@@ -43,7 +43,7 @@ describe('tsc', () => {
       path.resolve(dirname, 'fixtures/multi-decls/index.ts'),
       [
         dts({
-          emitDtsOnly: true,
+          dtsOnly: true,
           compilerOptions: { isolatedDeclarations: false },
         }),
       ],
@@ -126,7 +126,7 @@ describe('tsc', () => {
           tsconfig: path.resolve(root, 'tsconfig.react.json'),
           tsc: { build: true },
           sourcemap: true,
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
       {},
@@ -150,7 +150,7 @@ describe('tsc', () => {
           tsconfig: path.resolve(root, 'tsconfig.json'),
           tsc: { build: true },
           sourcemap: true,
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
       {},
@@ -250,12 +250,12 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
-  test.fails('jsdoc in js', async () => {
+  test('jsdoc in js', async () => {
     const root = path.resolve(dirname, 'fixtures/jsdoc-js')
     const { snapshot } = await rolldownBuild(path.resolve(root, 'main.js'), [
       dts({
         tsconfig: path.resolve(root, 'tsconfig.json'),
-        emitDtsOnly: true,
+        dtsOnly: true,
       }),
     ])
     expect(snapshot).toMatchSnapshot()
@@ -269,7 +269,7 @@ describe('tsc', () => {
           compilerOptions: {
             isolatedDeclarations: false,
           },
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
       { external: [/^arktype/] },
@@ -285,7 +285,7 @@ describe('tsc', () => {
           compilerOptions: {
             isolatedDeclarations: false,
           },
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
     )
@@ -301,7 +301,7 @@ describe('tsc', () => {
           compilerOptions: {
             isolatedDeclarations: false,
           },
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
       { external: ['zod'] },
@@ -315,7 +315,7 @@ describe('tsc', () => {
       [
         dts({
           generator: 'tsc',
-          emitDtsOnly: true,
+          dtsOnly: true,
           compilerOptions: { isolatedDeclarations: false },
         }),
       ],

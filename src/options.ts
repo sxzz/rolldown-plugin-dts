@@ -62,6 +62,8 @@ export interface Options extends DeprecatedOptions {
    * Patterns are relative to {@link cwd} and may be negated with `!`. Matching
    * files are emitted even when they are not Rolldown entry points.
    *
+   * Cannot be combined with {@link dtsOnly}; set Rolldown's `input` instead.
+   *
    * @example
    * ```ts
    * entry: ['src/*.ts', '!src/internal/**']
@@ -77,18 +79,13 @@ export interface Options extends DeprecatedOptions {
   cwd?: string
 
   /**
-   * Treats entry files as existing declarations instead of source files.
+   * Builds declarations only. Each entry resolves to its declaration, so the
+   * build emits no JavaScript. Entries may be source files or existing
+   * declaration files.
    *
    * @default false
    */
-  dtsInput?: boolean
-
-  /**
-   * Removes non-declaration chunks from the output.
-   *
-   * @default false
-   */
-  emitDtsOnly?: boolean
+  dtsOnly?: boolean
 
   /**
    * A `tsconfig.json` path, resolved relative to {@link cwd}.
@@ -200,6 +197,12 @@ export interface Options extends DeprecatedOptions {
 }
 
 interface DeprecatedOptions {
+  /** @deprecated Use `dtsOnly` instead. */
+  dtsInput?: boolean
+
+  /** @deprecated Use `dtsOnly` instead. */
+  emitDtsOnly?: boolean
+
   /** @deprecated Use `tsc.build` instead. */
   build?: TscOptions['build']
 
@@ -362,8 +365,7 @@ export function resolveOptions({
   generator,
   entry,
   cwd = process.cwd(),
-  dtsInput = false,
-  emitDtsOnly = false,
+  dtsOnly = false,
   tsconfig,
   tsconfigRaw: overriddenTsconfigRaw = {},
   compilerOptions = {},
@@ -382,6 +384,21 @@ export function resolveOptions({
   tsrs,
   ...deprecated
 }: Options): OptionsResolved {
+  for (const key of ['dtsInput', 'emitDtsOnly'] as const) {
+    const value = deprecated[key]
+    if (value === undefined) continue
+    logger.warn(`The \`${key}\` option is deprecated. Use \`dtsOnly\` instead.`)
+    if (value) dtsOnly = true
+  }
+
+  // A declaration-only build emits declarations for its inputs, which already
+  // select the files.
+  if (dtsOnly && entry !== undefined) {
+    throw new Error(
+      'The `entry` option cannot be combined with `dtsOnly` (or the deprecated `dtsInput` and `emitDtsOnly`). Set Rolldown `input` to the files to emit declarations for instead.',
+    )
+  }
+
   for (const key of [
     'build',
     'incremental',
@@ -603,8 +620,7 @@ export function resolveOptions({
     generator,
     entry: resolvedEntry,
     cwd,
-    dtsInput,
-    emitDtsOnly,
+    dtsOnly,
     tsconfig,
     tsconfigRaw,
     sourcemap,

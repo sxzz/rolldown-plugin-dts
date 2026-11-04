@@ -101,11 +101,11 @@ export declare const a = 1;"
 
 exports[`declare module 1`] = `
 "// declare-module.d.ts
-import "./rolldown-runtime-CPxUEhZH.js";
 declare module "virtual" {
   const _default: string;
   export default _default;
-}"
+}
+export {};"
 `;
 
 exports[`decorators 1`] = `

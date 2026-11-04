@@ -3,7 +3,14 @@ import { createResolver } from 'dts-resolver'
 import { createDebug } from 'obug'
 import { ResolverFactory } from 'rolldown/experimental'
 import { importerId, include } from 'rolldown/filter'
-import { filename_to_dts, RE_CSS, RE_DTS, RE_JSON, RE_TS } from './filename.ts'
+import {
+  filename_to_dts,
+  RE_CSS,
+  RE_DTS,
+  RE_JS,
+  RE_JSON,
+  RE_TS,
+} from './filename.ts'
 import type { OptionsResolved } from './options.ts'
 import type { Plugin, ResolvedId } from 'rolldown'
 
@@ -16,6 +23,7 @@ export function createDtsResolvePlugin({
   resolver,
   sideEffects,
   languageContext,
+  emitJs,
 }: Pick<
   OptionsResolved,
   | 'cwd'
@@ -24,11 +32,14 @@ export function createDtsResolvePlugin({
   | 'resolver'
   | 'sideEffects'
   | 'languageContext'
+  | 'emitJs'
 >): Plugin {
   function isSourceFile(id: string) {
     return (
       RE_TS.test(id) ||
       RE_JSON.test(id) ||
+      // JS sources get declarations too with `emitJs`
+      (emitJs && RE_JS.test(id)) ||
       languageContext.isCustomLanguageFile(id)
     )
   }
