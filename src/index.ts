@@ -1,5 +1,5 @@
 import { createDebug } from 'obug'
-import { createDtsInputPlugin } from './dts-input.ts'
+import { createDtsOnlyPlugin } from './dts-only.ts'
 import { createFakeJsPlugin } from './fake-js/index.ts'
 import { createGeneratePlugin } from './generate.ts'
 import {
@@ -18,14 +18,12 @@ export function dts(options: Options = {}): Plugin[] {
   const resolved = resolveOptions(options)
   debug('resolved dts options %o', resolved)
 
-  const plugins: Plugin[] = []
-  if (options.dtsInput) {
-    plugins.push(createDtsInputPlugin(resolved))
-  } else {
-    plugins.push(createGeneratePlugin(resolved))
-  }
-  plugins.push(createDtsResolvePlugin(resolved), createFakeJsPlugin(resolved))
-  return plugins
+  return [
+    resolved.dtsOnly && createDtsOnlyPlugin(resolved),
+    createGeneratePlugin(resolved),
+    createDtsResolvePlugin(resolved),
+    createFakeJsPlugin(resolved),
+  ].filter((plugin) => !!plugin)
 }
 
 export {

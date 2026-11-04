@@ -364,6 +364,21 @@ export { jsdoc_default as default, fn };
 "
 `;
 
+exports[`tsc > jsdoc in js 1`] = `
+"// main.d.ts
+/**
+ * @returns {string}
+ */
+export declare function bar(): string;
+/**
+ * Does bar.
+ *
+ * @param {string} baz
+ * @returns {void}
+ */
+export declare function foo(baz: string): void;"
+`;
+
 exports[`tsc > jsdoc members 1`] = `
 "// jsdoc-members.d.ts
 export declare const foo: string;

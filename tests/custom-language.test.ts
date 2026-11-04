@@ -22,7 +22,7 @@ describe('volar', () => {
         path.resolve(root, 'main.ts'),
         [
           dts({
-            emitDtsOnly: true,
+            dtsOnly: true,
             tsc: { vue: true },
             compilerOptions: {
               isolatedDeclarations: false,
@@ -40,7 +40,7 @@ describe('volar', () => {
         path.resolve(root, 'main.ts'),
         [
           dts({
-            emitDtsOnly: true,
+            dtsOnly: true,
             tsc: {
               vue: { vueCompilerOptions: { fallthroughAttributes: false } },
               parallel: true,
@@ -62,7 +62,7 @@ describe('volar', () => {
         [
           dts({
             tsconfig: path.resolve(root, 'tsconfig.json'),
-            emitDtsOnly: true,
+            dtsOnly: true,
             tsc: { vue: true },
           }),
         ],
@@ -77,7 +77,7 @@ describe('volar', () => {
         [path.resolve(root, 'Foo.vue'), path.resolve(root, 'Bar.vue')],
         [
           dts({
-            emitDtsOnly: true,
+            dtsOnly: true,
             tsc: { vue: true },
             compilerOptions: {
               isolatedDeclarations: false,
@@ -97,7 +97,7 @@ describe('volar', () => {
       const root = path.resolve(dirname, 'fixtures/ts-macro')
       const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
         dts({
-          emitDtsOnly: true,
+          dtsOnly: true,
           tsconfig: path.resolve(root, 'tsconfig.json'),
           customLanguages: [tsMacro],
         }),
@@ -111,7 +111,7 @@ describe('volar', () => {
         path.resolve(root, 'main.ts'),
         [
           dts({
-            emitDtsOnly: true,
+            dtsOnly: true,
             tsconfig: path.resolve(root, 'tsconfig.json'),
             tsc: { vue: true },
             customLanguages: [tsMacro],
@@ -128,7 +128,7 @@ describe('volar', () => {
 
     const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
       dts({
-        emitDtsOnly: true,
+        dtsOnly: true,
         customLanguages: [createAstroLanguage()],
       }),
     ])

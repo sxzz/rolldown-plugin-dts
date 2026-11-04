@@ -44,6 +44,19 @@ export default defineConfig({
 
 See [rolldown.config.ts](./rolldown.config.ts) for the project's own setup.
 
+### Declaration-only builds
+
+With `dtsOnly: true`, each entry resolves to its declaration and the build emits
+no JavaScript. Entries may be source files, existing `.d.ts` files, or both:
+
+```ts
+export default defineConfig({
+  input: ['src/index.ts', 'types/globals.d.ts'],
+  plugins: [dts({ dtsOnly: true })],
+  output: { dir: 'dist' },
+})
+```
+
 ## Generators
 
 | Generator | Use it for                                                       | Requirement                                 |
@@ -89,8 +102,7 @@ dts({
 | `tsc`             | Options for the built-in `tsc` generator.                                                 | `{}`                    |
 | `entry`           | Glob or globs selecting files to emit. Supports `!` negation and paths relative to `cwd`. | Rolldown entries        |
 | `cwd`             | Base directory for config discovery, globs, and relative paths.                           | `process.cwd()`         |
-| `dtsInput`        | Treat entry files as existing declarations.                                               | `false`                 |
-| `emitDtsOnly`     | Remove non-declaration chunks from the output.                                            | `false`                 |
+| `dtsOnly`         | Build declarations only. See [Declaration-only builds](#declaration-only-builds).         | `false`                 |
 | `tsconfig`        | Config path; `true` discovers one and `false` disables loading.                           | Nearest `tsconfig.json` |
 | `tsconfigRaw`     | Raw config values merged over the loaded config.                                          | `{}`                    |
 | `compilerOptions` | Compiler options merged over the loaded config.                                           | `{}`                    |
@@ -110,6 +122,9 @@ dts({
   entry: ['src/**/*.ts', '!src/icons/**'],
 })
 ```
+
+`entry` cannot be combined with `dtsOnly`. In a declaration-only build, list the
+files in Rolldown `input` instead.
 
 `cjsDefault` only changes the emitted export syntax. It does not enable
 CommonJS-style declaration input.
@@ -260,7 +275,7 @@ export default {
 
 Declaration bundling requires an ESM Rolldown output. The `cjs` output format is
 not supported. For CommonJS packages, build the JavaScript output separately
-and use `emitDtsOnly` for a second declaration-only build.
+and use `dtsOnly` for a second declaration-only build.
 
 The following declaration input cannot be bundled:
 

@@ -32,7 +32,7 @@ const moduleUrl = import.meta.resolve('typescript-next')
 const options = {
   generator: 'tsgo' as const,
   tsconfig: path.join(root, 'tsconfig.json'),
-  emitDtsOnly: true,
+  dtsOnly: true,
   tsgo: { moduleUrl, runExternalCode: true },
 }
 

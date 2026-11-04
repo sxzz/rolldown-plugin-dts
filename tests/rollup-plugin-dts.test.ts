@@ -26,7 +26,7 @@ await testFixtures(
       [
         dts({
           tsconfig: false,
-          dtsInput: true,
+          dtsOnly: true,
           sourcemap: false,
         }),
       ],
