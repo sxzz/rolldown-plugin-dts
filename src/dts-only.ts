@@ -19,15 +19,17 @@ export function createDtsOnlyPlugin({
       sideEffects === false
         ? (options) => {
             return {
+              ...options,
               treeshake:
                 // eslint-disable-next-line unicorn/prefer-logical-operator-over-ternary
                 options.treeshake === false
                   ? false
                   : {
                       ...(options.treeshake === true ? {} : options.treeshake),
-                      moduleSideEffects: false,
+                      // Drop unused external imports. Local declarations
+                      // keep their own side effects, such as `declare global`.
+                      moduleSideEffects: 'no-external',
                     },
-              ...options,
             }
           }
         : undefined,

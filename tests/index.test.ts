@@ -268,6 +268,29 @@ test('dtsOnly keeps code added by later transforms out of declarations', async (
   expect(snapshot).toContain('export declare const foo: number')
 })
 
+test.each([undefined, true, {}])(
+  'dtsOnly drops unused external imports (treeshake: %o)',
+  async (treeshake) => {
+    const { snapshot } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/dts-only-unused-external/index.d.ts'),
+      [dts({ dtsOnly: true })],
+      { platform: 'node', treeshake },
+    )
+    expect(snapshot).not.toContain('node:http')
+    expect(snapshot).toContain('type A = string')
+  },
+)
+
+test('dtsOnly keeps global augmentations of side-effect imports', async () => {
+  const { snapshot } = await rolldownBuild(
+    path.resolve(dirname, 'rollup-plugin-dts/extend-global-module/index.d.ts'),
+    [dts({ dtsOnly: true, tsconfig: false })],
+    { treeshake: undefined },
+  )
+  expect(snapshot).toContain('second2: Second')
+  expect(snapshot).toContain('declare module "foobar"')
+})
+
 describe('dts input', () => {
   test('input array', async () => {
     const { snapshot, chunks } = await rolldownBuild(
