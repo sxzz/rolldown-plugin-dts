@@ -145,32 +145,35 @@ export function createGeneratePlugin(
       }
     },
 
-    outputOptions(options) {
-      // `dtsOnly` builds are named by the dts-only plugin.
-      if (dtsOnly) return
+    // `dtsOnly` builds are named by the dts-only plugin.
+    outputOptions: dtsOnly
+      ? undefined
+      : (options) => {
+          return {
+            ...options,
+            entryFileNames(chunk) {
+              const { entryFileNames } = options
+              const nameTemplate = resolveTemplateFn(
+                entryFileNames || '[name].js',
+                chunk,
+              )
 
-      return {
-        ...options,
-        entryFileNames(chunk) {
-          const { entryFileNames } = options
-          const nameTemplate = resolveTemplateFn(
-            entryFileNames || '[name].js',
-            chunk,
-          )
+              if (chunk.name.endsWith('.d')) {
+                if (RE_DTS.test(nameTemplate)) {
+                  return replaceTemplateName(
+                    nameTemplate,
+                    chunk.name.slice(0, -2),
+                  )
+                }
+                if (RE_JS.test(nameTemplate)) {
+                  return nameTemplate.replace(RE_JS, '.$1ts')
+                }
+              }
 
-          if (chunk.name.endsWith('.d')) {
-            if (RE_DTS.test(nameTemplate)) {
-              return replaceTemplateName(nameTemplate, chunk.name.slice(0, -2))
-            }
-            if (RE_JS.test(nameTemplate)) {
-              return nameTemplate.replace(RE_JS, '.$1ts')
-            }
+              return nameTemplate
+            },
           }
-
-          return nameTemplate
         },
-      }
-    },
 
     resolveId: {
       order: dtsOnly ? 'pre' : undefined,
