@@ -29,8 +29,19 @@ export async function collectModuleExports(
     collectTypeOnlyLocals(node, info.typeOnlyLocals)
   }
 
-  for (const node of nodes) {
-    await collectExportInfo(context, node, id, info)
+  // Resolve every export source concurrently. Resolving a source module loads
+  // it, so a barrel file with many re-exports would otherwise load them one by
+  // one and delay generating their declarations.
+  const sources = await Promise.all(
+    nodes.map((node) =>
+      node.type === 'ExportNamedDeclaration' ||
+      (node.type === 'ExportAllDeclaration' && !node.exported)
+        ? resolveExportSource(context, node.source, id)
+        : undefined,
+    ),
+  )
+  for (const [i, node] of nodes.entries()) {
+    collectExportInfo(node, sources[i], info)
   }
 
   return info
@@ -107,12 +118,11 @@ function isTypeOnlyExport(
   return node.exportKind === 'type' || specifier.exportKind === 'type'
 }
 
-async function collectExportInfo(
-  context: TransformPluginContext,
+function collectExportInfo(
   node: t.ProgramStatement,
-  id: string,
+  source: string | undefined,
   info: ModuleExports,
-): Promise<void> {
+): void {
   if (node.type === 'ExportNamedDeclaration') {
     if (node.declaration) {
       for (const name of collectDeclarationNames(node.declaration)) {
@@ -121,7 +131,6 @@ async function collectExportInfo(
       return
     }
 
-    const source = await resolveExportSource(context, node.source, id)
     for (const specifier of node.specifiers) {
       const typeOnly = isTypeOnlyExport(node, specifier)
 
@@ -149,7 +158,7 @@ async function collectExportInfo(
   }
 
   info.exportAlls.push({
-    source: await resolveExportSource(context, node.source, id),
+    source,
     rawSource: node.source.value,
     typeOnly: node.exportKind === 'type',
   })
