@@ -66,6 +66,7 @@ export interface TsgoCliGeneratorOptions {
   tsgoPath: string
   tsconfig: string
   sourcemap?: boolean
+  typecheck?: boolean
   languageContext: LanguageContext
 }
 
@@ -80,8 +81,14 @@ export class TsgoCliGenerator implements Generator {
   }
 
   async init(): Promise<void> {
-    const { tsgoPath, tsconfig, sourcemap } = this.options
-    this.context = await runTsgo(tsgoPath, this.rootDir, tsconfig, sourcemap)
+    const { tsgoPath, tsconfig, sourcemap, typecheck } = this.options
+    this.context = await runTsgo(
+      tsgoPath,
+      this.rootDir,
+      tsconfig,
+      sourcemap,
+      typecheck,
+    )
   }
 
   async emit(_code: string, fileName: string): Promise<GeneratorResult> {
@@ -131,6 +138,7 @@ async function runTsgo(
   rootDir: string,
   tsconfig: string,
   sourcemap?: boolean,
+  typecheck?: boolean,
 ): Promise<TsgoContext> {
   debug('[tsgo] rootDir', rootDir)
   debug('[tsgo] using tsgo binary', tsgoPath)
@@ -149,7 +157,7 @@ async function runTsgo(
     tsgoDist,
     '--rootDir',
     rootDir,
-    '--noCheck',
+    ...(typecheck ? [] : ['--noCheck']),
     ...(sourcemap ? ['--declarationMap'] : []),
   ]
   debug('[tsgo] args %o', args)

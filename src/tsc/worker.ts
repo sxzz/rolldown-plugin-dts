@@ -1,19 +1,31 @@
 import process from 'node:process'
 import { LanguageContext } from '../custom-language.ts'
 import { createVueLanguage, type VueLanguageOptions } from './vue.ts'
-import { tscEmit, type TscOptions, type TscResult } from './index.ts'
+import {
+  tscCheck,
+  tscEmit,
+  type TscCheckOptions,
+  type TscOptions,
+  type TscResult,
+} from './index.ts'
 
 export type WorkerTscOptions = Omit<TscOptions, 'context' | 'languageContext'>
+export type WorkerTscCheckOptions = Omit<
+  TscCheckOptions,
+  'context' | 'languageContext'
+>
 
-export interface WorkerRequest {
+export type WorkerRequest = {
   id: number
-  options: WorkerTscOptions
   vue?: VueLanguageOptions
-}
+} & (
+  | { type: 'emit'; options: WorkerTscOptions }
+  | { type: 'check'; options: WorkerTscCheckOptions }
+)
 
 export interface WorkerResponse {
   id: number
-  result?: TscResult
+  result?: TscResult | string
   error?: unknown
 }
 
@@ -25,11 +37,11 @@ process.on('message', (request: WorkerRequest) => {
     languageContext ||= new LanguageContext(
       request.vue ? [createVueLanguage(request.vue)] : [],
     )
-    const options: TscOptions = {
-      ...request.options,
-      languageContext,
-    }
-    response = { id: request.id, result: tscEmit(options) }
+    const result =
+      request.type === 'check'
+        ? tscCheck({ ...request.options, languageContext })
+        : tscEmit({ ...request.options, languageContext })
+    response = { id: request.id, result }
   } catch (error) {
     response = {
       id: request.id,

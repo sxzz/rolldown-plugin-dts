@@ -8,8 +8,13 @@ import {
   type TscContext,
 } from './context.ts'
 import { createFsSystem, createMemorySystem } from './system.ts'
-import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
-import type { TscOptions, TscResult } from './types.ts'
+import {
+  customTransformers,
+  formatHost,
+  formatTypeErrors,
+  setSourceMapRoot,
+} from './utils.ts'
+import type { TscCheckOptions, TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 import type {
   CompilerOptions,
@@ -23,6 +28,14 @@ import type {
 const ts = requireTSApi()
 const debug = createDebug('rolldown-plugin-dts:tsc-build')
 
+// Diagnostics reported while building a solution, keyed by its project map so
+// they are dropped together when the context invalidates the build.
+// `checked` is false for builds with `noCheck`, which report no type errors.
+const buildDiagnostics = new WeakMap<
+  SourceFileToProjectMap,
+  { checked: boolean; diagnostics: Diagnostic[] }
+>()
+
 // Emit file using `tsc --build` mode.
 export function tscEmitBuild(tscOptions: TscOptions): TscResult {
   const {
@@ -31,6 +44,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
     incremental,
     context = globalContext,
     sourcemap,
+    typecheck = false,
   } = tscOptions
   debug(
     `running tscEmitBuild id: ${id}, tsconfig: ${tsconfig}, incremental: ${incremental}`,
@@ -59,6 +73,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
     tsconfig,
     !incremental,
     sourcemap,
+    typecheck,
   )
 
   const project = sourceFileToProjectMap.get(resolvedId)
@@ -134,20 +149,35 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
   }
 }
 
+// Report the type errors collected while building the solution.
+export function tscCheckBuild({
+  tsconfig,
+  context = globalContext,
+}: TscCheckOptions): string | undefined {
+  const projectMap = tsconfig && context.projects.get(tsconfig)
+  if (!projectMap) return
+  return (
+    formatTypeErrors(buildDiagnostics.get(projectMap)!.diagnostics) || undefined
+  )
+}
+
 function getOrBuildProjects(
   context: TscContext,
   fsSystem: System,
   tsconfig: string,
   force: boolean,
   sourcemap: boolean,
+  typecheck: boolean,
 ): SourceFileToProjectMap {
   let projectMap = context.projects.get(tsconfig)
-  if (projectMap) {
+  // A shared context may hold an unchecked build from a plugin instance
+  // without `typecheck`; rebuild it to collect type errors.
+  if (projectMap && (!typecheck || buildDiagnostics.get(projectMap)!.checked)) {
     debug(`skip building projects for ${tsconfig}`)
     return projectMap
   }
 
-  projectMap = buildProjects(fsSystem, tsconfig, force, sourcemap)
+  projectMap = buildProjects(fsSystem, tsconfig, force, sourcemap, typecheck)
   context.projects.set(tsconfig, projectMap)
   return projectMap
 }
@@ -160,26 +190,44 @@ function buildProjects(
   tsconfig: string,
   force: boolean,
   sourcemap: boolean,
+  typecheck: boolean,
 ): SourceFileToProjectMap {
   debug(`start building projects for ${tsconfig}`)
 
   // Collect all projects from the tsconfig file and its references. A project
   // is a string that represents the path to the project's `tsconfig` file.
-  const projects = collectProjectGraph(tsconfig, fsSystem, force, sourcemap)
+  const projects = collectProjectGraph(
+    tsconfig,
+    fsSystem,
+    force,
+    sourcemap,
+    typecheck,
+  )
   debug(
     'collected %d projects: %j',
     projects.length,
     projects.map((project) => project.tsconfigPath),
   )
 
+  const diagnostics: Diagnostic[] = []
   const host = ts.createSolutionBuilderHost(
     fsSystem,
     createProgramWithPatchedCompilerOptions({
       force,
       sourcemap,
+      typecheck,
       /** we don't need to print warning here because we have done this in {@link collectProjectGraph} */
       tsconfigPath: null,
     }),
+    (diagnostic) => {
+      diagnostics.push(diagnostic)
+      // With `typecheck`, errors are reported by `tscCheckBuild`.
+      // Otherwise keep the default reporter's behavior, which writes to the
+      // system (debug output only, see `createFsSystem`).
+      if (!typecheck) {
+        fsSystem.write(ts.formatDiagnostic(diagnostic, formatHost))
+      }
+    },
   )
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
     force,
@@ -205,6 +253,10 @@ function buildProjects(
       sourceFileToProjectMap.set(fsSystem.resolvePath(fileName), project)
     }
   }
+  buildDiagnostics.set(sourceFileToProjectMap, {
+    checked: typecheck,
+    diagnostics,
+  })
 
   return sourceFileToProjectMap
 }
@@ -217,6 +269,7 @@ function collectProjectGraph(
   fsSystem: System,
   force: boolean,
   sourcemap: boolean,
+  typecheck: boolean,
 ): ParsedProject[] {
   const seen = new Set<string>()
   const projects: ParsedProject[] = []
@@ -238,6 +291,7 @@ function collectProjectGraph(
       tsconfigPath: parsedConfig.fileNames.length > 0 ? tsconfigPath : null,
       force,
       sourcemap,
+      typecheck,
     })
 
     projects.push({ tsconfigPath, parsedConfig })
@@ -280,6 +334,7 @@ interface CompilerPatchOptions {
   tsconfigPath: string | null
   force: boolean
   sourcemap: boolean
+  typecheck: boolean
 }
 
 // To ensure we can get `.d.ts` and `.d.ts.map` files from `tsc --build` mode,
@@ -321,6 +376,12 @@ function patchCompilerOptions(
         `[rolldown-plugin-dts] ${extraOptions.tsconfigPath} has "declarationMap" set to false. Please set it to true if you want to generate source maps for declaration files.`,
       )
     }
+  }
+
+  // Type checking is only needed for the `typecheck` option. `noCheck` does not
+  // invalidate `.tsbuildinfo`; skipped checks stay pending for the next build.
+  if (options.noCheck !== !extraOptions.typecheck) {
+    options = { ...options, noCheck: !extraOptions.typecheck }
   }
 
   return options

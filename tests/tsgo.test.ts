@@ -403,3 +403,28 @@ test('tsgo CLI does not emit next to sources outside the tsconfig directory', as
     await rm(strayDts, { force: true })
   }
 })
+
+test('tsgo CLI fails on type errors with `typecheck`', async () => {
+  const fixture = path.resolve(dirname, 'fixtures/typecheck')
+  const options = {
+    tsgoPath: getTsgoPath(),
+    tsconfig: path.join(fixture, 'tsconfig.json'),
+    languageContext: new LanguageContext([]),
+  }
+
+  const unchecked = new TsgoCliGenerator(options)
+  try {
+    await unchecked.init()
+    const result = await unchecked.emit('', path.join(fixture, 'error.ts'))
+    expect(result.code).toContain('declare const value: number')
+  } finally {
+    await unchecked.dispose()
+  }
+
+  const checked = new TsgoCliGenerator({ ...options, typecheck: true })
+  try {
+    await expect(checked.init()).rejects.toThrow('tsgo process exited')
+  } finally {
+    await checked.dispose()
+  }
+})

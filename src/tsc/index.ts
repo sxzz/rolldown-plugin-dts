@@ -1,8 +1,13 @@
 import { createDebug } from 'obug'
-import { tscEmitBuild } from './emit-build.ts'
-import { tscEmitCompiler } from './emit-compiler.ts'
-import type { TscOptions, TscResult } from './types.ts'
-export type { TscModule, TscOptions, TscResult } from './types.ts'
+import { tscCheckBuild, tscEmitBuild } from './emit-build.ts'
+import { tscCheckCompiler, tscEmitCompiler } from './emit-compiler.ts'
+import type { TscCheckOptions, TscOptions, TscResult } from './types.ts'
+export type {
+  TscCheckOptions,
+  TscModule,
+  TscOptions,
+  TscResult,
+} from './types.ts'
 
 const debug = createDebug('rolldown-plugin-dts:tsc')
 
@@ -14,4 +19,10 @@ export function tscEmit(tscOptions: TscOptions): TscResult {
   } else {
     return tscEmitCompiler(tscOptions)
   }
+}
+
+/** Returns the type errors of the programs that emitted `ids`. */
+export function tscCheck(options: TscCheckOptions): string | undefined {
+  debug(`running tscCheck for ${options.ids.length} files`)
+  return options.build ? tscCheckBuild(options) : tscCheckCompiler(options)
 }

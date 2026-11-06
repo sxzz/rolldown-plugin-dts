@@ -110,6 +110,7 @@ dts({
 | `resolver`        | Resolve declaration imports with `oxc` or `tsc`.                                                                     | `oxc`                   |
 | `cjsDefault`      | Convert a single default export to `export =`.                                                                       | `false`                 |
 | `sideEffects`     | Mark declaration modules as having side effects.                                                                     | `false`                 |
+| `typecheck`       | Fail the build on type errors in the programs that emit declarations. Not supported by `oxc`.                        | `false`                 |
 | `logger`          | Logger implementing `info`, `warn`, and `error`.                                                                     | `console`               |
 
 `tsc.*`, `oxc.*`, `tsgo.*`, and `tsrs.*` apply only to their respective
@@ -126,6 +127,14 @@ dts({
 
 `entry` cannot be combined with `dtsOnly`. In a declaration-only build, list the
 files in Rolldown `input` instead.
+
+By default, generators skip type checking to emit declarations as fast as
+possible. Set `typecheck: true` to type-check each TypeScript program used
+during the build as a whole, after all declarations are emitted, and fail the
+build on errors. This covers files reached through imports even when they are
+outside the tsconfig's `include`, which a separate `tsc --noEmit` would miss.
+`tsc` overrides `compilerOptions.noCheck`; `tsgo` and `tsrs` read the
+tsconfig as is and reject `noCheck` with an error.
 
 `cjsDefault` only changes the emitted export syntax. It does not enable
 CommonJS-style declaration input.

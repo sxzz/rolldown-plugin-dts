@@ -18,8 +18,14 @@ export interface TscOptions {
   entries?: string[]
   id: string
   sourcemap: boolean
+  typecheck?: boolean
   languageContext: LanguageContext
   context?: TscContext
+}
+
+export type TscCheckOptions = Omit<TscOptions, 'id'> & {
+  /** Files emitted during the build. */
+  ids: string[]
 }
 
 export interface TscResult {

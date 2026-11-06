@@ -47,6 +47,7 @@ export function createGeneratePlugin(
     | 'tsrs'
     | 'emitJs'
     | 'sourcemap'
+    | 'typecheck'
   >,
 ): Plugin {
   const { entry, cwd, dtsOnly, languageContext, tsc, emitJs } = options
@@ -284,8 +285,15 @@ export function createGeneratePlugin(
       },
     },
 
-    async buildEnd() {
-      await declarationGenerator.dispose?.()
+    async buildEnd(error) {
+      try {
+        if (options.typecheck && !error) {
+          const typeErrors = await declarationGenerator.check?.()
+          if (typeErrors) this.error(typeErrors)
+        }
+      } finally {
+        await declarationGenerator.dispose?.()
+      }
     },
 
     watchChange(id) {

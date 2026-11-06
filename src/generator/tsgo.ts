@@ -11,7 +11,7 @@ import type { LanguageContext } from '../custom-language.ts'
 import type { Generator, GeneratorResult } from './index.ts'
 import type { SourceMapInput } from 'rolldown'
 import type * as TsgoApiModule from 'typescript-next/async'
-import type { API, Snapshot } from 'typescript-next/async'
+import type { API, Project, Snapshot } from 'typescript-next/async'
 import type * as TsgoFsModule from 'typescript-next/fs'
 import type { Diagnostic } from 'typescript-next/proto'
 
@@ -29,6 +29,8 @@ export interface TsgoGeneratorOptions {
   cwd: string
   tsconfig: string
   vfs: boolean
+  /** Reports type errors of emitted files. */
+  typecheck?: boolean
   languageContext: LanguageContext
   loadSource?: (fileName: string) => Promise<void>
 }
@@ -45,6 +47,11 @@ export class TsgoGenerator implements Generator {
   private loadedSourceFiles = new Set<string>()
   private rootFileProjects = new Map<string, string>()
   private emitQueue: Promise<void> = Promise.resolve()
+  // Emitted TS file name -> original file name, for error messages.
+  private emittedFiles = new Map<string, string>()
+  // Config file name (or TS file name of an inferred project) -> the TS file
+  // name to look up an inferred project with.
+  private checkedProjects = new Map<string, string | undefined>()
 
   constructor(options: TsgoGeneratorOptions) {
     this.options = options
@@ -56,6 +63,8 @@ export class TsgoGenerator implements Generator {
     this.loadedSourceFiles.clear()
     this.projectFiles = undefined
     this.emitQueue = Promise.resolve()
+    this.emittedFiles.clear()
+    this.checkedProjects.clear()
 
     const { compiler } = this.options
     this.apiModule = loadTsgoApi(this.options.moduleUrl, undefined, compiler)
@@ -100,6 +109,8 @@ export class TsgoGenerator implements Generator {
       }
     }
 
+    if (this.options.typecheck) this.assertNoCheckDisabled()
+
     // eslint-disable-next-line unicorn/prefer-early-return
     if (this.options.languageContext.contentMapperExtensions.length) {
       // Mapper setup and transform errors can otherwise produce empty declarations.
@@ -117,6 +128,21 @@ export class TsgoGenerator implements Generator {
           throw new Error(this.formatDiagnostics(diagnostics))
         }
       }
+    }
+  }
+
+  // A tsconfig `noCheck` would hide the errors `typecheck` asks for.
+  private assertNoCheckDisabled(): void {
+    const configs = this.snapshot!.getProjects()
+      .filter(
+        ({ configFileName, parsedCommandLine }) =>
+          configFileName && parsedCommandLine.options.noCheck,
+      )
+      .map(({ configFileName }) => configFileName)
+    if (configs.length) {
+      throw new Error(
+        `The \`typecheck\` option conflicts with \`noCheck\` in ${configs.join(', ')}. Remove \`noCheck\` from the tsconfig or disable \`typecheck\`.`,
+      )
     }
   }
 
@@ -141,6 +167,52 @@ export class TsgoGenerator implements Generator {
       () => {},
     )
     return result
+  }
+
+  /** Type-checks every project that emitted a declaration, as a whole. */
+  async check(): Promise<string | undefined> {
+    await this.emitQueue
+    if (!this.apiModule || !this.api || !this.snapshot) {
+      throw new Error('TsgoGenerator has not been initialized.')
+    }
+    const snapshot = this.snapshot
+
+    const projects = new Map<string, Project>()
+    await Promise.all(
+      Array.from(this.checkedProjects, async ([config, inferredFile]) => {
+        const project = inferredFile
+          ? await snapshot.getDefaultProjectForFile(inferredFile)
+          : snapshot.getConfiguredProject(config)
+        if (project) projects.set(project.id, project)
+      }),
+    )
+    debug('type checking %d projects', projects.size)
+
+    // Requests issued in the same tick are sent as one `batchRequests` call.
+    const diagnostics = (
+      await Promise.all(
+        Array.from(projects.values(), ({ program }) => [
+          program.getConfigFileParsingDiagnostics(),
+          program.getProgramDiagnostics(),
+          program.getGlobalDiagnostics(),
+          program.getSyntacticDiagnostics(),
+          program.getSemanticDiagnostics(),
+          // Errors such as TS2742 that make the emitted declarations wrong.
+          program.getDeclarationDiagnostics(),
+        ]).flat(),
+      )
+    )
+      .flat()
+      .filter(
+        ({ category }) => category === this.apiModule!.DiagnosticCategory.Error,
+      )
+    if (!diagnostics.length) return
+
+    let error = this.formatDiagnostics(diagnostics)
+    for (const [tsFileName, fileName] of this.emittedFiles) {
+      error = mapError(error, tsFileName, fileName)
+    }
+    return error
   }
 
   async dispose(): Promise<void> {
@@ -305,6 +377,15 @@ export class TsgoGenerator implements Generator {
       return {
         error: `No ${this.displayName} project found for ${fileName}. Please check your tsconfig and custom language filename mapping.`,
       }
+    }
+
+    if (this.options.typecheck) {
+      this.emittedFiles.set(tsFileName, fileName)
+      // Projects are looked up again in the final snapshot by `check`.
+      this.checkedProjects.set(
+        project.configFileName || tsFileName,
+        project.configFileName ? undefined : tsFileName,
+      )
     }
 
     const output = await project.program

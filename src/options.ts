@@ -159,6 +159,22 @@ export interface Options extends DeprecatedOptions {
    */
   emitJs?: boolean
 
+  /**
+   * Fails the build when a TypeScript program that emits declarations has
+   * type errors.
+   *
+   * By default, generators skip type checking to emit as fast as possible.
+   * Enabling this type-checks each program used during the build as a whole
+   * after all declarations are emitted, including files reached through
+   * imports that are outside the tsconfig's `include`. `tsc` overrides
+   * `compilerOptions.noCheck`; `tsgo` and `tsrs` reject it. Supported by the
+   * `tsc`, `tsgo`, and `tsrs` generators; `oxc` has no type checker. Custom
+   * generators can implement {@link Generator.check}.
+   *
+   * @default false
+   */
+  typecheck?: boolean
+
   /** Options for the built-in `tsc` generator. */
   tsc?: TscOptions
 
@@ -375,6 +391,7 @@ export function resolveOptions({
   sideEffects = false,
   logger = console,
   customLanguages,
+  typecheck = false,
   tsc,
 
   emitJs,
@@ -516,6 +533,12 @@ export function resolveOptions({
     }
   }
 
+  if (typecheck && generator === 'oxc') {
+    throw new Error(
+      "The `typecheck` option is not supported by the `oxc` generator. Use `generator: 'tsc'` or `generator: 'tsgo'` instead.",
+    )
+  }
+
   if (generator === 'tsc' && tscOptions.parallel && hasCustomLanguages) {
     throw new Error(
       'The `tsc.parallel` option does not support `customLanguages`. Disable `tsc.parallel` or use the built-in `tsc.vue` option for Vue.',
@@ -627,6 +650,7 @@ export function resolveOptions({
     resolver,
     cjsDefault,
     sideEffects,
+    typecheck,
 
     tsc: tscOptions,
     emitJs,

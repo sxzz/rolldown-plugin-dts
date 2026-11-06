@@ -13,6 +13,7 @@ import type { VueLanguageOptions } from '../tsc/vue.ts'
 import type {
   WorkerRequest,
   WorkerResponse,
+  WorkerTscCheckOptions,
   WorkerTscOptions,
 } from '../tsc/worker.ts'
 import type { Generator } from './index.ts'
@@ -36,6 +37,7 @@ export class TscGenerator implements Generator {
   private worker?: TscWorker
   private tscModule?: typeof import('../tsc/index.ts')
   private context?: TscContext
+  private emittedIds = new Set<string>()
 
   constructor({
     parallel,
@@ -54,6 +56,7 @@ export class TscGenerator implements Generator {
   }
 
   async init(): Promise<void> {
+    this.emittedIds.clear()
     if (this.parallel) {
       this.worker = createTscWorker(this.vue)
       return
@@ -71,6 +74,7 @@ export class TscGenerator implements Generator {
       entries: this.getEntries(),
       id: fileName,
     }
+    this.emittedIds.add(fileName)
 
     let result: TscResult
     if (this.parallel) {
@@ -94,6 +98,28 @@ export class TscGenerator implements Generator {
     }
 
     return result
+  }
+
+  check(): string | undefined | Promise<string | undefined> {
+    const options: WorkerTscCheckOptions = {
+      ...this.options,
+      entries: this.getEntries(),
+      ids: [...this.emittedIds],
+    }
+    if (this.parallel) {
+      if (!this.worker) {
+        throw new Error('TscGenerator has not been initialized.')
+      }
+      return this.worker.check(options)
+    }
+    if (!this.tscModule) {
+      throw new Error('TscGenerator has not been initialized.')
+    }
+    return this.tscModule.tscCheck({
+      ...options,
+      languageContext: this.languageContext,
+      context: this.context,
+    })
   }
 
   dispose(): void {
@@ -120,6 +146,7 @@ export class TscGenerator implements Generator {
 
 interface TscWorker {
   emit: (options: WorkerTscOptions) => Promise<TscResult>
+  check: (options: WorkerTscCheckOptions) => Promise<string | undefined>
   kill: () => void
 }
 
@@ -132,7 +159,7 @@ function createTscWorker(vue: false | VueLanguageOptions): TscWorker {
   const pending = new Map<
     number,
     {
-      resolve: (result: TscResult) => void
+      resolve: (result: any) => void
       reject: (error: unknown) => void
     }
   >()
@@ -156,17 +183,20 @@ function createTscWorker(vue: false | VueLanguageOptions): TscWorker {
     pending.clear()
   })
 
+  const request = (message: Omit<WorkerRequest, 'id' | 'vue'>): Promise<any> =>
+    new Promise((resolve, reject) => {
+      const id = nextId++
+      pending.set(id, { resolve, reject })
+      childProcess.send({
+        ...message,
+        id,
+        vue: vue || undefined,
+      } as WorkerRequest)
+    })
+
   return {
-    emit: (options) =>
-      new Promise((resolve, reject) => {
-        const id = nextId++
-        pending.set(id, { resolve, reject })
-        childProcess.send({
-          id,
-          options,
-          vue: vue || undefined,
-        } satisfies WorkerRequest)
-      }),
+    emit: (options) => request({ type: 'emit', options }),
+    check: (options) => request({ type: 'check', options }),
     kill: () => childProcess.kill(),
   }
 }
