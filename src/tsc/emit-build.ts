@@ -28,11 +28,8 @@ import type {
 const ts = requireTSApi()
 const debug = createDebug('rolldown-plugin-dts:tsc-build')
 
-// `checked` is false for builds with `noCheck`.
-const buildDiagnostics = new WeakMap<
-  SourceFileToProjectMap,
-  { checked: boolean; diagnostics: Diagnostic[] }
->()
+// Only builds with `typecheck` have diagnostics.
+const buildDiagnostics = new WeakMap<SourceFileToProjectMap, Diagnostic[]>()
 
 // Emit file using `tsc --build` mode.
 export function tscEmitBuild(tscOptions: TscOptions): TscResult {
@@ -85,7 +82,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
 
   if (typecheck) {
     const error = formatTypeErrors(
-      buildDiagnostics.get(sourceFileToProjectMap)!.diagnostics,
+      buildDiagnostics.get(sourceFileToProjectMap)!,
     )
     if (error) return { error }
   }
@@ -164,7 +161,7 @@ function getOrBuildProjects(
 ): SourceFileToProjectMap {
   let projectMap = context.projects.get(tsconfig)
   // A shared context may hold a build without `typecheck`.
-  if (projectMap && (!typecheck || buildDiagnostics.get(projectMap)!.checked)) {
+  if (projectMap && (!typecheck || buildDiagnostics.has(projectMap))) {
     debug(`skip building projects for ${tsconfig}`)
     return projectMap
   }
@@ -211,12 +208,11 @@ function buildProjects(
       /** we don't need to print warning here because we have done this in {@link collectProjectGraph} */
       tsconfigPath: null,
     }),
-    (diagnostic) => {
-      diagnostics.push(diagnostic)
-      if (!typecheck) {
-        fsSystem.write(ts.formatDiagnostic(diagnostic, formatHost))
-      }
-    },
+    typecheck
+      ? (diagnostic) => {
+          diagnostics.push(diagnostic)
+        }
+      : undefined,
   )
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
     force,
@@ -242,10 +238,7 @@ function buildProjects(
       sourceFileToProjectMap.set(fsSystem.resolvePath(fileName), project)
     }
   }
-  buildDiagnostics.set(sourceFileToProjectMap, {
-    checked: typecheck,
-    diagnostics,
-  })
+  if (typecheck) buildDiagnostics.set(sourceFileToProjectMap, diagnostics)
 
   return sourceFileToProjectMap
 }
