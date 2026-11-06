@@ -47,6 +47,7 @@ export function createGeneratePlugin(
     | 'tsrs'
     | 'emitJs'
     | 'sourcemap'
+    | 'typecheck'
   >,
 ): Plugin {
   const { entry, cwd, dtsOnly, languageContext, tsc, emitJs } = options

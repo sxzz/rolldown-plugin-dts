@@ -110,6 +110,7 @@ dts({
 | `resolver`        | Resolve declaration imports with `oxc` or `tsc`.                                                                     | `oxc`                   |
 | `cjsDefault`      | Convert a single default export to `export =`.                                                                       | `false`                 |
 | `sideEffects`     | Mark declaration modules as having side effects.                                                                     | `false`                 |
+| `typecheck`       | Fail the build on type errors. Not supported by `oxc`.                                                               | `false`                 |
 | `logger`          | Logger implementing `info`, `warn`, and `error`.                                                                     | `console`               |
 
 `tsc.*`, `oxc.*`, `tsgo.*`, and `tsrs.*` apply only to their respective

@@ -159,6 +159,13 @@ export interface Options extends DeprecatedOptions {
    */
   emitJs?: boolean
 
+  /**
+   * Fails the build on type errors. Not supported by `oxc`.
+   *
+   * @default false
+   */
+  typecheck?: boolean
+
   /** Options for the built-in `tsc` generator. */
   tsc?: TscOptions
 
@@ -375,6 +382,7 @@ export function resolveOptions({
   sideEffects = false,
   logger = console,
   customLanguages,
+  typecheck = false,
   tsc,
 
   emitJs,
@@ -516,6 +524,12 @@ export function resolveOptions({
     }
   }
 
+  if (typecheck && generator === 'oxc') {
+    throw new Error(
+      "The `typecheck` option is not supported by the `oxc` generator. Use `generator: 'tsc'` or `generator: 'tsgo'` instead.",
+    )
+  }
+
   if (generator === 'tsc' && tscOptions.parallel && hasCustomLanguages) {
     throw new Error(
       'The `tsc.parallel` option does not support `customLanguages`. Disable `tsc.parallel` or use the built-in `tsc.vue` option for Vue.',
@@ -627,6 +641,7 @@ export function resolveOptions({
     resolver,
     cjsDefault,
     sideEffects,
+    typecheck,
 
     tsc: tscOptions,
     emitJs,

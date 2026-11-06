@@ -11,7 +11,7 @@ import type { LanguageContext } from '../custom-language.ts'
 import type { Generator, GeneratorResult } from './index.ts'
 import type { SourceMapInput } from 'rolldown'
 import type * as TsgoApiModule from 'typescript-next/async'
-import type { API, Snapshot } from 'typescript-next/async'
+import type { API, Program, Snapshot } from 'typescript-next/async'
 import type * as TsgoFsModule from 'typescript-next/fs'
 import type { Diagnostic } from 'typescript-next/proto'
 
@@ -29,6 +29,7 @@ export interface TsgoGeneratorOptions {
   cwd: string
   tsconfig: string
   vfs: boolean
+  typecheck?: boolean
   languageContext: LanguageContext
   loadSource?: (fileName: string) => Promise<void>
 }
@@ -45,6 +46,8 @@ export class TsgoGenerator implements Generator {
   private loadedSourceFiles = new Set<string>()
   private rootFileProjects = new Map<string, string>()
   private emitQueue: Promise<void> = Promise.resolve()
+  // A new snapshot creates new programs, so changed code is checked again.
+  private programErrors = new WeakMap<Program, Promise<string>>()
 
   constructor(options: TsgoGeneratorOptions) {
     this.options = options
@@ -100,6 +103,8 @@ export class TsgoGenerator implements Generator {
       }
     }
 
+    if (this.options.typecheck) this.assertNoCheckDisabled()
+
     // eslint-disable-next-line unicorn/prefer-early-return
     if (this.options.languageContext.contentMapperExtensions.length) {
       // Mapper setup and transform errors can otherwise produce empty declarations.
@@ -117,6 +122,20 @@ export class TsgoGenerator implements Generator {
           throw new Error(this.formatDiagnostics(diagnostics))
         }
       }
+    }
+  }
+
+  private assertNoCheckDisabled(): void {
+    const configs = this.snapshot!.getProjects()
+      .filter(
+        ({ configFileName, parsedCommandLine }) =>
+          configFileName && parsedCommandLine.options.noCheck,
+      )
+      .map(({ configFileName }) => configFileName)
+    if (configs.length) {
+      throw new Error(
+        `The \`typecheck\` option conflicts with \`noCheck\` in ${configs.join(', ')}. Remove \`noCheck\` from the tsconfig or disable \`typecheck\`.`,
+      )
     }
   }
 
@@ -255,6 +274,31 @@ export class TsgoGenerator implements Generator {
     await this.replaceSnapshot(nextSnapshot)
   }
 
+  private checkProgram(program: Program): Promise<string> {
+    let errors = this.programErrors.get(program)
+    if (!errors) {
+      debug('type checking program %s', program.id)
+      errors = Promise.all([
+        program.getConfigFileParsingDiagnostics(),
+        program.getProgramDiagnostics(),
+        program.getGlobalDiagnostics(),
+        program.getSyntacticDiagnostics(),
+        program.getSemanticDiagnostics(),
+        program.getDeclarationDiagnostics(),
+      ]).then((diagnostics) => {
+        const errors = diagnostics
+          .flat()
+          .filter(
+            ({ category }) =>
+              category === this.apiModule!.DiagnosticCategory.Error,
+          )
+        return errors.length ? this.formatDiagnostics(errors) : ''
+      })
+      this.programErrors.set(program, errors)
+    }
+    return errors
+  }
+
   private async emitFromSnapshot(fileName: string): Promise<GeneratorResult> {
     if (!this.apiModule || !this.api || !this.snapshot) {
       throw new Error('TsgoGenerator has not been initialized.')
@@ -305,6 +349,17 @@ export class TsgoGenerator implements Generator {
       return {
         error: `No ${this.displayName} project found for ${fileName}. Please check your tsconfig and custom language filename mapping.`,
       }
+    }
+
+    if (this.options.typecheck) {
+      const error = await this.checkProgram(project.program).catch(
+        (error: unknown) => {
+          throw new Error(mapError(error, tsFileName, fileName), {
+            cause: error,
+          })
+        },
+      )
+      if (error) return { error: mapError(error, tsFileName, fileName) }
     }
 
     const output = await project.program

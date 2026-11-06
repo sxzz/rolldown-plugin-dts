@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "skipLibCheck": true
+  },
+  "include": ["index.ts"]
+}

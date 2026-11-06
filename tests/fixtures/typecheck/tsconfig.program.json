@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  // `unused.ts` is in the program but emits no declaration
+  "include": ["index.ts", "unused.ts"]
+}

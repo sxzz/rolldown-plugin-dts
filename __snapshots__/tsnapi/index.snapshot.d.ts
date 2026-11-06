@@ -40,6 +40,7 @@ export interface Options extends DeprecatedOptions {
   sideEffects?: boolean;
   logger?: Logger;
   emitJs?: boolean;
+  typecheck?: boolean;
   tsc?: TscOptions;
   oxc?: Omit<IsolatedDeclarationsOptions, "sourcemap">;
   tsgo?: TsgoOptions;
@@ -58,9 +59,9 @@ export interface TscOptions {
 
 // #region Functions
 export declare function createFakeJsPlugin({ sourcemap, cjsDefault, sideEffects }: Pick<OptionsResolved, "sourcemap" | "cjsDefault" | "sideEffects">): Plugin;
-export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "oxc" | "dtsOnly" | "languageContext" | "tsc" | "tsgo" | "tsrs" | "emitJs" | "sourcemap">): Plugin;
+export declare function createGeneratePlugin(_: Pick<OptionsResolved, "generator" | "entry" | "cwd" | "tsconfig" | "tsconfigRaw" | "oxc" | "dtsOnly" | "languageContext" | "tsc" | "tsgo" | "tsrs" | "emitJs" | "sourcemap" | "typecheck">): Plugin;
 export declare function dts(_?: Options): Plugin[];
-export declare function resolveOptions({ generator, entry, cwd, dtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, tsc, emitJs, oxc, tsgo, tsrs, ...deprecated }: Options): OptionsResolved;
+export declare function resolveOptions({ generator, entry, cwd, dtsOnly, tsconfig, tsconfigRaw: overriddenTsconfigRaw, compilerOptions, sourcemap, resolver, cjsDefault, sideEffects, logger, customLanguages, typecheck, tsc, emitJs, oxc, tsgo, tsrs, ...deprecated }: Options): OptionsResolved;
 // #endregion
 
 // #region Referenced (internal)

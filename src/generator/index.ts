@@ -44,6 +44,7 @@ export function createGenerator(
     tsgo,
     tsrs,
     sourcemap,
+    typecheck,
   }: Pick<
     OptionsResolved,
     | 'generator'
@@ -56,6 +57,7 @@ export function createGenerator(
     | 'tsgo'
     | 'tsrs'
     | 'sourcemap'
+    | 'typecheck'
   >,
   getEntries: () => string[] | undefined,
   loadSource?: (fileName: string) => Promise<void>,
@@ -71,6 +73,7 @@ export function createGenerator(
       tsgoPath: tsgo.path!,
       tsconfig: tsconfig!,
       sourcemap,
+      typecheck,
       languageContext,
     })
   }
@@ -85,6 +88,7 @@ export function createGenerator(
       cwd,
       tsconfig: tsconfig!,
       vfs: !!native.vfs,
+      typecheck,
       languageContext,
       loadSource,
     })
@@ -97,6 +101,7 @@ export function createGenerator(
     incremental: tsc.incremental,
     cwd,
     sourcemap,
+    typecheck,
     languageContext,
     vue: tsc.vue,
     parallel: tsc.parallel,

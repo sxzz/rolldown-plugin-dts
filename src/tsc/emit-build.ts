@@ -8,7 +8,12 @@ import {
   type TscContext,
 } from './context.ts'
 import { createFsSystem, createMemorySystem } from './system.ts'
-import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
+import {
+  customTransformers,
+  formatHost,
+  formatTypeErrors,
+  setSourceMapRoot,
+} from './utils.ts'
 import type { TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 import type {
@@ -23,6 +28,9 @@ import type {
 const ts = requireTSApi()
 const debug = createDebug('rolldown-plugin-dts:tsc-build')
 
+// Only builds with `typecheck` have diagnostics.
+const buildDiagnostics = new WeakMap<SourceFileToProjectMap, Diagnostic[]>()
+
 // Emit file using `tsc --build` mode.
 export function tscEmitBuild(tscOptions: TscOptions): TscResult {
   const {
@@ -31,6 +39,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
     incremental,
     context = globalContext,
     sourcemap,
+    typecheck = false,
   } = tscOptions
   debug(
     `running tscEmitBuild id: ${id}, tsconfig: ${tsconfig}, incremental: ${incremental}`,
@@ -59,6 +68,7 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
     tsconfig,
     !incremental,
     sourcemap,
+    typecheck,
   )
 
   const project = sourceFileToProjectMap.get(resolvedId)
@@ -69,6 +79,13 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
     }
   }
   debug(`loaded project ${project.tsconfigPath} for ${id}`)
+
+  if (typecheck) {
+    const error = formatTypeErrors(
+      buildDiagnostics.get(sourceFileToProjectMap)!,
+    )
+    if (error) return { error }
+  }
 
   const ignoreCase = !fsSystem.useCaseSensitiveFileNames
   const outputFiles = ts.getOutputFileNames(
@@ -140,14 +157,16 @@ function getOrBuildProjects(
   tsconfig: string,
   force: boolean,
   sourcemap: boolean,
+  typecheck: boolean,
 ): SourceFileToProjectMap {
   let projectMap = context.projects.get(tsconfig)
-  if (projectMap) {
+  // A shared context may hold a build without `typecheck`.
+  if (projectMap && (!typecheck || buildDiagnostics.has(projectMap))) {
     debug(`skip building projects for ${tsconfig}`)
     return projectMap
   }
 
-  projectMap = buildProjects(fsSystem, tsconfig, force, sourcemap)
+  projectMap = buildProjects(fsSystem, tsconfig, force, sourcemap, typecheck)
   context.projects.set(tsconfig, projectMap)
   return projectMap
 }
@@ -160,26 +179,40 @@ function buildProjects(
   tsconfig: string,
   force: boolean,
   sourcemap: boolean,
+  typecheck: boolean,
 ): SourceFileToProjectMap {
   debug(`start building projects for ${tsconfig}`)
 
   // Collect all projects from the tsconfig file and its references. A project
   // is a string that represents the path to the project's `tsconfig` file.
-  const projects = collectProjectGraph(tsconfig, fsSystem, force, sourcemap)
+  const projects = collectProjectGraph(
+    tsconfig,
+    fsSystem,
+    force,
+    sourcemap,
+    typecheck,
+  )
   debug(
     'collected %d projects: %j',
     projects.length,
     projects.map((project) => project.tsconfigPath),
   )
 
+  const diagnostics: Diagnostic[] = []
   const host = ts.createSolutionBuilderHost(
     fsSystem,
     createProgramWithPatchedCompilerOptions({
       force,
       sourcemap,
+      typecheck,
       /** we don't need to print warning here because we have done this in {@link collectProjectGraph} */
       tsconfigPath: null,
     }),
+    typecheck
+      ? (diagnostic) => {
+          diagnostics.push(diagnostic)
+        }
+      : undefined,
   )
   const builder = ts.createSolutionBuilder(host, [tsconfig], {
     force,
@@ -205,6 +238,7 @@ function buildProjects(
       sourceFileToProjectMap.set(fsSystem.resolvePath(fileName), project)
     }
   }
+  if (typecheck) buildDiagnostics.set(sourceFileToProjectMap, diagnostics)
 
   return sourceFileToProjectMap
 }
@@ -217,6 +251,7 @@ function collectProjectGraph(
   fsSystem: System,
   force: boolean,
   sourcemap: boolean,
+  typecheck: boolean,
 ): ParsedProject[] {
   const seen = new Set<string>()
   const projects: ParsedProject[] = []
@@ -238,6 +273,7 @@ function collectProjectGraph(
       tsconfigPath: parsedConfig.fileNames.length > 0 ? tsconfigPath : null,
       force,
       sourcemap,
+      typecheck,
     })
 
     projects.push({ tsconfigPath, parsedConfig })
@@ -280,6 +316,7 @@ interface CompilerPatchOptions {
   tsconfigPath: string | null
   force: boolean
   sourcemap: boolean
+  typecheck: boolean
 }
 
 // To ensure we can get `.d.ts` and `.d.ts.map` files from `tsc --build` mode,
@@ -321,6 +358,11 @@ function patchCompilerOptions(
         `[rolldown-plugin-dts] ${extraOptions.tsconfigPath} has "declarationMap" set to false. Please set it to true if you want to generate source maps for declaration files.`,
       )
     }
+  }
+
+  // `noCheck` does not invalidate `.tsbuildinfo`.
+  if (options.noCheck !== !extraOptions.typecheck) {
+    options = { ...options, noCheck: !extraOptions.typecheck }
   }
 
   return options

@@ -18,6 +18,7 @@ export interface TscOptions {
   entries?: string[]
   id: string
   sourcemap: boolean
+  typecheck?: boolean
   languageContext: LanguageContext
   context?: TscContext
 }
