@@ -254,14 +254,12 @@ test('disable dts source map only', async () => {
     {},
     { sourcemap: true },
   )
-  expect(chunks.map((chunk) => chunk.fileName)).toMatchInlineSnapshot(`
-    [
-      "index.d.ts",
-      "index.js",
-      "rolldown-runtime-D8jQpDG7.js",
-      "index.js.map",
-    ]
-  `)
+  expect(chunks.map((chunk) => chunk.fileName).toSorted()).toEqual([
+    'index.d.ts',
+    'index.js',
+    'index.js.map',
+    expect.stringContaining('rolldown-runtime-'),
+  ])
 })
 
 // https://github.com/rolldown/tsdown/issues/1091
