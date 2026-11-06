@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test, vi } from 'vitest'
 import { dts, resolveOptions, type Generator } from '../src/index.ts'
+import type { Plugin, TransformResult } from 'rolldown'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -995,6 +996,45 @@ test('file doc comment removed before a rebuild', async () => {
     await writeFile(input, code.replace(/^\/\*\*[\s\S]*?\*\/\n/, ''))
     const second = await rolldownBuild(input, plugins)
     expect(second.snapshot).not.toContain('Docs for this entry point.')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('release the previous build state on rebuild', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'dts-rebuild-'))
+  try {
+    const input = path.join(dir, 'index.ts')
+    await writeFile(input, 'export interface A { a: string }')
+
+    // reusing the plugins mimics a watch rebuild
+    let reuse = false
+    let cached: TransformResult
+    const plugins = dts({ dtsOnly: true }).map((plugin): Plugin => {
+      if (plugin.name !== 'rolldown-plugin-dts:fake-js') return plugin
+      const transform = plugin.transform as Extract<
+        Plugin['transform'],
+        { handler: unknown }
+      >
+      return {
+        ...plugin,
+        transform: {
+          ...transform,
+          async handler(...args) {
+            if (reuse) return cached
+            return (cached = await transform.handler.apply(this, args))
+          },
+        },
+      }
+    })
+
+    const first = await rolldownBuild(input, plugins)
+    expect(first.snapshot).toContain('interface A')
+
+    // The output of the previous transform refers to the declarations it
+    // stored, which no longer exist.
+    reuse = true
+    await expect(rolldownBuild(input, plugins)).rejects.toThrow()
   } finally {
     await rm(dir, { recursive: true, force: true })
   }
