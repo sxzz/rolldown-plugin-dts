@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { isLegacyTsgo } from '../tsgo.ts'
 import { OxcGenerator } from './oxc.ts'
 import { TscGenerator } from './tsc.ts'
@@ -70,7 +69,6 @@ export function createGenerator(
   if (generator === 'tsgo' && isLegacyTsgo(tsgo.moduleUrl)) {
     return new TsgoCliGenerator({
       tsgoPath: tsgo.path!,
-      rootDir: path.dirname(tsconfig!),
       tsconfig: tsconfig!,
       sourcemap,
       languageContext,

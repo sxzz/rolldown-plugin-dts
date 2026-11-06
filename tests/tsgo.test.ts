@@ -6,6 +6,7 @@ import url, { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { afterEach, expect, test, vi } from 'vitest'
 import { LanguageContext } from '../src/custom-language.ts'
+import { TsgoCliGenerator } from '../src/generator/tsgo-cli.ts'
 import { TsgoGenerator } from '../src/generator/tsgo.ts'
 import { dts } from '../src/index.ts'
 import { loadTsgoApi, loadTsgoFileSystem } from '../src/tsgo.ts'
@@ -26,6 +27,19 @@ afterEach(async () => {
   generator = undefined
   vi.restoreAllMocks()
 })
+
+// typescript-next's getExePath takes the Node modules as an argument
+function getTsgoPath(): string {
+  const getExePath: any = require(
+    path.join(path.dirname(fileURLToPath(moduleUrl)), 'getExePath.js'),
+  )
+  return (typeof getExePath === 'function' ? getExePath : getExePath.default)({
+    fs,
+    module,
+    path,
+    url,
+  })
+}
 
 function createGenerator(vfs = true): TsgoGenerator {
   return new TsgoGenerator({
@@ -223,12 +237,7 @@ test('vfs resolves new files in virtual directories and retains them across upda
 })
 
 test('tsgo with custom path', async () => {
-  const getExePath: any = require(
-    path.join(path.dirname(fileURLToPath(moduleUrl)), 'getExePath.js'),
-  )
-  const tsserverPath = (
-    typeof getExePath === 'function' ? getExePath : getExePath.default
-  )({ fs, module, path, url })
+  const tsserverPath = getTsgoPath()
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/basic.ts'),
     [
@@ -372,3 +381,25 @@ test.each([false, true])(
     expect(declaration!.code).not.toContain('valueB: number')
   },
 )
+
+test('tsgo CLI does not emit next to sources outside the tsconfig directory', async () => {
+  const fixture = path.resolve(dirname, 'fixtures/tsgo-outside-root')
+  const source = path.join(fixture, 'shared/greet.ts')
+  const strayDts = path.join(fixture, 'shared/greet.d.ts')
+  const cli = new TsgoCliGenerator({
+    tsgoPath: getTsgoPath(),
+    tsconfig: path.join(fixture, 'pkg/tsconfig.json'),
+    languageContext: new LanguageContext([]),
+  })
+
+  await rm(strayDts, { force: true })
+  try {
+    await cli.init()
+    const result = await cli.emit('', source)
+    expect(result.code).toContain('interface Greeting')
+    expect(fs.existsSync(strayDts)).toBe(false)
+  } finally {
+    await cli.dispose()
+    await rm(strayDts, { force: true })
+  }
+})
