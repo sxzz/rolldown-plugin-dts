@@ -64,7 +64,6 @@ interface TsgoContext {
 
 export interface TsgoCliGeneratorOptions {
   tsgoPath: string
-  rootDir: string
   tsconfig: string
   sourcemap?: boolean
   languageContext: LanguageContext
@@ -73,18 +72,21 @@ export interface TsgoCliGeneratorOptions {
 export class TsgoCliGenerator implements Generator {
   private options: TsgoCliGeneratorOptions
   private context?: TsgoContext
+  private rootDir: string
 
   constructor(options: TsgoCliGeneratorOptions) {
     this.options = options
+    this.rootDir = path.parse(path.resolve(options.tsconfig)).root
   }
 
   async init(): Promise<void> {
-    const { tsgoPath, rootDir, tsconfig, sourcemap } = this.options
-    this.context = await runTsgo(tsgoPath, rootDir, tsconfig, sourcemap)
+    const { tsgoPath, tsconfig, sourcemap } = this.options
+    this.context = await runTsgo(tsgoPath, this.rootDir, tsconfig, sourcemap)
   }
 
   async emit(_code: string, fileName: string): Promise<GeneratorResult> {
-    const { rootDir, languageContext } = this.options
+    const { rootDir } = this
+    const { languageContext } = this.options
     if (languageContext.isCustomLanguageFile(fileName)) {
       return {
         error: `tsgo does not support ${path.extname(fileName)} files.`,
@@ -96,10 +98,7 @@ export class TsgoCliGenerator implements Generator {
 
     const dtsPath = path.resolve(
       this.context.path,
-      path.relative(
-        path.resolve(rootDir),
-        filename_to_dts(fileName, languageContext),
-      ),
+      path.relative(rootDir, filename_to_dts(fileName, languageContext)),
     )
     if (!existsSync(dtsPath)) {
       debug('[tsgo]', dtsPath, 'is missing')

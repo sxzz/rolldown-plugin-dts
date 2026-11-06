@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { isLegacyTsgo } from '../tsgo.ts'
 import { OxcGenerator } from './oxc.ts'
 import { TscGenerator } from './tsc.ts'
@@ -70,11 +69,6 @@ export function createGenerator(
   if (generator === 'tsgo' && isLegacyTsgo(tsgo.moduleUrl)) {
     return new TsgoCliGenerator({
       tsgoPath: tsgo.path!,
-      // Use the filesystem root so every emitted file maps into the temp
-      // outDir. With a narrower rootDir, tsgo writes declarations for files
-      // outside it (e.g. workspace packages resolved to their sources) next
-      // to those source files.
-      rootDir: path.parse(tsconfig ? path.dirname(tsconfig) : cwd).root,
       tsconfig: tsconfig!,
       sourcemap,
       languageContext,
