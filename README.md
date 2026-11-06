@@ -129,9 +129,8 @@ dts({
 files in Rolldown `input` instead.
 
 By default, generators skip type checking to emit declarations as fast as
-possible. Set `typecheck: true` to type-check each TypeScript program used
-during the build as a whole, after all declarations are emitted, and fail the
-build on errors. This covers files reached through imports even when they are
+possible. Set `typecheck: true` to type-check each TypeScript program as a
+whole when it first emits a declaration, and fail the build on errors. This covers files reached through imports even when they are
 outside the tsconfig's `include`, which a separate `tsc --noEmit` would miss.
 `tsc` overrides `compilerOptions.noCheck`; `tsgo` and `tsrs` read the
 tsconfig as is and reject `noCheck` with an error.

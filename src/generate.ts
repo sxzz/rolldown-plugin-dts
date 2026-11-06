@@ -285,15 +285,8 @@ export function createGeneratePlugin(
       },
     },
 
-    async buildEnd(error) {
-      try {
-        if (options.typecheck && !error) {
-          const typeErrors = await declarationGenerator.check?.()
-          if (typeErrors) this.error(typeErrors)
-        }
-      } finally {
-        await declarationGenerator.dispose?.()
-      }
+    async buildEnd() {
+      await declarationGenerator.dispose?.()
     },
 
     watchChange(id) {

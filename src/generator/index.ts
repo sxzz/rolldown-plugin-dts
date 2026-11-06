@@ -26,12 +26,6 @@ export interface Generator {
     code: string,
     fileName: string,
   ) => GeneratorResult | Promise<GeneratorResult>
-  /**
-   * Type-checks the programs used during the build, before {@link dispose}.
-   * Called only with the `typecheck` option. Returns the errors to report.
-   */
-  check?: () =>
-    RollupError | string | undefined | Promise<RollupError | string | undefined>
   /** Releases resources at the end of each build. */
   dispose?: () => void | Promise<void>
   /** Invalidates cached state for a changed file in watch mode. */

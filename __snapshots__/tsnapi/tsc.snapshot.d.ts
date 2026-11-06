@@ -26,13 +26,6 @@ export interface TscResult {
 }
 // #endregion
 
-// #region Types
-export type TscCheckOptions = Omit<TscOptions, "id"> & {
-  ids: string[];
-};
-// #endregion
-
 // #region Functions
-export declare function tscCheck(_: TscCheckOptions): string | undefined;
 export declare function tscEmit(_: TscOptions): TscResult;
 // #endregion

@@ -3,7 +3,10 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
+import { LanguageContext } from '../src/custom-language.ts'
+import { TsgoGenerator } from '../src/generator/tsgo.ts'
 import { dts, type Options } from '../src/index.ts'
+import type { Plugin } from 'rolldown'
 
 const root = path.resolve(import.meta.dirname, 'fixtures/typecheck')
 const entry = path.join(root, 'index.ts')
@@ -129,6 +132,37 @@ test.each<[string, Options]>([
   ).rejects.toThrow('TS4094')
 })
 
+test.each([
+  ['tsgo', tsgo],
+  ['tsrs', tsrs],
+] as const)(
+  '%s VFS type-checks transformed sources',
+  async (compiler, native) => {
+    // Fixes the type error of a module that is not an entry.
+    const fix: Plugin = {
+      name: 'fix-type-error',
+      transform: {
+        order: 'pre',
+        filter: { id: /error\.ts$/ },
+        handler: (code) => code.replace("'not a number'", '0'),
+      },
+    }
+    const build = (vfs: boolean) =>
+      rolldownBuild(entry, [
+        fix,
+        dts({
+          generator: compiler,
+          tsconfig,
+          [compiler]: { ...native, vfs },
+          dtsOnly: true,
+          typecheck: true,
+        }),
+      ])
+    await expect(build(false)).rejects.toThrow('TS2322')
+    await build(true)
+  },
+)
+
 test('tsc does not reuse a cached `noCheck` program with `typecheck`', async () => {
   // A copy keeps the shared context free of programs from other tests.
   const dir = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
@@ -148,6 +182,60 @@ test('tsc does not reuse a cached `noCheck` program with `typecheck`', async () 
   } finally {
     await rm(dir, { recursive: true, force: true })
   }
+})
+
+test('tsc reports type errors of a cached program again', async () => {
+  // A copy keeps the shared context free of programs from other tests.
+  const dir = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
+  try {
+    await cp(root, dir, { recursive: true })
+    const build = () =>
+      rolldownBuild(path.join(dir, 'index.ts'), [
+        dts({
+          generator: 'tsc',
+          tsconfig: path.join(dir, 'tsconfig.json'),
+          dtsOnly: true,
+          typecheck: true,
+        }),
+      ])
+    await expect(build()).rejects.toThrow('TS2322')
+    await expect(build()).rejects.toThrow('TS2322')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test.each([
+  ['tsgo', tsgo],
+  ['tsrs', tsrs],
+] as const)('%s re-checks projects on rebuilds', async (compiler, native) => {
+  const generator = new TsgoGenerator({
+    compiler,
+    moduleUrl: native.moduleUrl,
+    cwd: root,
+    tsconfig,
+    vfs: true,
+    typecheck: true,
+    languageContext: new LanguageContext([]),
+  })
+  const errorFile = path.join(root, 'error.ts')
+  const indexCode = await readFile(entry, 'utf8')
+  const emit = async (errorCode: string) => {
+    await generator.init()
+    try {
+      generator.addFile(errorCode, errorFile)
+      return await generator.emit(indexCode, entry)
+    } finally {
+      await generator.dispose()
+    }
+  }
+
+  expect((await emit("export const value: number = ''")).error).toContain(
+    'TS2322',
+  )
+  expect(await emit('export const value: number = 0')).toMatchObject({
+    code: expect.stringContaining('value'),
+  })
 })
 
 test('rejects `typecheck` with oxc', () => {

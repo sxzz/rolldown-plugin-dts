@@ -14,7 +14,7 @@ import {
   formatTypeErrors,
   setSourceMapRoot,
 } from './utils.ts'
-import type { TscCheckOptions, TscOptions, TscResult } from './types.ts'
+import type { TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 import type {
   CompilerOptions,
@@ -85,6 +85,14 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
   }
   debug(`loaded project ${project.tsconfigPath} for ${id}`)
 
+  if (typecheck) {
+    // The whole solution was checked when it was built.
+    const error = formatTypeErrors(
+      buildDiagnostics.get(sourceFileToProjectMap)!.diagnostics,
+    )
+    if (error) return { error }
+  }
+
   const ignoreCase = !fsSystem.useCaseSensitiveFileNames
   const outputFiles = ts.getOutputFileNames(
     project.parsedConfig,
@@ -149,18 +157,6 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
   }
 }
 
-// Report the type errors collected while building the solution.
-export function tscCheckBuild({
-  tsconfig,
-  context = globalContext,
-}: TscCheckOptions): string | undefined {
-  const projectMap = tsconfig && context.projects.get(tsconfig)
-  if (!projectMap) return
-  return (
-    formatTypeErrors(buildDiagnostics.get(projectMap)!.diagnostics) || undefined
-  )
-}
-
 function getOrBuildProjects(
   context: TscContext,
   fsSystem: System,
@@ -221,7 +217,7 @@ function buildProjects(
     }),
     (diagnostic) => {
       diagnostics.push(diagnostic)
-      // With `typecheck`, errors are reported by `tscCheckBuild`.
+      // With `typecheck`, errors are reported when emitting.
       // Otherwise keep the default reporter's behavior, which writes to the
       // system (debug output only, see `createFsSystem`).
       if (!typecheck) {

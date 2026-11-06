@@ -9,12 +9,7 @@ import {
   formatTypeErrors,
   setSourceMapRoot,
 } from './utils.ts'
-import type {
-  TscCheckOptions,
-  TscModule,
-  TscOptions,
-  TscResult,
-} from './types.ts'
+import type { TscModule, TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 import type {
   CompilerOptions,
@@ -26,6 +21,10 @@ import type {
 
 const debug = createDebug('rolldown-plugin-dts:tsc-compiler')
 const ts = requireTSApi()
+
+// Type errors of each program, checked as a whole once. Programs are dropped
+// from the context and rebuilt when one of their files changes.
+const programErrors = new WeakMap<Program, string>()
 
 const defaultCompilerOptions: CompilerOptions = {
   declaration: true,
@@ -189,6 +188,16 @@ export function tscEmitCompiler(tscOptions: TscOptions): TscResult {
   const { program, file } = module
   debug(`got source file: ${file.fileName}`)
 
+  if (tscOptions.typecheck) {
+    let error = programErrors.get(program)
+    if (error === undefined) {
+      debug('type checking program')
+      error = formatTypeErrors(ts.getPreEmitDiagnostics(program))
+      programErrors.set(program, error)
+    }
+    if (error) return { error }
+  }
+
   let dtsCode: string | undefined
   let map: ExistingRawSourceMap | undefined
 
@@ -232,27 +241,4 @@ export function tscEmitCompiler(tscOptions: TscOptions): TscResult {
   }
 
   return { code: dtsCode, map }
-}
-
-// Type-check every program that emitted one of the files, as a whole.
-export function tscCheckCompiler({
-  ids,
-  context = globalContext,
-}: TscCheckOptions): string | undefined {
-  const programs = new Set<Program>()
-  for (const id of ids) {
-    const program = context.programs.find(
-      (program) =>
-        !program.getCompilerOptions().noCheck && program.getSourceFile(id),
-    )
-    if (program) programs.add(program)
-  }
-  debug(`type checking ${programs.size} programs`)
-  return (
-    Array.from(programs, (program) =>
-      formatTypeErrors(ts.getPreEmitDiagnostics(program)),
-    )
-      .filter(Boolean)
-      .join('\n') || undefined
-  )
 }

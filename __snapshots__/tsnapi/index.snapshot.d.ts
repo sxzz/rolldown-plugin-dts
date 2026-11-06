@@ -13,7 +13,6 @@ export interface Generator {
   init?: () => void | Promise<void>;
   addFile?: (_: string, _: string) => void;
   emit: (_: string, _: string) => GeneratorResult | Promise<GeneratorResult>;
-  check?: () => RollupError | string | undefined | Promise<RollupError | string | undefined>;
   dispose?: () => void | Promise<void>;
   invalidate?: (_: string) => void;
 }

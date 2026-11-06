@@ -47,11 +47,8 @@ export class TsgoGenerator implements Generator {
   private loadedSourceFiles = new Set<string>()
   private rootFileProjects = new Map<string, string>()
   private emitQueue: Promise<void> = Promise.resolve()
-  // Emitted TS file name -> original file name, for error messages.
-  private emittedFiles = new Map<string, string>()
-  // Config file name (or TS file name of an inferred project) -> the TS file
-  // name to look up an inferred project with.
-  private checkedProjects = new Map<string, string | undefined>()
+  // Type errors of each project, checked as a whole once per build.
+  private projectErrors = new Map<string, Promise<string>>()
 
   constructor(options: TsgoGeneratorOptions) {
     this.options = options
@@ -63,8 +60,7 @@ export class TsgoGenerator implements Generator {
     this.loadedSourceFiles.clear()
     this.projectFiles = undefined
     this.emitQueue = Promise.resolve()
-    this.emittedFiles.clear()
-    this.checkedProjects.clear()
+    this.projectErrors.clear()
 
     const { compiler } = this.options
     this.apiModule = loadTsgoApi(this.options.moduleUrl, undefined, compiler)
@@ -167,52 +163,6 @@ export class TsgoGenerator implements Generator {
       () => {},
     )
     return result
-  }
-
-  /** Type-checks every project that emitted a declaration, as a whole. */
-  async check(): Promise<string | undefined> {
-    await this.emitQueue
-    if (!this.apiModule || !this.api || !this.snapshot) {
-      throw new Error('TsgoGenerator has not been initialized.')
-    }
-    const snapshot = this.snapshot
-
-    const projects = new Map<string, Project>()
-    await Promise.all(
-      Array.from(this.checkedProjects, async ([config, inferredFile]) => {
-        const project = inferredFile
-          ? await snapshot.getDefaultProjectForFile(inferredFile)
-          : snapshot.getConfiguredProject(config)
-        if (project) projects.set(project.id, project)
-      }),
-    )
-    debug('type checking %d projects', projects.size)
-
-    // Requests issued in the same tick are sent as one `batchRequests` call.
-    const diagnostics = (
-      await Promise.all(
-        Array.from(projects.values(), ({ program }) => [
-          program.getConfigFileParsingDiagnostics(),
-          program.getProgramDiagnostics(),
-          program.getGlobalDiagnostics(),
-          program.getSyntacticDiagnostics(),
-          program.getSemanticDiagnostics(),
-          // Errors such as TS2742 that make the emitted declarations wrong.
-          program.getDeclarationDiagnostics(),
-        ]).flat(),
-      )
-    )
-      .flat()
-      .filter(
-        ({ category }) => category === this.apiModule!.DiagnosticCategory.Error,
-      )
-    if (!diagnostics.length) return
-
-    let error = this.formatDiagnostics(diagnostics)
-    for (const [tsFileName, fileName] of this.emittedFiles) {
-      error = mapError(error, tsFileName, fileName)
-    }
-    return error
   }
 
   async dispose(): Promise<void> {
@@ -327,6 +277,37 @@ export class TsgoGenerator implements Generator {
     await this.replaceSnapshot(nextSnapshot)
   }
 
+  // In VFS mode, the first emit has already loaded every source of the
+  // programs through Rolldown, so later snapshots only repeat the same code.
+  private checkProject(project: Project): Promise<string> {
+    const key = project.configFileName || `inferred:${project.id}`
+    let errors = this.projectErrors.get(key)
+    if (!errors) {
+      debug('type checking project %s', key)
+      const { program } = project
+      // Requests issued in the same tick are sent as one `batchRequests` call.
+      errors = Promise.all([
+        program.getConfigFileParsingDiagnostics(),
+        program.getProgramDiagnostics(),
+        program.getGlobalDiagnostics(),
+        program.getSyntacticDiagnostics(),
+        program.getSemanticDiagnostics(),
+        // Errors such as TS2742 that make the emitted declarations wrong.
+        program.getDeclarationDiagnostics(),
+      ]).then((diagnostics) => {
+        const errors = diagnostics
+          .flat()
+          .filter(
+            ({ category }) =>
+              category === this.apiModule!.DiagnosticCategory.Error,
+          )
+        return errors.length ? this.formatDiagnostics(errors) : ''
+      })
+      this.projectErrors.set(key, errors)
+    }
+    return errors
+  }
+
   private async emitFromSnapshot(fileName: string): Promise<GeneratorResult> {
     if (!this.apiModule || !this.api || !this.snapshot) {
       throw new Error('TsgoGenerator has not been initialized.')
@@ -380,12 +361,12 @@ export class TsgoGenerator implements Generator {
     }
 
     if (this.options.typecheck) {
-      this.emittedFiles.set(tsFileName, fileName)
-      // Projects are looked up again in the final snapshot by `check`.
-      this.checkedProjects.set(
-        project.configFileName || tsFileName,
-        project.configFileName ? undefined : tsFileName,
-      )
+      const error = await this.checkProject(project).catch((error: unknown) => {
+        throw new Error(mapError(error, tsFileName, fileName), {
+          cause: error,
+        })
+      })
+      if (error) return { error: mapError(error, tsFileName, fileName) }
     }
 
     const output = await project.program
