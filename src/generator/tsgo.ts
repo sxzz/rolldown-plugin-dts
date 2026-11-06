@@ -11,7 +11,7 @@ import type { LanguageContext } from '../custom-language.ts'
 import type { Generator, GeneratorResult } from './index.ts'
 import type { SourceMapInput } from 'rolldown'
 import type * as TsgoApiModule from 'typescript-next/async'
-import type { API, Project, Snapshot } from 'typescript-next/async'
+import type { API, Program, Snapshot } from 'typescript-next/async'
 import type * as TsgoFsModule from 'typescript-next/fs'
 import type { Diagnostic } from 'typescript-next/proto'
 
@@ -29,7 +29,6 @@ export interface TsgoGeneratorOptions {
   cwd: string
   tsconfig: string
   vfs: boolean
-  /** Reports type errors of emitted files. */
   typecheck?: boolean
   languageContext: LanguageContext
   loadSource?: (fileName: string) => Promise<void>
@@ -47,8 +46,8 @@ export class TsgoGenerator implements Generator {
   private loadedSourceFiles = new Set<string>()
   private rootFileProjects = new Map<string, string>()
   private emitQueue: Promise<void> = Promise.resolve()
-  // Type errors of each project, checked as a whole once per build.
-  private projectErrors = new Map<string, Promise<string>>()
+  // A new snapshot creates new programs, so changed code is checked again.
+  private programErrors = new WeakMap<Program, Promise<string>>()
 
   constructor(options: TsgoGeneratorOptions) {
     this.options = options
@@ -60,7 +59,6 @@ export class TsgoGenerator implements Generator {
     this.loadedSourceFiles.clear()
     this.projectFiles = undefined
     this.emitQueue = Promise.resolve()
-    this.projectErrors.clear()
 
     const { compiler } = this.options
     this.apiModule = loadTsgoApi(this.options.moduleUrl, undefined, compiler)
@@ -127,7 +125,6 @@ export class TsgoGenerator implements Generator {
     }
   }
 
-  // A tsconfig `noCheck` would hide the errors `typecheck` asks for.
   private assertNoCheckDisabled(): void {
     const configs = this.snapshot!.getProjects()
       .filter(
@@ -277,22 +274,16 @@ export class TsgoGenerator implements Generator {
     await this.replaceSnapshot(nextSnapshot)
   }
 
-  // In VFS mode, the first emit has already loaded every source of the
-  // programs through Rolldown, so later snapshots only repeat the same code.
-  private checkProject(project: Project): Promise<string> {
-    const key = project.configFileName || `inferred:${project.id}`
-    let errors = this.projectErrors.get(key)
+  private checkProgram(program: Program): Promise<string> {
+    let errors = this.programErrors.get(program)
     if (!errors) {
-      debug('type checking project %s', key)
-      const { program } = project
-      // Requests issued in the same tick are sent as one `batchRequests` call.
+      debug('type checking program %s', program.id)
       errors = Promise.all([
         program.getConfigFileParsingDiagnostics(),
         program.getProgramDiagnostics(),
         program.getGlobalDiagnostics(),
         program.getSyntacticDiagnostics(),
         program.getSemanticDiagnostics(),
-        // Errors such as TS2742 that make the emitted declarations wrong.
         program.getDeclarationDiagnostics(),
       ]).then((diagnostics) => {
         const errors = diagnostics
@@ -303,7 +294,7 @@ export class TsgoGenerator implements Generator {
           )
         return errors.length ? this.formatDiagnostics(errors) : ''
       })
-      this.projectErrors.set(key, errors)
+      this.programErrors.set(program, errors)
     }
     return errors
   }
@@ -361,11 +352,13 @@ export class TsgoGenerator implements Generator {
     }
 
     if (this.options.typecheck) {
-      const error = await this.checkProject(project).catch((error: unknown) => {
-        throw new Error(mapError(error, tsFileName, fileName), {
-          cause: error,
-        })
-      })
+      const error = await this.checkProgram(project.program).catch(
+        (error: unknown) => {
+          throw new Error(mapError(error, tsFileName, fileName), {
+            cause: error,
+          })
+        },
+      )
       if (error) return { error: mapError(error, tsFileName, fileName) }
     }
 

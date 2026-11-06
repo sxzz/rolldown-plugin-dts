@@ -208,7 +208,7 @@ test('tsc reports type errors of a cached program again', async () => {
 test.each([
   ['tsgo', tsgo],
   ['tsrs', tsrs],
-] as const)('%s re-checks projects on rebuilds', async (compiler, native) => {
+] as const)('%s re-checks programs on rebuilds', async (compiler, native) => {
   const generator = new TsgoGenerator({
     compiler,
     moduleUrl: native.moduleUrl,

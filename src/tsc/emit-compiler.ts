@@ -22,8 +22,6 @@ import type {
 const debug = createDebug('rolldown-plugin-dts:tsc-compiler')
 const ts = requireTSApi()
 
-// Type errors of each program, checked as a whole once. Programs are dropped
-// from the context and rebuilt when one of their files changes.
 const programErrors = new WeakMap<Program, string>()
 
 const defaultCompilerOptions: CompilerOptions = {
@@ -121,7 +119,6 @@ function createTsProgramFromParsedConfig({
     $configRaw: parsedConfig.raw,
     $rootDir: baseDir,
   }
-  // A tsconfig `noCheck` would hide the errors `typecheck` asks for.
   if (typecheck) compilerOptions.noCheck = false
   if (languageContext.languages.length) {
     // Allow non-TS extensions (e.g. `.vue`) to be used as root files. Without

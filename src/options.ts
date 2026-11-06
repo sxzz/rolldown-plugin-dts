@@ -160,16 +160,7 @@ export interface Options extends DeprecatedOptions {
   emitJs?: boolean
 
   /**
-   * Fails the build when a TypeScript program that emits declarations has
-   * type errors.
-   *
-   * By default, generators skip type checking to emit as fast as possible.
-   * Enabling this type-checks each program as a whole when it first emits a
-   * declaration, including files reached through imports that are outside
-   * the tsconfig's `include`. `tsc` overrides `compilerOptions.noCheck`;
-   * `tsgo` and `tsrs` reject it. Supported by the `tsc`, `tsgo`, and `tsrs`
-   * generators; `oxc` has no type checker. Custom generators ignore this
-   * option.
+   * Fails the build on type errors. Not supported by `oxc`.
    *
    * @default false
    */

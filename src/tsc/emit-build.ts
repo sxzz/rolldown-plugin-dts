@@ -28,9 +28,7 @@ import type {
 const ts = requireTSApi()
 const debug = createDebug('rolldown-plugin-dts:tsc-build')
 
-// Diagnostics reported while building a solution, keyed by its project map so
-// they are dropped together when the context invalidates the build.
-// `checked` is false for builds with `noCheck`, which report no type errors.
+// `checked` is false for builds with `noCheck`.
 const buildDiagnostics = new WeakMap<
   SourceFileToProjectMap,
   { checked: boolean; diagnostics: Diagnostic[] }
@@ -86,7 +84,6 @@ export function tscEmitBuild(tscOptions: TscOptions): TscResult {
   debug(`loaded project ${project.tsconfigPath} for ${id}`)
 
   if (typecheck) {
-    // The whole solution was checked when it was built.
     const error = formatTypeErrors(
       buildDiagnostics.get(sourceFileToProjectMap)!.diagnostics,
     )
@@ -166,8 +163,7 @@ function getOrBuildProjects(
   typecheck: boolean,
 ): SourceFileToProjectMap {
   let projectMap = context.projects.get(tsconfig)
-  // A shared context may hold an unchecked build from a plugin instance
-  // without `typecheck`; rebuild it to collect type errors.
+  // A shared context may hold a build without `typecheck`.
   if (projectMap && (!typecheck || buildDiagnostics.get(projectMap)!.checked)) {
     debug(`skip building projects for ${tsconfig}`)
     return projectMap
@@ -217,9 +213,6 @@ function buildProjects(
     }),
     (diagnostic) => {
       diagnostics.push(diagnostic)
-      // With `typecheck`, errors are reported when emitting.
-      // Otherwise keep the default reporter's behavior, which writes to the
-      // system (debug output only, see `createFsSystem`).
       if (!typecheck) {
         fsSystem.write(ts.formatDiagnostic(diagnostic, formatHost))
       }
@@ -374,8 +367,7 @@ function patchCompilerOptions(
     }
   }
 
-  // Type checking is only needed for the `typecheck` option. `noCheck` does not
-  // invalidate `.tsbuildinfo`; skipped checks stay pending for the next build.
+  // `noCheck` does not invalidate `.tsbuildinfo`.
   if (options.noCheck !== !extraOptions.typecheck) {
     options = { ...options, noCheck: !extraOptions.typecheck }
   }

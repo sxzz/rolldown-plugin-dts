@@ -24,7 +24,6 @@ export const formatHost: FormatDiagnosticsHost = {
     : (f) => f.toLowerCase(),
 }
 
-/** Formats type-check errors, with code frames when stderr supports colors. */
 export function formatTypeErrors(diagnostics: readonly Diagnostic[]): string {
   const errors = diagnostics.filter(
     (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
