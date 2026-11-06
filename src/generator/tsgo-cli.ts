@@ -85,7 +85,6 @@ export class TsgoCliGenerator implements Generator {
   }
 
   async emit(_code: string, fileName: string): Promise<GeneratorResult> {
-    const { rootDir } = this
     const { languageContext } = this.options
     if (languageContext.isCustomLanguageFile(fileName)) {
       return {
@@ -98,7 +97,7 @@ export class TsgoCliGenerator implements Generator {
 
     const dtsPath = path.resolve(
       this.context.path,
-      path.relative(rootDir, filename_to_dts(fileName, languageContext)),
+      path.relative(this.rootDir, filename_to_dts(fileName, languageContext)),
     )
     if (!existsSync(dtsPath)) {
       debug('[tsgo]', dtsPath, 'is missing')
