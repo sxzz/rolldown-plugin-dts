@@ -17,6 +17,7 @@ import {
   createVueLanguageMetadata,
   type VueLanguageOptions,
 } from './tsc/vue.ts'
+import { canonicalTsconfigPath } from './tsconfig-path.ts'
 import {
   getDefaultTsgoModuleUrl,
   isLegacyTsgo,
@@ -436,10 +437,12 @@ export function resolveOptions({
   let resolvedTsconfig: TsconfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
-    tsconfig = path
+    tsconfig = path ? canonicalTsconfigPath(path) : undefined
     resolvedTsconfig = config
   } else if (typeof tsconfig === 'string') {
-    tsconfig = path.resolve(cwd || process.cwd(), tsconfig)
+    tsconfig = canonicalTsconfigPath(
+      path.resolve(cwd || process.cwd(), tsconfig),
+    )
     resolvedTsconfig = readTsconfig(tsconfig).config
   } else {
     tsconfig = undefined
