@@ -316,6 +316,17 @@ describe('dts input', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
+  test('binding patterns in variable declarations', async () => {
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/dts-binding-pattern.d.ts')],
+      [dts({ dtsOnly: true })],
+      {},
+    )
+    expect(snapshot).toContain('width')
+    expect(snapshot).toContain('height')
+    expect(snapshot).toContain('depth')
+  })
+
   test('warns for CommonJS dts input syntax', async () => {
     const warnings: string[] = []
 
