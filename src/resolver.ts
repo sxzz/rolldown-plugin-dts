@@ -9,6 +9,7 @@ import {
   RE_DTS,
   RE_JS,
   RE_JSON,
+  RE_NODE_MODULES,
   RE_TS,
 } from './filename.ts'
 import type { OptionsResolved } from './options.ts'
@@ -38,8 +39,9 @@ export function createDtsResolvePlugin({
     return (
       RE_TS.test(id) ||
       RE_JSON.test(id) ||
-      // JS sources get declarations too with `emitJs`
-      (emitJs && RE_JS.test(id)) ||
+      // JS sources get declarations too with `emitJs`. Dependencies are
+      // excluded: `generate.ts` never emits declarations for them.
+      (emitJs && RE_JS.test(id) && !RE_NODE_MODULES.test(id)) ||
       languageContext.isCustomLanguageFile(id)
     )
   }
