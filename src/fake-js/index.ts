@@ -28,6 +28,7 @@ import {
   runtimeBindingArrayExpression,
 } from './runtime-binding.ts'
 import {
+  collectPatternIdentifiers,
   collectReferenceDirectives,
   findDefaultExportRef,
   getIdentifierIndex,
@@ -298,8 +299,12 @@ export function createFakeJsPlugin({
 
       const bindings: t.Identifier[] = []
       if (decl.type === 'VariableDeclaration') {
+        // a binding pattern, e.g. `declare const [a, b]: [A, B]` emitted by
+        // TypeScript 7.1, binds each of its identifiers
         bindings.push(
-          ...decl.declarations.map((decl) => decl.id as t.Identifier),
+          ...decl.declarations.flatMap((decl) =>
+            collectPatternIdentifiers(decl.id),
+          ),
         )
       } else if ('id' in decl && decl.id) {
         let binding: t.Node = decl.id
