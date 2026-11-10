@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module'
+import path from 'node:path'
 import { createDebug } from 'obug'
 
 const nodeRequire: NodeJS.Require = createRequire(import.meta.url)
@@ -27,6 +28,18 @@ export function tryResolve(
 ): string | undefined {
   try {
     return require.resolve(id, options)
+  } catch {}
+}
+
+// Unlike `require.resolve(id, { paths })`, this honors the self-reference of the
+// package containing `from`, so aliased packages resolve their own subpaths.
+export function tryResolveFrom(id: string, from: string): string | undefined {
+  try {
+    // Mocked resolvers in tests only understand the `paths` option.
+    if (import.meta.TEST && requireImpl !== nodeRequire) {
+      return requireImpl.resolve(id, { paths: [path.dirname(from)] })
+    }
+    return createRequire(from).resolve(id)
   } catch {}
 }
 
