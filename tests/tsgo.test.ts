@@ -1,6 +1,14 @@
 import fs from 'node:fs'
-import { mkdir, readFile, rm, symlink } from 'node:fs/promises'
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from 'node:fs/promises'
 import module, { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import url, { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
@@ -72,6 +80,45 @@ test.each([
       languageContext: new LanguageContext([]),
     }).init(),
   ).rejects.toThrow(message)
+})
+
+test('loads the API from an aliased moduleUrl next to another typescript', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
+  try {
+    const writePackage = async (
+      name: string,
+      files: Record<string, string>,
+    ) => {
+      for (const [file, content] of Object.entries(files)) {
+        const filePath = path.join(dir, 'node_modules', name, file)
+        await mkdir(path.dirname(filePath), { recursive: true })
+        await writeFile(filePath, content)
+      }
+    }
+    await writePackage('typescript', {
+      'package.json': JSON.stringify({ name: 'typescript', version: '5.9.3' }),
+      'async.js': 'module.exports = { Program: class {} }',
+    })
+    await writePackage('typescript-next', {
+      'package.json': JSON.stringify({
+        name: 'typescript',
+        version: '7.1.0',
+        exports: { '.': './lib/version.cjs', './async': './async.js' },
+      }),
+      'lib/version.cjs': '',
+      'async.js':
+        'module.exports = { Program: class { getDeclarationEmit() {} } }',
+    })
+
+    const aliasedModuleUrl = url.pathToFileURL(
+      path.join(dir, 'node_modules/typescript-next/lib/version.cjs'),
+    ).href
+    expect(
+      loadTsgoApi(aliasedModuleUrl).Program.prototype.getDeclarationEmit,
+    ).toBeTypeOf('function')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
 })
 
 test('concurrent disk emits share configured project membership until the next build', async () => {

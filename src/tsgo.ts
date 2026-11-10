@@ -1,6 +1,11 @@
-import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { getPackageInfo, require, tryRequire, tryResolve } from './require.ts'
+import {
+  getPackageInfo,
+  require,
+  tryRequire,
+  tryResolve,
+  tryResolveFrom,
+} from './require.ts'
 import type { Logger } from './options.ts'
 import type * as TsgoApiModule from 'typescript-next/async'
 import type * as TsgoFsModule from 'typescript-next/fs'
@@ -19,8 +24,7 @@ function resolveSubpath(
   subpath: string,
 ): string | undefined {
   const packageName = PACKAGE_NAMES[compiler]
-  const paths = [path.dirname(modulePath)]
-  return tryResolve(`${packageName}/${subpath}`, { paths })
+  return tryResolveFrom(`${packageName}/${subpath}`, modulePath)
 }
 
 export function getDefaultTsgoModuleUrl(
