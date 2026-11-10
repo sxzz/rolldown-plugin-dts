@@ -6,7 +6,7 @@ interface Props {
   name: string;
 }
 declare function Foo(_props: Props): any;
-export {};"
+export { Foo };"
 `;
 
 exports[`volar > custom without volar (oxc) 1`] = `
