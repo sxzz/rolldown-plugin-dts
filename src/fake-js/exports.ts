@@ -1,7 +1,11 @@
 import { b } from 'yuku'
 import { is } from 'yuku/utils'
 import { isRuntimeBindingVariableDeclaration } from './runtime-binding.ts'
-import { getIdFromTSEntityName, nameOf } from './utils.ts'
+import {
+  collectPatternIdentifiers,
+  getIdFromTSEntityName,
+  nameOf,
+} from './utils.ts'
 import type {
   ChunkExportPlan,
   DeclarationInfo,
@@ -65,7 +69,9 @@ function collectTypeOnlyLocals(
 
 function collectDeclarationNames(node: t.Node): string[] {
   if (node.type === 'VariableDeclaration') {
-    return node.declarations.flatMap((decl) => collectPatternNames(decl.id))
+    return node.declarations.flatMap((decl) =>
+      collectPatternIdentifiers(decl.id).map(({ name }) => name),
+    )
   }
 
   if ('id' in node && node.id) {
@@ -75,37 +81,6 @@ function collectDeclarationNames(node: t.Node): string[] {
 
     const id = getIdFromTSEntityName(node.id)
     return id.type === 'Identifier' ? [id.name] : []
-  }
-
-  return []
-}
-
-function collectPatternNames(node: t.Node | null | undefined): string[] {
-  if (!node) return []
-
-  if (node.type === 'Identifier') {
-    return [node.name]
-  }
-
-  if (node.type === 'RestElement') {
-    return collectPatternNames(node.argument)
-  }
-
-  if (node.type === 'AssignmentPattern') {
-    return collectPatternNames(node.left)
-  }
-
-  if (node.type === 'ArrayPattern') {
-    return node.elements.flatMap((element) => collectPatternNames(element))
-  }
-
-  if (node.type === 'ObjectPattern') {
-    return node.properties.flatMap((property) => {
-      if (property.type === 'RestElement') {
-        return collectPatternNames(property.argument)
-      }
-      return collectPatternNames(property.value)
-    })
   }
 
   return []
