@@ -151,7 +151,8 @@ function getExportAllNamespace(
     node.declarations[0].init?.type !== 'CallExpression' ||
     node.declarations[0].init.callee.type !== 'Identifier' ||
     node.declarations[0].init.callee.name !== '__exportAll' ||
-    node.declarations[0].init.arguments.length !== 1 ||
+    // rolldown >= 1.3 passes a flags argument for modules with an external `export *`
+    node.declarations[0].init.arguments.length < 1 ||
     node.declarations[0].init.arguments[0].type !== 'ObjectExpression'
   ) {
     return false

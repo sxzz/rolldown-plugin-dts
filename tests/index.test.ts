@@ -812,6 +812,18 @@ test('re-export from lib', async () => {
   expect(both).toMatchSnapshot('both')
 })
 
+// #354
+test('namespace of a module re-exporting from lib', async () => {
+  const cwd = path.resolve(dirname, 'fixtures/namespace-re-export-lib')
+  const { snapshot } = await rolldownBuild(
+    ['index.ts'],
+    [dts({ dtsOnly: true })],
+    { cwd },
+  )
+  expect(snapshot).toContain('declare namespace lib_d_exports')
+  expect(snapshot).toMatchSnapshot()
+})
+
 test('cyclic import', async () => {
   const cwd = path.resolve(dirname, 'fixtures/cyclic-import')
   const { snapshot } = await rolldownBuild(

@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "typeRoots": ["../re-export-lib/typings"]
+  },
+  "include": ["./index.ts", "./lib.ts"]
+}
