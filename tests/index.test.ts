@@ -305,6 +305,17 @@ test('dtsOnly keeps global augmentations of side-effect imports', async () => {
   expect(snapshot).toContain('declare module "foobar"')
 })
 
+test('keeps untyped JS dependencies external with emitJs', async () => {
+  const root = path.resolve(dirname, 'fixtures/emit-js-untyped-dep')
+
+  const { chunks } = await rolldownBuild(
+    [path.join(root, 'index.ts')],
+    [dts({ emitJs: true, tsconfig: false, dtsOnly: true })],
+    { cwd: root },
+  )
+  expect(chunks[0].code).toContain('from "untyped-dep"')
+})
+
 describe('dts input', () => {
   test('input array', async () => {
     const { snapshot, chunks } = await rolldownBuild(
