@@ -375,6 +375,17 @@ export interface Test {
 export {};"
 `;
 
+exports[`namespace of a module re-exporting from lib 1`] = `
+"// index.d.ts
+declare namespace lib_d_exports {
+  export { foo };
+}
+import * as import_stub_lib from "stub-lib";
+declare function foo(): void;
+export declare const version = "1.0.0";
+export { lib_d_exports as lib };"
+`;
+
 exports[`re-export from lib > both 1`] = `
 "// a-B4zIqhFh.d.ts
 import * as import_stub_lib from "stub-lib";
