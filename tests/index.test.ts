@@ -322,9 +322,16 @@ describe('dts input', () => {
       [dts({ dtsOnly: true })],
       {},
     )
-    expect(snapshot).toContain('width')
-    expect(snapshot).toContain('height')
-    expect(snapshot).toContain('depth')
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test('renamed bindings in binding patterns', async () => {
+    const { snapshot } = await rolldownBuild(
+      [path.resolve(dirname, 'fixtures/dts-binding-pattern-rename/index.d.ts')],
+      [dts({ dtsOnly: true })],
+      {},
+    )
+    expect(snapshot).toMatchSnapshot()
   })
 
   test('warns for CommonJS dts input syntax', async () => {

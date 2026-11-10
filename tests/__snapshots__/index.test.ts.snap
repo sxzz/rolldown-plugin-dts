@@ -142,6 +142,14 @@ export type MyTypeB = import('stub_lib').LibType;
 export type MyTypeC = import('stub_lib').LibType;"
 `;
 
+exports[`dts input > binding patterns in variable declarations 1`] = `
+"// dts-binding-pattern.d.ts
+export declare const [width, height]: [number, number];
+export declare const { depth }: {
+  depth: number;
+};"
+`;
+
 exports[`dts input > custom chunk name 2`] = `
 "// chunks/RNYvPRwl-types.d.ts
 interface User {
@@ -188,6 +196,24 @@ export declare class Foo {}"
 exports[`dts input > input object 1`] = `
 "// index.d.ts
 export declare class Foo {}"
+`;
+
+exports[`dts input > renamed bindings in binding patterns 1`] = `
+"// index.d.ts
+declare const { depth }: {
+  depth: boolean;
+};
+declare const [width]: [string];
+declare const [width$1, , ...rest]: [number, string, ...boolean[]];
+declare const { depth: depth$1, nested: { inner }, ...others }: {
+  depth: number;
+  nested: {
+    inner: string;
+  };
+  x: 1;
+};
+export declare const all: [typeof width$1, typeof width, typeof depth$1, typeof depth];
+export { depth as depDepth, width as depWidth, depth$1 as depth, inner, others, rest, width$1 as width };"
 `;
 
 exports[`entryFileNames > custom chunk name 2`] = `
