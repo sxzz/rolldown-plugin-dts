@@ -13,6 +13,34 @@ export function isInfer(node: t.Node): node is t.Identifier {
   return is.Identifier(node) && node.name === 'infer'
 }
 
+/** Identifiers bound by a declaration id, e.g. `[a, { b }]` */
+export function collectPatternIdentifiers(
+  node: t.Node | null | undefined,
+): t.Identifier[] {
+  if (!node) return []
+
+  switch (node.type) {
+    case 'Identifier':
+      return [node]
+    case 'RestElement':
+      return collectPatternIdentifiers(node.argument)
+    case 'AssignmentPattern':
+      return collectPatternIdentifiers(node.left)
+    case 'ArrayPattern':
+      return node.elements.flatMap((element) =>
+        collectPatternIdentifiers(element),
+      )
+    case 'ObjectPattern':
+      return node.properties.flatMap((property) =>
+        collectPatternIdentifiers(
+          property.type === 'RestElement' ? property.argument : property.value,
+        ),
+      )
+  }
+
+  return []
+}
+
 export function nameOf(node: t.ModuleExportName): string {
   return node.type === 'Identifier' ? node.name : node.value
 }
