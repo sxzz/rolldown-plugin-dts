@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { isDeepStrictEqual } from 'node:util'
@@ -443,6 +444,15 @@ export function resolveOptions({
     resolvedTsconfig = readTsconfig(tsconfig).config
   } else {
     tsconfig = undefined
+  }
+  if (tsconfig) {
+    // Rolldown module IDs are real paths, so resolve a symlinked directory for
+    // the compiler to match them. Keep the file name: a symlinked tsconfig
+    // still resolves `include` from where it is linked.
+    tsconfig = path.join(
+      realpathSync(path.dirname(tsconfig)),
+      path.basename(tsconfig),
+    )
   }
 
   compilerOptions = {

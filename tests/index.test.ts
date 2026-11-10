@@ -1,10 +1,24 @@
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import {
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test, vi } from 'vitest'
-import { dts, resolveOptions, type Generator } from '../src/index.ts'
+import {
+  dts,
+  resolveOptions,
+  type Generator,
+  type Options,
+} from '../src/index.ts'
 import type { Plugin, TransformResult } from 'rolldown'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -93,6 +107,52 @@ describe('resolve paths', () => {
     ])
     expect(snapshot).toMatchSnapshot()
   })
+})
+
+test.each<[string, Options]>([
+  ['tsc', { generator: 'tsc', tsc: { newContext: true } }],
+  ['tsc build', { generator: 'tsc', tsc: { build: true } }],
+  [
+    'tsgo',
+    {
+      generator: 'tsgo',
+      tsgo: { moduleUrl: import.meta.resolve('typescript-next') },
+    },
+  ],
+])('%s: tsconfig in a symlinked directory', async (_, options) => {
+  const dir = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), 'rolldown-plugin-dts-')),
+  )
+  try {
+    const project = path.join(dir, 'project')
+    const alias = path.join(dir, 'alias')
+    await mkdir(project)
+    await writeFile(
+      path.join(project, 'index.ts'),
+      'export const value: number = 1',
+    )
+    // `files` must still resolve from `project`, not from the link target.
+    await writeFile(
+      path.join(dir, 'shared.json'),
+      JSON.stringify({ files: ['index.ts'] }),
+    )
+    await symlink(
+      path.join(dir, 'shared.json'),
+      path.join(project, 'tsconfig.json'),
+    )
+    await symlink(project, alias, 'junction')
+
+    const { snapshot } = await rolldownBuild(path.join(project, 'index.ts'), [
+      dts({
+        ...options,
+        tsconfig: path.join(alias, 'tsconfig.json'),
+        dtsOnly: true,
+      }),
+    ])
+    expect(snapshot).toContain('value: number')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
 })
 
 // Test alias mapping based on rolldown input option
