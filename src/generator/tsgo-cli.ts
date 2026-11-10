@@ -7,7 +7,6 @@ import { styleText } from 'node:util'
 import { createDebug } from 'obug'
 import { filename_to_dts } from '../filename.ts'
 import { require, tryResolve } from '../require.ts'
-import { canonicalTsconfigPath } from '../tsconfig-path.ts'
 import type { LanguageContext } from '../custom-language.ts'
 import type { Logger } from '../options.ts'
 import type { Generator, GeneratorResult } from './index.ts'
@@ -83,16 +82,10 @@ export class TsgoCliGenerator implements Generator {
 
   async init(): Promise<void> {
     const { tsgoPath, tsconfig, sourcemap, typecheck } = this.options
-    // Rolldown supplies physical source paths, while the CLI preserves the
-    // spelling of the config directory in its emitted tree. Resolve directory
-    // aliases so both refer to the same outputs. Keep a symlinked config file's
-    // basename: its relative includes still belong to this directory.
-    const resolvedTsconfig = canonicalTsconfigPath(tsconfig)
-    this.rootDir = path.parse(resolvedTsconfig).root
     this.context = await runTsgo(
       tsgoPath,
       this.rootDir,
-      resolvedTsconfig,
+      tsconfig,
       sourcemap,
       typecheck,
     )

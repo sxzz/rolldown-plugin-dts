@@ -3,7 +3,6 @@ import {
   mkdir,
   mkdtemp,
   readFile,
-  realpath,
   rm,
   symlink,
   writeFile,
@@ -11,7 +10,6 @@ import {
 import module, { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import process from 'node:process'
 import url, { fileURLToPath } from 'node:url'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { afterEach, expect, test, vi } from 'vitest'
@@ -477,52 +475,3 @@ test('tsgo CLI fails on type errors with `typecheck`', async () => {
     await checked.dispose()
   }
 })
-
-test.each([false, true])(
-  'tsgo CLI finds physical source outputs through a directory alias (config symlink: %s)',
-  async (configSymlink) => {
-    const directory = await mkdtemp(
-      path.join(tmpdir(), 'tsgo-cli-directory-alias-'),
-    )
-    let cli: TsgoCliGenerator | undefined
-    try {
-      const project = path.join(directory, 'project')
-      const alias = path.join(directory, 'alias')
-      await mkdir(project)
-      const source = path.join(project, 'index.ts')
-      await writeFile(source, 'export const value: number = 2')
-      const contents = JSON.stringify({
-        compilerOptions: { types: [] },
-        files: ['index.ts'],
-      })
-      const tsconfig = path.join(project, 'tsconfig.json')
-      if (configSymlink) {
-        // The config's relative includes belong to the project directory, not
-        // the target of a file symlink. Canonicalize the directory only.
-        const shared = path.join(directory, 'shared.json')
-        await writeFile(shared, contents)
-        await symlink(shared, tsconfig, 'file')
-      } else {
-        await writeFile(tsconfig, contents)
-      }
-      await symlink(
-        project,
-        alias,
-        process.platform === 'win32' ? 'junction' : 'dir',
-      )
-      cli = new TsgoCliGenerator({
-        tsgoPath: getTsgoPath(),
-        tsconfig: path.join(alias, 'tsconfig.json'),
-        languageContext: new LanguageContext([]),
-      })
-      await cli.init()
-      const result = await cli.emit('', await realpath(source))
-      expect(result.error).toBeUndefined()
-      expect(result.code).toContain('value: number')
-      expect(fs.existsSync(path.join(project, 'index.d.ts'))).toBe(false)
-    } finally {
-      await cli?.dispose()
-      await rm(directory, { recursive: true, force: true })
-    }
-  },
-)

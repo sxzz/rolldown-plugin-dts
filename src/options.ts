@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { isDeepStrictEqual } from 'node:util'
@@ -17,7 +18,6 @@ import {
   createVueLanguageMetadata,
   type VueLanguageOptions,
 } from './tsc/vue.ts'
-import { canonicalTsconfigPath } from './tsconfig-path.ts'
 import {
   getDefaultTsgoModuleUrl,
   isLegacyTsgo,
@@ -437,15 +437,22 @@ export function resolveOptions({
   let resolvedTsconfig: TsconfigJsonResolved | undefined
   if (tsconfig === true || tsconfig == null) {
     const { config, path } = getTsconfig(cwd) || {}
-    tsconfig = path ? canonicalTsconfigPath(path) : undefined
+    tsconfig = path
     resolvedTsconfig = config
   } else if (typeof tsconfig === 'string') {
-    tsconfig = canonicalTsconfigPath(
-      path.resolve(cwd || process.cwd(), tsconfig),
-    )
+    tsconfig = path.resolve(cwd || process.cwd(), tsconfig)
     resolvedTsconfig = readTsconfig(tsconfig).config
   } else {
     tsconfig = undefined
+  }
+  if (tsconfig) {
+    // Rolldown module IDs are real paths, so resolve a symlinked directory for
+    // the compiler to match them. Keep the file name: a symlinked tsconfig
+    // still resolves `include` from where it is linked.
+    tsconfig = path.join(
+      realpathSync(path.dirname(tsconfig)),
+      path.basename(tsconfig),
+    )
   }
 
   compilerOptions = {
