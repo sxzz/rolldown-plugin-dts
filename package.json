@@ -88,7 +88,6 @@
     }
   },
   "dependencies": {
-    "dts-resolver": "catalog:prod",
     "get-tsconfig": "catalog:prod",
     "obug": "catalog:prod",
     "yuku": "catalog:prod"
