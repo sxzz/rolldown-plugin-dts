@@ -16,7 +16,7 @@ catalog:
   '@astrojs/ts-plugin': ^1.11.0
   '@jridgewell/source-map': ^0.3.11
   '@sxzz/eslint-config': ^8.9.2
-  '@sxzz/prettier-config': ^2.3.3
+  '@sxzz/prettier-config': ^2.4.0
   '@sxzz/test-utils': ^0.5.20
   '@ts-macro/language-plugin': ^0.3.7
   '@ts-macro/tsc': ^0.3.7
@@ -27,12 +27,12 @@ catalog:
   arktype: ^2.2.9
   bumpp: ^12.3.0
   eslint: ^10.14.0
-  prettier: ^3.9.10
-  rolldown: ^1.3.1
+  prettier: ^3.10.0
+  rolldown: ^1.3.2
   ts-macro: ^0.3.7
   tsdown: ^0.23.7
   tsnapi: ^1.6.1
-  tsrs: 0.23.0-ts7.1.0-beta
+  tsrs: 0.24.0-ts7.1.0-beta
   typescript: ^6.0.3
   typescript-next: 'npm:typescript@7.1.0-dev.20261108.1'
   vitest: ^5.1.0
@@ -44,4 +44,4 @@ catalogs:
     dts-resolver: ^3.0.0
     get-tsconfig: 5.0.0-beta.6
     obug: ^3.0.0
-    yuku: ^0.27.0
+    yuku: ^0.28.0

@@ -111,7 +111,7 @@ export {};"
 exports[`decorators 1`] = `
 "// decorator.d.ts
 export declare class Product {
-  accessor price;
+  accessor price: number;
 }"
 `;
 
