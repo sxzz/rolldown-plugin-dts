@@ -3,18 +3,26 @@ import { createDebug } from 'obug'
 import { requireTSApi } from '../require.ts'
 import { globalContext } from './context.ts'
 import { createFsSystem } from './system.ts'
-import { customTransformers, formatHost, setSourceMapRoot } from './utils.ts'
+import {
+  customTransformers,
+  formatHost,
+  formatTypeErrors,
+  setSourceMapRoot,
+} from './utils.ts'
 import type { TscModule, TscOptions, TscResult } from './types.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 import type {
   CompilerOptions,
   ParsedCommandLine,
+  Program,
   ScriptTarget,
   System,
 } from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-compiler')
 const ts = requireTSApi()
+
+const programErrors = new WeakMap<Program, string>()
 
 const defaultCompilerOptions: CompilerOptions = {
   declaration: true,
@@ -30,8 +38,9 @@ const defaultCompilerOptions: CompilerOptions = {
 }
 
 function createOrGetTsModule(options: TscOptions): TscModule {
-  const { id, entries, context = globalContext } = options
+  const { id, entries, context = globalContext, typecheck } = options
   const program = context.programs.find((program) => {
+    if (typecheck && program.getCompilerOptions().noCheck) return false
     const roots = program.getRootFileNames()
     if (entries) {
       return entries.every((entry) => roots.includes(entry))
@@ -61,6 +70,7 @@ function createTsProgram({
   languageContext,
   cwd,
   context = globalContext,
+  typecheck,
 }: TscOptions): TscModule {
   const fsSystem = createFsSystem(context.files)
   const baseDir = tsconfig ? path.dirname(tsconfig) : cwd
@@ -82,6 +92,7 @@ function createTsProgram({
     id,
     entries,
     languageContext,
+    typecheck,
   })
 }
 
@@ -92,25 +103,31 @@ function createTsProgramFromParsedConfig({
   id,
   entries,
   languageContext,
+  typecheck,
 }: {
   parsedConfig: ParsedCommandLine
   fsSystem: System
   baseDir: string
-} & Pick<TscOptions, 'entries' | 'languageContext' | 'id'>): TscModule {
+} & Pick<
+  TscOptions,
+  'entries' | 'languageContext' | 'id' | 'typecheck'
+>): TscModule {
   const compilerOptions: CompilerOptions = {
     ...defaultCompilerOptions,
     ...parsedConfig.options,
+    declaration: true,
     $configRaw: parsedConfig.raw,
     $rootDir: baseDir,
+  }
+  if (typecheck) compilerOptions.noCheck = false
+  if (languageContext.languages.length) {
     // Allow non-TS extensions (e.g. `.vue`) to be used as root files. Without
     // this, TypeScript silently drops root files whose extension is not in its
     // built-in supported list, so `program.getSourceFile(id)` returns
     // `undefined` for a `.vue` entry that is not imported by a `.ts` file.
     // Only relevant when a custom language (e.g. Vue) registers such
     // extensions; module resolution already handles the imported-file case.
-    ...(languageContext.languages.length
-      ? { allowNonTsExtensions: true }
-      : undefined),
+    compilerOptions.allowNonTsExtensions = true
   }
 
   const rootNames = [
@@ -139,7 +156,7 @@ function createTsProgramFromParsedConfig({
 
     if (hasReferences) {
       throw new Error(
-        `[rolldown-plugin-dts] Unable to load ${id}; You have "references" in your tsconfig file. Perhaps you want to add \`dts: { build: true }\` in your config?`,
+        `[rolldown-plugin-dts] Unable to load ${id}; You have "references" in your tsconfig file. Perhaps you want to add \`dts: { tsc: { build: true } }\` in your config?`,
       )
     }
 
@@ -167,6 +184,17 @@ export function tscEmitCompiler(tscOptions: TscOptions): TscResult {
   const module = createOrGetTsModule(tscOptions)
   const { program, file } = module
   debug(`got source file: ${file.fileName}`)
+
+  if (tscOptions.typecheck) {
+    let error = programErrors.get(program)
+    if (error === undefined) {
+      debug('type checking program')
+      error = formatTypeErrors(ts.getPreEmitDiagnostics(program))
+      programErrors.set(program, error)
+    }
+    if (error) return { error }
+  }
+
   let dtsCode: string | undefined
   let map: ExistingRawSourceMap | undefined
 
@@ -204,7 +232,7 @@ export function tscEmitCompiler(tscOptions: TscOptions): TscResult {
       dtsCode = file.getFullText()
     } else {
       console.warn(
-        '[rolldown-plugin-dts] Warning: Failed to emit declaration file. Please try to enable `eager` option (`dts.eager` for tsdown).',
+        '[rolldown-plugin-dts] Warning: Failed to emit declaration file. Please try to enable `tsc.eager` option (`dts.tsc.eager` for tsdown).',
       )
     }
   }

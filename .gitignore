@@ -1,5 +1,6 @@
 node_modules
 !tests/fixtures/cjs-dts-dep-warning/node_modules
+!tests/fixtures/emit-js-untyped-dep/node_modules
 dist
 
 *.log

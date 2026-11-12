@@ -1,0 +1,5 @@
+{
+  "name": "@fixture/model",
+  "type": "module",
+  "exports": "./src/index.ts"
+}

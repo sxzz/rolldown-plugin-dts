@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module'
+import path from 'node:path'
 import { createDebug } from 'obug'
 
 const nodeRequire: NodeJS.Require = createRequire(import.meta.url)
@@ -15,23 +16,54 @@ export const require: NodeJS.Require = import.meta.TEST
 
 const debug = createDebug('rolldown-plugin-dts:utils')
 
-function tryRequire<T>(moduleName: string): T | undefined {
+export function tryRequire<T>(moduleName: string): T | undefined {
   try {
     return require(moduleName)
   } catch {}
 }
 
-export function tryResolve(id: string): string | undefined {
+export function tryResolve(
+  id: string,
+  options?: { paths?: string[] },
+): string | undefined {
   try {
-    return require.resolve(id)
+    return require.resolve(id, options)
+  } catch {}
+}
+
+// Unlike `require.resolve(id, { paths })`, this honors the self-reference of the
+// package containing `from`, so aliased packages resolve their own subpaths.
+export function tryResolveFrom(id: string, from: string): string | undefined {
+  try {
+    // Mocked resolvers in tests only understand the `paths` option.
+    if (import.meta.TEST && requireImpl !== nodeRequire) {
+      return requireImpl.resolve(id, { paths: [path.dirname(from)] })
+    }
+    return createRequire(from).resolve(id)
   } catch {}
 }
 
 let _ts: typeof import('typescript') | undefined
 
-export function isTS70Installed(): boolean {
-  const tsPkg = tryRequire<{ version: string }>('typescript/package.json')
-  return tsPkg?.version.slice(0, 3) === '7.0'
+export interface PackageInfo {
+  name: string
+  version: string
+  packageJsonPath: string
+}
+
+export function getPackageInfo(name: string): PackageInfo | undefined {
+  const packageJsonPath = tryResolve(`${name}/package.json`)
+  if (!packageJsonPath) return
+
+  const pkg = tryRequire<{ version?: string }>(packageJsonPath)
+  if (!pkg?.version) return
+
+  return { name, version: pkg.version, packageJsonPath }
+}
+
+export function isNativeTypeScriptVersion(version: string): boolean {
+  const major = +version.split('.', 1)[0]
+  return Number.isFinite(major) && major >= 7
 }
 
 export function requireTSApi(
@@ -40,9 +72,10 @@ export function requireTSApi(
 ): typeof import('typescript') {
   if (_ts) return _ts
 
-  if (isTS70Installed()) {
+  const tsPkg = getPackageInfo('typescript')
+  if (tsPkg && isNativeTypeScriptVersion(tsPkg.version)) {
     throw new Error(
-      `TypeScript 7.0 is not supported when using ${mode}. Please use TypeScript 6.0 or below${message}`,
+      `TypeScript ${tsPkg.version} does not provide the classic TypeScript API required by ${mode}. Please use TypeScript <7.0${message}`,
     )
   }
 
@@ -51,7 +84,7 @@ export function requireTSApi(
     ts = require('typescript')
   } catch (cause) {
     throw new Error(
-      `TypeScript is not installed. Please install the \`typescript\` package (v7.0 is not yet supported)${
+      `TypeScript is not installed. Please install the \`typescript\` package (<7.0 for the classic API)${
         message
       }`,
       { cause },

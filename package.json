@@ -1,8 +1,7 @@
 {
   "name": "rolldown-plugin-dts",
   "type": "module",
-  "version": "0.28.4",
-  "packageManager": "pnpm@12.1.0",
+  "version": "0.30.2",
   "description": "A Rolldown plugin to generate and bundle dts files.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
   "license": "MIT",
@@ -22,10 +21,12 @@
     "vite-plugin",
     "dts",
     "typescript",
+    "tsrs",
     "vue",
     "jsdoc",
     "volar"
   ],
+  "sideEffects": false,
   "exports": {
     ".": "./dist/index.mjs",
     "./internal": "./dist/internal.mjs",
@@ -43,29 +44,40 @@
   "engines": {
     "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
   },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.18.0",
+      "onFail": "download"
+    }
+  },
   "scripts": {
     "lint": "eslint --cache .",
     "lint:fix": "pnpm run lint --fix",
     "build": "tsdown",
     "dev": "tsdown --watch",
     "test": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --fast",
     "format": "prettier --cache --write .",
     "release": "bumpp",
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "@typescript/native-preview": "*",
     "@volar/typescript": "~2.4.0",
+    "@vue/language-core": "~3.2.0 || ~3.3.0",
     "rolldown": "^1.2.0",
-    "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0",
+    "tsrs": "*",
+    "typescript": "^5.0.0 || ^6.0.0 || ~7.0.0 || ~7.1.0-0",
     "vue-tsc": "~3.2.0 || ~3.3.0"
   },
   "peerDependenciesMeta": {
-    "@typescript/native-preview": {
+    "@volar/typescript": {
       "optional": true
     },
-    "@volar/typescript": {
+    "@vue/language-core": {
+      "optional": true
+    },
+    "tsrs": {
       "optional": true
     },
     "typescript": {
@@ -79,9 +91,7 @@
     "dts-resolver": "catalog:prod",
     "get-tsconfig": "catalog:prod",
     "obug": "catalog:prod",
-    "yuku-ast": "catalog:prod",
-    "yuku-codegen": "catalog:prod",
-    "yuku-parser": "catalog:prod"
+    "yuku": "catalog:prod"
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "catalog:",
@@ -92,7 +102,6 @@
     "@ts-macro/language-plugin": "catalog:",
     "@ts-macro/tsc": "catalog:",
     "@types/node": "catalog:",
-    "@typescript/native-preview": "catalog:",
     "@volar/typescript": "catalog:",
     "@vue/language-core": "catalog:",
     "arktype": "catalog:",
@@ -103,7 +112,9 @@
     "ts-macro": "catalog:",
     "tsdown": "catalog:",
     "tsnapi": "catalog:",
+    "tsrs": "catalog:",
     "typescript": "catalog:",
+    "typescript-next": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:",
     "vue-tsc": "catalog:",

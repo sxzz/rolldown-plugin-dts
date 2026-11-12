@@ -1,0 +1,65 @@
+name: PR Template
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened]
+
+concurrency:
+  group: pr-template-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-slim
+    permissions:
+      pull-requests: write
+    steps:
+      # Never check out or execute PR code with this write-enabled token.
+      - name: Check PR template
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const params = { ...context.repo, pull_number: context.issue.number };
+            // Read the latest body so queued events do not check stale descriptions.
+            const { data: pr } = await github.rest.pulls.get(params);
+            if (pr.state !== 'open' || pr.user.type === 'Bot') return;
+
+            const { data: access } = await github.rest.repos.getCollaboratorPermissionLevel({
+              ...context.repo,
+              username: pr.user.login,
+            });
+            // GitHub maps maintain to write, including the base role of custom roles.
+            if (['admin', 'write'].includes(access.permission)) return;
+            if (!['read', 'none'].includes(access.permission)) {
+              throw new Error(`Unexpected permission: ${access.permission}`);
+            }
+
+            // Keep these in sync with sxzz/.github's shared PR template.
+            const templateUrl = 'https://github.com/sxzz/.github/blob/main/.github/PULL_REQUEST_TEMPLATE.md';
+            const body = pr.body ?? '';
+            const visibleBody = body.replace(/<!--[\s\S]*?-->/g, '');
+            const missing = [];
+            if (!/<!--\s*DO NOT IGNORE THE TEMPLATE![\s\S]*?-->/.test(body)) {
+              missing.push('the template instruction comment');
+            }
+            for (const heading of ['AI usage', 'Description', 'Linked Issues', 'Additional context']) {
+              if (!new RegExp(`^### ${heading}\\s*$`, 'm').test(visibleBody)) {
+                missing.push(`the "${heading}" section`);
+              }
+            }
+            if (missing.length === 0) return;
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: pr.number,
+              body: [
+                'Thank you for contributing! This PR does not follow the required PR template.',
+                '',
+                `Missing: ${missing.join(', ')}.`,
+                '',
+                `Please use the [shared PR template](${templateUrl}), preserve its comments and sections, and complete the applicable fields, including the AI usage disclosure.`,
+                '',
+                'This PR is being closed automatically. After updating the description, you can reopen it or ask a maintainer to reopen it.',
+              ].join('\n'),
+            });
+            await github.rest.pulls.update({ ...params, state: 'closed' });

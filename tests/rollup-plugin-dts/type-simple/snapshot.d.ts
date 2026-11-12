@@ -1,5 +1,4 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/type-simple/index.d.ts
 export declare const A: "string";
 export declare const B: 8;
 export declare const C: void;
@@ -17,4 +16,3 @@ export interface N {
   foo(): this;
 }
 export declare const O: bigint;
-//#endregion

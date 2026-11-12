@@ -1,10 +1,12 @@
 import path from 'node:path'
+import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { requireTSApi } from '../require.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 import type {
   Bundle,
   CustomTransformers,
+  Diagnostic,
   FormatDiagnosticsHost,
   Node,
   SourceFile,
@@ -20,6 +22,16 @@ export const formatHost: FormatDiagnosticsHost = {
   getCanonicalFileName: ts.sys.useCaseSensitiveFileNames
     ? (f) => f
     : (f) => f.toLowerCase(),
+}
+
+export function formatTypeErrors(diagnostics: readonly Diagnostic[]): string {
+  const errors = diagnostics.filter(
+    (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
+  )
+  if (!errors.length) return ''
+  return process.stderr.hasColors?.()
+    ? ts.formatDiagnosticsWithColorAndContext(errors, formatHost)
+    : ts.formatDiagnostics(errors, formatHost)
 }
 
 // Rewrite property signatures whose name is a private identifier (e.g. the

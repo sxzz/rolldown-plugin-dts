@@ -1,4 +1,4 @@
-import type * as t from 'yuku-parser'
+import type * as t from 'yuku'
 
 export type Dep = t.Expression & { replace?: (newNode: t.Node) => void }
 
@@ -19,7 +19,7 @@ export interface DeclarationInfo {
   /** How the declaration was exported in the source file, if it was */
   exportType?: InlineExportKind
   /** The comments attached to the declaration, as parsed */
-  comments?: t.AttachedComment[]
+  comments?: t.Comment[]
 }
 
 export interface ModuleExports {

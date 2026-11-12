@@ -18,7 +18,7 @@ describe('tsc', () => {
       [path.resolve(root, 'entry1.ts'), path.resolve(root, 'entry2.ts')],
       [
         dts({
-          emitDtsOnly: true,
+          dtsOnly: true,
           compilerOptions: {
             skipLibCheck: true,
             isolatedDeclarations: false,
@@ -33,7 +33,7 @@ describe('tsc', () => {
   test('parallel', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/basic.ts'),
-      [dts({ generator: 'tsc', parallel: true })],
+      [dts({ generator: 'tsc', tsc: { parallel: true } })],
     )
     expect(snapshot).toContain('export declare const foo: number;')
   })
@@ -43,7 +43,7 @@ describe('tsc', () => {
       path.resolve(dirname, 'fixtures/multi-decls/index.ts'),
       [
         dts({
-          emitDtsOnly: true,
+          dtsOnly: true,
           compilerOptions: { isolatedDeclarations: false },
         }),
       ],
@@ -60,7 +60,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           compilerOptions: { isolatedDeclarations: false },
-          build: true,
+          tsc: { build: true },
         }),
       ],
     )
@@ -76,7 +76,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           sourcemap: true,
-          build: false,
+          tsc: { build: false },
         }),
       ],
       {},
@@ -100,7 +100,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           sourcemap: true,
-          build: true,
+          tsc: { build: true },
         }),
       ],
       {},
@@ -124,9 +124,9 @@ describe('tsc', () => {
       [
         dts({
           tsconfig: path.resolve(root, 'tsconfig.react.json'),
-          build: true,
+          tsc: { build: true },
           sourcemap: true,
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
       {},
@@ -148,9 +148,9 @@ describe('tsc', () => {
       [
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
-          build: true,
+          tsc: { build: true },
           sourcemap: true,
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
       {},
@@ -180,7 +180,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           compilerOptions: { isolatedDeclarations: false },
-          build: true,
+          tsc: { build: true },
         }),
       ],
     )
@@ -213,7 +213,7 @@ describe('tsc', () => {
         dts({
           tsconfig: path.resolve(root, 'tsconfig.json'),
           compilerOptions: { isolatedDeclarations: false },
-          build: true,
+          tsc: { build: true },
         }),
       ],
     )
@@ -250,12 +250,12 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
-  test.fails('jsdoc in js', async () => {
+  test('jsdoc in js', async () => {
     const root = path.resolve(dirname, 'fixtures/jsdoc-js')
     const { snapshot } = await rolldownBuild(path.resolve(root, 'main.js'), [
       dts({
         tsconfig: path.resolve(root, 'tsconfig.json'),
-        emitDtsOnly: true,
+        dtsOnly: true,
       }),
     ])
     expect(snapshot).toMatchSnapshot()
@@ -269,7 +269,7 @@ describe('tsc', () => {
           compilerOptions: {
             isolatedDeclarations: false,
           },
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
       { external: [/^arktype/] },
@@ -285,27 +285,12 @@ describe('tsc', () => {
           compilerOptions: {
             isolatedDeclarations: false,
           },
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
     )
 
     expect(snapshot).toMatchSnapshot()
-  })
-
-  describe('resolve paths', () => {
-    test.each(['oxc', 'tsc'] as const)('resolver: %s', async (resolver) => {
-      const root = path.resolve(dirname, 'fixtures/paths')
-      const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
-        dts({
-          generator: 'oxc',
-          emitDtsOnly: true,
-          tsconfig: path.resolve(root, 'tsconfig.json'),
-          resolver,
-        }),
-      ])
-      expect(snapshot).toMatchSnapshot()
-    })
   })
 
   test('rename infer', async () => {
@@ -316,7 +301,7 @@ describe('tsc', () => {
           compilerOptions: {
             isolatedDeclarations: false,
           },
-          emitDtsOnly: true,
+          dtsOnly: true,
         }),
       ],
       { external: ['zod'] },
@@ -330,7 +315,7 @@ describe('tsc', () => {
       [
         dts({
           generator: 'tsc',
-          emitDtsOnly: true,
+          dtsOnly: true,
           compilerOptions: { isolatedDeclarations: false },
         }),
       ],

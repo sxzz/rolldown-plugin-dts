@@ -1,5 +1,6 @@
-import { b, is } from 'yuku-ast'
-import type * as t from 'yuku-parser'
+import { b } from 'yuku'
+import { is } from 'yuku/utils'
+import type * as t from 'yuku'
 
 /**
  * A variable declaration that declares a runtime binding variable. It represents a declaration like:

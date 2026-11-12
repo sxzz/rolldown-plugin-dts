@@ -1,5 +1,4 @@
 // index.d.ts
-//#region tests/rollup-plugin-dts/inline-import-external-namespace/index.d.ts
 export interface Foo {
   ns1: import("foo");
   ns2: typeof import("foo");
@@ -8,4 +7,3 @@ export interface Foo {
   ns5: import('foo.bar').T;
   ns6: import('foo/bar').T;
 }
-//#endregion

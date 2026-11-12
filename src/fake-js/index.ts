@@ -1,11 +1,12 @@
-import { b, is, walk } from 'yuku-ast'
-import { generate } from 'yuku-codegen'
-import { parse, type ParseResult } from 'yuku-parser'
+import path from 'node:path'
+import { b, parse, print, walk, type SourceFile } from 'yuku'
+import { is } from 'yuku/utils'
 import {
   filename_js_to_dts,
   RE_DTS,
   RE_DTS_MAP,
   RE_NODE_MODULES,
+  RE_ROLLDOWN_RUNTIME,
   replaceTemplateName,
   resolveTemplateFn,
 } from '../filename.ts'
@@ -27,15 +28,19 @@ import {
   runtimeBindingArrayExpression,
 } from './runtime-binding.ts'
 import {
+  collectPatternIdentifiers,
   collectReferenceDirectives,
+  findDefaultExportRef,
   getIdentifierIndex,
   getIdFromTSEntityName,
   inheritNodeComments,
   isCjsDtsInputSyntax,
   isHelperImport,
   isInfer,
+  isLineMapped,
   overwriteNode,
   pragmaComments,
+  runtimeToTSEntityName,
 } from './utils.ts'
 import type { OptionsResolved } from '../options.ts'
 import type {
@@ -45,13 +50,17 @@ import type {
   TypeParams,
 } from './types.ts'
 import type {
+  FunctionPluginHooks,
+  NormalizedOutputOptions,
+  OutputBundle,
+  OutputChunk,
   Plugin,
   RenderedChunk,
   SourceMapInput,
   TransformPluginContext,
   TransformResult,
 } from 'rolldown'
-import type * as t from 'yuku-parser'
+import type * as t from 'yuku'
 
 // input:
 // export declare function x(xx: X): void
@@ -63,6 +72,11 @@ import type * as t from 'yuku-parser'
 // output:
 // export declare function x$1(xx: X$1): void
 
+// Rolldown does not export the type of this argument.
+type RenderChunkMeta = Parameters<FunctionPluginHooks['renderChunk']>[3]
+
+const RE_SOURCE_MAPPING_URL = /\n?\/\/# sourceMappingURL=[^\n]*\n?$/
+
 export function createFakeJsPlugin({
   sourcemap,
   cjsDefault,
@@ -71,11 +85,22 @@ export function createFakeJsPlugin({
   let declarationIdx = 0
   const declarationMap = new Map<number /* declaration id */, DeclarationInfo>()
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
+  const fileCommentsMap = new Map<string /* filename */, t.Comment[]>()
   const moduleExportsMap = new Map<string /* filename */, ModuleExports>()
   const warnedCjsDtsInputs = new Set<string>()
 
   return {
     name: 'rolldown-plugin-dts:fake-js',
+
+    buildStart() {
+      // The plugin instance lives across watch rebuilds, which transform every
+      // module again, so the previous build's state is never used again.
+      // Rolldown's dev engine reuses cached transforms and is not supported.
+      declarationMap.clear()
+      moduleExportsMap.clear()
+      commentsMap.clear()
+      fileCommentsMap.clear()
+    },
 
     outputOptions(options) {
       if (options.format === 'cjs' || options.format === 'commonjs') {
@@ -125,6 +150,21 @@ export function createFakeJsPlugin({
 
     generateBundle(options, bundle) {
       for (const chunk of Object.values(bundle)) {
+        // `sourcemap` is an output-wide option, so the JS sourcemap setting
+        // also applies to dts chunks. When declaration maps are disabled,
+        // drop the map and its `sourceMappingURL` comment from dts chunks so
+        // they don't reference a file that is never emitted.
+        if (
+          !sourcemap &&
+          chunk.type === 'chunk' &&
+          RE_DTS.test(chunk.fileName)
+        ) {
+          chunk.code = chunk.code.replace(RE_SOURCE_MAPPING_URL, '')
+          chunk.map = null
+          chunk.sourcemapFileName = null
+          continue
+        }
+
         if (!RE_DTS_MAP.test(chunk.fileName)) continue
 
         if (sourcemap) {
@@ -137,6 +177,8 @@ export function createFakeJsPlugin({
           delete bundle[chunk.fileName]
         }
       }
+
+      removeDtsOnlyRuntimeChunks(bundle)
     },
   }
 
@@ -145,9 +187,10 @@ export function createFakeJsPlugin({
     code: string,
     id: string,
   ): Promise<TransformResult> {
-    let file: ParseResult
+    let file: SourceFile
     try {
       file = parse(code, {
+        path: id,
         lang: 'dts',
         sourceType: 'module',
         attachComments: true,
@@ -182,9 +225,34 @@ export function createFakeJsPlugin({
     const appendStmts: t.ProgramStatement[] = []
     const namespaceStmts: NamespaceMap = new Map()
 
+    // Generators map different statements of `export default <expr>`: tsc and
+    // tsgo only map `export default _default`, oxc only maps the declaration.
+    // The former is dropped below, so a binding on a line without mappings
+    // takes the position of its default export reference.
+    const defaultExportRef = sourcemap
+      ? findDefaultExportRef(program.body)
+      : undefined
+    const inputMappings = defaultExportRef
+      ? this.getCombinedSourcemap().mappings
+      : ''
+    const getBindingRange = (binding: t.Identifier) =>
+      binding.name === defaultExportRef?.name &&
+      !isLineMapped(inputMappings, code, binding.start)
+        ? { start: defaultExportRef.start, end: defaultExportRef.end }
+        : undefined
+
     for (const [i, stmt] of program.body.entries()) {
       const setStmt = (stmt: t.ProgramStatement) => (program.body[i] = stmt)
-      if (rewriteImportExport(stmt, setStmt, appendStmts)) continue
+      if (rewriteImportExport(stmt, setStmt, appendStmts)) {
+        // The file's doc comment, e.g. `@module`, is attached to its first
+        // statement. An import or export keeps no comments, so save it for
+        // `renderChunk` to restore.
+        if (i === 0) {
+          const docComments = stmt.comments?.filter(isDocComment)
+          if (docComments?.length) fileCommentsMap.set(id, docComments)
+        }
+        continue
+      }
 
       const sideEffect =
         stmt.type === 'TSModuleDeclaration' && stmt.kind !== 'namespace'
@@ -231,8 +299,12 @@ export function createFakeJsPlugin({
 
       const bindings: t.Identifier[] = []
       if (decl.type === 'VariableDeclaration') {
+        // a binding pattern, e.g. `declare const [a, b]: [A, B]` emitted by
+        // TypeScript 7.1, binds each of its identifiers
         bindings.push(
-          ...decl.declarations.map((decl) => decl.id as t.Identifier),
+          ...decl.declarations.flatMap((decl) =>
+            collectPatternIdentifiers(decl.id),
+          ),
         )
       } else if ('id' in decl && decl.id) {
         let binding: t.Node = decl.id
@@ -295,9 +367,6 @@ export function createFakeJsPlugin({
       }) as t.NumericLiteral
       const depsBody: t.ArrayExpression = b.ArrayExpression({ elements: deps })
       const depsNode: t.ArrowFunctionExpression = b.ArrowFunctionExpression({
-        id: null,
-        generator: false,
-        async: false,
         params: params.map(({ name }) => b.Identifier({ name })),
         body: depsBody,
         expression: true,
@@ -317,7 +386,6 @@ export function createFakeJsPlugin({
         b.CallExpression({
           callee: b.Identifier({ name: 'sideEffect' }),
           arguments: [bindings[0]],
-          optional: false,
         })
       const runtimeArrayNode = runtimeBindingArrayExpression([
         declarationIdNode,
@@ -341,6 +409,7 @@ export function createFakeJsPlugin({
             id: b.ArrayPattern({
               elements: bindings.map((binding) => ({
                 ...binding,
+                ...getBindingRange(binding),
                 typeAnnotation: null,
               })),
             }),
@@ -353,15 +422,12 @@ export function createFakeJsPlugin({
         // export { ${binding} as default }
         appendStmts.push(
           b.ExportNamedDeclaration({
-            declaration: null,
             specifiers: [
               b.ExportSpecifier({
                 local: bindings[0],
                 exported: b.Identifier({ name: 'default' }),
               }),
             ],
-            source: null,
-            attributes: [],
           }),
         )
         // replace the whole statement
@@ -378,8 +444,6 @@ export function createFakeJsPlugin({
         b.ExpressionStatement({
           expression: b.CallExpression({
             callee: b.Identifier({ name: 'sideEffect' }),
-            arguments: [],
-            optional: false,
           }),
         }),
       )
@@ -391,12 +455,7 @@ export function createFakeJsPlugin({
       ...appendStmts,
     ]
 
-    const result = generate(program, {
-      comments: false,
-      ...(sourcemap && {
-        sourceMaps: { source: code, sourceFileName: id },
-      }),
-    })
+    const result = print(file, { comments: 'none', sourceMap: sourcemap })
 
     return {
       code: result.code,
@@ -404,14 +463,20 @@ export function createFakeJsPlugin({
     }
   }
 
-  function renderChunk(code: string, chunk: RenderedChunk) {
+  function renderChunk(
+    code: string,
+    chunk: RenderedChunk,
+    _outputOptions: NormalizedOutputOptions,
+    meta: RenderChunkMeta,
+  ) {
     if (!RE_DTS.test(chunk.fileName)) {
       return
     }
 
-    let file: ParseResult
+    let file: SourceFile
     try {
       file = parse(code, {
+        path: chunk.fileName,
         lang: 'ts',
         sourceType: 'module',
         attachComments: true,
@@ -440,6 +505,7 @@ export function createFakeJsPlugin({
       node: t.ProgramStatement,
     ): t.ProgramStatement | null | false {
       if (isHelperImport(node)) return null
+      if (isRuntimeChunkImport(node, chunk, meta)) return null
       if (node.type === 'ExpressionStatement') return null
 
       const newNode = patchImportExport(node, exportPlan, cjsDefault)
@@ -537,6 +603,18 @@ export function createFakeJsPlugin({
         }
       }
 
+      walk(declaration.decl, {
+        TSTypeReference(node) {
+          runtimeToTSEntityName(node.typeName)
+        },
+        TSTypeQuery(node) {
+          runtimeToTSEntityName(node.exprName)
+        },
+        TSQualifiedName(node) {
+          runtimeToTSEntityName(node.left)
+        },
+      })
+
       const kind = exportPlan.inlineKinds.get(declarationId!)
       const rendered = kind
         ? inlineExportDeclaration(declaration.decl, kind)
@@ -548,7 +626,7 @@ export function createFakeJsPlugin({
     const body: t.ProgramStatement[] = []
     // comments of dropped statements, e.g. the `//#endregion` in front of an
     // `export { ... }` that became empty because it was inlined
-    let danglingComments: t.AttachedComment[] = []
+    let danglingComments: t.Comment[] = []
 
     for (const node of program.body) {
       const rendered = renderStatement(node)
@@ -580,8 +658,27 @@ export function createFakeJsPlugin({
 
     program.body = body
 
+    // With `treeshake: false`, Rolldown includes its whole runtime. Inlined
+    // into this chunk, its code is dropped above, but its `createRequire`
+    // import would remain.
+    if (chunk.moduleIds.some((id) => RE_ROLLDOWN_RUNTIME.test(id))) {
+      program.body = removeRuntimeImports(program.body)
+    }
+
     if (program.body.length === 0) {
       return { code: EMPTY_STUB, map: null }
+    }
+
+    if (needsScopeMarker(program.body)) {
+      program.body.push(b.ExportNamedDeclaration({}))
+    }
+
+    // recover the entry's doc comment, but not those of the modules it inlines
+    const fileComments =
+      chunk.facadeModuleId && fileCommentsMap.get(chunk.facadeModuleId)
+    if (fileComments) {
+      program.body[0].comments ||= []
+      program.body[0].comments.unshift(...fileComments)
     }
 
     // recover comments
@@ -598,30 +695,20 @@ export function createFakeJsPlugin({
           commentsValue.add(id)
           comments.add(c)
         })
-        commentsMap.delete(id)
       }
     }
     if (comments.size) {
       program.body[0].comments ||= []
       program.body[0].comments.unshift(
-        ...Array.from(comments, (c): t.AttachedComment => ({
-          type: c.type,
-          value: c.value,
+        ...Array.from(comments, (c): t.Comment => ({
+          ...c,
           position: 'before',
           sameLine: false,
         })),
       )
     }
 
-    const result = generate(program, {
-      comments: true,
-      ...(sourcemap && {
-        sourceMaps: {
-          source: code,
-          sourceFileName: chunk.fileName,
-        },
-      }),
-    })
+    const result = print(file, { comments: 'all', sourceMap: sourcemap })
 
     return {
       // a chunk ending with a comment, e.g. `//#endregion`, is generated with a
@@ -641,4 +728,136 @@ export function createFakeJsPlugin({
   function getDeclaration(declarationId: number) {
     return declarationMap.get(declarationId)!
   }
+}
+
+function needsScopeMarker(body: t.ProgramStatement[]): boolean {
+  let hasModuleStatement = false
+  let hasPrivateDeclaration = false
+
+  for (const node of body) {
+    switch (node.type) {
+      case 'ExportAllDeclaration':
+      case 'TSExportAssignment':
+        return false
+      case 'ExportNamedDeclaration':
+        if (!node.declaration) return false
+        hasModuleStatement = true
+        break
+      case 'ExportDefaultDeclaration':
+        if (!is.Declaration(node.declaration)) return false
+        hasModuleStatement = true
+        break
+      case 'ImportDeclaration':
+        hasModuleStatement = true
+        break
+      case 'TSImportEqualsDeclaration':
+        hasModuleStatement ||=
+          node.moduleReference.type === 'TSExternalModuleReference'
+        break
+      default:
+        hasPrivateDeclaration ||=
+          is.Declaration(node) &&
+          (node.type !== 'TSModuleDeclaration' ||
+            (node.kind !== 'global' && !is.StringLiteral(node.id)))
+    }
+  }
+
+  // Inline exports alone do not prevent private declarations from being exported.
+  return !hasModuleStatement || hasPrivateDeclaration
+}
+
+/**
+ * Declarations never need the Rolldown runtime, and a runtime chunk imported
+ * only by declaration chunks is removed in `generateBundle`.
+ */
+function isRuntimeChunkImport(
+  node: t.ProgramStatement,
+  chunk: RenderedChunk,
+  meta: RenderChunkMeta,
+): boolean {
+  if (node.type !== 'ImportDeclaration' || node.specifiers.length) return false
+  const fileName = path.posix.join(
+    path.posix.dirname(chunk.fileName),
+    node.source.value,
+  )
+  const imported = meta.chunks[fileName]
+  return (
+    !!imported &&
+    imported.moduleIds.length === 1 &&
+    RE_ROLLDOWN_RUNTIME.test(imported.moduleIds[0])
+  )
+}
+
+function removeRuntimeImports(
+  body: t.ProgramStatement[],
+): t.ProgramStatement[] {
+  const isRuntimeSpecifier = (spec: t.ImportDeclarationSpecifier) =>
+    spec.type === 'ImportSpecifier' &&
+    spec.imported.type === 'Identifier' &&
+    spec.imported.name === 'createRequire'
+  const runtimeImports = body.filter(
+    (node): node is t.ImportDeclaration =>
+      node.type === 'ImportDeclaration' &&
+      node.source.value === 'node:module' &&
+      node.specifiers.some(isRuntimeSpecifier),
+  )
+  if (!runtimeImports.length) return body
+
+  // Declarations may import `createRequire` themselves.
+  const referenced = new Set<string>()
+  for (const node of body) {
+    if (runtimeImports.includes(node as t.ImportDeclaration)) continue
+    walk(node, {
+      enter(child) {
+        if (child.type === 'Identifier') referenced.add(child.name)
+      },
+    })
+  }
+
+  return body.filter((node) => {
+    if (!runtimeImports.includes(node as t.ImportDeclaration)) return true
+    const decl = node as t.ImportDeclaration
+    decl.specifiers = decl.specifiers.filter(
+      (spec) => !isRuntimeSpecifier(spec) || referenced.has(spec.local.name),
+    )
+    return decl.specifiers.length > 0
+  })
+}
+
+function removeDtsOnlyRuntimeChunks(bundle: OutputBundle): void {
+  const chunks = Object.values(bundle).filter(
+    (chunk): chunk is OutputChunk => chunk.type === 'chunk',
+  )
+
+  for (const chunk of chunks) {
+    if (
+      chunk.moduleIds.length !== 1 ||
+      !RE_ROLLDOWN_RUNTIME.test(chunk.moduleIds[0])
+    )
+      continue
+
+    const importers = chunks.filter((importer) =>
+      importer.imports.includes(chunk.fileName),
+    )
+    if (
+      importers.length === 0 ||
+      importers.some((importer) => !RE_DTS.test(importer.fileName))
+    )
+      continue
+
+    delete bundle[chunk.fileName]
+    for (const importer of importers) {
+      importer.imports = importer.imports.filter(
+        (fileName) => fileName !== chunk.fileName,
+      )
+    }
+  }
+}
+
+function isDocComment(comment: t.Comment): boolean {
+  return (
+    comment.position === 'before' &&
+    comment.type === 'Block' &&
+    comment.value.startsWith('*')
+  )
 }

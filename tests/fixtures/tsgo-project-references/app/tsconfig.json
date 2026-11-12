@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.base.json",
+  "files": ["src/index.ts"],
+  "references": [{ "path": "../lib/tsconfig.production.json" }]
+}

@@ -1,16 +1,48 @@
-import { is } from 'yuku-ast'
-import type * as t from 'yuku-parser'
+import { is } from 'yuku/utils'
+import type * as t from 'yuku'
 
 export function isThisExpression(node: t.Node): boolean {
   return (
-    is.Identifier(node, 'this') ||
+    (is.Identifier(node) && node.name === 'this') ||
     node.type === 'ThisExpression' ||
     (node.type === 'MemberExpression' && isThisExpression(node.object))
   )
 }
 
 export function isInfer(node: t.Node): node is t.Identifier {
-  return is.Identifier(node, 'infer')
+  return is.Identifier(node) && node.name === 'infer'
+}
+
+/** Identifiers bound by a declaration id, e.g. `[a, { b }]` */
+export function collectPatternIdentifiers(
+  node: t.Node | null | undefined,
+): t.Identifier[] {
+  if (!node) return []
+
+  switch (node.type) {
+    case 'Identifier':
+      return [node]
+    case 'RestElement':
+      return collectPatternIdentifiers(node.argument)
+    case 'AssignmentPattern':
+      return collectPatternIdentifiers(node.left)
+    case 'ArrayPattern':
+      return node.elements.flatMap((element) =>
+        collectPatternIdentifiers(element),
+      )
+    case 'ObjectPattern':
+      return node.properties.flatMap((property) =>
+        collectPatternIdentifiers(
+          property.type === 'RestElement' ? property.argument : property.value,
+        ),
+      )
+  }
+
+  return []
+}
+
+export function nameOf(node: t.ModuleExportName): string {
+  return node.type === 'Identifier' ? node.name : node.value
 }
 
 export function TSEntityNameToRuntime(
@@ -26,6 +58,26 @@ export function TSEntityNameToRuntime(
     object: left,
     property: node.right,
     computed: false,
+  })
+}
+
+/**
+ * The reverse of {@link TSEntityNameToRuntime}, in place. A type name taken out
+ * as a runtime dependency comes back from Rolldown as a member expression,
+ * which the printer rejects in a type position.
+ */
+export function runtimeToTSEntityName(node: t.Node): void {
+  if (node.type !== 'MemberExpression') return
+
+  const { object, property } = node
+  runtimeToTSEntityName(object)
+  for (const key of ['object', 'property', 'computed', 'optional']) {
+    Reflect.deleteProperty(node, key)
+  }
+  Object.assign(node, {
+    type: 'TSQualifiedName',
+    left: object,
+    right: property,
   })
 }
 
@@ -59,7 +111,7 @@ export function isHelperImport(node: t.Node): boolean {
 
 const REFERENCE_RE = /\/\s*<reference\s+(?:path|types)=/
 export function collectReferenceDirectives(
-  comment: t.Comment[],
+  comment: readonly t.Comment[],
   negative = false,
 ): t.Comment[] {
   return comment.filter((c) => REFERENCE_RE.test(c.value) !== negative)
@@ -78,6 +130,29 @@ export function isCjsDtsInputSyntax(node: t.ProgramStatement): boolean {
   )
 }
 
+export function findDefaultExportRef(
+  body: t.ProgramStatement[],
+): t.Identifier | undefined {
+  for (const stmt of body) {
+    const ref =
+      stmt.type === 'ExportDefaultDeclaration'
+        ? stmt.declaration
+        : stmt.type === 'TSExportAssignment'
+          ? stmt.expression
+          : undefined
+    if (ref) return ref.type === 'Identifier' ? ref : undefined
+  }
+}
+
+export function isLineMapped(
+  mappings: string,
+  code: string,
+  offset: number,
+): boolean {
+  const line = code.slice(0, offset).split('\n').length - 1
+  return !!mappings.split(';')[line]
+}
+
 export function overwriteNode<T>(node: t.Node, newNode: T): T {
   // clear object keys
   for (const key of Object.keys(node)) {
@@ -91,7 +166,7 @@ export function overwriteNode<T>(node: t.Node, newNode: T): T {
  * Region markers and alike, the comments worth keeping when their node is
  * replaced or dropped
  */
-export function pragmaComments(node: t.Node): t.AttachedComment[] {
+export function pragmaComments(node: t.Node): t.Comment[] {
   return (
     node.comments?.filter(
       (comment) =>

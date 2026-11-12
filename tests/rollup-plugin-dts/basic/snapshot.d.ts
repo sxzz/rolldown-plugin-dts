@@ -1,10 +1,5 @@
 // index.d.ts
-declare namespace mod_d_exports {
-  export { a };
-}
 declare const a: string;
-//#endregion
-//#region tests/rollup-plugin-dts/basic/foo.d.ts
 declare const foo: number;
 export declare const bar: typeof a;
 type SomeType<T> = T;
@@ -20,5 +15,4 @@ declare class Cls {
   foo: string;
   fn(e: Enum): void;
 }
-//#endregion
 export type { Cls, fn, foo };

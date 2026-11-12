@@ -16,7 +16,10 @@ export interface CustomLanguage {
   /** Extra file extensions passed to the TypeScript compiler. */
   tsFileExtensionInfos?: FileExtensionInfo[]
 
-  /** Maps a source filename to the TypeScript filename used for declarations. */
+  /**
+   * Maps a source filename to the TypeScript filename used for declarations.
+   * Required for custom file extensions.
+   */
   toTsFilename?: (id: string) => string
 
   /** @ts-ignore - optional dep */
@@ -32,6 +35,8 @@ export interface CustomLanguage {
 export class LanguageContext {
   languages: CustomLanguage[]
   patterns: RegExp[]
+  /** @internal */
+  contentMapperExtensions: string[] = []
 
   constructor(languages: CustomLanguage[]) {
     this.languages = languages
@@ -96,7 +101,15 @@ export class LanguageContext {
     })
   }
 
+  /** @internal */
+  isContentMappedFile(id: string): boolean {
+    return this.contentMapperExtensions.some((extension) =>
+      id.endsWith(extension),
+    )
+  }
+
   toTsFilename(id: string): string {
+    if (this.isContentMappedFile(id)) return `${id}.ts`
     for (const language of this.languages) {
       if (
         language.toTsFilename &&
