@@ -309,6 +309,45 @@ describe('tsc', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
+  // `tsc -p <tsconfig> --strict false` derives the strict-family flags from
+  // the override unless the tsconfig sets them explicitly.
+  test.each([
+    {
+      tsconfig: 'tsconfig.json',
+      expected: [
+        'export declare function f(x?: string): string;',
+        'export declare const g: (n: number) => string;',
+      ],
+    },
+    {
+      // TypeScript 6 enables `strict` by default.
+      tsconfig: 'tsconfig.default.json',
+      expected: [
+        'export declare function f(x?: string): string;',
+        'export declare const g: (n: number) => string;',
+      ],
+    },
+    {
+      tsconfig: 'tsconfig.explicit.json',
+      expected: [
+        'export declare function f(x?: string): string | null;',
+        'export declare const g: (n: number) => "pos" | undefined;',
+      ],
+    },
+  ])('strict: false overrides $tsconfig', async ({ tsconfig, expected }) => {
+    const root = path.resolve(dirname, 'fixtures/strict-override')
+    const { snapshot } = await rolldownBuild(path.resolve(root, 'index.ts'), [
+      dts({
+        tsconfig: path.resolve(root, tsconfig),
+        compilerOptions: { strict: false },
+        generator: 'tsc',
+        tsc: { newContext: true },
+        dtsOnly: true,
+      }),
+    ])
+    for (const line of expected) expect(snapshot).toContain(line)
+  })
+
   test('accessor in type literal', async () => {
     const { snapshot } = await rolldownBuild(
       path.resolve(dirname, 'fixtures/accessor-in-type-literal.ts'),
