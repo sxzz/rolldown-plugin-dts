@@ -125,7 +125,7 @@ interface TscWorker {
 
 function createTscWorker(vue: false | VueLanguageOptions): TscWorker {
   const childProcess = fork(new URL(WORKER_URL, import.meta.url), {
-    stdio: 'inherit',
+    stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
     serialization: 'advanced',
   })
 

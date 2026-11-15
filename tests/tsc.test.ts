@@ -1,5 +1,8 @@
+import { spawn } from 'node:child_process'
+import { once } from 'node:events'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import process from 'node:process'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../src/index.ts'
@@ -37,6 +40,18 @@ describe('tsc', () => {
     )
     expect(snapshot).toContain('export declare const foo: number;')
   })
+
+  test('parallel with pending read on piped stdin', async () => {
+    const child = spawn(
+      process.execPath,
+      [path.resolve(dirname, 'fixtures/tsc-parallel-stdin/build.ts')],
+      { stdio: ['pipe', 'ignore', 'inherit'] },
+    )
+    const timer = setTimeout(() => child.kill(), 20_000)
+    const [code] = await once(child, 'exit')
+    clearTimeout(timer)
+    expect(code).toBe(0)
+  }, 30_000)
 
   test('multi declarations', async () => {
     const { snapshot } = await rolldownBuild(
