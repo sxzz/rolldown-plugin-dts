@@ -34,32 +34,64 @@ jobs:
               throw new Error(`Unexpected permission: ${access.permission}`);
             }
 
-            // Keep these in sync with sxzz/.github's shared PR template.
+            const label = 'incomplete template';
+            const marker = '<!-- pr-template-check -->';
             const templateUrl = 'https://github.com/sxzz/.github/blob/main/.github/PULL_REQUEST_TEMPLATE.md';
-            const body = pr.body ?? '';
-            const visibleBody = body.replace(/<!--[\s\S]*?-->/g, '');
-            const missing = [];
-            if (!/<!--\s*DO NOT IGNORE THE TEMPLATE![\s\S]*?-->/.test(body)) {
-              missing.push('the template instruction comment');
-            }
-            for (const heading of ['AI usage', 'Description', 'Linked Issues', 'Additional context']) {
-              if (!new RegExp(`^### ${heading}\\s*$`, 'm').test(visibleBody)) {
-                missing.push(`the "${heading}" section`);
-              }
-            }
-            if (missing.length === 0) return;
 
-            await github.rest.issues.createComment({
+            // Only the AI usage disclosure is required; other sections and comments may be removed.
+            const visibleBody = (pr.body ?? '').replace(/<!--[\s\S]*?-->/g, '');
+            const noAi = /^\s*[-*]\s*\[[xX]\]\s*No AI was used/m.test(visibleBody);
+            const aiUsed = visibleBody.match(/^\s*[-*]\s*\[[xX]\]\s*AI was used\b:?(.*)$/m);
+            const problems = [];
+            if (noAi && aiUsed) {
+              problems.push('Check only one of "No AI was used" and "AI was used".');
+            } else if (!noAi && !aiUsed) {
+              problems.push('Check either "No AI was used" or "AI was used" in the AI usage section.');
+            } else if (aiUsed && !aiUsed[1].trim()) {
+              problems.push('Describe your AI setup after "AI was used:", e.g. "Claude Code + Opus 4.8 High".');
+            }
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
               ...context.repo,
               issue_number: pr.number,
-              body: [
-                'Thank you for contributing! This PR does not follow the required PR template.',
-                '',
-                `Missing: ${missing.join(', ')}.`,
-                '',
-                `Please use the [shared PR template](${templateUrl}), preserve its comments and sections, and complete the applicable fields, including the AI usage disclosure.`,
-                '',
-                'This PR is being closed automatically. After updating the description, you can reopen it or ask a maintainer to reopen it.',
-              ].join('\n'),
+              per_page: 100,
             });
-            await github.rest.pulls.update({ ...params, state: 'closed' });
+            const existing = comments.find(
+              (c) => c.user?.type === 'Bot' && c.body?.includes(marker),
+            );
+            const hasLabel = pr.labels.some((l) => l.name === label);
+
+            if (problems.length === 0) {
+              if (hasLabel) {
+                await github.rest.issues.removeLabel({
+                  ...context.repo,
+                  issue_number: pr.number,
+                  name: label,
+                });
+              }
+              if (existing) {
+                await github.rest.issues.deleteComment({ ...context.repo, comment_id: existing.id });
+              }
+              return;
+            }
+
+            const body = [
+              marker,
+              `Thank you for contributing! Please complete the AI usage disclosure from the [PR template](${templateUrl}) in the PR description:`,
+              '',
+              ...problems.map((p) => `- ${p}`),
+              '',
+              `This PR stays open. The \`${label}\` label is removed automatically once the description is updated.`,
+            ].join('\n');
+            if (existing) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: pr.number, body });
+            }
+            if (!hasLabel) {
+              await github.rest.issues.addLabels({
+                ...context.repo,
+                issue_number: pr.number,
+                labels: [label],
+              });
+            }
