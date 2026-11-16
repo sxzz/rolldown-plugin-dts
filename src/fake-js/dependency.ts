@@ -48,6 +48,52 @@ export function collectParams(node: t.Node): TypeParams {
   }))
 }
 
+/**
+ * Names declared directly in the body of a `namespace`. They are not bindings
+ * the bundler knows about, so a same-named binding it hoists to the top level
+ * would capture references meant for an outer declaration. The names are
+ * reported to the bundler as unresolved globals instead, which it avoids when
+ * naming top-level bindings, and the members themselves keep their names.
+ */
+export function collectNamespaceMembers(node: t.Node): string[] {
+  if (
+    node.type !== 'TSModuleDeclaration' ||
+    node.kind !== 'namespace' ||
+    node.id.type !== 'Identifier' ||
+    node.body?.type !== 'TSModuleBlock'
+  ) {
+    return []
+  }
+
+  const names = new Set<string>()
+  for (let stmt of node.body.body as t.Node[]) {
+    if (stmt.type === 'ExportNamedDeclaration') {
+      if (!stmt.declaration) continue
+      stmt = stmt.declaration
+    }
+    switch (stmt.type) {
+      case 'TSInterfaceDeclaration':
+      case 'TSTypeAliasDeclaration':
+      case 'TSEnumDeclaration':
+      case 'TSModuleDeclaration':
+      case 'TSImportEqualsDeclaration':
+      case 'ClassDeclaration':
+      case 'FunctionDeclaration':
+      case 'TSDeclareFunction': {
+        if (stmt.id?.type === 'Identifier') names.add(stmt.id.name)
+        break
+      }
+      case 'VariableDeclaration': {
+        for (const { id } of stmt.declarations) {
+          if (id.type === 'Identifier') names.add(id.name)
+        }
+        break
+      }
+    }
+  }
+  return Array.from(names)
+}
+
 export async function collectDependencies(
   context: TransformPluginContext,
   node: t.Node,

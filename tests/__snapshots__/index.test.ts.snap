@@ -169,6 +169,29 @@ export interface UserWithAge extends User {
 }"
 `;
 
+exports[`dts input > deconflicts renamed external imports from namespace members 1`] = `
+"// index.d.ts
+import { Response as Response$1 } from "./dep.js";
+export declare namespace CreateOne {
+  interface Response {
+    data: Response$1;
+  }
+}"
+`;
+
+exports[`dts input > deconflicts renamed imports from namespace members 1`] = `
+"// index.d.ts
+interface Response$1 {
+  status: number;
+}
+export declare namespace CreateOne {
+  interface Response {
+    data: Response$1;
+  }
+}
+export {};"
+`;
+
 exports[`dts input > default chunk name 2`] = `
 "// input1.d.mts
 import { t as User } from "./types-RNYvPRwl.js";
