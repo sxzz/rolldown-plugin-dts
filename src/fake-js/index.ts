@@ -765,14 +765,15 @@ function needsScopeMarker(body: t.ProgramStatement[]): boolean {
 
 /**
  * Declarations never need the Rolldown runtime, and a runtime chunk imported
- * only by declaration chunks is removed in `generateBundle`.
+ * only by declaration chunks is removed in `generateBundle`. Its helpers may
+ * still be imported by name, e.g. `__name` with `keepNames`.
  */
 function isRuntimeChunkImport(
   node: t.ProgramStatement,
   chunk: RenderedChunk,
   meta: RenderChunkMeta,
 ): boolean {
-  if (node.type !== 'ImportDeclaration' || node.specifiers.length) return false
+  if (node.type !== 'ImportDeclaration') return false
   const fileName = path.posix.join(
     path.posix.dirname(chunk.fileName),
     node.source.value,
