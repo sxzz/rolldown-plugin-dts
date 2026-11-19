@@ -3,8 +3,10 @@ import path from 'node:path'
 import process from 'node:process'
 import { isDeepStrictEqual } from 'node:util'
 import {
+  getExtendsChain,
   getTsconfig,
   readTsconfig,
+  resolveExtendsChain,
   type TsconfigJson,
   type TsconfigJsonResolved,
 } from 'get-tsconfig'
@@ -12,7 +14,7 @@ import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
 import { resolveTsgoPath } from './generator/tsgo-cli.ts'
 import { escapeRegExp } from './regexp.ts'
-import { requireTSApi } from './require.ts'
+import { requireTSApi, tryRequire, tryResolveFrom } from './require.ts'
 import {
   createVueLanguage,
   createVueLanguageMetadata,
@@ -445,6 +447,10 @@ export function resolveOptions({
   } else {
     tsconfig = undefined
   }
+  const tsconfigCompilerOptions =
+    tsconfig && Object.keys(compilerOptions).length
+      ? resolveCompilerOptions(tsconfig, compilerOptions)
+      : resolvedTsconfig?.compilerOptions
   if (tsconfig) {
     // Rolldown module IDs are real paths, so resolve a symlinked directory for
     // the compiler to match them. Keep the file name: a symlinked tsconfig
@@ -456,7 +462,7 @@ export function resolveOptions({
   }
 
   compilerOptions = {
-    ...resolvedTsconfig?.compilerOptions,
+    ...tsconfigCompilerOptions,
     ...compilerOptions,
   }
 
@@ -665,4 +671,40 @@ export function resolveOptions({
   debug('Resolved Options: %O', resolved)
 
   return resolved
+}
+
+/**
+ * Applies `overrides` to the tsconfig as written, the way `tsc` applies
+ * command-line options, so the values get-tsconfig derives (such as the
+ * strict-family flags from `strict`) follow the overrides.
+ */
+function resolveCompilerOptions(
+  tsconfig: string,
+  overrides: TsconfigJson.CompilerOptions,
+): TsconfigJsonResolved['compilerOptions'] {
+  const [root, ...extended] = getExtendsChain(tsconfig)
+  const chain = [
+    {
+      ...root,
+      config: {
+        ...root.config,
+        compilerOptions: { ...root.config.compilerOptions, ...overrides },
+      },
+    },
+    ...extended,
+  ]
+  return resolveExtendsChain(chain, {
+    typescriptVersion: detectTypeScriptVersion(root.path),
+  }).config.compilerOptions
+}
+
+// Mirrors get-tsconfig's `typescriptVersion: 'auto'`, which
+// `resolveExtendsChain` does not accept.
+function detectTypeScriptVersion(tsconfig: string): string | false {
+  const packageJsonPath = tryResolveFrom('typescript/package.json', tsconfig)
+  return (
+    (packageJsonPath &&
+      tryRequire<{ version?: string }>(packageJsonPath)?.version) ||
+    false
+  )
 }

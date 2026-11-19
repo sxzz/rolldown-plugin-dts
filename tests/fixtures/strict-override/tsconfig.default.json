@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": [],
+    "declaration": true,
+    "skipLibCheck": true
+  },
+  "include": ["index.ts"]
+}
