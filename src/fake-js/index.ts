@@ -16,6 +16,8 @@ import {
   collectModuleExports,
   inlineExportDeclaration,
   planChunkExports,
+  resolveAllModuleExports,
+  type ResolvedModuleExports,
 } from './exports.ts'
 import {
   patchImportExport,
@@ -87,6 +89,10 @@ export function createFakeJsPlugin({
   const commentsMap = new Map<string /* filename */, t.Comment[]>()
   const fileCommentsMap = new Map<string /* filename */, t.Comment[]>()
   const moduleExportsMap = new Map<string /* filename */, ModuleExports>()
+  // Resolving the re-export graph walks every module, so it is computed once
+  // and shared by all chunks instead of once per chunk, which is quadratic
+  // with one chunk per module (e.g. `preserveModules`).
+  let resolvedModuleExports: ResolvedModuleExports | undefined
   const warnedCjsDtsInputs = new Set<string>()
 
   return {
@@ -98,6 +104,7 @@ export function createFakeJsPlugin({
       // Rolldown's dev engine reuses cached transforms and is not supported.
       declarationMap.clear()
       moduleExportsMap.clear()
+      resolvedModuleExports = undefined
       commentsMap.clear()
       fileCommentsMap.clear()
     },
@@ -204,6 +211,7 @@ export function createFakeJsPlugin({
 
     const { program } = file
     moduleExportsMap.set(id, await collectModuleExports(this, program.body, id))
+    resolvedModuleExports = undefined
     const identifierMap: Record<string, number> = Object.create(null)
 
     if (!warnedCjsDtsInputs.has(id) && program.body.some(isCjsDtsInputSyntax)) {
@@ -492,9 +500,11 @@ export function createFakeJsPlugin({
     program.body = patchTsNamespace(program.body)
     program.body = patchReExport(program.body)
 
+    resolvedModuleExports ??= resolveAllModuleExports(moduleExportsMap)
     const exportPlan = planChunkExports(
       chunk,
       moduleExportsMap,
+      resolvedModuleExports,
       program.body,
       getDeclaration,
       cjsDefault,
