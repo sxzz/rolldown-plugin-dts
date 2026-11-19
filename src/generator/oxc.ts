@@ -39,10 +39,12 @@ export class OxcGenerator implements Generator {
 
     let map: SourceMapInput | undefined
     if (result.map) {
-      map = result.map
-      // Point back to the original file, not the mapped TS filename.
-      map.sources = [fileName]
-      map.sourcesContent = undefined
+      map = {
+        ...result.map,
+        // Point back to the original file, not the mapped TS filename.
+        sources: [fileName],
+        sourcesContent: undefined,
+      }
     }
 
     return { code: result.code, map }
