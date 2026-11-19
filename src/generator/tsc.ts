@@ -171,9 +171,17 @@ function createTscWorker(vue: false | VueLanguageOptions): TscWorker {
   }
 }
 
+const RE_JSON_EXPORT_ASSIGNMENT = /^export = _exports;$/m
+
 function patchJsonDts(code: string): string {
   // If the declaration contains invalid JSON keys, add named exports.
   if (code.includes('declare const _exports')) {
+    // tsc declares such JSON modules with `export = _exports`. Use an ES
+    // default export instead, so it isn't reported as CommonJS dts input.
+    code = code.replace(
+      RE_JSON_EXPORT_ASSIGNMENT,
+      'export { _exports as default };',
+    )
     if (
       code.includes('declare const _exports: {') &&
       !code.includes('\n}[];')

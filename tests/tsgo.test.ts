@@ -470,7 +470,9 @@ test('tsgo CLI fails on type errors with `typecheck`', async () => {
 
   const checked = new TsgoCliGenerator({ ...options, typecheck: true })
   try {
-    await expect(checked.init()).rejects.toThrow('tsgo process exited')
+    await expect(checked.init()).rejects.toThrow(
+      /tsgo process exited.*error\.ts.*TS2322/s,
+    )
   } finally {
     await checked.dispose()
   }

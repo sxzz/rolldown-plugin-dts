@@ -303,6 +303,11 @@ describe('tsc', () => {
           dtsOnly: true,
         }),
       ],
+      {
+        onwarn(warning) {
+          expect.unreachable(warning.message)
+        },
+      },
     )
 
     expect(snapshot).toMatchSnapshot()
