@@ -16,14 +16,22 @@ import type { SourceMapInput } from 'rolldown'
 // TypeScript 7.1+ uses the API generator. To be removed in the next minor.
 const debug = createDebug('rolldown-plugin-dts:tsgo')
 
+// Output is piped rather than inherited so diagnostics reach the user through
+// the thrown error, i.e. through Rolldown, instead of being written straight
+// to the terminal.
 const spawnAsync = (...args: Parameters<typeof spawn>) =>
   new Promise<void>((resolve, reject) => {
     const child = spawn(...args)
+    let output = ''
+    child.stdout?.on('data', (chunk) => (output += chunk))
+    child.stderr?.on('data', (chunk) => (output += chunk))
     child.on('close', (code, signal) => {
-      if (code === 0) resolve()
-      else if (signal)
-        reject(new Error(`tsgo process terminated by signal ${signal}`))
-      else reject(new Error(`tsgo process exited with code ${code}`))
+      if (code === 0) return resolve()
+      const message = signal
+        ? `tsgo process terminated by signal ${signal}`
+        : `tsgo process exited with code ${code}`
+      output = output.trim()
+      reject(new Error(output ? `${message}\n${output}` : message))
     })
     child.on('error', (error) => reject(error))
   })
@@ -162,7 +170,7 @@ async function runTsgo(
   ]
   debug('[tsgo] args %o', args)
 
-  await spawnAsync(tsgoPath, args, { stdio: 'inherit' })
+  await spawnAsync(tsgoPath, args, { stdio: ['ignore', 'pipe', 'pipe'] })
 
   return {
     path: tsgoDist,
