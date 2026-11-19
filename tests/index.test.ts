@@ -1067,6 +1067,42 @@ describe('rolldown runtime chunk', () => {
       '_virtual/_rolldown/runtime.js',
     )
   })
+
+  test('helper import dropped with keepNames', async () => {
+    const { chunks } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/runtime-dts-only/index.ts'),
+      [dts()],
+      {},
+      { preserveModules: true, keepNames: true },
+    )
+    expect(chunks.map((chunk) => chunk.fileName).toSorted()).toStrictEqual([
+      'index.d.ts',
+      'index.js',
+      'worker.d.ts',
+    ])
+    for (const chunk of chunks) {
+      if (chunk.type === 'chunk' && chunk.fileName.endsWith('.d.ts')) {
+        expect(chunk.code).not.toContain('__name')
+      }
+    }
+  })
+
+  test('helper import dropped from dts with keepNames when used by js chunks', async () => {
+    const { chunks } = await rolldownBuild(
+      path.resolve(dirname, 'fixtures/source-map/index.ts'),
+      [dts()],
+      {},
+      { preserveModules: true, keepNames: true },
+    )
+    expect(chunks.map((chunk) => chunk.fileName)).toContain(
+      '_virtual/_rolldown/runtime.js',
+    )
+    for (const chunk of chunks) {
+      if (chunk.type === 'chunk' && chunk.fileName.endsWith('.d.ts')) {
+        expect(chunk.code).not.toContain('runtime')
+      }
+    }
+  })
 })
 
 test('file doc comment before an import', async () => {
