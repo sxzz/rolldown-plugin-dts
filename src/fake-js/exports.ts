@@ -174,12 +174,13 @@ interface ChunkExports {
 export function planChunkExports(
   chunk: RenderedChunk,
   moduleExportsMap: Map<string, ModuleExports>,
+  exportsByModule: ResolvedModuleExports,
   nodes: t.ProgramStatement[],
   getDeclaration: (declarationId: number) => DeclarationInfo,
   cjsDefault: boolean,
 ): ChunkExportPlan {
   const { typeOnlyNames, typeOnlyExportAllSources, inlineNames } =
-    collectChunkExports(chunk, moduleExportsMap)
+    collectChunkExports(chunk, moduleExportsMap, exportsByModule)
   const { kinds, allowExportAssignment } = planInlineExports(
     nodes,
     inlineNames,
@@ -198,8 +199,8 @@ export function planChunkExports(
 function collectChunkExports(
   chunk: RenderedChunk,
   moduleExportsMap: Map<string, ModuleExports>,
+  exportsByModule: ResolvedModuleExports,
 ): ChunkExports {
-  const exportsByModule = resolveAllModuleExports(moduleExportsMap)
   const roots =
     chunk.facadeModuleId && moduleExportsMap.has(chunk.facadeModuleId)
       ? [chunk.facadeModuleId]
@@ -234,9 +235,19 @@ function collectChunkExports(
   return { typeOnlyNames, typeOnlyExportAllSources, inlineNames }
 }
 
-function resolveAllModuleExports(
+/** Module id to every name it exports, and whether that export is type only */
+export type ResolvedModuleExports = ReadonlyMap<
+  string,
+  ReadonlyMap<string, boolean>
+>
+
+/**
+ * Resolves the exports of every module through re-exports and `export *`.
+ * The result is shared by all chunks of a build and must not be mutated.
+ */
+export function resolveAllModuleExports(
   moduleExportsMap: Map<string, ModuleExports>,
-): Map<string, Map<string, boolean>> {
+): ResolvedModuleExports {
   const exportsByModule = new Map<string, Map<string, boolean>>()
 
   for (const [id, info] of moduleExportsMap) {
