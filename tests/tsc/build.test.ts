@@ -1,13 +1,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { rolldownBuild } from '@sxzz/test-utils'
+import { normalizePath, rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
 import { dts } from '../../src/index.ts'
 import { findSourceMapChunk, fixture } from '../utils.ts'
-
-function slash(path: string) {
-  return path.replaceAll('\\', '/')
-}
 
 describe('tsc', () => {
   test('references', async () => {
@@ -184,7 +180,8 @@ describe('tsc', () => {
         cwd: tempDir,
       }),
     )
-    expect(tsBuildInfoFiles.map(slash).toSorted()).toMatchInlineSnapshot(`
+    expect(tsBuildInfoFiles.map(normalizePath).toSorted())
+      .toMatchInlineSnapshot(`
       [
         "dir1/tsconfig.1.tsbuildinfo",
         "dir2/tsconfig.2.tsbuildinfo",

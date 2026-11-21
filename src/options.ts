@@ -11,8 +11,6 @@ import {
 import { createDebug } from 'obug'
 import { LanguageContext, type CustomLanguage } from './custom-language.ts'
 import { resolveTsgoPath } from './generator/tsgo-cli.ts'
-import { escapeRegExp } from './regexp.ts'
-import { requireTSApi } from './require.ts'
 import {
   createVueLanguage,
   createVueLanguageMetadata,
@@ -25,6 +23,8 @@ import {
   tryLoadTsgoApi,
   type NativeCompiler,
 } from './tsgo.ts'
+import { escapeRegExp } from './utils/regexp.ts'
+import { requireTSApi } from './utils/require.ts'
 import type { Generator } from './generator/index.ts'
 import type { IsolatedDeclarationsOptions } from 'rolldown/experimental'
 

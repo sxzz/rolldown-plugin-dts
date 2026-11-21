@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { normalizePath } from '@sxzz/test-utils'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
   createGenerator,
@@ -8,7 +9,7 @@ import {
   TsgoGenerator,
 } from '../src/generator/index.ts'
 import { resolveOptions, type Options } from '../src/options.ts'
-import { mockRequire } from '../src/require.ts'
+import { mockRequire } from '../src/utils/require.ts'
 import type { CustomLanguage } from '../src/custom-language.ts'
 import type { Generator } from '../src/index.ts'
 
@@ -36,10 +37,6 @@ const TSGO_EXE = path.join(MOCK_ROOT, 'tsgo')
 const CUSTOM_MODULE_PATH = path.join(MOCK_ROOT, 'xxx/lib/index.js')
 const CUSTOM_MODULE_URL = pathToFileURL(CUSTOM_MODULE_PATH).href
 const CUSTOM_API_PATH = path.join(MOCK_ROOT, 'xxx/dist/api/async/api.js')
-
-function normalizePath(fileName: string): string {
-  return fileName.replaceAll('\\', '/')
-}
 
 type PackageVersion = 6 | 7 | 'api' | 'next' | false
 type Installed = [ts: PackageVersion, custom: PackageVersion]

@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
-import { requireTSApi } from '../require.ts'
+import { requireTSApi } from '../utils/require.ts'
 import type { ResolvedProjectReference } from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-resolver')

@@ -1,7 +1,7 @@
 import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
-import { requireTSApi } from '../require.ts'
+import { requireTSApi } from '../utils/require.ts'
 import type { ExistingRawSourceMap } from 'rolldown'
 import type {
   Bundle,

@@ -1,5 +1,5 @@
 import { createDebug } from 'obug'
-import { requireTSApi } from '../require.ts'
+import { requireTSApi } from '../utils/require.ts'
 import type { System } from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-system')

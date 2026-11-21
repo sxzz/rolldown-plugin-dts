@@ -1,5 +1,5 @@
 import { createDebug } from 'obug'
-import { require, requireTSApi } from '../require.ts'
+import { require, requireTSApi } from '../utils/require.ts'
 import type { CustomLanguage } from '../custom-language.ts'
 import type * as ts from 'typescript'
 
