@@ -11,7 +11,11 @@ import {
   resolveTemplateFn,
 } from '../filename.ts'
 import { EMPTY_STUB } from '../generate.ts'
-import { collectDependencies, collectParams } from './dependency.ts'
+import {
+  collectDependencies,
+  collectNamespaceMembers,
+  collectParams,
+} from './dependency.ts'
 import {
   collectModuleExports,
   inlineExportDeclaration,
@@ -373,7 +377,15 @@ export function createFakeJsPlugin({
         value: declarationId,
         raw: String(declarationId),
       }) as t.NumericLiteral
-      const depsBody: t.ArrayExpression = b.ArrayExpression({ elements: deps })
+      // Only the first `deps.length` elements are mapped back to the declaration
+      const depsBody: t.ArrayExpression = b.ArrayExpression({
+        elements: [
+          ...deps,
+          ...collectNamespaceMembers(decl).map((name) =>
+            b.Identifier({ name }),
+          ),
+        ],
+      })
       const depsNode: t.ArrowFunctionExpression = b.ArrowFunctionExpression({
         params: params.map(({ name }) => b.Identifier({ name })),
         body: depsBody,
