@@ -14,72 +14,6 @@ export declare const test: import("arktype/internal/variants/object.ts").ObjectT
 }, {}>;"
 `;
 
-exports[`tsc > compiler project sourcemap (build: false) 2`] = `
-"// index.d.ts
-export declare const a = 1;
-//# sourceMappingURL=index.d.ts.map
-// index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":"A,qBAAa"}
-// index.js
-// tests/fixtures/deep-source-map/src/index.ts
-const a = 1;
-export { a };
-
-//# sourceMappingURL=index.js.map
-// index.js.map
-{"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
-`;
-
-exports[`tsc > compiler project sourcemap (build: true) 2`] = `
-"// index.d.ts
-export declare const a = 1;
-//# sourceMappingURL=index.d.ts.map
-// index.d.ts.map
-{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":"A,qBAAa"}
-// index.js
-// tests/fixtures/deep-source-map/src/index.ts
-const a = 1;
-export { a };
-
-//# sourceMappingURL=index.js.map
-// index.js.map
-{"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
-`;
-
-exports[`tsc > composite references incremental 1`] = `
-"// input1.d.ts
-export declare const input1 = "input1";
-// input1.js
-// tests/fixtures/composite-refs-incremental/dir1/input1.ts
-const input1 = "input1";
-export { input1 };
-
-// input2.d.ts
-export declare const input2 = "input2";
-// input2.js
-// tests/fixtures/composite-refs-incremental/dir2/input2.ts
-const input2 = "input2";
-export { input2 };
-"
-`;
-
-exports[`tsc > composite references no incremental 1`] = `
-"// input1.d.ts
-export declare const input1 = "input1";
-// input1.js
-// tests/fixtures/composite-refs-no-incremental/dir1/input1.ts
-const input1 = "input1";
-export { input1 };
-
-// input2.d.ts
-export declare const input2 = "input2";
-// input2.js
-// tests/fixtures/composite-refs-no-incremental/dir2/input2.ts
-const input2 = "input2";
-export { input2 };
-"
-`;
-
 exports[`tsc > import JSON 1`] = `
 "// index.d.ts
 declare namespace foo_json_d_exports {
@@ -319,109 +253,11 @@ declare const _exports: {
 export { _exports as arrayOfObjects, _exports$1 as bar, bar_json_d_exports as barNs, __json_default_export as foo, foo_json_d_exports as fooNs, invalid_json_d_exports as invalidNs, __json_default_export$1 as nested };"
 `;
 
-exports[`tsc > jsdoc 1`] = `
-"// jsdoc.d.ts
-import { Plugin } from "rolldown";
-/**
- * with imports
- */
-export interface RollupMdiFontminOptions extends Plugin {}
-/**
- * named export
- */
-export declare function fn(): number;
-/**
- * options
- */
-export interface Options {
-  /**
-   * interface member
-   */
-  foo: string;
-}
-/**
- * type alias
- */
-export type Foo = string;
-/**
- * default export
- */
-declare const _default: number;
-export { _default as default };
-// jsdoc.js
-// tests/fixtures/jsdoc.ts
-/**
-* named export
-*/
-function fn() {
-	return 42;
-}
-/**
-* default export
-*/
-var jsdoc_default = fn();
-export { jsdoc_default as default, fn };
-"
-`;
-
-exports[`tsc > jsdoc in js 1`] = `
-"// main.d.ts
-/**
- * @returns {string}
- */
-export declare function bar(): string;
-/**
- * Does bar.
- *
- * @param {string} baz
- * @returns {void}
- */
-export declare function foo(baz: string): void;"
-`;
-
-exports[`tsc > jsdoc members 1`] = `
-"// jsdoc-members.d.ts
-export declare const foo: string;
-export interface A {
-  /** Comment A1 */
-  AA?: string;
-  /** Comment A2 */
-  AB?: string;
-  /** Comment A3 */
-  AC?: string;
-}
-export type B = {
-  /** Comment B1 */
-  BA?: string;
-  /** Comment B2 */
-  BB?: string;
-  /** Comment B3 */
-  BC?: string;
-};
-export declare function fn(): void;
-// jsdoc-members.js
-// tests/fixtures/jsdoc-members.ts
-const foo = "foo";
-function fn() {}
-export { fn, foo };
-"
-`;
-
 exports[`tsc > multi declarations 1`] = `
 "// index.d.ts
 export declare const a: 1, b: 2;
 declare const a$1 = 3, b$1 = 3;
 export { a$1 as c, b$1 as d };"
-`;
-
-exports[`tsc > references 1`] = `
-"// index.d.ts
-export declare const a = 1;
-// index.js
-// tests/fixtures/refs/src/index.ts
-const a = 1;
-export { a };
-"
 `;
 
 exports[`tsc > rename infer 1`] = `

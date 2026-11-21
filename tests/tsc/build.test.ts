@@ -1,73 +1,17 @@
-import { spawn } from 'node:child_process'
-import { once } from 'node:events'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import process from 'node:process'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
-import { dts } from '../src/index.ts'
-import { findSourceMapChunk } from './utils.ts'
-
-const { dirname } = import.meta
+import { dts } from '../../src/index.ts'
+import { findSourceMapChunk, fixture } from '../utils.ts'
 
 function slash(path: string) {
   return path.replaceAll('\\', '/')
 }
 
 describe('tsc', () => {
-  test('typescript compiler', async () => {
-    const root = path.resolve(dirname, 'fixtures/tsc')
-    const { snapshot } = await rolldownBuild(
-      [path.resolve(root, 'entry1.ts'), path.resolve(root, 'entry2.ts')],
-      [
-        dts({
-          dtsOnly: true,
-          compilerOptions: {
-            skipLibCheck: true,
-            isolatedDeclarations: false,
-          },
-          generator: 'tsc',
-        }),
-      ],
-    )
-    expect(snapshot.replaceAll(/\/\/#region.*/g, '')).toMatchSnapshot()
-  })
-
-  test('parallel', async () => {
-    const { snapshot } = await rolldownBuild(
-      path.resolve(dirname, 'fixtures/basic.ts'),
-      [dts({ generator: 'tsc', tsc: { parallel: true } })],
-    )
-    expect(snapshot).toContain('export declare const foo: number;')
-  })
-
-  test('parallel with pending read on piped stdin', async () => {
-    const child = spawn(
-      process.execPath,
-      [path.resolve(dirname, 'fixtures/tsc-parallel-stdin/build.ts')],
-      { stdio: ['pipe', 'ignore', 'inherit'] },
-    )
-    const timer = setTimeout(() => child.kill(), 20_000)
-    const [code] = await once(child, 'exit')
-    clearTimeout(timer)
-    expect(code).toBe(0)
-  }, 30_000)
-
-  test('multi declarations', async () => {
-    const { snapshot } = await rolldownBuild(
-      path.resolve(dirname, 'fixtures/multi-decls/index.ts'),
-      [
-        dts({
-          dtsOnly: true,
-          compilerOptions: { isolatedDeclarations: false },
-        }),
-      ],
-    )
-    expect(snapshot).toMatchSnapshot()
-  })
-
   test('references', async () => {
-    const root = path.resolve(dirname, 'fixtures/refs')
+    const root = fixture('refs')
 
     const { snapshot } = await rolldownBuild(
       [path.resolve(root, 'src/index.ts')],
@@ -84,7 +28,7 @@ describe('tsc', () => {
   })
 
   test('compiler project sourcemap (build: false)', async () => {
-    const root = path.resolve(dirname, 'fixtures/deep-source-map')
+    const root = fixture('deep-source-map')
     const { snapshot, chunks } = await rolldownBuild(
       [path.resolve(root, 'src/index.ts')],
       [
@@ -108,7 +52,7 @@ describe('tsc', () => {
   })
 
   test('compiler project sourcemap (build: true)', async () => {
-    const root = path.resolve(dirname, 'fixtures/deep-source-map')
+    const root = fixture('deep-source-map')
     const { snapshot, chunks } = await rolldownBuild(
       [path.resolve(root, 'src/index.ts')],
       [
@@ -132,7 +76,7 @@ describe('tsc', () => {
   })
 
   test('composite projects sourcemap #80', async () => {
-    const root = path.resolve(dirname, 'fixtures/composite-refs-sourcemap')
+    const root = fixture('composite-refs-sourcemap')
 
     const { chunks } = await rolldownBuild(
       [path.resolve(root, 'src/react/index.ts')],
@@ -156,7 +100,7 @@ describe('tsc', () => {
   })
 
   test('build sourcemap sources point to .ts not .d.ts #255', async () => {
-    const root = path.resolve(dirname, 'fixtures/build-sourcemap-refs')
+    const root = fixture('build-sourcemap-refs')
 
     const { chunks } = await rolldownBuild(
       [path.resolve(root, 'src/index.ts')],
@@ -178,7 +122,7 @@ describe('tsc', () => {
   })
 
   test('composite references no incremental', async () => {
-    const root = path.resolve(dirname, 'fixtures/composite-refs-no-incremental')
+    const root = fixture('composite-refs-no-incremental')
 
     // The outDir in tsconfig files.
     const tempDir = path.resolve(root, 'temp')
@@ -211,7 +155,7 @@ describe('tsc', () => {
   })
 
   test('composite references incremental', async () => {
-    const root = path.resolve(dirname, 'fixtures/composite-refs-incremental')
+    const root = fixture('composite-refs-incremental')
 
     // The outDir in tsconfig files.
     const tempDir = path.resolve(root, 'temp')
@@ -246,100 +190,5 @@ describe('tsc', () => {
         "dir2/tsconfig.2.tsbuildinfo",
       ]
     `)
-  })
-
-  test('jsdoc', async () => {
-    const { snapshot } = await rolldownBuild(
-      path.resolve(dirname, 'fixtures/jsdoc.ts'),
-      [dts({ generator: 'tsc' })],
-      { external: ['rolldown'] },
-    )
-    expect(snapshot).toMatchSnapshot()
-  })
-
-  test('jsdoc members', async () => {
-    const { snapshot } = await rolldownBuild(
-      path.resolve(dirname, 'fixtures/jsdoc-members.ts'),
-      [dts({ generator: 'tsc' })],
-    )
-    expect(snapshot).toMatchSnapshot()
-  })
-
-  test('jsdoc in js', async () => {
-    const root = path.resolve(dirname, 'fixtures/jsdoc-js')
-    const { snapshot } = await rolldownBuild(path.resolve(root, 'main.js'), [
-      dts({
-        tsconfig: path.resolve(root, 'tsconfig.json'),
-        dtsOnly: true,
-      }),
-    ])
-    expect(snapshot).toMatchSnapshot()
-  })
-
-  test('arktype', async () => {
-    const { snapshot } = await rolldownBuild(
-      path.resolve(dirname, 'fixtures/arktype.ts'),
-      [
-        dts({
-          compilerOptions: {
-            isolatedDeclarations: false,
-          },
-          dtsOnly: true,
-        }),
-      ],
-      { external: [/^arktype/] },
-    )
-    expect(snapshot).toMatchSnapshot()
-  })
-
-  test('import JSON', async () => {
-    const { snapshot } = await rolldownBuild(
-      path.resolve(dirname, 'fixtures/import-json/index.ts'),
-      [
-        dts({
-          compilerOptions: {
-            isolatedDeclarations: false,
-          },
-          dtsOnly: true,
-        }),
-      ],
-      {
-        onwarn(warning) {
-          expect.unreachable(warning.message)
-        },
-      },
-    )
-
-    expect(snapshot).toMatchSnapshot()
-  })
-
-  test('rename infer', async () => {
-    const { snapshot } = await rolldownBuild(
-      path.resolve(dirname, 'fixtures/infer-renaming.ts'),
-      [
-        dts({
-          compilerOptions: {
-            isolatedDeclarations: false,
-          },
-          dtsOnly: true,
-        }),
-      ],
-      { external: ['zod'] },
-    )
-    expect(snapshot).toMatchSnapshot()
-  })
-
-  test('accessor in type literal', async () => {
-    const { snapshot } = await rolldownBuild(
-      path.resolve(dirname, 'fixtures/accessor-in-type-literal.ts'),
-      [
-        dts({
-          generator: 'tsc',
-          dtsOnly: true,
-          compilerOptions: { isolatedDeclarations: false },
-        }),
-      ],
-    )
-    expect(snapshot).toMatchSnapshot()
   })
 })

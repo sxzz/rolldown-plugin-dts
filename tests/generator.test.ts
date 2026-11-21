@@ -253,6 +253,12 @@ describe('TypeScript 7.0 CLI backend (deprecated)', () => {
 })
 
 describe('resolve generator', () => {
+  test('rejects `typecheck` with oxc', () => {
+    expect(() =>
+      resolveOptions({ generator: 'oxc', tsconfig: TSCONFIG, typecheck: true }),
+    ).toThrow('The `typecheck` option is not supported by the `oxc` generator')
+  })
+
   test('preserves a custom generator without compiler inference', () => {
     mockInstalled([false, false])
     const generator: Generator = {
