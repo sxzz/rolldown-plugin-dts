@@ -1,0 +1,77 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`tsc > compiler project sourcemap (build: false) 2`] = `
+"// index.d.ts
+export declare const a = 1;
+//# sourceMappingURL=index.d.ts.map
+// index.d.ts.map
+{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":"A,qBAAa"}
+// index.js
+// tests/fixtures/deep-source-map/src/index.ts
+const a = 1;
+export { a };
+
+//# sourceMappingURL=index.js.map
+// index.js.map
+{"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
+`;
+
+exports[`tsc > compiler project sourcemap (build: true) 2`] = `
+"// index.d.ts
+export declare const a = 1;
+//# sourceMappingURL=index.d.ts.map
+// index.d.ts.map
+{"version":3,"file":"index.d.ts","names":[],"sources":["../src/index.ts"],"mappings":"A,qBAAa"}
+// index.js
+// tests/fixtures/deep-source-map/src/index.ts
+const a = 1;
+export { a };
+
+//# sourceMappingURL=index.js.map
+// index.js.map
+{"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["export const a = 1\\n"],"mappings":";AAAA,MAAa,IAAI"}"
+`;
+
+exports[`tsc > composite references incremental 1`] = `
+"// input1.d.ts
+export declare const input1 = "input1";
+// input1.js
+// tests/fixtures/composite-refs-incremental/dir1/input1.ts
+const input1 = "input1";
+export { input1 };
+
+// input2.d.ts
+export declare const input2 = "input2";
+// input2.js
+// tests/fixtures/composite-refs-incremental/dir2/input2.ts
+const input2 = "input2";
+export { input2 };
+"
+`;
+
+exports[`tsc > composite references no incremental 1`] = `
+"// input1.d.ts
+export declare const input1 = "input1";
+// input1.js
+// tests/fixtures/composite-refs-no-incremental/dir1/input1.ts
+const input1 = "input1";
+export { input1 };
+
+// input2.d.ts
+export declare const input2 = "input2";
+// input2.js
+// tests/fixtures/composite-refs-no-incremental/dir2/input2.ts
+const input2 = "input2";
+export { input2 };
+"
+`;
+
+exports[`tsc > references 1`] = `
+"// index.d.ts
+export declare const a = 1;
+// index.js
+// tests/fixtures/refs/src/index.ts
+const a = 1;
+export { a };
+"
+`;

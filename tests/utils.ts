@@ -1,4 +1,12 @@
+import path from 'node:path'
 import type { ExistingRawSourceMap, RolldownOutput } from 'rolldown'
+
+/**
+ * Resolve a path inside `tests/fixtures`
+ */
+export function fixture(...paths: string[]): string {
+  return path.resolve(import.meta.dirname, 'fixtures', ...paths)
+}
 
 /**
  * Find and parse a source map from the output chunks

@@ -1,0 +1,89 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`tsc > jsdoc 1`] = `
+"// jsdoc.d.ts
+import { Plugin } from "rolldown";
+/**
+ * with imports
+ */
+export interface RollupMdiFontminOptions extends Plugin {}
+/**
+ * named export
+ */
+export declare function fn(): number;
+/**
+ * options
+ */
+export interface Options {
+  /**
+   * interface member
+   */
+  foo: string;
+}
+/**
+ * type alias
+ */
+export type Foo = string;
+/**
+ * default export
+ */
+declare const _default: number;
+export { _default as default };
+// jsdoc.js
+// tests/fixtures/jsdoc.ts
+/**
+* named export
+*/
+function fn() {
+	return 42;
+}
+/**
+* default export
+*/
+var jsdoc_default = fn();
+export { jsdoc_default as default, fn };
+"
+`;
+
+exports[`tsc > jsdoc in js 1`] = `
+"// main.d.ts
+/**
+ * @returns {string}
+ */
+export declare function bar(): string;
+/**
+ * Does bar.
+ *
+ * @param {string} baz
+ * @returns {void}
+ */
+export declare function foo(baz: string): void;"
+`;
+
+exports[`tsc > jsdoc members 1`] = `
+"// jsdoc-members.d.ts
+export declare const foo: string;
+export interface A {
+  /** Comment A1 */
+  AA?: string;
+  /** Comment A2 */
+  AB?: string;
+  /** Comment A3 */
+  AC?: string;
+}
+export type B = {
+  /** Comment B1 */
+  BA?: string;
+  /** Comment B2 */
+  BB?: string;
+  /** Comment B3 */
+  BC?: string;
+};
+export declare function fn(): void;
+// jsdoc-members.js
+// tests/fixtures/jsdoc-members.ts
+const foo = "foo";
+function fn() {}
+export { fn, foo };
+"
+`;

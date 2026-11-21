@@ -3,10 +3,10 @@ import path from 'node:path'
 import { getLanguagePlugin } from '@astrojs/ts-plugin/dist/language.js'
 import { rolldownBuild } from '@sxzz/test-utils'
 import { describe, expect, test } from 'vitest'
-import { dts } from '../src/index.ts'
-import type { CustomLanguage } from '../src/custom-language.ts'
+import { dts } from '../../src/index.ts'
+import { fixture } from '../utils.ts'
+import type { CustomLanguage } from '../../src/custom-language.ts'
 
-const { dirname } = import.meta
 const require = createRequire(import.meta.url)
 const tsgoModuleUrl = import.meta.resolve('typescript-next')
 
@@ -15,86 +15,11 @@ const RE_CUSTOM = /\.custom$/
 const RE_ASTRO = /\.astro$/
 
 describe('volar', () => {
-  describe('vue', () => {
-    test('vue-sfc w/ ts-compiler', async () => {
-      const root = path.resolve(dirname, 'fixtures/vue-sfc')
-      const { snapshot } = await rolldownBuild(
-        path.resolve(root, 'main.ts'),
-        [
-          dts({
-            dtsOnly: true,
-            tsc: { vue: true },
-            compilerOptions: {
-              isolatedDeclarations: false,
-            },
-          }),
-        ],
-        { external },
-      )
-      expect(snapshot).toMatchSnapshot()
-    })
-
-    test('vue-sfc w/ parallel ts-compiler', async () => {
-      const root = path.resolve(dirname, 'fixtures/vue-sfc')
-      const { snapshot } = await rolldownBuild(
-        path.resolve(root, 'main.ts'),
-        [
-          dts({
-            dtsOnly: true,
-            tsc: {
-              vue: { vueCompilerOptions: { fallthroughAttributes: false } },
-              parallel: true,
-            },
-            compilerOptions: {
-              isolatedDeclarations: false,
-            },
-          }),
-        ],
-        { external },
-      )
-      expect(snapshot).toMatchSnapshot()
-    })
-
-    test('vue-sfc w/ ts-compiler w/ vueCompilerOptions in tsconfig', async () => {
-      const root = path.resolve(dirname, 'fixtures/vue-sfc-fallthrough')
-      const { snapshot } = await rolldownBuild(
-        path.resolve(root, 'main.ts'),
-        [
-          dts({
-            tsconfig: path.resolve(root, 'tsconfig.json'),
-            dtsOnly: true,
-            tsc: { vue: true },
-          }),
-        ],
-        { external },
-      )
-      expect(snapshot).toMatchSnapshot()
-    })
-
-    test('vue-sfc as entries w/o ts importer', async () => {
-      const root = path.resolve(dirname, 'fixtures/vue-sfc-entries')
-      const { snapshot } = await rolldownBuild(
-        [path.resolve(root, 'Foo.vue'), path.resolve(root, 'Bar.vue')],
-        [
-          dts({
-            dtsOnly: true,
-            tsc: { vue: true },
-            compilerOptions: {
-              isolatedDeclarations: false,
-            },
-          }),
-        ],
-        { external },
-      )
-      expect(snapshot).toMatchSnapshot()
-    })
-  })
-
   describe('ts-macro', () => {
     const tsMacro = createTsMacroLanguage()
 
     test('ts-macro w/ ts-compiler', async () => {
-      const root = path.resolve(dirname, 'fixtures/ts-macro')
+      const root = fixture('ts-macro')
       const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
         dts({
           dtsOnly: true,
@@ -106,7 +31,7 @@ describe('volar', () => {
     })
 
     test('vue-sfc w/ ts-macro w/ ts-compiler', async () => {
-      const root = path.resolve(dirname, 'fixtures/vue-sfc-with-ts-macro')
+      const root = fixture('vue-sfc-with-ts-macro')
       const { snapshot } = await rolldownBuild(
         path.resolve(root, 'main.ts'),
         [
@@ -124,7 +49,7 @@ describe('volar', () => {
   })
 
   test('astro', async () => {
-    const root = path.resolve(dirname, 'fixtures/astro')
+    const root = fixture('astro')
 
     const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
       dts({
@@ -138,7 +63,7 @@ describe('volar', () => {
   test.each(['oxc', 'tsc'] as const)(
     'custom without volar (%s)',
     async (generator) => {
-      const root = path.resolve(dirname, 'fixtures/custom-language')
+      const root = fixture('custom-language')
 
       const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
         {
@@ -175,7 +100,7 @@ describe('volar', () => {
   )
 
   test('custom without volar (tsgo vfs)', async () => {
-    const root = path.resolve(dirname, 'fixtures/custom-language')
+    const root = fixture('custom-language')
     const { snapshot } = await rolldownBuild(path.resolve(root, 'main.ts'), [
       {
         name: 'convert-custom-to-ts',
