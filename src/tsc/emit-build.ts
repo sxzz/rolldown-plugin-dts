@@ -1,6 +1,6 @@
 import { createDebug } from 'obug'
 import { RE_DTS, RE_DTS_MAP } from '../filename.ts'
-import { requireTSApi } from '../require.ts'
+import { requireTSApi } from '../utils/require.ts'
 import {
   globalContext,
   type ParsedProject,

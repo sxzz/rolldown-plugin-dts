@@ -5,7 +5,7 @@ import {
   tryRequire,
   tryResolve,
   tryResolveFrom,
-} from './require.ts'
+} from './utils/require.ts'
 import type { Logger } from './options.ts'
 import type * as TsgoApiModule from 'typescript-next/async'
 import type * as TsgoFsModule from 'typescript-next/fs'

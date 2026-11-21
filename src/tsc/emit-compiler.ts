@@ -1,7 +1,8 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
-import { requireTSApi } from '../require.ts'
+import { requireTSApi } from '../utils/require.ts'
 import { globalContext } from './context.ts'
+import { shareLibFiles } from './lib-files.ts'
 import { createFsSystem } from './system.ts'
 import {
   customTransformers,
@@ -139,6 +140,7 @@ function createTsProgramFromParsedConfig({
   ]
 
   const host = ts.createCompilerHost(compilerOptions, true)
+  shareLibFiles(host, compilerOptions)
   const createProgram = languageContext.getCreateProgram(ts)
   const program = createProgram({
     rootNames,

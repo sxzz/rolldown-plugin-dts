@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { createDebug } from 'obug'
+import { normalizePath } from '../utils/path.ts'
 import type { ParsedCommandLine, Program } from 'typescript'
 
 const debug = createDebug('rolldown-plugin-dts:tsc-context')
@@ -38,7 +39,7 @@ export function createContext(): TscContext {
  * working directory.
  */
 export function invalidateContextFile(context: TscContext, file: string): void {
-  file = path.resolve(file).replaceAll('\\', '/')
+  file = normalizePath(path.resolve(file))
   debug(`invalidating context file: ${file}`)
   context.files.delete(file)
   context.programs = context.programs.filter((program) => {
