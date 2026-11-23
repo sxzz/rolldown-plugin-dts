@@ -753,6 +753,44 @@ describe('entryFileNames', () => {
 
     expect(snapshot).toMatchSnapshot()
   })
+
+  test('respects dts extension from a naming function in unbundled dts-only builds', async () => {
+    const { chunks } = await rolldownBuild(
+      {
+        cache: path.resolve(
+          dirname,
+          'fixtures/dts-only-out-extension/cache.ts',
+        ),
+        event: path.resolve(
+          dirname,
+          'fixtures/dts-only-out-extension/event.ts',
+        ),
+      },
+      [dts({ dtsOnly: true })],
+      {},
+      {
+        preserveModules: true,
+        entryFileNames: (chunk) =>
+          `[name]${chunk.name.endsWith('.d') ? '.d.ts' : '.mjs'}`,
+        chunkFileNames: (chunk) =>
+          `[name]-[hash]${chunk.name.endsWith('.d') ? '.d.ts' : '.mjs'}`,
+      },
+    )
+
+    expect(chunks.map((chunk) => chunk.fileName).toSorted()).toStrictEqual([
+      'cache.d.ts',
+      'error-shape.d.ts',
+      'event.d.ts',
+    ])
+
+    for (const fileName of ['cache.d.ts', 'event.d.ts']) {
+      const chunk = chunks.find((chunk) => chunk.fileName === fileName)
+      expect(chunk?.type).toBe('chunk')
+      if (chunk?.type === 'chunk') {
+        expect(chunk.code).toContain('from "./error-shape.js"')
+      }
+    }
+  })
 })
 
 test('type-only export', async () => {
