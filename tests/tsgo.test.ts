@@ -477,3 +477,48 @@ test('tsgo CLI fails on type errors with `typecheck`', async () => {
     await checked.dispose()
   }
 })
+
+test('tsgo fails when declaration emit reports an error', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'tsgo-decl-error-'))
+  const tsconfigPath = path.join(dir, 'tsconfig.json')
+  const source = path.join(dir, 'index.ts')
+  await writeFile(
+    tsconfigPath,
+    JSON.stringify({
+      compilerOptions: {
+        strict: true,
+        declaration: true,
+        module: 'nodenext',
+        moduleResolution: 'nodenext',
+      },
+      include: ['index.ts'],
+    }),
+  )
+  // TS4094 is reported while the emit still runs, and the written type drops `private`.
+  await writeFile(
+    source,
+    `export const Widget = class {
+  private secret = 1
+  value() {
+    return this.secret
+  }
+}
+`,
+  )
+  const tsgen = new TsgoGenerator({
+    moduleUrl,
+    cwd: dir,
+    tsconfig: tsconfigPath,
+    vfs: false,
+    languageContext: new LanguageContext([]),
+  })
+  try {
+    await tsgen.init()
+    const output = await tsgen.emit('', source)
+    expect(output.error).toContain('TS4094')
+    expect(output.code).toBeUndefined()
+  } finally {
+    await tsgen.dispose()
+    await rm(dir, { recursive: true, force: true })
+  }
+})

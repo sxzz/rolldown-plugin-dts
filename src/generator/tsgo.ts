@@ -369,10 +369,16 @@ export class TsgoGenerator implements Generator {
           cause: error,
         })
       })
-    if (output.emitSkipped && output.diagnostics.length) {
+    const diagnostics = output.emitSkipped
+      ? output.diagnostics
+      : output.diagnostics.filter(
+          ({ category }) =>
+            category === this.apiModule!.DiagnosticCategory.Error,
+        )
+    if (diagnostics.length) {
       return {
         error: mapError(
-          this.formatDiagnostics(output.diagnostics),
+          this.formatDiagnostics(diagnostics),
           tsFileName,
           fileName,
         ),
