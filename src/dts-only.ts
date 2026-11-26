@@ -42,14 +42,21 @@ export function createDtsOnlyPlugin({
           if (entryFileNames) {
             const nameTemplate = resolveTemplateFn(entryFileNames, chunk)
 
-            const renderedName = replaceTemplateName(nameTemplate, chunk.name)
+            // Entry chunks are usually named after their `.d.ts` module
+            // (`index.d`), so drop `.d` before applying a template that
+            // already has a dts extension, e.g. `[name].d.ts`.
+            const name = chunk.name.endsWith('.d')
+              ? chunk.name.slice(0, -2)
+              : chunk.name
+
+            const renderedName = replaceTemplateName(nameTemplate, name)
             if (RE_DTS.test(renderedName)) {
-              return nameTemplate
+              return renderedName
             }
 
             const renderedNameWithD = replaceTemplateName(
               nameTemplate,
-              `${chunk.name}.d`,
+              `${name}.d`,
             )
             if (RE_DTS.test(renderedNameWithD)) {
               return renderedNameWithD
@@ -57,10 +64,7 @@ export function createDtsOnlyPlugin({
 
             // `[name].mjs` becomes `[name].d.mts`, as with regular builds.
             if (RE_JS.test(nameTemplate)) {
-              const name = chunk.name.endsWith('.d')
-                ? chunk.name.slice(0, -2)
-                : chunk.name
-              return filename_js_to_dts(replaceTemplateName(nameTemplate, name))
+              return filename_js_to_dts(renderedName)
             }
 
             // Ignore the user-defined entryFileNames if it doesn't match the dts pattern
