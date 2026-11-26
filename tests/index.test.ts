@@ -323,6 +323,35 @@ test('dtsOnly accepts source and declaration entries together', async () => {
   ])
 })
 
+test.each<[string, RegExp, RegExp]>([
+  ['[name].d.ts', /^basic\.d\.ts$/, /^dts-input\.d\.ts$/],
+  ['[name].d.mts', /^basic\.d\.mts$/, /^dts-input\.d\.mts$/],
+  ['[name].ts', /^basic\.d\.ts$/, /^dts-input\.d\.ts$/],
+  ['[name].mjs', /^basic\.d\.mts$/, /^dts-input\.d\.mts$/],
+  [
+    'types/[name]-[hash].d.ts',
+    /^types\/basic-[\w-]+\.d\.ts$/,
+    /^types\/dts-input-[\w-]+\.d\.ts$/,
+  ],
+])(
+  'dtsOnly with entryFileNames %s does not duplicate `.d`',
+  async (entryFileNames, sourceFile, declarationFile) => {
+    const { chunks } = await rolldownBuild(
+      [
+        path.resolve(dirname, 'fixtures/basic.ts'),
+        path.resolve(dirname, 'fixtures/dts-input.d.ts'),
+      ],
+      [dts({ dtsOnly: true })],
+      {},
+      { entryFileNames },
+    )
+    const fileNames = chunks.map((chunk) => chunk.fileName).toSorted()
+    expect(fileNames).toHaveLength(2)
+    expect(fileNames[0]).toMatch(sourceFile)
+    expect(fileNames[1]).toMatch(declarationFile)
+  },
+)
+
 test('dtsOnly keeps code added by later transforms out of declarations', async () => {
   const { snapshot } = await rolldownBuild(
     path.resolve(dirname, 'fixtures/basic.ts'),
