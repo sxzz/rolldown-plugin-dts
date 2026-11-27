@@ -78,7 +78,7 @@ export function createGeneratePlugin(
   const dtsOnlyEntries = new Map<string, ResolvedId>()
 
   /**
-   * Resolved Rolldown inputs in `dtsOnly` mode. Rolldown resolves entries
+   * Resolved Rolldown inputs that emit declarations. Rolldown resolves entries
    * concurrently, so a declaration may be emitted before every entry is known.
    * Passing all of them upfront lets tsc build one program instead of several.
    */
@@ -142,7 +142,14 @@ export function createGeneratePlugin(
         const resolvedId = resolved?.id || id
         debug('resolved input %s -> %s', id, resolvedId)
         if (name) inputAliasMap.set(resolvedId, name)
-        if (dtsOnly && isSourceFile(resolvedId)) inputIds.add(resolvedId)
+        if (
+          isSourceFile(resolvedId) &&
+          (dtsOnly ||
+            !entryMatcher ||
+            entryMatcher(path.relative(cwd, resolvedId)))
+        ) {
+          inputIds.add(resolvedId)
+        }
       }
     },
 
