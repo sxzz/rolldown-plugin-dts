@@ -40,14 +40,17 @@ export function createDtsOnlyPlugin({
         entryFileNames(chunk) {
           const { entryFileNames } = options
           if (entryFileNames) {
-            const nameTemplate = resolveTemplateFn(entryFileNames, chunk)
-
-            // Entry chunks are usually named after their `.d.ts` module
-            // (`index.d`), so drop `.d` before applying a template that
-            // already has a dts extension, e.g. `[name].d.ts`.
+            // Entry chunks may or may not be named after their `.d.ts` module
+            // (`index.d` vs. `index`). Normalize the name: drop `.d` before
+            // applying the template, but pass it with `.d` to naming functions
+            // so they can detect dts chunks as in regular builds.
             const name = chunk.name.endsWith('.d')
               ? chunk.name.slice(0, -2)
               : chunk.name
+            const nameTemplate = resolveTemplateFn(entryFileNames, {
+              ...chunk,
+              name: `${name}.d`,
+            })
 
             const renderedName = replaceTemplateName(nameTemplate, name)
             if (RE_DTS.test(renderedName)) {
