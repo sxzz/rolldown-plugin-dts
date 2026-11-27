@@ -434,6 +434,34 @@ describe('dts input', () => {
     expect(snapshot).toMatchSnapshot()
   })
 
+  test('deconflicts renamed imports from namespace members', async () => {
+    const { snapshot } = await rolldownBuild(
+      [
+        path.resolve(
+          dirname,
+          'fixtures/dts-namespace-shadowed-import/index.d.ts',
+        ),
+      ],
+      [dts({ dtsOnly: true })],
+      {},
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
+
+  test('deconflicts renamed external imports from namespace members', async () => {
+    const { snapshot } = await rolldownBuild(
+      [
+        path.resolve(
+          dirname,
+          'fixtures/dts-namespace-shadowed-import/index.d.ts',
+        ),
+      ],
+      [dts({ dtsOnly: true })],
+      { external: ['./dep.js'] },
+    )
+    expect(snapshot).toMatchSnapshot()
+  })
+
   test('warns for CommonJS dts input syntax', async () => {
     const warnings: string[] = []
 
