@@ -154,6 +154,15 @@ async function runTsgo(
   const tsgoDist = await mkdtemp(path.join(tmpdir(), 'rolldown-plugin-dts-'))
   debug('[tsgo] tsgoDist', tsgoDist)
 
+  const dispose = async () => {
+    if (debug.enabled) {
+      debug('[tsgo] skip cleanup of tsgoDist', tsgoDist)
+    } else {
+      debug('[tsgo] disposing tsgoDist', tsgoDist)
+      await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
+    }
+  }
+
   const args = [
     '--noEmit',
     'false',
@@ -170,17 +179,15 @@ async function runTsgo(
   ]
   debug('[tsgo] args %o', args)
 
-  await spawnAsync(tsgoPath, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+  try {
+    await spawnAsync(tsgoPath, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+  } catch (error) {
+    await dispose()
+    throw error
+  }
 
   return {
     path: tsgoDist,
-    async dispose() {
-      if (debug.enabled) {
-        debug('[tsgo] skip cleanup of tsgoDist', tsgoDist)
-      } else {
-        debug('[tsgo] disposing tsgoDist', tsgoDist)
-        await rm(tsgoDist, { recursive: true, force: true }).catch(() => {})
-      }
-    },
+    dispose,
   }
 }

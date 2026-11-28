@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import {
   mkdir,
   mkdtemp,
+  readdir,
   readFile,
   rm,
   symlink,
@@ -468,11 +469,20 @@ test('tsgo CLI fails on type errors with `typecheck`', async () => {
     await unchecked.dispose()
   }
 
+  const before = new Set(
+    (await readdir(tmpdir())).filter((name) =>
+      name.startsWith('rolldown-plugin-dts-'),
+    ),
+  )
   const checked = new TsgoCliGenerator({ ...options, typecheck: true })
   try {
     await expect(checked.init()).rejects.toThrow(
       /tsgo process exited.*error\.ts.*TS2322/s,
     )
+    const leaked = (await readdir(tmpdir())).filter(
+      (name) => name.startsWith('rolldown-plugin-dts-') && !before.has(name),
+    )
+    expect(leaked).toEqual([])
   } finally {
     await checked.dispose()
   }
